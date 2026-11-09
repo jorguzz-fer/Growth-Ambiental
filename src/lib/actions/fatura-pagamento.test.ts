@@ -34,6 +34,10 @@ describe.skipIf(!HAS_DB)("Pagamento da fatura de cartão (Prompt U, 3)", async (
   const despesas = () => db.select().from(schema.despesas).where(eq(schema.despesas.tenantId, tenantId));
 
   beforeAll(async () => {
+    // O estado da fatura (aberta/fechada) depende de "hoje". Os cenários foram escritos com hoje = 01/10/2026
+    // (fatura de 10/10/2026 ainda aberta); fixa o relógio nessa data. Só o Date é falso: timers seguem reais (driver do Postgres).
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 9, 1, 12, 0, 0));
     const [t] = await db.insert(schema.tenants).values({ name: "fatura-U3" }).returning();
     tenantId = t.id;
     const [p] = await db.insert(schema.projects).values({ tenantId, name: "OBRA U3" }).returning();
@@ -50,6 +54,7 @@ describe.skipIf(!HAS_DB)("Pagamento da fatura de cartão (Prompt U, 3)", async (
     expect((await addDespesa(fd({ ...base, competencia: "03/2026", valor: "400", cartaoDataCompra: "03/05/2026", cartaoParcelas: "1", obs: "mar" }))).ok).toBe(true); // fatura 03/10
   });
   afterAll(async () => {
+    vi.useRealTimers();
     await db.delete(schema.tenants).where(eq(schema.tenants.id, tenantId));
   });
 

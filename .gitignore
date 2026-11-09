@@ -33,3 +33,6 @@ yarn-error.log*
 
 # migrate bundle (gerado por build:migrate)
 /.migrate
+
+# saída do scripts/pacote-revisao.sh (pacote gerado, não versionado)
+pacote-revisao/

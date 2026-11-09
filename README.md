@@ -70,11 +70,55 @@ npm run dev                     # http://localhost:3000
 | `npm run build` / `start` | Build e execução de produção |
 | `npm run typecheck` | Checagem de tipos (tsc) |
 | `npm run lint` | ESLint |
-| `npm run test` | Testes (Vitest) da lógica de cálculo |
+| `npm run test` | Testes (Vitest) — **pula os de integração se não houver `DATABASE_URL`** |
+| `npm run test:db` | Suíte completa; **recusa rodar sem `DATABASE_URL`** |
+| `npm run test:all` | `typecheck` + `lint` + `test:db` — é o portão de qualidade |
 | `npm run db:generate` | Gera migrações Drizzle |
 | `npm run db:migrate` | Aplica migrações |
 | `npm run db:seed` | Popula o tenant de demonstração (RMV) |
 | `npm run db:studio` | Drizzle Studio (explorar o banco) |
+
+#### Por que `test:all` e não `test`
+
+`npm test` sem `DATABASE_URL` termina **verde pulando 95 dos 263 arquivos
+(508 testes)** — são os de integração, que abrem com
+`describe.skipIf(!HAS_DB)` e cobrem justamente concorrência de numeração,
+travas de conciliação, Acerto, Ressarcimentos e permissões. Verde sem banco não
+prova nada sobre esses caminhos.
+
+`npm run test:all` é o portão: falha se `DATABASE_URL` não estiver definido.
+Com banco, a suíte roda inteira — 263 arquivos, 2.148 testes, zero pulados.
+
+```sh
+export DATABASE_URL='postgres://usuario:senha@localhost:5432/growth'
+npm run db:migrate
+npm run test:all
+```
+
+**Todo relatório de entrega informa o resultado de `test:all` e o número de
+testes pulados. Pulado > 0 precisa de motivo escrito.**
+
+Testes que afirmam sobre datas literais e dependem de "hoje" (fatura aberta,
+vencido, atrasado, mês corrente, aging) **fixam o relógio** com
+`vi.useFakeTimers({ toFake: ["Date"] })` + `vi.setSystemTime(...)`. Sem isso
+eles envelhecem e quebram sozinhos na virada do mês — ver
+`src/lib/actions/fatura-pagamento.test.ts`. Só o `Date` é falsificado; os
+timers seguem reais, porque o driver do Postgres depende deles.
+
+#### Pacote para revisão
+
+```sh
+scripts/pacote-revisao.sh [commit-ou-tag-da-ultima-revisao]
+```
+
+Gera `pacote-revisao/<nome>-<hash>.zip` a partir de `git archive HEAD`, com
+`REVISAO.txt` (hash e data do HEAD, `git log --oneline` e `git diff --stat` do
+intervalo). Usa `git archive` de propósito: um pacote montado à mão escolhendo
+diretórios já saiu **sem** `src/lib/db/migrations/meta/_journal.json`, e sem
+esse arquivo o migrator do Drizzle aborta com
+`Can't find meta/_journal.json file` — o revisor teve de aplicar os `.sql` à
+mão. O script confere a presença de `_journal.json`, `docs/SPEC.md`,
+`package.json` e `REVISAO.txt` e falha se algum faltar.
 
 ## Estrutura
 

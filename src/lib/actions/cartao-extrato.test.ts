@@ -33,6 +33,13 @@ describe.skipIf(!HAS_DB)("Extrato do cartão e estorno (Prompt U, 5 e 6)", async
   };
 
   beforeAll(async () => {
+    // Em qual fatura um crédito do extrato cai depende de "hoje": a da compra, se ainda não paga;
+    // senão a do ciclo ABERTO hoje (cartao-extrato.ts). E `pagarFatura` recusa fatura aberta.
+    // Os cenários são de março/2026 (fatura 03/10, pagamento em 03/20); fixa o relógio em 01/04/2026,
+    // depois de todas as datas do cenário, para a fatura de março estar fechada e o ciclo aberto não
+    // deslizar com o calendário. Só o Date é falso: timers seguem reais (driver do Postgres).
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 3, 1, 12, 0, 0));
     const [t] = await db.insert(schema.tenants).values({ name: "extrato-U4" }).returning();
     tenantId = t.id;
     const [p] = await db.insert(schema.projects).values({ tenantId, name: "OBRA U4" }).returning();
@@ -46,6 +53,7 @@ describe.skipIf(!HAS_DB)("Extrato do cartão e estorno (Prompt U, 5 e 6)", async
     [{ id: compraId }] = await db.select({ id: schema.despesas.id }).from(schema.despesas).where(eq(schema.despesas.tenantId, tenantId));
   });
   afterAll(async () => {
+    vi.useRealTimers();
     await db.delete(schema.tenants).where(eq(schema.tenants.id, tenantId));
   });
 
