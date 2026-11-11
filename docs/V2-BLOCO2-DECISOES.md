@@ -140,7 +140,7 @@ para construí-lo.
 | | Decisão | Como entra |
 |---|---|---|
 | **B4** | Sim, chave por empresa antes de qualquer mudança que altere número | **Feito** na PR #103 (`/chaves`) |
-| **BI-1.2** | **Opção A:** venda no meio da obra reconhece de uma vez os meses já passados e segue mês a mês | §54, atrás de chave |
+| **BI-1.2** | ~~**Opção A:** venda no meio da obra reconhece de uma vez os meses já passados e segue mês a mês~~ **Substituída em 11/11/2026 (Revisão 4, BAR-6):** a venda é espalhada pela janela inteira, revisando os meses passados. Ver `docs/AR-MEDICAO.md` | §54, atrás de chave |
 | **BI-1.3** | **Opção B:** obra além do prazo continua reconhecendo receita até o término real — **só daqui para frente**, sem refazer meses fechados | §54, atrás de chave |
 | **BI-2** | **Materializar:** as parcelas viram contas a receber de verdade, respeitando a ordem técnica (54, 56 e 57 antes) para não duplicar a DRE | Prompt K, depois de I-9; obra a obra, com prévia |
 | **BP-1** | Permuta fica no inventário da tela e, **quando for insumo, também entra no Estoque** | Prompt P: valor na Permuta, quantidade e custo no Estoque, ligados por `permuta_id` |
