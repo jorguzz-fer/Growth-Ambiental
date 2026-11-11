@@ -213,6 +213,35 @@ O BI-1.3 não muda: obra além do prazo segue reconhecendo só daqui para frente
   que ao contrário; fica registrado aqui para não surpreender.
 - **Nada é gravado:** o reconhecimento é calculado na leitura (§54.3).
 
+### Qual valor é rateado (decidido em 11/11/2026)
+
+O valor dividido pelos meses da obra é o **total do contrato**: a soma do plano
+de pagamento da unidade, incluindo a permuta e o financiamento. É o preço
+efetivamente vendido.
+
+O campo "Valor" da unidade é o preço de tabela, que entra no VGV, e **não** é o
+valor rateado. Na unidade de teste da spec, o contrato soma R$ 555.000 e o
+preço de tabela é R$ 537.027.
+
+Isto ajusta o §54.2 do Prompt I, que dizia "valor da unidade".
+
+**Cuidado com a BAR-1.** O total do contrato soma só as seções com a caixinha
+"Usar" marcada. Uma venda com as caixinhas desmarcadas teria contrato zero e
+não apareceria na DRE. Por isso a lista de conferência da BAR-1 vale também
+para a DRE, e a regra entra atrás da chave.
+
+### Em aberto: o que entra na DRE quando o bem da permuta é vendido
+
+O total do contrato já inclui o valor do bem recebido em permuta. Exemplo: o
+bem entrou por R$ 90 mil e foi vendido por R$ 95 mil.
+
+- **Só o ganho (R$ 5 mil)**, numa linha própria, fora da receita de vendas.
+  É o que diz o §57.4.3 do Prompt I e a recomendação do revisor.
+- **O valor cheio (R$ 95 mil)** como receita. Nesse caso, os R$ 90 mil contam
+  duas vezes, uma no contrato rateado e outra na revenda.
+
+**Aguardando o dono.**
+
 ### Atenção na BAR-1 (risco de sumir parcela de venda real)
 
 O próprio código avisa que as vendas lançadas **normalmente não marcam as
