@@ -25,7 +25,8 @@ import { NAV_MENU } from "@/lib/nav-menu";
 export const ROTAS_CONHECIDAS: ReadonlySet<string> = new Set(NAV_MENU.flatMap((m) => m.items.flatMap((i) => [i.href, ...(i.tambem ?? [])])));
 
 export const NOME_DA_CRIS = "Cris";
-export const MAX_MENSAGEM = 1500;
+/** Prompt AQ §5.3: era 1.500; sobe para caber uma tabela colada. O cliente avisa quando passa; o servidor corta no mesmo limite. */
+export const MAX_MENSAGEM = 6000;
 export const MAX_HISTORICO_CRIS = 12;
 /** Teto do resumo da tela em caracteres de JSON (o que a tela manda além disso é cortado). */
 export const MAX_DADOS_DA_TELA = 12_000;

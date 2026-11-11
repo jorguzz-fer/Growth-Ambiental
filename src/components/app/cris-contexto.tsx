@@ -4,6 +4,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { usePathname, useSearchParams } from "next/navigation";
 import type { ContextoDeTela, FormularioDaTela, PropostaDePreenchimento } from "@/lib/cris";
 import { repartirProposta, unirFormularios } from "@/lib/cris-formularios";
+import { validarAnexo } from "@/lib/cris-colagem";
+import { CampoDeMensagem, type AvisoDoCampo } from "@/components/app/campo-de-mensagem";
 
 /**
  * Prompt E2 — o que a tela aberta conta para a Cris.
@@ -23,9 +25,9 @@ interface EstadoDaCris {
   setTela: (t: Omit<ContextoDeTela, "rota" | "formulario"> | null) => void;
   registrarFormulario: (f: FormularioDaTela, aplicar: Aplicar) => () => void;
   aplicarProposta: (p: PropostaDePreenchimento) => boolean;
-  /** Abre a Cris com uma pergunta pronta (ex.: o botão de um painel). */
-  perguntar: (texto: string) => void;
-  pedidoPendente: string | null;
+  /** Abre a Cris com uma pergunta pronta (ex.: o botão de um painel), e o anexo, se houver. */
+  perguntar: (texto: string, anexo?: File | null) => void;
+  pedidoPendente: { texto: string; anexo: File | null } | null;
   consumirPedido: () => void;
 }
 
@@ -41,7 +43,7 @@ export function CrisProvider({ children }: { children: React.ReactNode }) {
   // prefixados pelo id de cada um; a proposta é repartida de volta.
   const [formularios, setFormularios] = useState<FormularioDaTela[]>([]);
   const aplicarRef = useRef(new Map<string, Aplicar>());
-  const [pedidoPendente, setPedido] = useState<string | null>(null);
+  const [pedidoPendente, setPedido] = useState<{ texto: string; anexo: File | null } | null>(null);
 
   const registrarFormulario = useCallback((f: FormularioDaTela, aplicar: Aplicar) => {
     setFormularios((lista) => [...lista.filter((x) => x.id !== f.id), f]);
@@ -79,7 +81,7 @@ export function CrisProvider({ children }: { children: React.ReactNode }) {
       setTela: setBase,
       registrarFormulario,
       aplicarProposta,
-      perguntar: setPedido,
+      perguntar: (texto: string, anexo?: File | null) => setPedido({ texto, anexo: anexo ?? null }),
       pedidoPendente,
       consumirPedido: () => setPedido(null),
     }),
@@ -134,33 +136,67 @@ export function PerguntarACris({ pergunta, children, className }: { pergunta: st
 /**
  * Prompt Y2 — caixa de conversa embaixo das perguntas prontas de um painel:
  * o que a pessoa escreve vai para a Cris, que abre com a pergunta.
+ *
+ * Prompt AQ §5.4: o mesmo campo do chat (várias linhas, Enter envia, colar
+ * imagem ou arquivo vira anexo, aviso de limite). O anexo vai junto com a
+ * pergunta para a Cris.
  */
 export function CaixaDeConversa({ placeholder }: { placeholder?: string }) {
   const cris = useCris();
   const [texto, setTexto] = useState("");
+  const [anexo, setAnexo] = useState<File | null>(null);
+  const [aviso, setAviso] = useState<AvisoDoCampo>(null);
   if (!cris) return null;
+  const anexar = (f: File) => {
+    const erro = validarAnexo(f);
+    if (erro) return setAviso({ texto: erro, tom: "erro" });
+    setAviso(anexo && anexo !== f ? { texto: `O anexo "${anexo.name}" foi trocado por "${f.name}".`, tom: "info" } : null);
+    setAnexo(f);
+  };
+  const enviar = () => {
+    const q = texto.trim();
+    if (!q && !anexo) return;
+    cris.perguntar(q, anexo);
+    setTexto("");
+    setAnexo(null);
+    setAviso(null);
+  };
   return (
-    <form
-      data-caixa-conversa
-      className="mt-3 flex gap-1.5"
-      onSubmit={(e) => {
-        e.preventDefault();
-        const q = texto.trim();
-        if (!q) return;
-        cris.perguntar(q);
-        setTexto("");
-      }}
-    >
-      <input
-        value={texto}
-        onChange={(e) => setTexto(e.target.value)}
-        placeholder={placeholder ?? "Pergunte à Cris…"}
-        aria-label="Pergunte à Cris"
-        className="min-w-0 flex-1 rounded-[8px] border border-[var(--color-line)] bg-white px-2.5 py-1.5 text-[12.5px] text-[var(--color-ink)] placeholder:text-[var(--color-ink3)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent2)]/40"
-      />
-      <button type="submit" disabled={!texto.trim()} className="rounded-[8px] bg-[var(--color-accent)] px-2.5 py-1.5 text-[12px] font-semibold text-white disabled:opacity-40">
-        Enviar
-      </button>
-    </form>
+    <div data-caixa-conversa className="mt-3 space-y-1">
+      <form
+        className="flex items-end gap-1.5"
+        onSubmit={(e) => {
+          e.preventDefault();
+          enviar();
+        }}
+      >
+        <CampoDeMensagem
+          valor={texto}
+          onValor={setTexto}
+          onEnviar={enviar}
+          onAnexo={anexar}
+          onAviso={setAviso}
+          placeholder={placeholder ?? "Pergunte à Cris…"}
+          rotulo="Pergunte à Cris"
+          className="min-w-0 flex-1 resize-none rounded-[8px] border border-[var(--color-line)] bg-white px-2.5 py-1.5 text-[12.5px] leading-[18px] text-[var(--color-ink)] placeholder:text-[var(--color-ink3)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent2)]/40"
+        />
+        <button type="submit" disabled={!texto.trim() && !anexo} className="rounded-[8px] bg-[var(--color-accent)] px-2.5 py-1.5 text-[12px] font-semibold text-white disabled:opacity-40">
+          Enviar
+        </button>
+      </form>
+      {anexo && (
+        <p className="flex items-center justify-between text-[11.5px] text-[var(--color-ink2)]">
+          <span className="truncate">📎 {anexo.name}</span>
+          <button type="button" onClick={() => setAnexo(null)} className="text-[var(--color-ink3)] hover:text-[var(--color-danger)]">
+            tirar
+          </button>
+        </p>
+      )}
+      {aviso && (
+        <p role={aviso.tom === "erro" ? "alert" : "status"} className={`text-[11.5px] ${aviso.tom === "erro" ? "text-[var(--color-danger)]" : "text-[var(--color-ink2)]"}`}>
+          {aviso.texto}
+        </p>
+      )}
+    </div>
   );
 }
