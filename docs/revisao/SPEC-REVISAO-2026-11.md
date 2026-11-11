@@ -229,13 +229,13 @@ Estas decisões valem como requisito. Não reabrir.
 | --- | --- | --- | --- |
 | BAQ-1 | AQ | `perguntarAoAssistente` e `interpretarPergunta` são chamados por alguma rota do agente? | Resposta do código; não apagar se forem |
 | BAQ-2 | AQ | A tela de Clientes aceita anexo para a Cris? | Resposta do código |
-| BAR-1 | AR | Seção do plano preenchida e com a chave `usar*` desligada conta? | — |
-| BAR-2 | AR | Subsídio pendente entra na projeção? | — |
-| BAR-3 | AR | Financiamento entra em todas as leituras? | — |
-| BAR-4 | AR | `Permuta.val` sai de toda leitura de receita? | Sim (decisão: permuta é ativo) |
+| BAR-1 | AR | Seção do plano preenchida e com a chave `usar*` desligada conta? | **Decidido (11/11): não conta; só a seção com a caixinha marcada.** Atrás de chave, com lista de conferência antes (ver `docs/AR-MEDICAO.md`) |
+| BAR-2 | AR | Subsídio pendente entra na projeção? | **Decidido (11/11): enquanto não conciliado, entra como previsto** |
+| BAR-3 | AR | Financiamento entra em todas as leituras? | **Decidido (11/11): não entra como recebível; chega como liberação de obra** |
+| BAR-4 | AR | `Permuta.val` sai de toda leitura de receita? | **Decidido (11/11): sim; permuta é ativo e só vira receita quando vendida** |
 | BAR-5 | AR | INCC só na Projeção ou também nos recebíveis? | — |
 | BAR-6 | AR | Separar `getMonthlyRevenue` em recebimentos (Fluxo) e receita (DRE)? | Sim |
-| BAR-7 | AR | O mesmo bem de permuta entra duas vezes (recebimento e revenda)? | Medir na Fase 1 |
+| BAR-7 | AR | O mesmo bem de permuta entra duas vezes (recebimento e revenda)? | **Respondido pela BAR-4: fica só a revenda** |
 | BAT-0 | AT | Open Finance ligado em produção? | **Respondido: não** |
 | BAT-1 | AT | O que fazer com duplicados do Open Finance? | Sem objeto (não está ligado) |
 | BAT-2 | AT | Movimento sem vínculo não tem obra: aparece como "não atribuído" no realizado da empresa? | Sim |

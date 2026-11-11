@@ -170,3 +170,38 @@ A medição de produção acima serve para responder a estes:
 | BAR-7 | O mesmo bem de permuta entra duas vezes (no plano e na revenda)? | Ver a tabela BAR-7 da medição |
 
 A Fase 2 (Etapa 5) só começa depois dessas respostas.
+
+## Decisões do dono (11/11/2026)
+
+| Bloqueio | Decisão | O que muda na Fase 2 |
+| --- | --- | --- |
+| **BAR-1** | **Só conta a seção com a caixinha "Usar …" marcada.** A caixinha diz que aquele sinal ou módulo de pagamento será usado. | As três leituras passam a respeitar a chave `usar*` da seção, como a Projeção já faz. Seção preenchida com a caixinha desmarcada sai de Contas a Receber, da DRE e do Fluxo. |
+| **BAR-2** | **Subsídio ainda não conciliado entra como previsto.** | O subsídio conta na data prevista, como os outros recebíveis. Depois de recebido e conciliado, sai do previsto e vai para o realizado. A Projeção deixa de esperar o status "Recebido". |
+| **BAR-3** | **O financiado pelo banco não entra no caixa como recebível**, porque o dinheiro chega como **liberação de obra**. | `Banco.valFinanc` sai dos recebíveis (Contas a Receber, DRE e Fluxo) e dos totais do Resumo. O dinheiro do banco entra pela liberação de obra, que já é lançada. Isso também evita contar o mesmo dinheiro duas vezes, no plano e na liberação. O cartão "Financiamento Banco" do Resumo continua como informação, fora dos totais. |
+| **BAR-4** | **A permuta entra como ativo; só vira receita quando é vendida.** | `Permuta.val` do plano sai de toda leitura de receita e de recebimento (DRE, Fluxo, Projeção e Contas a Receber). A receita da permuta é só a revenda registrada na tabela de Permutas. |
+| BAR-7 | Respondido pela BAR-4: fica só a revenda. | Com a permuta do plano fora, a dupla contagem acaba. |
+| BAR-5 | **Em aberto.** INCC só na Projeção, ou também nos recebíveis? | — |
+| BAR-6 | **Em aberto.** Separar `getMonthlyRevenue` em recebimentos (Fluxo) e receita (DRE)? E a liberação de obra sai da receita da DRE? | — |
+
+### Atenção na BAR-1 (risco de sumir parcela de venda real)
+
+O próprio código avisa que as vendas lançadas **normalmente não marcam as
+caixinhas**. O comentário em `src/app/(app)/projecao/page.tsx:168–172` diz que,
+por isso, a Projeção já saiu zerada uma vez, e foi trocada para ler os
+recebíveis.
+
+O formulário de unidade tem as caixinhas, mas há vendas que entram por
+importação ou por versões antigas. Se a regra da BAR-1 for ligada direto,
+parcelas de vendas reais podem sumir de Contas a Receber, da DRE e do Fluxo.
+
+Como fica na Fase 2:
+
+1. A regra entra atrás de uma chave por empresa, nascendo **desligada**, como
+   as outras mudanças de número.
+2. Antes de ligar, a coluna "Seção > 0 com a chave `usar*` desligada" da
+   medição de produção diz quantas unidades seriam afetadas, por obra.
+3. A Fase 2 entrega uma lista dessas unidades (obra, unidade e seção, sem dado
+   do comprador). Com ela, as caixinhas são conferidas e marcadas na tela de
+   Unidades antes de ligar a chave.
+
+Nada é marcado automaticamente no banco.
