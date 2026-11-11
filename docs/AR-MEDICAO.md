@@ -79,6 +79,94 @@ gera as duas tabelas pedidas e a do BAR-7:
 - **BAR-7:** unidades com permuta no plano que também estão na tabela de
   permutas. Mostra o valor do plano e o valor da revenda registrada.
 
-## 3 e 4 · Onde cada total aparece, e com qual rótulo
+## 3 · Onde cada leitura aparece hoje, e com qual rótulo
 
-(preenchido abaixo, a partir do código)
+Levantado no código em 11/11/2026. Os caminhos são relativos a `src/`.
+
+**O mapa da spec mudou.** A tabela do Anexo C diz que a Projeção usa
+`calcProjectionBySource`. Hoje só o modo de **comparação** usa essa leitura.
+A Projeção de **uma versão** usa os recebíveis (`expandUnitReceivables`).
+A mesma tela mostra números de duas leituras, conforme o modo.
+
+### Leitura 1 · `expandUnitReceivables` (recebíveis)
+
+| Tela | Rótulo exato | Onde |
+| --- | --- | --- |
+| Contas a Receber | "Recebíveis das vendas (Unidades) · R$ …"; colunas "Previsto" e "Valor"; selo "Venda" na busca | `components/app/contas-receber-manager.tsx:566, 577–578`; `receita-search.tsx:133` |
+| Caixa (faixa de 7 dias, já sem a permuta: Etapa 2) | "Vence a receber", "Saldo projetado", "Em atraso, fora da projeção: … a receber" | `components/app/cadeia-dias.tsx:124, 132, 42–43` |
+| Dashboard, coluna **Atual** | card "A receber" ("Atual: recebíveis em aberto das unidades, pela data.") | `app/(app)/dashboard/page.tsx:272`; `lib/dashboard-tela.ts:72` |
+| Projeção, **uma versão** | série "Unidades vendidas"; linha "TOTAL (todas as unidades)"; "Detalhe por unidade" | `app/(app)/projecao/page.tsx:283, 321, 333` |
+| Parâmetros / INCC | nenhum número: só os meses de vencimento, para conferir a cobertura do INCC | `app/(app)/parametros/page.tsx:55` |
+| API do agente | JSON `contas-receber` (`natureza: "previsao"`) | `app/api/agent/contas-receber/route.ts:24` |
+
+Também alimenta `getMonthlyRevenue` na versão Atual (tabela do item 4).
+
+### Leitura 2 · `calcProjectionBySource` (projeção por fonte)
+
+| Tela | Rótulo exato | Onde |
+| --- | --- | --- |
+| Projeção, **comparando 2 ou 3 versões** | "Projeção de Receitas", "Comparativo de versões · receita total projetada por fonte"; linhas "AS/Sinais", "Mensais", "Semestrais", "Anuais", "FGTS", "Subsídio", "Permuta", "Liberações de Obra", "TOTAL" | `lib/calc/projection.ts:145–153`; `app/(app)/projecao/page.tsx:118–149` |
+| Nenhuma tela (`actions/budget.ts:563`) | Gravaria linhas "Receita" do Orçamento ("Replicar da Atual"). O botão está em `components/app/budget-matrix.tsx`, que **nenhum arquivo importa**: o caminho não é alcançável pela interface hoje. | `lib/actions/budget.ts:563–580` |
+
+### Leitura 3 · `calcTotals` (totais do Resumo)
+
+| Tela | Rótulo exato | Onde |
+| --- | --- | --- |
+| Resumo Executivo, uma versão | tabela "Indicadores Gerais": "AS + S1 + S2 + S3 (Sinais)", "Mensais (nominal, sem INCC)", "Semestrais (nominal, sem INCC)", "Anuais (nominal, sem INCC)", "FGTS", "Subsídio estimado", "Permuta Recebido (estimado)", "Permuta Vendidos (rec. projetada)", "Liberações de Obra"; cartão "Financiamento Banco" ("Total financiado") | `lib/resumo-tela.ts:57–70`; `app/(app)/resumo/page.tsx:360, 380, 408–441` |
+| Resumo, com a chave `resumo_definicao_nova` ligada | bloco "Exposição": "Financiamento aprovado", "Financiamento liberado" | `app/(app)/resumo/page.tsx:639–640` |
+| Resumo, comparando versões | os mesmos indicadores; coluna "Indicador" | `app/(app)/resumo/page.tsx:94, 209` |
+| Resumo consolidado (Todos, Ativos, Finalizados) | os mesmos indicadores, mais "Financiamento aprovado (não entra nos totais)" | `app/(app)/resumo/page.tsx:862–889` |
+| Chaves (`lib/resumo-previa.ts:37`) | "Prévia · Resumo Executivo pela definição nova" | `app/(app)/chaves/page.tsx:376, 408` |
+
+## 4 · `getMonthlyRevenue`: onde é "receita" e onde é "recebimento"
+
+Na versão Atual, ela soma três coisas, pelo **vencimento**:
+
+- os recebíveis da leitura 1, com a permuta e o financiamento do plano;
+- as liberações de obra;
+- as contas a receber lançadas.
+
+Em Orçamento e Previsão, ela lê as linhas de receita do planejamento.
+
+| Quem chama | Tela | Como a tela chama | Rótulo exato · onde |
+| --- | --- | --- | --- |
+| `lib/dre-inputs.ts:72` | DRE | **receita** | linha "Receita" · `lib/calc/dre-cascata.ts:67` |
+| idem | Dashboard, gráfico "DRE por mês" | **receita** | "Cada barra é a receita do mês…" · `components/app/graficos-dashboard.tsx:49` |
+| idem | Projetos, cartão "Orçado x Realizado · competência" | **receita** | linha "Receita"; dica "receita pelos recebíveis das vendas, como na DRE" · `lib/orcado-realizado.ts:71`; `components/app/orcado-realizado.tsx:28` |
+| `lib/dre-inputs.ts:122` | DRE Analítica e Relatórios Customizados | **receita** | "Receita" › "Unidades vendidas e liberações de obra" · `lib/dre-analitica.ts:114, 116` |
+| `lib/queries.ts:3876` (`getStatusProjeto`) | Dashboard, "Margem e produtividade" | **receita** | "Margem de contribuição" ("receita da Atual (vencimento, todo o horizonte) − …"), "Receita por m²" · `components/app/indicadores-obra.tsx:246–276` |
+| `app/(app)/projecao/page.tsx:191` | Projeção, uma versão de Orçamento ou Previsão | **receita** (título "Projeção de Receitas") | entra na série "Unidades vendidas" · `projecao/page.tsx:283, 321` |
+| `lib/actions/previsao-assistente.ts:66` | Assistente da Previsão, "Partir do realizado" | **receita** | "Receita (Receitas do Projeto)…" · `components/app/assistente-orcamento.tsx:134` (vira %, não aparece em R$) |
+| `lib/fluxo-caixa.ts:74` | Fluxo de Caixa (mensal e semanal) | **entradas** | coluna "Entradas" · `app/(app)/fluxocaixa/page.tsx:561, 745` |
+| idem | Fluxo de Caixa Analítico | **entradas** | "Entradas" › "Unidades vendidas e liberações de obra" · `lib/fluxo-analitico.ts:55–56` |
+| idem | Dashboard, gráfico "Fluxo de caixa" | **entradas** | série "Entradas"; "Entradas e saídas previstas por mês, pelo vencimento" · `components/app/graficos-dashboard.tsx:26, 34` |
+| `app/(app)/resumo/page.tsx:238 e 719` | Resumo, com período escolhido | **recebimento** | "Recebimentos previstos no período" ("receita das unidades + reembolso + revenda de permuta") · `resumo/page.tsx:336, 340, 853` |
+| `app/(app)/dashboard/page.tsx:76` | Dashboard, colunas Orçamento e Previsão | **a receber** | "A receber" = planejado − realizado ("é saldo a realizar, não recebível") · `lib/dashboard-tela.ts:73` |
+| `lib/dashboard-previa.ts:58` | Chaves, "Prévia · Dashboard pela definição nova" | **a receber** | "A receber · …" · `lib/dashboard-previa.ts:67` |
+
+**Resumo do item 4.** A mesma série mensal da Atual tem quatro nomes:
+
+- **"Receita"** na DRE, na DRE Analítica, no cartão de Projetos, na margem do
+  Dashboard e na Projeção;
+- **"Entradas"** no Fluxo de Caixa e no gráfico de fluxo do Dashboard;
+- **"Recebimentos previstos"** no Resumo;
+- **"A receber"** nas colunas de planejamento do Dashboard. Na coluna Atual
+  desse mesmo card, o "A receber" vem direto da leitura 1.
+
+Isto é o C11 e o ponto do BAR-6.
+
+## Bloqueios que esperam o dono (Parte 5 da spec)
+
+A medição de produção acima serve para responder a estes:
+
+| Bloqueio | Pergunta | Proposta do revisor |
+| --- | --- | --- |
+| BAR-1 | Seção preenchida com a chave `usar*` desligada conta? | — |
+| BAR-2 | Subsídio pendente entra na projeção? | — |
+| BAR-3 | O financiamento entra em todas as leituras? | — |
+| BAR-4 | `Permuta.val` sai de toda leitura de receita? | Sim (permuta é ativo) |
+| BAR-5 | O INCC fica só na Projeção, ou entra também nos recebíveis? | — |
+| BAR-6 | Separar `getMonthlyRevenue` em recebimentos (Fluxo, Dashboard) e receita (DRE)? Liberações saem da receita da DRE? | Sim |
+| BAR-7 | O mesmo bem de permuta entra duas vezes (no plano e na revenda)? | Ver a tabela BAR-7 da medição |
+
+A Fase 2 (Etapa 5) só começa depois dessas respostas.
