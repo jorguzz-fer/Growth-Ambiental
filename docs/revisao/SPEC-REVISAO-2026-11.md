@@ -232,10 +232,10 @@ Estas decisões valem como requisito. Não reabrir.
 | BAR-1 | AR | Seção do plano preenchida e com a chave `usar*` desligada conta? | **Decidido (11/11): não conta; só a seção com a caixinha marcada.** Atrás de chave, com lista de conferência antes (ver `docs/AR-MEDICAO.md`) |
 | BAR-2 | AR | Subsídio pendente entra na projeção? | **Decidido (11/11): enquanto não conciliado, entra como previsto** |
 | BAR-3 | AR | Financiamento entra em todas as leituras? | **Decidido (11/11): não entra como recebível; chega como liberação de obra** |
-| BAR-4 | AR | `Permuta.val` sai de toda leitura de receita? | **Decidido (11/11): sim; permuta é ativo e só vira receita quando vendida** |
+| BAR-4 | AR | `Permuta.val` sai de toda leitura de receita? | **Decidido (11/11): sim como fonte própria; o valor do bem já está na receita, pelo rateio do total do contrato. A revenda não soma o valor cheio na DRE (só o ganho ou a perda, em linha própria)** |
 | BAR-5 | AR | INCC só na Projeção ou também nos recebíveis? | **Decidido (11/11), provisório: só nas projeções** |
 | BAR-6 | AR | Separar `getMonthlyRevenue` em recebimentos (Fluxo) e receita (DRE)? | **Decidido (11/11): sim; a liberação sai da receita da DRE e a DRE passa ao rateio da venda pela duração da obra (§54/§57). Venda no meio da obra: espalhada pela janela inteira, revisando os meses passados (substitui BI-1.2 A de 30/09)** |
-| BAR-7 | AR | O mesmo bem de permuta entra duas vezes (recebimento e revenda)? | **Respondido pela BAR-4: fica só a revenda** |
+| BAR-7 | AR | O mesmo bem de permuta entra duas vezes (recebimento e revenda)? | **Respondido pela BAR-4: o bem conta uma vez, dentro do contrato rateado; a revenda só como ganho ou perda** |
 | BAT-0 | AT | Open Finance ligado em produção? | **Respondido: não** |
 | BAT-1 | AT | O que fazer com duplicados do Open Finance? | Sem objeto (não está ligado) |
 | BAT-2 | AT | Movimento sem vínculo não tem obra: aparece como "não atribuído" no realizado da empresa? | Sim |
