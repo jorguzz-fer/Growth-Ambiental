@@ -180,8 +180,38 @@ A Fase 2 (Etapa 5) só começa depois dessas respostas.
 | **BAR-3** | **O financiado pelo banco não entra no caixa como recebível**, porque o dinheiro chega como **liberação de obra**. | `Banco.valFinanc` sai dos recebíveis (Contas a Receber, DRE e Fluxo) e dos totais do Resumo. O dinheiro do banco entra pela liberação de obra, que já é lançada. Isso também evita contar o mesmo dinheiro duas vezes, no plano e na liberação. O cartão "Financiamento Banco" do Resumo continua como informação, fora dos totais. |
 | **BAR-4** | **A permuta entra como ativo; só vira receita quando é vendida.** | `Permuta.val` do plano sai de toda leitura de receita e de recebimento (DRE, Fluxo, Projeção e Contas a Receber). A receita da permuta é só a revenda registrada na tabela de Permutas. |
 | BAR-7 | Respondido pela BAR-4: fica só a revenda. | Com a permuta do plano fora, a dupla contagem acaba. |
-| BAR-5 | **Em aberto.** INCC só na Projeção, ou também nos recebíveis? | — |
-| BAR-6 | **Em aberto.** Separar `getMonthlyRevenue` em recebimentos (Fluxo) e receita (DRE)? E a liberação de obra sai da receita da DRE? | — |
+| **BAR-5** | **Por enquanto, o INCC incide só nas projeções.** O dono ainda tem dúvida; pode rever depois. | Fica como hoje: só a tela Projeção corrige pelo INCC. Contas a Receber e Fluxo mostram o valor nominal do contrato. |
+| **BAR-6** | **Separar, e a liberação de obra sai da receita da DRE.** No caixa ela entra normalmente. A DRE passa a ter outro conceito: a receita é a **venda da unidade (ou da obra), rateada pelos meses de duração do projeto**. Exemplo: unidade vendida por R$ 500 mil é dividida pelos meses da obra. | É o Prompt I, §54/§56/§57: a receita da DRE (Atual) passa a ser só (1) a venda rateada pela janela do projeto e (2) as contas a receber avulsas. O plano de pagamento e a liberação ficam só no caixa: Fluxo, Contas a Receber e Caixa. Atrás de chave por empresa, nascendo desligada. |
+
+### Venda no meio da obra: revisar os meses passados (decidido em 11/11/2026)
+
+O dono decidiu que a venda é **espalhada pela janela inteira da obra**,
+inclusive pelos meses que já passaram. A DRE desses meses é revisada.
+
+Motivo, nas palavras dele: assim a receita da DRE fica mais pareada com a
+execução do projeto. No caixa a lógica é outra, e continua sendo a dos
+vencimentos e das entradas.
+
+Exemplo, unidade de R$ 500 mil vendida no mês 4 de uma obra de 10 meses:
+
+| | Meses 1 a 3 | Mês 4 | Meses 5 a 10 |
+| --- | ---: | ---: | ---: |
+| **Decidido: revisar o passado** | R$ 50 mil cada (a DRE já vista muda) | R$ 50 mil | R$ 50 mil cada |
+| Antes (BI-1.2 A, de 30/09): tudo no mês da venda | não mudavam | R$ 200 mil | R$ 50 mil cada |
+
+**Isto substitui a decisão BI-1.2 de 30/09/2026** (`docs/V2-BLOCO2-DECISOES.md`).
+O BI-1.3 não muda: obra além do prazo segue reconhecendo só daqui para frente.
+
+**Consequências que a Fase 2 precisa tratar:**
+
+- **A DRE de meses passados muda a cada venda nova.** Isso está decidido, mas
+  quem exportou ou apresentou uma DRE de meses anteriores vai ver outro número
+  depois de uma venda. A tela deve dizer isso. Proposta: um aviso "receita
+  revisada pela venda de … em …" no mês afetado.
+- **Distrato:** pela mesma regra, a unidade que sai de Vendido tira a receita
+  de todos os meses da janela, inclusive os passados. É o mesmo princípio, só
+  que ao contrário; fica registrado aqui para não surpreender.
+- **Nada é gravado:** o reconhecimento é calculado na leitura (§54.3).
 
 ### Atenção na BAR-1 (risco de sumir parcela de venda real)
 
