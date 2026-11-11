@@ -505,6 +505,13 @@
       "when": 1791900000000,
       "tag": "0071_indices_dre",
       "breakpoints": true
+    },
+    {
+      "idx": 72,
+      "version": "7",
+      "when": 1792000000000,
+      "tag": "0072_cash_entry_external_id",
+      "breakpoints": true
     }
   ]
 }

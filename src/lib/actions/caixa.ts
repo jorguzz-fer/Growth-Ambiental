@@ -482,8 +482,20 @@ export async function importCash(
   return { inserted: toInsert.length, conciliated, saldoUpdated, skipped };
 }
 
-/** Alterna o estado de conciliação de um lançamento de caixa. */
-export async function toggleConciliado(id: string, rec: boolean, contraparte?: { despesaId: string; valor?: number } | null) {
+/** Mensagem da recusa de "conciliar" sem dizer com o quê (Prompt AT §2.2). */
+const CONCILIAR_EXIGE_VINCULO =
+  "Para conciliar, diga com o quê o movimento casou: uma despesa, uma conta a receber, uma parcela de venda ou um pagamento de fatura (na Conciliação ou no Assistente do Caixa). Se for diferença sem documento, lance um ajuste com motivo.";
+
+/**
+ * Alterna o estado de conciliação de um lançamento de caixa.
+ *
+ * Prompt AT §2.2 (Revisão 4): MARCAR exige vínculo. Sem contraparte, a marca
+ * é recusada: ela sustentava saldo conciliado sem lastro. O seletor só serve
+ * para DESFAZER, e desfazer pede motivo (vai à auditoria). Os movimentos já
+ * marcados sem vínculo não mudam: aparecem como "conciliado sem vínculo" na
+ * lista de conferência da Conciliação e no Assistente do Caixa.
+ */
+export async function toggleConciliado(id: string, rec: boolean, contraparte?: { despesaId: string; valor?: number } | null, motivo?: string | null) {
   const ctx = await getTenantContext();
   if (!ctx || !can(ctx.perms, "caixa", "editar")) return;
   // Prompt L, 2.6 — tenant, versão congelada e auditoria; com contraparte
@@ -496,6 +508,9 @@ export async function toggleConciliado(id: string, rec: boolean, contraparte?: {
     .limit(1);
   if (!alvo) throw new Error("Movimento não encontrado.");
   if (alvo.locked) throw new Error("Versão congelada — conciliação bloqueada.");
+  if (rec && !contraparte?.despesaId) throw new Error(CONCILIAR_EXIGE_VINCULO);
+  const motivoLimpo = (motivo ?? "").trim();
+  if (!rec && !motivoLimpo) throw new Error("Informe o motivo para desfazer a conciliação (fica na auditoria).");
   if (rec && contraparte?.despesaId) {
     const r = await conciliarMovimento({ cashEntryId: id, itens: [{ despesaId: contraparte.despesaId, valor: contraparte.valor ?? 0 }] });
     if (!r.ok) throw new Error(r.error);
@@ -516,7 +531,7 @@ export async function toggleConciliado(id: string, rec: boolean, contraparte?: {
       action: "conciliacao.flag",
       entity: "cash_entry",
       entityId: mov.id,
-      meta: { data: mov.data, descricao: mov.descricao, valor: mov.valor, para: rec },
+      meta: { data: mov.data, descricao: mov.descricao, valor: mov.valor, para: rec, ...(motivoLimpo ? { motivo: motivoLimpo } : {}) },
     });
   }
   revalidatePath("/caixa");

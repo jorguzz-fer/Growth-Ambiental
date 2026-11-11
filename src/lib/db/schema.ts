@@ -1505,7 +1505,12 @@ export const cashEntries = pgTable("cash_entry", {
   /** usuário e data/hora da conciliação (auditoria). */
   conciliadoPor: text("conciliado_por"),
   conciliadoEm: text("conciliado_em"),
-});
+  /**
+   * Prompt AT §1.1 — id da transação no Open Finance (Pluggy). Único por conta
+   * quando preenchido: a mesma transação sincronizada de novo não entra duas vezes.
+   */
+  externalId: text("external_id"),
+}, (r) => [uniqueIndex("cash_entry_conta_externo_uq").on(r.bankAccountId, r.externalId).where(sql`${r.externalId} is not null`)]);
 
 /**
  * Conta a Receber (recebível) criada manualmente ou a partir do extrato. Os

@@ -92,3 +92,25 @@ export function saldosProjetados(
   }
   return out;
 }
+
+/**
+ * O que está a receber, para a faixa do Caixa: contas a receber lançadas (o
+ * que falta receber, inclusive vencidas, que contam como atraso) e parcelas dos
+ * planos de venda de hoje em diante (não guardam recebimento).
+ *
+ * Prompt AT §2.1 (Revisão 4): a PERMUTA do plano não entra. Permuta é um bem,
+ * não dinheiro: contá-la inflava o saldo projetado dos próximos dias. O
+ * financiamento (`Banco`) fica como está até a decisão BAR-3 do Prompt AR.
+ */
+export function aReceberDaFaixa(
+  contasReceber: readonly { status: string | null; vencimento: string | null; valor: number; valorRecebido: number }[],
+  recebiveisDasVendas: readonly { dia: string; valor: number; secao: string }[],
+  hojeISO: string,
+): TituloEmAberto[] {
+  return [
+    ...contasReceber.filter((c) => c.status !== "Recebido").map((c) => ({ vencimento: c.vencimento, saldo: c.valor - c.valorRecebido })),
+    ...recebiveisDasVendas
+      .filter((r) => r.secao !== "Permuta" && (isoDaData(r.dia) ?? "") >= hojeISO)
+      .map((r) => ({ vencimento: r.dia, saldo: r.valor })),
+  ];
+}

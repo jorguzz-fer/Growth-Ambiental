@@ -106,13 +106,15 @@ describe.skipIf(!HAS_DB)("AK Parte 1 — as 8 ações registram no log", async (
     expect(l.meta).toMatchObject({ unidade: "101", tipo: "Terreno" });
   });
 
-  it("toggleConciliado → conciliacao.flag", async () => {
+  it("toggleConciliado → conciliacao.flag (Prompt AT §2.2: o seletor só desfaz, com motivo)", async () => {
     const { toggleConciliado } = await import("./caixa");
-    await toggleConciliado(ids.cash, true);
+    // marca antiga, sem vínculo (o caminho que criava isso foi fechado)
+    await db.update(schema.cashEntries).set({ rec: true }).where(eq(schema.cashEntries.id, ids.cash));
+    await toggleConciliado(ids.cash, false, null, "marcado por engano");
     const [c] = await db.select().from(schema.cashEntries).where(eq(schema.cashEntries.id, ids.cash));
-    expect(c.rec).toBe(true);
+    expect(c.rec).toBe(false);
     const [l] = await logs("conciliacao.flag");
-    expect(l.meta).toMatchObject({ para: true });
+    expect(l.meta).toMatchObject({ para: false, motivo: "marcado por engano" });
   });
 
   it("deleteStockItem → estoque.item.delete com o que existia (Prompt Y: com movimento, recusa; sem, exclui e audita)", async () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeAll, afterAll } from "vitest";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, asc, eq, isNull } from "drizzle-orm";
 
 /**
  * Prompt Q2 — INCC da empresa. Adotar copia a série de uma obra para a série
@@ -34,7 +34,8 @@ describe.skipIf(!HAS_DB)("Prompt Q2 · INCC da empresa", async () => {
   const serie = (projectId: string, acs: number[]) =>
     acs.map((ac, i) => ({ tenantId, projectId, mes: `0${i + 1}/2026`, monthly: "1", accumulated: String(ac), ordem: i }));
   const acs = async (projectId: string) => (await getInccRows(tenantId, projectId)).map((r) => r.ac);
-  const daEmpresa = () => db.select().from(schema.inccRates).where(and(eq(schema.inccRates.tenantId, tenantId), isNull(schema.inccRates.projectId)));
+  // Ordenada pelo mês: sem ORDER BY, o Postgres devolve na ordem física, que muda depois de apagar e regravar a série.
+  const daEmpresa = () => db.select().from(schema.inccRates).where(and(eq(schema.inccRates.tenantId, tenantId), isNull(schema.inccRates.projectId))).orderBy(asc(schema.inccRates.mes));
 
   beforeAll(async () => {
     const [t] = await db.insert(schema.tenants).values({ name: "tenant-prompt-q2" }).returning();

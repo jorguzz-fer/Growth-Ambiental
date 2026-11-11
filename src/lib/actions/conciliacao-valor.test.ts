@@ -116,9 +116,26 @@ describe.skipIf(!HAS_DB)("Conciliação com valor (Prompt L, Parte 2)", async ()
     expect((await db.select().from(schema.despesas).where(eq(schema.despesas.id, d.id)))[0].status).toBe("Pago");
   });
 
+  it("AT-T4 — conciliar sem contraparte é recusado; desfazer funciona, com motivo", async () => {
+    const m = await movimento("c", -88, "09/18/2026");
+    await expect(toggleConciliado(m.id, true)).rejects.toThrow(/diga com o quê o movimento casou/);
+    await expect(toggleConciliado(m.id, true, null)).rejects.toThrow(/diga com o quê/);
+    expect((await db.select().from(schema.cashEntries).where(eq(schema.cashEntries.id, m.id)))[0].rec).toBe(false);
+    // movimento que já estava marcado sem vínculo: desfazer sem motivo é recusado; com motivo, desfaz e audita
+    await db.update(schema.cashEntries).set({ rec: true }).where(eq(schema.cashEntries.id, m.id));
+    await expect(toggleConciliado(m.id, false)).rejects.toThrow(/motivo/);
+    await expect(toggleConciliado(m.id, false, null, "   ")).rejects.toThrow(/motivo/);
+    expect((await db.select().from(schema.cashEntries).where(eq(schema.cashEntries.id, m.id)))[0].rec).toBe(true);
+    await toggleConciliado(m.id, false, null, "sem documento que comprove");
+    expect((await db.select().from(schema.cashEntries).where(eq(schema.cashEntries.id, m.id)))[0].rec).toBe(false);
+    const log = await db.select().from(schema.auditLog).where(and(eq(schema.auditLog.tenantId, tenant.id), eq(schema.auditLog.action, "conciliacao.flag"), eq(schema.auditLog.entityId, m.id)));
+    expect(log.map((l) => l.meta)).toEqual([expect.objectContaining({ para: false, motivo: "sem documento que comprove" })]);
+  });
+
   it("19 — rec sem vínculo (BL-2) aparece como estado próprio na lista de conferência", async () => {
     const m = await movimento("c", -77, "09/17/2026");
-    await toggleConciliado(m.id, true); // sem contraparte: só a marca (caminho antigo)
+    // marca antiga, sem contraparte: o caminho que a criava foi fechado (Prompt AT §2.2); o estado continua existindo
+    await db.update(schema.cashEntries).set({ rec: true }).where(eq(schema.cashEntries.id, m.id));
     const data = await getConciliacaoData(tenant.id, proj.c.versionId);
     expect(data.conciliados.find((c) => c.cashEntryId === m.id)).toMatchObject({ semVinculo: true, vinculos: [] });
   });

@@ -9,7 +9,7 @@ import { CadeiaDias } from "@/components/app/cadeia-dias";
 import { BalancoDiaTable } from "@/components/app/balanco-dia-table";
 import { CrisDaTela } from "@/components/app/cris-contexto";
 import { AvisoTelaRemovida } from "@/components/app/aviso-tela-removida";
-import { isoDaData, previstoPorDia, saldosProjetados } from "@/lib/calc/previsto-caixa";
+import { aReceberDaFaixa, previstoPorDia, saldosProjetados } from "@/lib/calc/previsto-caixa";
 import { SaldosCaixa } from "@/components/app/saldos-caixa";
 import { hojeISO } from "@/lib/despesa-status";
 import {
@@ -287,12 +287,8 @@ export default async function CaixaPage({
   // Prompt L2 — o que vence na faixa (a pagar em aberto, a receber em aberto)
   // e o saldo projetado. Só a versão Atual entra, como no Contas a Pagar.
   const [contasReceberAbertas, recebiveisDasVendas] = await Promise.all([getContasReceber(ctx.tenant.id), getReceivables(ctx.tenant.id)]);
-  const aReceberEmAberto = [
-    // Contas lançadas: o que falta receber, inclusive as vencidas (contam como atraso).
-    ...contasReceberAbertas.filter((c) => c.status !== "Recebido").map((c) => ({ vencimento: c.vencimento, saldo: c.valor - c.valorRecebido })),
-    // Parcelas dos planos de venda: não guardam recebimento, então só as de hoje em diante.
-    ...recebiveisDasVendas.filter((r) => (isoDaData(r.dia) ?? "") >= hoje).map((r) => ({ vencimento: r.dia, saldo: r.valor })),
-  ];
+  // Contas lançadas e parcelas dos planos de venda, sem a permuta (Prompt AT §2.1).
+  const aReceberEmAberto = aReceberDaFaixa(contasReceberAbertas, recebiveisDasVendas, hoje);
   const { porDia: previstoPorDiaDaFaixa, atrasados } = previstoPorDia(
     cadeia.dias.map((d) => d.dia),
     hoje,

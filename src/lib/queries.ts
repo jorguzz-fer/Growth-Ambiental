@@ -1037,6 +1037,8 @@ export interface ReceivableRow {
   projectName: string;
   clienteNome: string | null;
   status: string;
+  /** Seção do plano de pagamento (ver `Receivable.secao`). */
+  secao: string;
 }
 
 /**
@@ -1086,6 +1088,7 @@ export async function getReceivables(tenantId: string, projectId?: string): Prom
         projectName: r.projectName,
         clienteNome: r.clienteNome,
         status: "A receber",
+        secao: rec.secao,
       });
     }
   }
