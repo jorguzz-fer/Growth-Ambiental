@@ -251,3 +251,40 @@ const ROLE_LABEL: Record<string, string> = {
 export function roleLabel(role: string): string {
   return ROLE_LABEL[role] ?? role;
 }
+
+/** Item do menu que responde por uma rota (o de `href`, `tambem` ou `hrefAlt` mais longo que casa). */
+export function itemDaRota(rota: string | null | undefined, menu: NavModule[] = NAV_MENU): NavItem | null {
+  if (!rota) return null;
+  const caminho = rota.split(/[?#]/)[0].replace(/\/+$/, "") || "/";
+  let melhor: { item: NavItem; tam: number } | null = null;
+  for (const m of menu) {
+    for (const it of m.items) {
+      for (const h of [it.href, ...(it.tambem ?? []), ...(it.hrefAlt ? [it.hrefAlt] : [])]) {
+        if ((caminho === h || caminho.startsWith(h + "/")) && (!melhor || h.length > melhor.tam)) melhor = { item: it, tam: h.length };
+      }
+    }
+  }
+  return melhor?.item ?? null;
+}
+
+/**
+ * Prompt AQ §2 (Revisão 4) — o que a Cris pode usar numa rota, resolvido PELO
+ * ITEM DO MENU (não pelo primeiro segmento da URL):
+ *  - `tela`: a chave de permissão do item (`perm`, ou `permAlt` quando a rota
+ *    é a da permissão alternativa, como /medicaolanc);
+ *  - `ver`: "ver" da chave E todas as exigências do item (`exige`), as mesmas
+ *    que o menu já confere para mostrar o item;
+ *  - `lancar`: `ver` E criar ou editar na chave.
+ *
+ * Falha FECHADA: rota fora do menu → nada (antes, rota sem id de tela, como
+ * /acerto, liberava os números sem conferir permissão e descartava o formulário).
+ */
+export function permissaoDaRota(rota: string | null | undefined, perms: PermMatrix): { tela: string | null; ver: boolean; lancar: boolean } {
+  const item = itemDaRota(rota);
+  if (!item) return { tela: null, ver: false, lancar: false };
+  const segmento = (rota ?? "").split(/[?#]/)[0].replace(/^\//, "").split("/")[0];
+  const tela = item.permAlt && segmento === item.permAlt ? item.permAlt : permOf(item);
+  const ver = can(perms, tela, "ver") && (item.exige ?? []).every((e) => can(perms, e.tela, e.acao));
+  const lancar = ver && (can(perms, tela, "criar") || can(perms, tela, "editar"));
+  return { tela, ver, lancar };
+}

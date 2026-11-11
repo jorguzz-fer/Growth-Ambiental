@@ -25,7 +25,7 @@ Quase toda tela pede a obra no seletor do topo; com a versão de trabalho congel
 - Anexar documentos de venda, como contrato, proposta, termo aditivo e distrato, até 10 MB cada. Um novo arquivo do mesmo tipo vira a versão seguinte, e a anterior continua guardada.
 - Excluir o cliente, digitando o nome dele para confirmar.
 - **Perfil da base** (no topo, recolhível): quantos clientes por situação do contrato, finalidade (morar ou investir), faixa etária, cidade e como conheceu, e quantos têm unidade. São só contagens; grupo com menos de 3 clientes entra em "Outros". Renda, FGTS, score, documento e contato não entram. A Cris analisa esse perfil.
-- A Cris **não** preenche a ficha do cliente nem lê documento pessoal dele: dado pessoal não vai ao modelo.
+- A Cris **não** preenche a ficha do cliente. O anexo do chat (📎) funciona em qualquer tela, inclusive aqui: se alguém anexar um documento do cliente, o modelo lê o documento inteiro, com nome e CPF. Os documentos de venda ficam no bloco de documentos da ficha, não na Cris.
 
 **Campos que confundem:**
 - **Status do contrato** (Ativo, Assinado, Em análise, Reservado, Distratado ou Cancelado): enquanto o status estiver em branco ou for qualquer um que não seja Distratado ou Cancelado, a unidade fica presa a este cliente. Nesse caso, o sistema recusa vincular a mesma unidade a outro comprador.
@@ -105,7 +105,7 @@ Quase toda tela pede a obra no seletor do topo; com a versão de trabalho congel
   - São aceitos recebimentos parciais.
 - Anexar arquivos, editar e cancelar. A conta cancelada sai das listas e relatórios, mas fica no histórico.
 - Usar o assistente, que **propõe** pares conta ↔ linha do extrato. Só concilia quando a pessoa clica em "Conciliar".
-- **Lançar com a Cris**: diga, dite ou anexe o que receber (ex.: "sinal de 20 mil da unidade A101 vencendo dia 10"). A Cris preenche o formulário Nova conta a receber (projeto, tipo, valor, vencimento, descrição, unidade e banco) e quem grava é Adicionar. O cliente é escolhido à mão: o nome do comprador não vai ao modelo.
+- **Lançar com a Cris**: diga, dite ou anexe o que receber (ex.: "sinal de 20 mil da unidade A101 vencendo dia 10"). A Cris preenche o formulário Nova conta a receber (projeto, tipo, valor, vencimento, descrição, unidade e banco) e quem grava é Adicionar. A Cris não preenche o cliente; ele é escolhido à mão. Se o documento anexado tiver o nome, o modelo lê o documento, mas o nome não vai para o formulário.
 
 **Campos que confundem:**
 - **Tipo** (Sinal, Parcela mensal, Outros ou Outras Receitas): "Outras Receitas" exige descrição.
@@ -150,7 +150,7 @@ Quase toda tela pede a obra no seletor do topo; com a versão de trabalho congel
 - Cancelar com motivo. O ativo fica na lista, fora dos totais.
 - Usar o assistente, que analisa as permutas e oferece lançamento por descrição: a IA **propõe** os campos, e a pessoa confere e grava.
 - **Fotos do ativo**: em Documentos e fotos do ativo, o tipo "Foto do ativo" guarda a foto do bem, que aparece em miniatura na lista.
-- **Lançar com a Cris**: no ativo novo ou na edição, diga, dite ou anexe o laudo, o contrato ou a foto. A Cris preenche unidade, data, tipo, descrição, valor estimado e os dados da revenda; quem grava é Salvar. O cliente é escolhido à mão: o nome não vai ao modelo.
+- **Lançar com a Cris**: no ativo novo ou na edição, diga, dite ou anexe o laudo, o contrato ou a foto. A Cris preenche unidade, data, tipo, descrição, valor estimado e os dados da revenda; quem grava é Salvar. A Cris não preenche o cliente; ele é escolhido à mão. Se o documento anexado tiver o nome, o modelo lê o documento, mas o nome não vai para o formulário.
 
 **Campos que confundem:**
 - **Status**: "Disponivel" (em estoque) ou "Vendido". Quando é Vendido, data, valor e forma da revenda são obrigatórios.
@@ -269,7 +269,7 @@ Quase toda tela pede a obra no seletor do topo; com a versão de trabalho congel
 - Listar os funcionários, com opção de mostrar os desligados.
 - Cadastrar e abrir a ficha, com identificação, números de documentos, endereço, contrato, dados bancários, observações e dependentes (IR e salário-família).
 - Anexar documentos. O ASO só aparece para quem tem a permissão de ASO, e cada acesso a ele fica registrado.
-- **Com a Cris**: ela preenche só o **vínculo de trabalho** (cargo, setor, obra, tipo e prazo do contrato, admissão e observação) e abre o formulário de novo funcionário. Nome, documentos, nascimento, filiação, endereço, jornada, salário e dados bancários são preenchidos à mão, porque dado pessoal do funcionário não vai ao modelo. Quem cadastra é o botão "Cadastrar".
+- **Com a Cris**: ela preenche só o **vínculo de trabalho** (cargo, setor, obra, tipo e prazo do contrato, admissão e observação) e abre o formulário de novo funcionário. Nome, documentos, nascimento, filiação, endereço, jornada, salário e dados bancários são preenchidos à mão: a Cris não preenche dado pessoal do funcionário. Se o documento anexado (CTPS, contrato) tiver esses dados, o modelo lê o documento, mas eles não vão para o formulário. Quem cadastra é o botão "Cadastrar".
 - **Desligar** com data: o funcionário sai das alocações, e o histórico fica. É possível **Reativar**. **Excluir** só é possível sem nenhuma alocação em equipe, digitando o nome.
 - **Folha de pagamento e encargos** (/funcionarios/folha), para quem tem permissão de dados do funcionário: arquivo mensal com folha, holerites, guias e comprovantes.
   - Cada folha pode ser vinculada à despesa que a pagou.

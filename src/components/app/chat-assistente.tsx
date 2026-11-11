@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { perguntarACris } from "@/lib/actions/cris";
-import { MAX_ANEXO_BYTES, MAX_MENSAGEM, NOME_DA_CRIS, TIPOS_DE_ANEXO, trechosDaCris, type FalaDaCris, type PropostaDePreenchimento } from "@/lib/cris";
+import { MAX_ANEXO_BYTES, MAX_MENSAGEM, NOME_DA_CRIS, TIPOS_DE_ANEXO, trechosDaCris, type FalaDaCris, type PropostaDePreenchimento, type TrechoDaCris, type TrechoEmLinha } from "@/lib/cris";
 import { useCris } from "@/components/app/cris-contexto";
 import { BotaoDeVoz } from "@/components/app/cris-voz";
 import { Faisca } from "@/components/app/assistente-funcionarios";
@@ -163,17 +163,7 @@ export function ChatAssistente() {
                 </p>
               ) : (
                 <div key={i} className="space-y-2" data-chat-resposta>
-                  <p className="whitespace-pre-wrap text-[var(--color-ink)]">
-                    {trechosDaCris(m.texto).map((t, k) =>
-                      t.tipo === "link" ? (
-                        <Link key={k} href={t.href} className="text-[var(--color-accent2)] hover:underline">
-                          {t.texto}
-                        </Link>
-                      ) : (
-                        <span key={k}>{t.texto}</span>
-                      ),
-                    )}
-                  </p>
+                  <RespostaDaCris texto={m.texto} />
                   {m.proposta && (
                     <div className="rounded-[10px] border border-[#e9d5ff] bg-[#fcfaff] p-3" data-cris-proposta>
                       <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-[var(--color-ink3)]">Proposta para a tela</p>
@@ -258,5 +248,56 @@ export function ChatAssistente() {
         </div>
       )}
     </>
+  );
+}
+
+function TrechoNaLinha({ t }: { t: TrechoEmLinha }) {
+  if (t.tipo === "link") {
+    return (
+      <Link href={t.href} className="text-[var(--color-accent2)] hover:underline">
+        {t.texto}
+      </Link>
+    );
+  }
+  if (t.tipo === "negrito") return <strong className="font-semibold">{t.texto}</strong>;
+  return <>{t.texto}</>;
+}
+
+/**
+ * Prompt AQ §3 — a resposta formatada a partir de trechos tipados (negrito,
+ * lista e links), sem HTML vindo do modelo. Itens seguidos viram uma lista.
+ */
+function RespostaDaCris({ texto }: { texto: string }) {
+  const blocos: ({ tipo: "linha"; trechos: TrechoEmLinha[] } | { tipo: "lista"; itens: TrechoEmLinha[][] })[] = [];
+  for (const t of trechosDaCris(texto) as TrechoDaCris[]) {
+    const ultimo = blocos[blocos.length - 1];
+    if (t.tipo === "item") {
+      if (ultimo?.tipo === "lista") ultimo.itens.push(t.trechos);
+      else blocos.push({ tipo: "lista", itens: [t.trechos] });
+    } else if (ultimo?.tipo === "linha") ultimo.trechos.push(t);
+    else blocos.push({ tipo: "linha", trechos: [t] });
+  }
+  return (
+    <div className="space-y-1 text-[var(--color-ink)]">
+      {blocos.map((b, i) =>
+        b.tipo === "lista" ? (
+          <ul key={i} className="list-disc space-y-0.5 pl-5">
+            {b.itens.map((item, k) => (
+              <li key={k}>
+                {item.map((t, n) => (
+                  <TrechoNaLinha key={n} t={t} />
+                ))}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p key={i} className="whitespace-pre-wrap">
+            {b.trechos.map((t, n) => (
+              <TrechoNaLinha key={n} t={t} />
+            ))}
+          </p>
+        ),
+      )}
+    </div>
   );
 }

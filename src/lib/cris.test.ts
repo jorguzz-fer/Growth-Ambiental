@@ -81,3 +81,59 @@ describe("Prompt E2 — Cris, regras puras", () => {
     expect(regrasDaCris()).toMatch(/Nunca invente número/);
   });
 });
+
+describe("Prompt AQ §3 — formatação da resposta sem Markdown cru", () => {
+  it("AQ-T4: **X:** vira negrito; '- item' vira item de lista; link no item continua link; rota desconhecida é texto", () => {
+    const t = trechosDaCris("**Análises e números:** veja abaixo\n- Abra [Despesas](/despesas)\n- Rota [Nada](/nao-existe)\n- **Saldo**: em [Caixa](/caixa)");
+    expect(t[0]).toEqual({ tipo: "negrito", texto: "Análises e números:" });
+    expect(t[1]).toEqual({ tipo: "texto", texto: " veja abaixo" });
+    const itens = t.filter((x) => x.tipo === "item");
+    expect(itens).toHaveLength(3);
+    expect(itens[0]).toEqual({ tipo: "item", trechos: [{ tipo: "texto", texto: "Abra " }, { tipo: "link", texto: "Despesas", href: "/despesas" }] });
+    expect(itens[1]).toEqual({ tipo: "item", trechos: [{ tipo: "texto", texto: "Rota " }, { tipo: "texto", texto: "Nada" }] });
+    expect(itens[2]).toEqual({ tipo: "item", trechos: [{ tipo: "negrito", texto: "Saldo" }, { tipo: "texto", texto: ": em " }, { tipo: "link", texto: "Caixa", href: "/caixa" }] });
+    // nenhum asterisco sobra em lugar nenhum
+    expect(JSON.stringify(t)).not.toContain("*");
+  });
+
+  it("quebra de linha entre linhas comuns é preservada; título, tabela, código e itálico perdem os símbolos", () => {
+    const t = trechosDaCris("## Resumo\nlinha 1\nlinha 2\n```\nconst x = 1\n```\n| Obra | Saldo |\n|---|---:|\n| A | 10 |\nUse `consultar_numero` e *veja* o _total_.");
+    const texto = t.map((x) => (x.tipo === "item" ? "" : x.texto)).join("");
+    expect(texto).toBe("Resumo\nlinha 1\nlinha 2\nconst x = 1\nObra · Saldo\nA · 10\nUse consultar_numero e veja o _total_.");
+  });
+
+  it("AQ-T5: HTML e <script> continuam texto (nenhum trecho vira marcação)", () => {
+    const t = trechosDaCris('<script>alert(1)</script> e <b onclick="x">oi</b>\n- <img src=x onerror=alert(1)>');
+    expect(t[0]).toEqual({ tipo: "texto", texto: '<script>alert(1)</script> e <b onclick="x">oi</b>' });
+    expect(t[1]).toEqual({ tipo: "item", trechos: [{ tipo: "texto", texto: "<img src=x onerror=alert(1)>" }] });
+    expect(trechosDaCris("[clique](javascript:alert(1))")).toEqual([{ tipo: "texto", texto: "[clique](javascript:alert(1))" }]);
+  });
+});
+
+describe("Prompt AQ §4 — o que não muda", () => {
+  it("AQ-T6: a Cris não importa action de escrita nem grava no banco", async () => {
+    const { readFileSync } = await import("node:fs");
+    const importsDe = (arq: string) => [...readFileSync(arq, "utf8").matchAll(/^import\s[^;]*?from\s+"([^"]+)"/gm)].map((m) => m[1]);
+    const permitidos = new Set([
+      "@anthropic-ai/sdk",
+      "@/lib/ai/client",
+      "@/lib/assistente-base",
+      "@/lib/assistente-chat",
+      "@/lib/cris",
+      "@/lib/context",
+      "@/lib/permissions",
+      "@/lib/nav-menu",
+      "@/lib/ai/uso",
+      "@/lib/ai/cris",
+      "@/lib/chat-metricas",
+    ]);
+    for (const arq of ["src/lib/ai/cris.ts", "src/lib/actions/cris.ts"]) {
+      const imps = importsDe(arq);
+      expect(imps.length).toBeGreaterThan(0);
+      // import novo exige revisão: se for action, não pode ser de escrita
+      expect(imps.filter((i) => !permitidos.has(i))).toEqual([]);
+      expect(imps.some((i) => i.startsWith("@/lib/actions/") || i.startsWith("./"))).toBe(false);
+      expect(readFileSync(arq, "utf8")).not.toMatch(/\.(insert|update|delete)\(\s*schema\./);
+    }
+  });
+});

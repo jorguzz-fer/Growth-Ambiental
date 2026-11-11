@@ -12,8 +12,12 @@
  *    pela mesma action de sempre (regra 4.2.1; pedido do dono em 18/10).
  *  - Absorve o Assistente do produto (Prompt AM2: `/diagnosticoia` virou só
  *    o diagnóstico da IA): explica o sistema pela mesma base de conhecimento.
- *  - Lê documento anexado (PDF ou imagem) para propor o preenchimento —
- *    "vai ao modelo só o documento" (decisão de 01/10, privacidade da leitura).
+ *  - Lê documento anexado (PDF ou imagem) para propor o preenchimento. O
+ *    documento vai INTEIRO ao modelo, com o que estiver escrito nele.
+ *
+ * O que vai ao modelo, completo, está na seção "O assistente" da base
+ * (`assistente-base/conceitos-despesas-caixa.ts`, Prompt AQ §1). Mudou algo
+ * aqui? Atualize aquela seção junto.
  */
 import { NAV_MENU } from "@/lib/nav-menu";
 
@@ -234,7 +238,8 @@ export function regrasDaCris(): string {
     "- No `propor_preenchimento`, use só os campos do <formulario>, com os valores aceitos em campos de opção. O que você deduziu ou não tem certeza vai em `conferir`, com o motivo. Datas no formato da dica do campo.",
     "- Despesa de obra é custo (variável), não despesa: siga a categoria que o plano de contas indica e a base de conhecimento.",
     "- Não dê orientação fiscal, tributária ou contábil (o que a empresa deve fazer perante a lei). Explique o que o sistema faz e sugira confirmar com a contabilidade.",
-    "- Dado pessoal (CPF, renda, documento de cliente ou funcionário) não chega até você; não peça.",
+    "- Dado pessoal (CPF, renda, contato de cliente ou funcionário) não vem no bloco <tela>; não peça. Se um documento anexado trouxer nome, CPF ou contato de cliente ou funcionário, não coloque isso na resposta nem na proposta.",
+    "- Se perguntarem o que é enviado ao modelo de IA, responda pela seção 'O assistente' da base, completa. Nunca diga que só a pergunta vai ao modelo.",
     "- Quando indicar uma tela, escreva o link em Markdown com a rota exata da base, ex.: [Despesas](/despesas). Só use rotas que aparecem na base.",
     "- Respostas de até ~10 linhas. Assuntos fora do sistema: diga educadamente que só ajuda com o Growth Construction.",
   ].join("\n");
@@ -258,19 +263,71 @@ export function blocoDaTela(ctx: ContextoDeTela | null, dadosPermitidos: boolean
   return partes.join("\n");
 }
 
-export type TrechoDaCris = { tipo: "texto"; texto: string } | { tipo: "link"; texto: string; href: string };
+/** Trecho dentro de uma linha: texto, link (só rota conhecida) ou negrito. */
+export type TrechoEmLinha = { tipo: "texto"; texto: string } | { tipo: "link"; texto: string; href: string } | { tipo: "negrito"; texto: string };
+/** Trecho da resposta: o de linha, ou um item de lista (linha que começa com "- "). */
+export type TrechoDaCris = TrechoEmLinha | { tipo: "item"; trechos: TrechoEmLinha[] };
 
-/** Texto → trechos com links só para rotas que existem (mesma regra do Assistente do produto). */
-export function trechosDaCris(resposta: string): TrechoDaCris[] {
-  const out: TrechoDaCris[] = [];
-  const re = /\[([^\]]+)\]\((\/[a-z0-9/-]*)((?:[?#][^)]*)?)\)/gi;
+const RE_LINK = /\[([^\]]+)\]\((\/[a-z0-9/-]*)((?:[?#][^)]*)?)\)/gi;
+
+/** Tira a marcação que não vira formatação: código, itálico e asteriscos soltos. */
+function semSimbolos(t: string): string {
+  return t
+    .replace(/`([^`]*)`/g, "$1")
+    .replace(/(^|[\s(])\*([^*\s](?:[^*]*[^*\s])?)\*(?=[\s).,;:!?]|$)/g, "$1$2")
+    .replace(/\*\*/g, "");
+}
+
+/** Uma linha → trechos: links (só rotas que existem), negrito e texto. */
+function trechosDaLinha(linha: string): TrechoEmLinha[] {
+  const out: TrechoEmLinha[] = [];
+  const texto = (t: string) => {
+    const re = /\*\*(.+?)\*\*/g;
+    let ultimo = 0;
+    for (let m = re.exec(t); m; m = re.exec(t)) {
+      if (m.index > ultimo) out.push({ tipo: "texto", texto: semSimbolos(t.slice(ultimo, m.index)) });
+      out.push({ tipo: "negrito", texto: semSimbolos(m[1]) });
+      ultimo = m.index + m[0].length;
+    }
+    if (ultimo < t.length) out.push({ tipo: "texto", texto: semSimbolos(t.slice(ultimo)) });
+  };
+  const re = new RegExp(RE_LINK.source, RE_LINK.flags);
   let ultimo = 0;
-  for (let m = re.exec(resposta); m; m = re.exec(resposta)) {
-    if (m.index > ultimo) out.push({ tipo: "texto", texto: resposta.slice(ultimo, m.index) });
+  for (let m = re.exec(linha); m; m = re.exec(linha)) {
+    if (m.index > ultimo) texto(linha.slice(ultimo, m.index));
     const rota = m[2].replace(/\/$/, "") || "/";
-    out.push(ROTAS_CONHECIDAS.has(rota) ? { tipo: "link", texto: m[1], href: rota + (m[3] ?? "") } : { tipo: "texto", texto: m[1] });
+    const rotulo = semSimbolos(m[1]);
+    out.push(ROTAS_CONHECIDAS.has(rota) ? { tipo: "link", texto: rotulo, href: rota + (m[3] ?? "") } : { tipo: "texto", texto: rotulo });
     ultimo = m.index + m[0].length;
   }
-  if (ultimo < resposta.length) out.push({ tipo: "texto", texto: resposta.slice(ultimo) });
+  if (ultimo < linha.length) texto(linha.slice(ultimo));
+  return out.filter((t) => t.texto !== "");
+}
+
+/**
+ * Resposta da Cris → trechos tipados, sem HTML (Prompt AQ §3). Reconhece
+ * links (só rotas de `ROTAS_CONHECIDAS`), `**negrito**` e linhas que começam
+ * com "- " (item de lista). Outra marcação (títulos `#`, tabelas, código,
+ * itálico) aparece como texto, sem os símbolos. Quebras de linha entre linhas
+ * comuns viram um trecho de texto "\n".
+ */
+export function trechosDaCris(resposta: string): TrechoDaCris[] {
+  const out: TrechoDaCris[] = [];
+  let anteriorEhLinha = false;
+  for (const bruta of resposta.split(/\r?\n/)) {
+    if (/^\s*```/.test(bruta)) continue;
+    if (/^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/.test(bruta) && bruta.includes("-")) continue;
+    let linha = bruta.replace(/^\s{0,3}#{1,6}\s+/, "");
+    if (/^\s*\|.*\|\s*$/.test(linha)) linha = linha.split("|").map((c) => c.trim()).filter(Boolean).join(" · ");
+    const item = /^\s*[-*•]\s+(.*)$/.exec(linha);
+    if (item) {
+      out.push({ tipo: "item", trechos: trechosDaLinha(item[1]) });
+      anteriorEhLinha = false;
+      continue;
+    }
+    if (anteriorEhLinha) out.push({ tipo: "texto", texto: "\n" });
+    out.push(...trechosDaLinha(linha));
+    anteriorEhLinha = true;
+  }
   return out;
 }

@@ -1,7 +1,7 @@
 "use server";
 
 import { getTenantContext } from "@/lib/context";
-import { can, screenIdOfPath } from "@/lib/permissions";
+import { permissaoDaRota } from "@/lib/nav-menu";
 import { isAiConfigured } from "@/lib/ai/client";
 import { comUsoDeIa, limiteDeConversa } from "@/lib/ai/uso";
 import { responderComoCris } from "@/lib/ai/cris";
@@ -44,10 +44,12 @@ export async function perguntarACris(entrada: { conversa: unknown; tela: unknown
   const anexo = entrada?.anexo ? anexoValido(entrada.anexo) : null;
   if (entrada?.anexo && !anexo) return { ok: false, error: "Anexo não aceito: envie PDF ou imagem (PNG, JPG, WEBP) de até 4 MB." };
 
-  const telaId = tela ? screenIdOfPath(tela.rota) : null;
-  const dadosPermitidos = !!tela && (telaId ? can(ctx.perms, telaId, "ver") : true);
+  // Prompt AQ §2 — a permissão vem do item do menu da rota (com as exigências
+  // dele, como as do Acerto), e falha fechada: rota sem item não libera nada.
+  const permissao = tela ? permissaoDaRota(tela.rota, ctx.perms) : { ver: false, lancar: false };
+  const dadosPermitidos = permissao.ver;
   // Formulário só para quem pode criar ou editar naquela tela.
-  const podeLancar = !!telaId && (can(ctx.perms, telaId, "criar") || can(ctx.perms, telaId, "editar"));
+  const podeLancar = permissao.lancar;
   const telaUsada = tela ? { ...tela, formulario: podeLancar ? tela.formulario : null } : null;
   const projetoDaTela = projetoDaRota((entrada?.tela as { rota?: unknown } | undefined)?.rota, ctx.projects);
   const pergunta = conversa[conversa.length - 1].texto;

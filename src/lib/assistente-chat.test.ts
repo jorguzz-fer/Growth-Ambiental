@@ -6,7 +6,6 @@ import {
   mesesDoPeriodo,
   metricasPermitidas,
   normalizarIntencao,
-  promptDoChat,
   resolverObra,
   textoDoPeriodo,
 } from "./assistente-chat";
@@ -17,15 +16,6 @@ describe("chat (Prompt E, Etapa 2) — catálogo e privacidade", () => {
   it("o catálogo é só receita, custo, desvio e saldo — nenhuma métrica de pessoa", () => {
     expect(CATALOGO.map((m) => m.id).sort()).toEqual(["custo", "desvio", "receita", "saldo"]);
     for (const m of CATALOGO) expect(m.definicao).not.toMatch(/cliente|comprador|CPF|telefone|endereço/i);
-  });
-
-  it("o texto que vai ao modelo é fixo: catálogo e mês, nenhum dado do sistema", () => {
-    const p = promptDoChat("10/2026");
-    expect(p).toContain("Você NÃO responde a pergunta e NÃO recebe números");
-    expect(p).toContain("você não conhece as obras cadastradas");
-    // Mesmo texto para qualquer empresa: não depende de nada além do mês.
-    expect(promptDoChat("10/2026")).toBe(p);
-    expect(p).not.toMatch(/R\$\s?\d/);
   });
 
   it("custo e desvio exigem ver DRE E Despesas; saldo exige Controle de Caixa", () => {

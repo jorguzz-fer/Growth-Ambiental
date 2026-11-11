@@ -1,0 +1,187 @@
+# Revisão 4 · Etapa 3 · Prompt AQ (Cris) — relatório, parte 1 (§1 a §4)
+
+**Data:** 11/11/2026 · **Spec:** `docs/revisao/SPEC-REVISAO-2026-11.md`, Anexo B
+
+A parte 2 (§5, colar no chat; §6, bateria de anexos; Prompt AV, ditado por
+voz) vem num PR separado.
+
+## §1 · O que a base dizia sobre privacidade (C3) e o código morto (C6)
+
+**O problema:** a base dizia que "só o texto da pergunta vai ao modelo", e a
+Cris repetia isso ao usuário. Era falso desde 15/10. Agora:
+
+- A seção "O assistente" descreve a Cris de hoje, na ordem da spec:
+  1. o que ela faz;
+  2. o que vai ao modelo;
+  3. o que não vai;
+  4. a exceção do anexo;
+  5. que a conversa não é gravada.
+- As frases das linhas ~28, ~108, ~153 e ~272 de `receitas-obra-pessoas.ts`
+  passaram para a forma verdadeira.
+- Em `regrasDaCris()`:
+  - entrou a regra "Nunca diga que só a pergunta vai ao modelo";
+  - a regra antiga "documento de cliente ou funcionário não chega até você"
+    (também falsa com anexo) virou: "não vem no bloco `<tela>`; se o anexo
+    trouxer nome, CPF ou contato, não coloque na resposta nem na proposta".
+- Um teste novo (`src/lib/cris-privacidade-base.test.ts`) trava o texto: as
+  frases falsas não podem voltar, e a seção tem as cinco partes, na ordem.
+
+**Antes × depois** (linhas `-` saíram, `+` entraram):
+
+    --- a/src/lib/assistente-base/conceitos-despesas-caixa.ts
+    -- **Chat (botão no canto inferior direito, em qualquer tela)**: responde **receita** (DRE, por cenário), **custo** (Custo Variável + Custo Fixo), **desvio de custo** (Atual × Orçamento) e **saldo** das contas da empresa.
+    -  - Os números são calculados no próprio sistema, com as regras dos relatórios. Só o texto da pergunta vai ao modelo, para entender o pedido; números, nomes e cadastros não vão.
+    -  - Sem a permissão de ver a tela de origem, o chat diz que não tem acesso. A pergunta não é gravada. Fora desses temas, o chat diz que ainda não responde.
+    +- **A Cris (chat no canto inferior direito, em qualquer tela)**:
+    +  - **O que ela faz:** explica como o sistema funciona; analisa os números da tela em que a pessoa está; busca em outras telas as quatro métricas do catálogo (**receita**, **custo**, **desvio de custo** e **saldo** das contas da empresa), sempre com o acesso da pessoa; e, nas telas de lançamento, **propõe** o preenchimento do formulário. Quem grava é o botão da tela, depois que a pessoa confere.
+    +  - **O que vai ao modelo de IA:** a pergunta e o histórico da conversa nesta aba (até 12 falas); o **resumo dos números da tela** que a pessoa está vendo, com o nome da obra e os valores; o **resultado das buscas** de receita, custo, desvio e saldo, também com nome da obra e valores; e o **documento anexado, inteiro** (PDF ou imagem).
+    +  - **O que não vai:** o que a tela não mostra; o cadastro completo de clientes, funcionários ou fornecedores; o histórico de outras conversas; e, do resumo da tela, os campos com dado pessoal, que o sistema descarta antes de enviar (CPF, CNPJ, RG e documentos, e-mail, telefone, endereço e CEP, renda, salário, FGTS, score e restrições, nascimento, saúde, Pix, conta e agência bancária, senhas).
+    +  - **A exceção é o anexo:** o documento vai inteiro ao modelo, com tudo o que estiver escrito nele, inclusive nome, CPF ou endereço de uma pessoa. A Cris não usa nome de cliente nem de funcionário para preencher o formulário, mas o modelo lê o documento. Só anexe o que precisa ser lido.
+    +  - **A conversa não é gravada.** O sistema registra só o consumo (quantas perguntas e quantos tokens, por empresa e pessoa), nunca o conteúdo.
+    +  - Sem a permissão de ver a tela de origem, ela diz que não tem acesso.
+    --- a/src/lib/assistente-base/receitas-obra-pessoas.ts
+    -- A Cris **não** preenche a ficha do cliente nem lê documento pessoal dele: dado pessoal não vai ao modelo.
+    +- A Cris **não** preenche a ficha do cliente. O anexo do chat (📎) funciona em qualquer tela, inclusive aqui: se alguém anexar um documento do cliente, o modelo lê o documento inteiro, com nome e CPF. Os documentos de venda ficam no bloco de documentos da ficha, não na Cris.
+    -- **Lançar com a Cris**: diga, dite ou anexe o que receber (ex.: "sinal de 20 mil da unidade A101 vencendo dia 10"). A Cris preenche o formulário Nova conta a receber (projeto, tipo, valor, vencimento, descrição, unidade e banco) e quem grava é Adicionar. O cliente é escolhido à mão: o nome do comprador não vai ao modelo.
+    +- **Lançar com a Cris**: diga, dite ou anexe o que receber (ex.: "sinal de 20 mil da unidade A101 vencendo dia 10"). A Cris preenche o formulário Nova conta a receber (projeto, tipo, valor, vencimento, descrição, unidade e banco) e quem grava é Adicionar. A Cris não preenche o cliente; ele é escolhido à mão. Se o documento anexado tiver o nome, o modelo lê o documento, mas o nome não vai para o formulário.
+    -- **Lançar com a Cris**: no ativo novo ou na edição, diga, dite ou anexe o laudo, o contrato ou a foto. A Cris preenche unidade, data, tipo, descrição, valor estimado e os dados da revenda; quem grava é Salvar. O cliente é escolhido à mão: o nome não vai ao modelo.
+    +- **Lançar com a Cris**: no ativo novo ou na edição, diga, dite ou anexe o laudo, o contrato ou a foto. A Cris preenche unidade, data, tipo, descrição, valor estimado e os dados da revenda; quem grava é Salvar. A Cris não preenche o cliente; ele é escolhido à mão. Se o documento anexado tiver o nome, o modelo lê o documento, mas o nome não vai para o formulário.
+    -- **Com a Cris**: ela preenche só o **vínculo de trabalho** (cargo, setor, obra, tipo e prazo do contrato, admissão e observação) e abre o formulário de novo funcionário. Nome, documentos, nascimento, filiação, endereço, jornada, salário e dados bancários são preenchidos à mão, porque dado pessoal do funcionário não vai ao modelo. Quem cadastra é o botão "Cadastrar".
+    +- **Com a Cris**: ela preenche só o **vínculo de trabalho** (cargo, setor, obra, tipo e prazo do contrato, admissão e observação) e abre o formulário de novo funcionário. Nome, documentos, nascimento, filiação, endereço, jornada, salário e dados bancários são preenchidos à mão: a Cris não preenche dado pessoal do funcionário. Se o documento anexado (CTPS, contrato) tiver esses dados, o modelo lê o documento, mas eles não vão para o formulário. Quem cadastra é o botão "Cadastrar".
+
+
+**BAQ-1, respondido pelo código.** `perguntarAoAssistente` e
+`interpretarPergunta` só eram chamados entre si e pelo teste do próprio chat
+antigo (`src/lib/actions/assistente-chat.test.ts`). Nenhuma rota de
+`src/app/api/agent/*`, nenhum worker e nenhum import dinâmico os usa. Foram
+removidos:
+
+- os dois arquivos;
+- o teste deles;
+- `promptDoChat` e `MAX_PERGUNTA`, que só eles usavam.
+
+De `src/lib/assistente-chat.ts` ficou o que a Cris usa: `CATALOGO`,
+`normalizarIntencao` e `interpretarLocalmente`.
+
+**BAQ-2, respondido pelo código.** A tela de Clientes **não recusa** anexo:
+
+- o 📎 do chat da Cris aparece em todas as telas
+  (`src/components/app/chat-assistente.tsx:242`);
+- o servidor aceita o arquivo sem olhar a tela
+  (`src/lib/actions/cris.ts:44`).
+
+A tela de Clientes não declara formulário para a Cris, então ela não preenche
+a ficha. Mas um documento anexado ali vai inteiro ao modelo. A frase da linha
+~28 foi corrigida para dizer isso.
+
+**Decisão sua, se quiser:** bloquear o anexo na tela de Clientes (e em
+Funcionários). Hoje não há bloqueio. É o item 5 da bateria de anexos.
+
+## §2 · Permissão da Cris pelo item do menu (C4)
+
+- Função pura nova `permissaoDaRota(rota, perms)` em `src/lib/nav-menu.ts`:
+  - acha o item do menu da rota (por `href`, `tambem` e `hrefAlt`; vale o mais
+    longo);
+  - `ver` = "ver" da chave **e** todas as exigências do item (`exige`);
+  - `lancar` = `ver` **e** criar ou editar.
+- Falha **fechada**: rota sem item no menu não libera nada.
+- `perguntarACris` (`src/lib/actions/cris.ts`) usa essa função no lugar de
+  `screenIdOfPath`.
+- Comparei a regra antiga com a nova em todas as rotas e nos cinco papéis.
+  **Só o `/acerto` mudou:**
+  - owner e membro passam a receber o formulário (antes era descartado);
+  - contador e engenheiro deixam de receber os números (antes iam, sem
+    conferir permissão).
+
+  Um teste trava isso: qualquer outra rota que mudar faz o teste falhar.
+
+**`{ ver, lancar }` por rota e papel** (V = vê os números, L = pode receber o
+formulário; "membro*" = membro com a chave `membroRestrito` ligada):
+
+| Rota | Chave | owner | membro | membro* | contador | engenheiro |
+| --- | --- | --- | --- | --- | --- | --- |
+| `/acerto` | despesas | VL | VL | VL | -- | -- |
+| `/acessos` | acessos | VL | -- | -- | -- | -- |
+| `/acoes` | acoes | VL | -- | -- | V- | -- |
+| `/backup` | backup | VL | -- | -- | -- | -- |
+| `/budget` | budget | VL | VL | -- | -- | -- |
+| `/caixa` | caixa | VL | VL | VL | -- | -- |
+| `/cartoes` | cartoes | VL | VL | -- | -- | -- |
+| `/chaves` | chaves | -- | -- | -- | -- | -- |
+| `/clientes` | clientes | VL | VL | VL | -- | -- |
+| `/conferencia` | conferencia | VL | VL | VL | V- | -- |
+| `/contas` | contas | VL | VL | VL | -- | -- |
+| `/contaspagar` | contaspagar | VL | VL | VL | -- | -- |
+| `/contasreceber` | contasreceber | VL | VL | VL | -- | -- |
+| `/dashboard` | dashboard | VL | VL | -- | -- | -- |
+| `/despesas` | despesas | VL | VL | VL | V- | -- |
+| `/diagnosticoia` | diagnosticoia | VL | -- | -- | -- | -- |
+| `/dre` | dre | VL | VL | -- | V- | -- |
+| `/dre/analitica` | dre | VL | VL | -- | V- | -- |
+| `/empresa` | empresa | VL | -- | -- | -- | -- |
+| `/equipes` | equipes | VL | VL | -- | -- | -- |
+| `/estoque` | estoque | VL | VL | -- | -- | -- |
+| `/fluxocaixa` | fluxocaixa | VL | VL | -- | V- | -- |
+| `/fluxocaixa/analitico` | fluxocaixa | VL | VL | -- | V- | -- |
+| `/forecast` | forecast | VL | VL | -- | -- | -- |
+| `/fornecedores` | fornecedores | VL | VL | VL | -- | -- |
+| `/funcionarios` | funcionarios | VL | VL | -- | -- | -- |
+| `/medicao` | medicao | VL | VL | VL | V- | -- |
+| `/medicaolanc` | medicaolanc | VL | VL | VL | -- | VL |
+| `/notasfiscais` | notasfiscais | VL | VL | -- | V- | -- |
+| `/numeracao` | numeracao | VL | -- | -- | -- | -- |
+| `/parametros` | parametros | VL | VL | -- | -- | -- |
+| `/permuta` | permuta | VL | VL | VL | -- | -- |
+| `/planocontas` | planocontas | VL | VL | -- | V- | -- |
+| `/projecao` | projecao | VL | VL | -- | -- | -- |
+| `/projeto` | projeto | VL | -- | -- | -- | -- |
+| `/reembolso` | reembolso | VL | VL | -- | -- | -- |
+| `/relatorios` | relatorios | VL | VL | -- | -- | -- |
+| `/restituicoes` | restituicoes | VL | VL | -- | -- | -- |
+| `/resumo` | resumo | VL | VL | -- | V- | -- |
+| `/simulador` | simulador | VL | VL | -- | -- | -- |
+| `/unidades` | unidades | VL | VL | VL | -- | -- |
+| `/usuarios` | usuarios | VL | -- | -- | -- | -- |
+
+(`/chaves` sai "--" até para o owner: é tela só do operador da plataforma.)
+
+## §3 · Markdown cru (C5)
+
+- `trechosDaCris` (`src/lib/cris.ts`, função pura) devolve trechos tipados:
+  - texto, link (só rota que existe) e **negrito**;
+  - **item de lista** (linha com `- `), que pode ter link e negrito dentro.
+- Títulos `#`, tabelas, blocos de código e itálico aparecem como texto, sem os
+  símbolos.
+- Sem `dangerouslySetInnerHTML` e sem biblioteca nova. O chat
+  (`chat-assistente.tsx`) monta `<strong>`, `<ul>`/`<li>` e `<Link>` a partir
+  dos trechos.
+
+## §4 · O que não muda
+
+- **AQ-T6:** `src/lib/ai/cris.ts` e `src/lib/actions/cris.ts` só importam de
+  uma lista conhecida, nenhuma action, e não têm `insert`, `update` nem
+  `delete` no banco. Import novo faz o teste falhar.
+
+## Testes
+
+| Teste | Arquivo |
+| --- | --- |
+| Base: as frases falsas não voltam; a seção "O assistente" tem as cinco partes, na ordem; a regra nova está nas regras da Cris | `src/lib/cris-privacidade-base.test.ts` |
+| AQ-T1 · toda rota do menu resolve para tela que existe; rota fora do menu → nada; só o `/acerto` muda em relação à regra antiga | `src/lib/actions/cris-permissao.test.ts` |
+| AQ-T2 · `/acerto`: com despesas/editar + caixa/ver, o formulário e os números vão; sem caixa/ver, nada; contador, nada | idem |
+| AQ-T3 · Medição (`permAlt`): `/medicaolanc` usa a permissão de lançamento, como antes | idem |
+| AQ-T4 · negrito, item de lista, link no item, rota desconhecida como texto | `src/lib/cris.test.ts` |
+| AQ-T5 · `<script>`, HTML e `javascript:` continuam texto | idem |
+| AQ-T6 · a Cris não importa action nem grava | idem |
+
+## Validação
+
+- `npm run test:all` (typecheck + lint + suíte com banco): **266 arquivos,
+  2165 testes, todos passaram, 0 pulados.**
+- `next build`: ok. A primeira tentativa falhou ao baixar a fonte do Google
+  (rede); a segunda passou.
+
+## Pendente para depois do deploy (relatório final da etapa)
+
+- Item 6: print da Cris respondendo "o que você manda para o modelo de IA?".
+  Precisa da Cris em produção, com a chave de IA.
