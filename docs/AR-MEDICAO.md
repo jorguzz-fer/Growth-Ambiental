@@ -178,7 +178,7 @@ A Fase 2 (Etapa 5) só começa depois dessas respostas.
 | **BAR-1** | **Só conta a seção com a caixinha "Usar …" marcada.** A caixinha diz que aquele sinal ou módulo de pagamento será usado. | As três leituras passam a respeitar a chave `usar*` da seção, como a Projeção já faz. Seção preenchida com a caixinha desmarcada sai de Contas a Receber, da DRE e do Fluxo. |
 | **BAR-2** | **Subsídio ainda não conciliado entra como previsto.** | O subsídio conta na data prevista, como os outros recebíveis. Depois de recebido e conciliado, sai do previsto e vai para o realizado. A Projeção deixa de esperar o status "Recebido". |
 | **BAR-3** | **O financiado pelo banco não entra no caixa como recebível**, porque o dinheiro chega como **liberação de obra**. | `Banco.valFinanc` sai dos recebíveis (Contas a Receber, DRE e Fluxo) e dos totais do Resumo. O dinheiro do banco entra pela liberação de obra, que já é lançada. Isso também evita contar o mesmo dinheiro duas vezes, no plano e na liberação. O cartão "Financiamento Banco" do Resumo continua como informação, fora dos totais. |
-| **BAR-4** | **A permuta entra como ativo; só vira receita quando é vendida.** | `Permuta.val` do plano sai de toda leitura de receita e de recebimento (DRE, Fluxo, Projeção e Contas a Receber). A receita da permuta é só a revenda registrada na tabela de Permutas. |
+| **BAR-4** | **A permuta entra como ativo; só vira receita quando é vendida.** Corrigido pelo dono no mesmo dia: o valor da permuta já está na receita, pelo rateio do contrato da unidade (ver "A permuta já está na receita da venda"). | `Permuta.val` do plano sai de toda leitura de receita e de recebimento (DRE, Fluxo, Projeção e Contas a Receber). A receita da permuta é só a revenda registrada na tabela de Permutas. |
 | BAR-7 | Respondido pela BAR-4: fica só a revenda. | Com a permuta do plano fora, a dupla contagem acaba. |
 | **BAR-5** | **Por enquanto, o INCC incide só nas projeções.** O dono ainda tem dúvida; pode rever depois. | Fica como hoje: só a tela Projeção corrige pelo INCC. Contas a Receber e Fluxo mostram o valor nominal do contrato. |
 | **BAR-6** | **Separar, e a liberação de obra sai da receita da DRE.** No caixa ela entra normalmente. A DRE passa a ter outro conceito: a receita é a **venda da unidade (ou da obra), rateada pelos meses de duração do projeto**. Exemplo: unidade vendida por R$ 500 mil é dividida pelos meses da obra. | É o Prompt I, §54/§56/§57: a receita da DRE (Atual) passa a ser só (1) a venda rateada pela janela do projeto e (2) as contas a receber avulsas. O plano de pagamento e a liberação ficam só no caixa: Fluxo, Contas a Receber e Caixa. Atrás de chave por empresa, nascendo desligada. |
@@ -230,17 +230,25 @@ Isto ajusta o §54.2 do Prompt I, que dizia "valor da unidade".
 não apareceria na DRE. Por isso a lista de conferência da BAR-1 vale também
 para a DRE, e a regra entra atrás da chave.
 
-### Em aberto: o que entra na DRE quando o bem da permuta é vendido
+### A permuta já está na receita da venda (decidido em 11/11/2026)
 
-O total do contrato já inclui o valor do bem recebido em permuta. Exemplo: o
-bem entrou por R$ 90 mil e foi vendido por R$ 95 mil.
+Correção do dono à BAR-4: "na venda do imóvel, mesmo que haja permuta, o valor
+da receita já é considerado na receita, pois ocorre o rateio".
 
-- **Só o ganho (R$ 5 mil)**, numa linha própria, fora da receita de vendas.
-  É o que diz o §57.4.3 do Prompt I e a recomendação do revisor.
-- **O valor cheio (R$ 95 mil)** como receita. Nesse caso, os R$ 90 mil contam
-  duas vezes, uma no contrato rateado e outra na revenda.
+O valor do bem recebido em permuta faz parte do total do contrato. Esse total é
+rateado pelos meses da obra, então a permuta já está na receita da DRE.
 
-**Aguardando o dono.**
+Na Fase 2:
+
+- **No plano:** `Permuta.val` não entra como receita própria (já está no
+  contrato rateado) nem como recebível de caixa, porque não é dinheiro.
+- **Na revenda do bem:** a DRE **não soma o valor cheio** da revenda.
+  Somar contaria o mesmo valor duas vezes. Hoje `permutaRevenueByMonth`
+  soma o valor cheio; isso sai, atrás da chave.
+- **A diferença entre a revenda e o valor de entrada** (ganho ou perda) pode
+  aparecer numa linha própria, fora da receita de vendas, como no §57.4.3 do
+  Prompt I. É a proposta; a ser confirmada com o contador.
+- **No caixa:** o dinheiro da revenda continua entrando normalmente.
 
 ### Atenção na BAR-1 (risco de sumir parcela de venda real)
 
