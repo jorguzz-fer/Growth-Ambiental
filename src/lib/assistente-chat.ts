@@ -1,15 +1,15 @@
 /**
- * Prompt E, Etapa 2 — chat somente leitura (decisão de 01/10/2026). Módulo PURO.
+ * Catálogo de métricas e leitura de intenção que a Cris usa. Módulo PURO.
  *
- * Regras do dono:
- * - O chat responde sobre MÉTRICAS DO CATÁLOGO (receita, custo, saldo,
- *   desvio), sem dado pessoal. Métrica nova que precise de dado de pessoa
- *   (ex.: nome de comprador) NÃO entra sem perguntar antes ao dono.
- * - "Vai ao modelo só o documento. Nada do banco entra no prompt": o modelo
- *   recebe só a PERGUNTA digitada e este catálogo, e devolve a intenção
- *   (métrica, cenário, obra citada, período). O número é calculado aqui, no
- *   servidor, e a resposta é montada aqui — o número nunca vai ao modelo.
- * - O conteúdo da pergunta nunca entra em log nem em auditoria.
+ * Origem: o chat somente leitura do Prompt E, Etapa 2 (decisão de 01/10/2026),
+ * em que o modelo só classificava a pergunta. Esse chat SAIU (Revisão 4,
+ * Prompt AQ §1.4): a decisão BE-2 foi reaberta em 15/10 e a Cris de hoje
+ * manda mais coisas ao modelo (ver `src/lib/cris.ts` e a seção "O assistente"
+ * da base de conhecimento). Daqui ficam só o catálogo das quatro métricas
+ * (`CATALOGO`), a normalização da intenção e a leitura local da pergunta.
+ *
+ * O catálogo continua sem dado pessoal: métrica nova que precise de dado de
+ * pessoa (ex.: nome de comprador) NÃO entra sem perguntar antes ao dono.
  */
 import { enumMonths, monthIndex } from "@/lib/dre";
 
@@ -66,7 +66,6 @@ export const CATALOGO: readonly MetricaDoCatalogo[] = [
 
 export const ROTULO_DO_CENARIO: Record<CenarioDoChat, string> = { atual: "Atual", budget: "Orçamento", forecast: "Previsão Atualizada" };
 
-export const MAX_PERGUNTA = 500;
 
 export interface IntencaoDoChat {
   metrica: IdDaMetrica | null;
@@ -178,18 +177,4 @@ export function textoDoPeriodo(de: string | null, ate: string | null, padrao: st
   if (!de && !ate) return padrao;
   if (de && ate && de === ate) return `em ${de}`;
   return `de ${de ?? ate} a ${ate ?? de}`;
-}
-
-/** O texto fixo que vai ao modelo: o catálogo, sem nenhum dado do sistema. */
-export function promptDoChat(mesAtual: string): string {
-  return [
-    "Você interpreta perguntas sobre os números de uma construtora brasileira e diz QUAL métrica do catálogo responde a pergunta.",
-    "Você NÃO responde a pergunta e NÃO recebe números: só classifica. O sistema calcula o número depois.",
-    "Catálogo:",
-    ...CATALOGO.map((m) => `- ${m.id}: ${m.definicao}`),
-    "Cenários: atual (realizado), budget (orçamento), forecast (previsão atualizada).",
-    `O mês corrente é ${mesAtual}. Períodos sempre em competência MM/AAAA ("este ano" = 01 a 12 do ano corrente).`,
-    'Se a pergunta citar uma obra ou projeto, copie o nome como o usuário escreveu em "obra" — você não conhece as obras cadastradas.',
-    'Se a pergunta não couber em nenhuma métrica do catálogo (ou pedir dado de pessoa, como nome, CPF ou telefone de cliente), devolva metrica = "".',
-  ].join("\n");
 }

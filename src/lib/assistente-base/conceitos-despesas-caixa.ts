@@ -54,9 +54,13 @@ Cada despesa tem três datas, e confundi-las é o erro mais caro do sistema:
 
 ### O assistente
 - **Painel por tela**: várias telas (Caixa, Cartões, Ressarcimentos, Fornecedores, Contas Correntes e outras) têm um painel lateral recolhível, com análises calculadas sobre o que a página carregou, sem enviar nada a modelo de IA. É **somente leitura**. No Caixa, ele **propõe** pares extrato × despesa, e a conciliação só acontece quando a pessoa confirma.
-- **Chat (botão no canto inferior direito, em qualquer tela)**: responde **receita** (DRE, por cenário), **custo** (Custo Variável + Custo Fixo), **desvio de custo** (Atual × Orçamento) e **saldo** das contas da empresa.
-  - Os números são calculados no próprio sistema, com as regras dos relatórios. Só o texto da pergunta vai ao modelo, para entender o pedido; números, nomes e cadastros não vão.
-  - Sem a permissão de ver a tela de origem, o chat diz que não tem acesso. A pergunta não é gravada. Fora desses temas, o chat diz que ainda não responde.
+- **A Cris (chat no canto inferior direito, em qualquer tela)**:
+  - **O que ela faz:** explica como o sistema funciona; analisa os números da tela em que a pessoa está; busca em outras telas as quatro métricas do catálogo (**receita**, **custo**, **desvio de custo** e **saldo** das contas da empresa), sempre com o acesso da pessoa; e, nas telas de lançamento, **propõe** o preenchimento do formulário. Quem grava é o botão da tela, depois que a pessoa confere.
+  - **O que vai ao modelo de IA:** a pergunta e o histórico da conversa nesta aba (até 12 falas); o **resumo dos números da tela** que a pessoa está vendo, com o nome da obra e os valores; o **resultado das buscas** de receita, custo, desvio e saldo, também com nome da obra e valores; e o **documento anexado, inteiro** (PDF ou imagem).
+  - **O que não vai:** o que a tela não mostra; o cadastro completo de clientes, funcionários ou fornecedores; o histórico de outras conversas; e, do resumo da tela, os campos com dado pessoal, que o sistema descarta antes de enviar (CPF, CNPJ, RG e documentos, e-mail, telefone, endereço e CEP, renda, salário, FGTS, score e restrições, nascimento, saúde, Pix, conta e agência bancária, senhas).
+  - **A exceção é o anexo:** o documento vai inteiro ao modelo, com tudo o que estiver escrito nele, inclusive nome, CPF ou endereço de uma pessoa. A Cris não usa nome de cliente nem de funcionário para preencher o formulário, mas o modelo lê o documento. Só anexe o que precisa ser lido.
+  - **A conversa não é gravada.** O sistema registra só o consumo (quantas perguntas e quantos tokens, por empresa e pessoa), nunca o conteúdo.
+  - Sem a permissão de ver a tela de origem, ela diz que não tem acesso.
 - **Leitura de documentos por IA** (Despesas, Fornecedores, extrato em PDF escaneado): a IA **propõe** o preenchimento e marca com alerta o que faltou ou ficou em dúvida. **Nada é gravado** antes de a pessoa conferir e confirmar. Sem a chave de IA, os campos são preenchidos à mão e o anexo funciona normalmente.
 
 ---

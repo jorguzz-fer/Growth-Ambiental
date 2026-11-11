@@ -105,3 +105,10 @@
 - `next build`: ok.
 - Pacote: `scripts/pacote-revisao.sh 4b3a604`, em que `4b3a604` é o `main`
   depois do merge do PR #268, antes desta etapa.
+
+## Decisões depois do relatório (11/11/2026)
+
+- **Faixas do aging:** o dono decidiu **manter como está** (até 30 com "a
+  vencer", 31–60, 61–90, acima de 90). O teste AT-T4b trava essa divisão.
+- **Próxima etapa:** o dono autorizou seguir para a Etapa 3 sem esperar a
+  aprovação do pacote.
