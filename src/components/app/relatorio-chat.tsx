@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { pedirRelatorio } from "@/lib/actions/relatorio";
 import { Button } from "@/components/ui/button";
 import { BotaoDeVoz } from "@/components/app/cris-voz";
+import { juntarDitado } from "@/lib/voz-ditado";
 
 interface Fala {
   de: "usuario" | "cris";
@@ -21,6 +22,7 @@ export function RelatorioChat({ iaConfigurada }: { iaConfigurada: boolean }) {
   const [falas, setFalas] = useState<Fala[]>([]);
   const [texto, setTexto] = useState("");
   const [erro, setErro] = useState<string | null>(null);
+  const [erroVoz, setErroVoz] = useState<string | null>(null);
   const [pendente, start] = useTransition();
 
   const enviar = (pedido: string) => {
@@ -74,7 +76,10 @@ export function RelatorioChat({ iaConfigurada }: { iaConfigurada: boolean }) {
       >
         <textarea
           value={texto}
-          onChange={(e) => setTexto(e.target.value)}
+          onChange={(e) => {
+            setTexto(e.target.value);
+            setErroVoz(null);
+          }}
           rows={2}
           maxLength={1500}
           aria-label="Pedido de relatório"
@@ -86,11 +91,17 @@ export function RelatorioChat({ iaConfigurada }: { iaConfigurada: boolean }) {
             }
           }}
         />
-        <BotaoDeVoz onTexto={(t) => setTexto((x) => (x ? `${x} ${t}` : t))} />
+        <BotaoDeVoz onTexto={(t) => setTexto((x) => juntarDitado(x, t))} onErro={setErroVoz} />
         <Button type="submit" size="sm" disabled={pendente || !texto.trim()}>
           Montar
         </Button>
       </form>
+      {/* Prompt AV — o erro do ditado em texto, abaixo do campo (não só no title do 🎤). */}
+      {erroVoz && (
+        <p role="alert" data-voz-erro className="mt-1 text-[12px] text-[var(--color-danger)]">
+          {erroVoz}
+        </p>
+      )}
     </div>
   );
 }

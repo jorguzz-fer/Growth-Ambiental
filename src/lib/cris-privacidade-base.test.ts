@@ -42,3 +42,12 @@ describe("A base diz a verdade sobre o que vai ao modelo (AQ §1)", () => {
     expect(regrasDaCris()).not.toMatch(/documento de cliente ou funcionário\) não chega até você/);
   });
 });
+
+describe("O texto do chat também não promete o que não cumpre (AQ §1)", () => {
+  it("o aviso do chat diz que o documento anexado vai inteiro", async () => {
+    const { readFileSync } = await import("node:fs");
+    const chat = readFileSync("src/components/app/chat-assistente.tsx", "utf8");
+    expect(chat).not.toMatch(/Dado pessoal não vai\./);
+    expect(chat).toMatch(/o documento que você anexar, inteiro/);
+  });
+});

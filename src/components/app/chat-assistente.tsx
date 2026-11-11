@@ -3,7 +3,10 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { perguntarACris } from "@/lib/actions/cris";
-import { MAX_ANEXO_BYTES, MAX_MENSAGEM, NOME_DA_CRIS, TIPOS_DE_ANEXO, trechosDaCris, type FalaDaCris, type PropostaDePreenchimento, type TrechoDaCris, type TrechoEmLinha } from "@/lib/cris";
+import { NOME_DA_CRIS, TIPOS_DE_ANEXO, trechosDaCris, type FalaDaCris, type PropostaDePreenchimento, type TrechoDaCris, type TrechoEmLinha } from "@/lib/cris";
+import { validarAnexo } from "@/lib/cris-colagem";
+import { juntarDitado } from "@/lib/voz-ditado";
+import { CampoDeMensagem, tratarTransferencia, type AvisoDoCampo } from "@/components/app/campo-de-mensagem";
 import { useCris } from "@/components/app/cris-contexto";
 import { BotaoDeVoz } from "@/components/app/cris-voz";
 import { Faisca } from "@/components/app/assistente-funcionarios";
@@ -48,20 +51,31 @@ export function ChatAssistente() {
   const [texto, setTexto] = useState("");
   const [conversa, setConversa] = useState<Mensagem[]>([]);
   const [anexo, setAnexo] = useState<File | null>(null);
-  const [erroAnexo, setErroAnexo] = useState<string | null>(null);
+  // Prompt AQ §5 e AV: um aviso abaixo do campo (anexo recusado ou trocado, limite, erro do ditado).
+  const [aviso, setAviso] = useState<AvisoDoCampo>(null);
+  const [arrastando, setArrastando] = useState(false);
   const [pendente, start] = useTransition();
   const fim = useRef<HTMLDivElement>(null);
   const arquivo = useRef<HTMLInputElement>(null);
 
-  const enviar = (pergunta: string) => {
+  // Anexo novo (📎, colar ou soltar): se já havia um, troca e avisa (§5.2).
+  const anexar = (f: File) => {
+    const erro = validarAnexo(f);
+    if (erro) return setAviso({ texto: erro, tom: "erro" });
+    setAviso(anexo && anexo !== f ? { texto: `O anexo "${anexo.name}" foi trocado por "${f.name}".`, tom: "info" } : null);
+    setAnexo(f);
+  };
+
+  const enviar = (pergunta: string, anexoDoPedido?: File | null) => {
     const q = pergunta.trim();
-    if ((!q && !anexo) || pendente) return;
+    const anexoAgora = anexoDoPedido !== undefined ? anexoDoPedido : anexo;
+    if ((!q && !anexoAgora) || pendente) return;
     const textoDaFala = q || (tela?.formulario ? "Preencha a tela com este documento." : "O que tem neste documento?");
-    const nova: Mensagem[] = [...conversa, { de: "usuario", texto: textoDaFala, anexo: anexo?.name }];
+    const nova: Mensagem[] = [...conversa, { de: "usuario", texto: textoDaFala, anexo: anexoAgora?.name }];
     setConversa(nova);
     setTexto("");
-    const anexoAgora = anexo;
-    setAnexo(null);
+    setAviso(null);
+    if (anexoDoPedido === undefined) setAnexo(null);
     start(async () => {
       try {
         const falas: FalaDaCris[] = nova.filter((m): m is Exclude<Mensagem, { de: "erro" }> => m.de !== "erro").map((m) => ({ de: m.de, texto: m.texto }));
@@ -78,7 +92,7 @@ export function ChatAssistente() {
   useEffect(() => {
     if (cris?.pedidoPendente) {
       setAberto(true);
-      enviar(cris.pedidoPendente);
+      enviar(cris.pedidoPendente.texto, cris.pedidoPendente.anexo ?? null);
       cris.consumirPedido();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -112,7 +126,23 @@ export function ChatAssistente() {
           role="dialog"
           aria-label={`${NOME_DA_CRIS}, assistente`}
           data-chat
-          className="fixed bottom-20 right-5 z-[110] flex max-h-[75vh] w-[min(420px,calc(100vw-2.5rem))] flex-col overflow-hidden rounded-[12px] border border-[var(--color-line)] bg-[var(--color-surface)] shadow-2xl print:hidden"
+          data-arrastando={arrastando || undefined}
+          // §5.5 — arrastar e soltar um arquivo sobre o painel vira anexo, pela mesma regra.
+          onDragOver={(e) => {
+            if (!Array.from(e.dataTransfer.types).includes("Files")) return;
+            e.preventDefault();
+            setArrastando(true);
+          }}
+          onDragLeave={(e) => {
+            if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setArrastando(false);
+          }}
+          onDrop={(e) => {
+            setArrastando(false);
+            if (!Array.from(e.dataTransfer.types).includes("Files")) return;
+            e.preventDefault();
+            tratarTransferencia(e.dataTransfer, anexar, setAviso);
+          }}
+          className={`fixed bottom-20 right-5 z-[110] flex max-h-[75vh] w-[min(420px,calc(100vw-2.5rem))] flex-col overflow-hidden rounded-[12px] border bg-[var(--color-surface)] shadow-2xl print:hidden ${arrastando ? "border-[var(--color-accent2)] ring-2 ring-[var(--color-accent2)]/30" : "border-[var(--color-line)]"}`}
         >
           <div className="border-b border-[var(--color-line)] px-4 py-3">
             <div className="flex items-center justify-between">
@@ -146,7 +176,7 @@ export function ChatAssistente() {
                   ))}
                 </div>
                 <p className="pt-1 text-[11.5px] leading-relaxed text-[var(--color-ink3)]">
-                  Vão ao modelo de IA a sua pergunta, os números que esta tela mostra e o documento que você anexar. Dado pessoal não vai.
+                  Vão ao modelo de IA a sua pergunta, os números que esta tela mostra e o documento que você anexar, inteiro. Dado pessoal do cadastro não vai.
                   A {NOME_DA_CRIS} não grava nada: o que ela preenche, você confere e salva.
                 </p>
               </div>
@@ -206,9 +236,13 @@ export function ChatAssistente() {
               </button>
             </div>
           )}
-          {erroAnexo && <p className="border-t border-[var(--color-line)] px-3 py-1.5 text-[12px] text-[var(--color-danger)]">{erroAnexo}</p>}
+          {aviso && (
+            <p role={aviso.tom === "erro" ? "alert" : "status"} data-cris-aviso className={`border-t border-[var(--color-line)] px-3 py-1.5 text-[12px] ${aviso.tom === "erro" ? "text-[var(--color-danger)]" : "text-[var(--color-ink2)]"}`}>
+              {aviso.texto}
+            </p>
+          )}
           <form
-            className="flex items-center gap-2 border-t border-[var(--color-line)] p-3"
+            className="flex items-end gap-2 border-t border-[var(--color-line)] p-3"
             onSubmit={(e) => {
               e.preventDefault();
               enviar(texto);
@@ -222,24 +256,21 @@ export function ChatAssistente() {
               onChange={(e) => {
                 const f = e.target.files?.[0] ?? null;
                 e.target.value = "";
-                setErroAnexo(null);
-                if (!f) return;
-                if (f.size > MAX_ANEXO_BYTES) return setErroAnexo("Arquivo maior que 4 MB.");
-                if (!(TIPOS_DE_ANEXO as readonly string[]).includes(f.type)) return setErroAnexo("Envie PDF ou imagem (PNG, JPG, WEBP).");
-                setAnexo(f);
+                if (f) anexar(f);
               }}
             />
             <button type="button" onClick={() => arquivo.current?.click()} title="Anexar documento (PDF ou imagem)" aria-label="Anexar documento" className="text-[16px] text-[var(--color-ink3)] hover:text-[var(--color-ink)]">
               📎
             </button>
-            <BotaoDeVoz onTexto={(t) => setTexto((atual) => (atual ? `${atual} ${t}` : t))} />
-            <input
-              value={texto}
-              onChange={(e) => setTexto(e.target.value)}
-              maxLength={MAX_MENSAGEM}
-              placeholder={tela?.formulario ? "Diga o que lançar, ou anexe o documento" : `Pergunte à ${NOME_DA_CRIS}`}
-              aria-label="Mensagem para a Cris"
-              className="h-9 min-w-0 flex-1 rounded-[8px] border border-[var(--color-line)] bg-transparent px-3 text-[13px] outline-none focus:border-[var(--color-accent2)]"
+            <BotaoDeVoz onTexto={(t) => setTexto((atual) => juntarDitado(atual, t))} onErro={(m) => setAviso(m ? { texto: m, tom: "erro" } : null)} />
+            <CampoDeMensagem
+              valor={texto}
+              onValor={setTexto}
+              onEnviar={() => enviar(texto)}
+              onAnexo={anexar}
+              onAviso={setAviso}
+              placeholder={tela?.formulario ? "Diga o que lançar, cole ou anexe o documento" : `Pergunte à ${NOME_DA_CRIS}`}
+              rotulo="Mensagem para a Cris"
             />
             <Button type="submit" size="sm" disabled={pendente || (!texto.trim() && !anexo)}>
               Enviar

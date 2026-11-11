@@ -1,48 +1,38 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { ligarDitado, type ConstrutorDeReconhecedor, type Reconhecedor } from "@/lib/voz-ditado";
 
 /**
- * Prompt VOZ (Fase 3) — ditado no chat da Cris, pelo reconhecimento de fala
- * do próprio navegador (Web Speech API, pt-BR). O texto ditado entra na
- * caixa de mensagem, para a pessoa conferir e enviar: o caminho depois é o
- * mesmo do texto digitado.
+ * Prompt VOZ (Fase 3) — ditado no chat da Cris e nos Relatórios, pelo
+ * reconhecimento de fala do próprio navegador (Web Speech API, pt-BR). O texto
+ * ditado entra na caixa de mensagem, para a pessoa conferir e enviar.
  *
  * BV2-1 (decidido no prompt): nenhum áudio passa pelo servidor do app nem vai
- * ao modelo da Cris; o navegador transcreve. No Chrome e no Edge o
+ * ao modelo da Cris; o navegador transcreve. No Chrome, no Edge e no Safari o
  * reconhecimento roda no serviço de fala do fabricante do navegador. Sem
  * suporte (Firefox, por exemplo), o botão não aparece.
+ *
+ * Prompt AV (Revisão 4): o erro deixa de ficar só no `title` do botão (que no
+ * celular ninguém vê). Ele vai para `onErro`, e a tela mostra em texto, abaixo
+ * do campo. Tentar de novo limpa a mensagem (`onErro(null)`).
  */
 
-interface ResultadoDeFala {
-  results: ArrayLike<ArrayLike<{ transcript: string }> & { isFinal: boolean }>;
-  resultIndex: number;
-}
-interface Reconhecedor {
-  lang: string;
-  continuous: boolean;
-  interimResults: boolean;
-  onresult: ((e: ResultadoDeFala) => void) | null;
-  onend: (() => void) | null;
-  onerror: ((e: { error: string }) => void) | null;
-  start: () => void;
-  stop: () => void;
-}
-type Construtor = new () => Reconhecedor;
-
-function construtorDeFala(): Construtor | null {
+function construtorDeFala(): ConstrutorDeReconhecedor | null {
   if (typeof window === "undefined") return null;
-  const w = window as unknown as { SpeechRecognition?: Construtor; webkitSpeechRecognition?: Construtor };
+  const w = window as unknown as { SpeechRecognition?: ConstrutorDeReconhecedor; webkitSpeechRecognition?: ConstrutorDeReconhecedor };
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
 }
 
-export function BotaoDeVoz({ onTexto }: { onTexto: (texto: string) => void }) {
+export function BotaoDeVoz({ onTexto, onErro }: { onTexto: (texto: string) => void; onErro?: (mensagem: string | null) => void }) {
   const [suportado, setSuportado] = useState(false);
   const [ouvindo, setOuvindo] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const rec = useRef<Reconhecedor | null>(null);
   const onTextoRef = useRef(onTexto);
+  const onErroRef = useRef(onErro);
   onTextoRef.current = onTexto;
+  onErroRef.current = onErro;
 
   useEffect(() => setSuportado(!!construtorDeFala()), []);
   useEffect(() => () => rec.current?.stop(), []);
@@ -56,22 +46,27 @@ export function BotaoDeVoz({ onTexto }: { onTexto: (texto: string) => void }) {
     }
     const C = construtorDeFala();
     if (!C) return;
-    const r = new C();
-    r.lang = "pt-BR";
-    r.continuous = false;
-    r.interimResults = false;
-    r.onresult = (e) => {
-      const partes: string[] = [];
-      for (let i = e.resultIndex; i < e.results.length; i++) if (e.results[i].isFinal) partes.push(e.results[i][0].transcript);
-      const t = partes.join(" ").trim();
-      if (t) onTextoRef.current(t);
-    };
-    r.onerror = (e) => setErro(e.error === "not-allowed" ? "Permita o microfone no navegador." : "Não entendi. Tente de novo.");
-    r.onend = () => setOuvindo(false);
+    const r = ligarDitado(C, {
+      onTexto: (t) => onTextoRef.current(t),
+      onErro: (m) => {
+        setErro(m);
+        onErroRef.current?.(m);
+      },
+      onFim: () => setOuvindo(false),
+    });
     rec.current = r;
     setErro(null);
+    onErroRef.current?.(null);
     setOuvindo(true);
-    r.start();
+    try {
+      r.start();
+    } catch {
+      // start() lança se já houver um reconhecimento em andamento.
+      const m = "O ditado já está ligado em outro lugar. Toque no 🎤 de novo.";
+      setOuvindo(false);
+      setErro(m);
+      onErroRef.current?.(m);
+    }
   };
 
   return (

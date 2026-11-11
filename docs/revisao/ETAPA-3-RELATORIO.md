@@ -1,9 +1,12 @@
-# Revisão 4 · Etapa 3 · Prompt AQ (Cris) — relatório, parte 1 (§1 a §4)
+# Revisão 4 · Etapa 3 · Prompt AQ (Cris) e Prompt AV (voz) — relatório
 
 **Data:** 11/11/2026 · **Spec:** `docs/revisao/SPEC-REVISAO-2026-11.md`, Anexo B
 
-A parte 2 (§5, colar no chat; §6, bateria de anexos; Prompt AV, ditado por
-voz) vem num PR separado.
+Esta etapa saiu em dois PRs:
+
+- **parte 1:** §1 a §4 (PR #282);
+- **parte 2:** §5 (colar no chat), §6 (bateria de anexos) e o Prompt AV
+  (ditado por voz).
 
 ## §1 · O que a base dizia sobre privacidade (C3) e o código morto (C6)
 
@@ -181,7 +184,124 @@ formulário; "membro*" = membro com a chave `membroRestrito` ligada):
 - `next build`: ok. A primeira tentativa falhou ao baixar a fonte do Google
   (rede); a segunda passou.
 
+## §5 · Colar no chat (C2, C22) — parte 2
+
+- **Campo novo**, `src/components/app/campo-de-mensagem.tsx`, usado no chat e
+  na caixa de conversa dos painéis (§5.4):
+  - `<textarea>` que cresce de 1 a 6 linhas;
+  - Enter envia, Shift+Enter quebra a linha;
+  - quebras e tabulações coladas ficam como estão.
+- **Colar imagem ou arquivo vira anexo**, com a validação do 📎. A regra fica
+  em `classificarColagem` (`src/lib/cris-colagem.ts`, função pura):
+  - sem arquivo → texto;
+  - arquivo junto com texto de várias linhas ou com tabulação → **texto** (o
+    Excel põe a tabela como texto e também como imagem; quem cola tabela quer
+    a tabela);
+  - fora disso, o arquivo: aceito se for de tipo válido e até 4 MB; senão,
+    recusado com a mesma mensagem do 📎.
+- **Anexo novo troca o anterior, com aviso.** Vale para o 📎, o colar e o
+  arrastar.
+- **Limite:** `MAX_MENSAGEM` subiu de 1.500 para **6.000**, no cliente e no
+  servidor. Passou do limite, o campo corta e **avisa** quantos caracteres
+  ficaram de fora.
+- **Arrastar e soltar** um arquivo sobre o painel da Cris vira anexo, pela
+  mesma regra (§5.5). O painel ganha borda de destaque enquanto o arquivo
+  passa por cima.
+- **Caixa de conversa dos painéis:** passou a levar o anexo junto com a
+  pergunta. `cris.perguntar(texto, anexo)`; antes era só texto.
+- **Mais uma frase falsa:** o aviso do chat vazio dizia "Dado pessoal não
+  vai". Agora diz "o documento que você anexar, inteiro. Dado pessoal do
+  cadastro não vai". Um teste trava isso.
+
+## §6 · Bateria de anexos
+
+O roteiro está em `docs/revisao/BATERIA-ANEXOS-CRIS.md`, com a tabela para o
+Thiago e para o relatório. Os itens 6 e 7, e o item 1 sem o modelo, já foram
+conferidos aqui. O resto pede a chave de IA e o Safari.
+
+## Prompt AV · Ditado por voz (C21)
+
+**Fase 1 (reproduzir): não feita, BLOQUEIO BVZ-1.**
+
+- Falta saber qual erro o Thiago viu, em qual navegador e computador, e com
+  qual frase.
+- O ditado usa o serviço de fala do navegador, que não roda aqui. O Chromium
+  de teste não tem o serviço do Google.
+- Até esta etapa, o erro só aparecia no `title` do 🎤. No celular, ninguém
+  conseguia ler a mensagem para relatar.
+- Agora a mensagem aparece em texto. Desconhecido, o código vem junto:
+  "O ditado falhou (xyz)". Isso deve ajudar o Thiago a responder o BVZ-1.
+
+**Fase 2: o que é do app e não depende da reprodução, feito:**
+
+- **2.1:** `mensagemDoErroDeVoz(codigo)` (`src/lib/voz-ditado.ts`) dá uma
+  mensagem para cada código: `no-speech`, `audio-capture`, `not-allowed`,
+  `service-not-allowed`, `network`, `aborted`, `language-not-supported` e
+  `bad-grammar`. Para código desconhecido, a mensagem é genérica e leva o
+  código.
+- **2.2:** a mensagem aparece **em texto, abaixo do campo**, no chat da Cris e
+  nos Relatórios. Some quando a pessoa digita ou toca no 🎤 de novo.
+- **2.4:** um erro no meio do ditado não apaga o que já entrou. Cada trecho
+  final vai para o campo na hora (`ligarDitado`).
+- **2.5:** o mesmo comportamento no chat da Cris e no chat de Relatórios. O
+  texto ditado é somado por `juntarDitado`: um espaço, sem espaço duplo.
+- **2.6:** a seção "O assistente" da base explica:
+  - o ditado é do navegador e roda no serviço de fala do fabricante;
+  - o áudio não passa pelo servidor do app;
+  - no Firefox, o botão não aparece.
+
+**2.3 (ditado contínuo com texto parcial): adiado.** Ele muda o reconhecimento
+em todos os navegadores (`continuous = true`, `interimResults = true`). O
+Safari do iPhone se comporta diferente nesse modo, e eu não consigo testar
+aqui. Fica para depois da tabela da Fase 1: se o erro do Thiago for "corta no
+meio da frase", é este o ajuste.
+
+## Conferido no navegador (Chromium, servidor local, modelo desligado)
+
+13 checagens no chat da Cris e 4 na caixa do painel de Estoque, todas OK. O
+reconhecedor de fala foi simulado: um trecho reconhecido e, depois, o erro
+`no-speech`.
+
+- **O campo:**
+  - é textarea;
+  - Shift+Enter quebra a linha sem enviar;
+  - a tabela de 5 × 3 colada mantém linhas e tabulações;
+  - o campo cresce.
+- **Anexo:**
+  - um print colado vira anexo e não entra como texto;
+  - um segundo print troca o primeiro e avisa.
+- **Limite:** colar 6.005 caracteres deixa 6.000 e avisa "5 caracteres
+  ficaram de fora".
+- **Ditado:**
+  - o texto reconhecido entra e fica depois do erro;
+  - o erro aparece em texto abaixo do campo, no computador e no celular
+    (iPhone 13 emulado);
+  - digitar limpa o erro.
+- **Caixa do painel:**
+  - Enter abre a Cris com a pergunta;
+  - um print colado vira anexo;
+  - enviar só o print leva o anexo para a Cris.
+
+## Testes da parte 2
+
+| Teste | Arquivo |
+| --- | --- |
+| AQ-T7 · `classificarColagem`: texto, texto com quebras e tabulações, PNG, PDF, arquivo do explorador, tabela do Excel com imagem, .docx, imagem acima de 4 MB | `src/lib/cris-colagem.test.ts` |
+| AQ-T8 · 6.001 caracteres: o cliente corta e avisa; o servidor corta no mesmo limite | idem |
+| AQ-T9 · tabela 5 × 3 colada chega ao modelo com as quebras e as tabulações | `src/lib/ai/cris.test.ts` |
+| AQ-T10 · print na tela de Fornecedores: vira anexo, chega ao modelo com o formulário, a proposta volta para a tela, nada gravado | `src/lib/actions/cris-permissao.test.ts` |
+| AV-T1 · mensagem própria para cada código; genérica com o código para o desconhecido | `src/lib/voz-ditado.test.ts` |
+| AV-T2 · `juntarDitado` | idem |
+| AV-T3 · reconhecedor simulado: o texto entra, o `no-speech` vira mensagem e o texto fica (a parte "visível na tela" foi conferida no navegador, acima) | idem |
+| O aviso do chat não promete "dado pessoal não vai" | `src/lib/cris-privacidade-base.test.ts` |
+
 ## Pendente para depois do deploy (relatório final da etapa)
 
-- Item 6: print da Cris respondendo "o que você manda para o modelo de IA?".
-  Precisa da Cris em produção, com a chave de IA.
+- Item 5 do relatório: vídeo ou prints de colar texto de várias linhas, um
+  print e uma tabela do Excel, no Chrome e no Safari (ou Edge). Precisa de
+  computador com Excel e Safari.
+- Item 6 do relatório: print da Cris respondendo "o que você manda para o
+  modelo de IA?". Precisa da Cris em produção, com a chave de IA.
+- Item 7: a bateria de anexos preenchida (`docs/revisao/BATERIA-ANEXOS-CRIS.md`).
+- BVZ-1: o erro do ditado que o Thiago viu, para a Fase 1 do Prompt AV e a
+  decisão sobre o 2.3.

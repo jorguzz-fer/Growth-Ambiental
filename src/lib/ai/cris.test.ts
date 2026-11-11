@@ -94,3 +94,18 @@ describe("Prompt E2 — responderComoCris", () => {
     expect(r.texto).toMatch(/longa demais/);
   });
 });
+
+describe("Prompt AQ §5 — o que é colado chega ao modelo como está", () => {
+  it("AQ-T9: uma tabela de 5 linhas × 3 colunas colada chega com as quebras de linha e as tabulações", async () => {
+    const { historicoDaCris } = await import("@/lib/cris");
+    const tabela = ["Obra\tMês\tValor", "A\t10/2026\t100", "B\t10/2026\t200", "C\t11/2026\t300", "D\t11/2026\t400"].join("\n");
+    const conversa = historicoDaCris([{ de: "usuario", texto: `${tabela}\n` }])!;
+    roteiro = [{ stop_reason: "end_turn", content: [{ type: "text", text: "ok", citations: null } as Anthropic.TextBlock] }];
+    await responderComoCris({ conversa, tela: null, dadosPermitidos: false, anexo: null, consultar: async () => "" });
+    const ultima = chamadas[0].messages.at(-1)!.content as Anthropic.TextBlockParam[];
+    const texto = ultima.at(-1)!.text;
+    expect(texto).toBe(tabela);
+    expect(texto.split("\n")).toHaveLength(5);
+    expect(texto.split("\n").every((l) => l.split("\t").length === 3)).toBe(true);
+  });
+});

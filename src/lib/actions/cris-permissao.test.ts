@@ -7,16 +7,17 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
  * Sem banco: o modelo e as métricas são simulados.
  */
 const ctxRef: { current: unknown } = { current: null };
-const chamadas: { tela: { formulario: unknown } | null; dadosPermitidos: boolean }[] = [];
+const chamadas: { tela: { formulario: unknown } | null; dadosPermitidos: boolean; anexo?: unknown }[] = [];
+const simulado: { proposta: unknown } = { proposta: null };
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/context", () => ({ getTenantContext: async () => ctxRef.current }));
 vi.mock("@/lib/ai/client", () => ({ isAiConfigured: () => true }));
 vi.mock("@/lib/ai/uso", () => ({ comUsoDeIa: (_m: unknown, fn: () => unknown) => fn(), limiteDeConversa: async () => null }));
 vi.mock("@/lib/chat-metricas", () => ({ responderMetrica: async () => ({ texto: "", detalhes: [] }) }));
 vi.mock("@/lib/ai/cris", () => ({
-  responderComoCris: async (e: { tela: { formulario: unknown } | null; dadosPermitidos: boolean }) => {
-    chamadas.push({ tela: e.tela, dadosPermitidos: e.dadosPermitidos });
-    return { texto: "ok", proposta: null };
+  responderComoCris: async (e: { tela: { formulario: unknown } | null; dadosPermitidos: boolean; anexo: unknown }) => {
+    chamadas.push({ tela: e.tela, dadosPermitidos: e.dadosPermitidos, anexo: e.anexo });
+    return { texto: "ok", proposta: simulado.proposta };
   },
 }));
 
@@ -113,5 +114,34 @@ describe("perguntarACris usa a permissão do menu (AQ-T2)", () => {
     com(defaultPermissions("contador"));
     await pergunta("/dre");
     expect(chamadas[0]).toMatchObject({ dadosPermitidos: true, tela: { formulario: null } });
+  });
+});
+
+describe("AQ-T10 (C22): print colado na tela de Fornecedores", () => {
+  it("o print vira anexo, chega ao modelo com o formulário do fornecedor e a proposta volta para a tela, sem gravar", async () => {
+    const { classificarColagem } = await import("@/lib/cris-colagem");
+    const { formularioDoFornecedor, lidosDaProposta } = await import("@/lib/fornecedor-cris");
+    // 1) colar o print: é anexo (mesma regra do 📎)
+    expect(classificarColagem([{ kind: "file", type: "image/png", size: 120_000 }])).toEqual({ tipo: "anexo", indice: 0 });
+    // 2) a Cris recebe o anexo e o formulário; o modelo (simulado) propõe os campos
+    const papeis = ["Fornecedor", "Prestador de Serviço"];
+    ctxRef.current = { tenant: { id: "t" }, projects: [], userId: "u", userEmail: "x@x", role: "owner", perms: defaultPermissions("owner") };
+    const proposta = { formulario: "fornecedor-novo", valores: { tipo: "PJ", nome: "Cimentos Exemplo Ltda", doc: "11.222.333/0001-81", endereco: "Rua das Obras", tel: "(11) 4000-0000", papeis: "Fornecedor" }, conferir: {}, observacao: null };
+    chamadas.length = 0;
+    simulado.proposta = proposta;
+    try {
+      const r = await perguntarACris({
+        conversa: [{ de: "usuario", texto: "Preencha a tela com este documento." }],
+        tela: { rota: "/fornecedores", titulo: "Fornecedores", formulario: formularioDoFornecedor(papeis) },
+        anexo: { tipo: "image/png", base64: "iVBORw0KGgo=", nome: "image.png" },
+      });
+      expect(chamadas[0].anexo).toMatchObject({ tipo: "image/png", nome: "image.png" });
+      expect(chamadas[0].tela?.formulario).toMatchObject({ id: "fornecedor-novo" });
+      // 3) a proposta volta para a tela (quem grava é o Salvar do formulário; a Cris não grava: AQ-T6)
+      expect(r).toMatchObject({ ok: true, proposta });
+      expect(lidosDaProposta(proposta.valores, papeis)).toMatchObject({ tipo: "PJ", nome: "Cimentos Exemplo Ltda", doc: "11.222.333/0001-81", papeis: ["Fornecedor"] });
+    } finally {
+      simulado.proposta = null;
+    }
   });
 });
