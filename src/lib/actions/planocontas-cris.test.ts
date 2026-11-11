@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeAll, afterAll } from "vitest";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 /** Prompt G2 — criar as contas propostas: valida de novo, cria as boas, devolve o motivo das outras. */
 const HAS_DB = !!process.env.DATABASE_URL;
@@ -32,7 +32,7 @@ describe.skipIf(!HAS_DB)("Prompt G2 — criarContasPropostas", async () => {
     ]);
     expect(r).toMatchObject({ ok: true, criadas: ["1.2"] });
     if (r.ok) expect(r.recusadas.map((x) => x.code)).toEqual(["1.1", "Z.1"]);
-    const [c] = await db.select().from(schema.chartAccounts).where(eq(schema.chartAccounts.code, "1.2"));
+    const [c] = await db.select().from(schema.chartAccounts).where(and(eq(schema.chartAccounts.tenantId, tenantId), eq(schema.chartAccounts.code, "1.2")));
     expect(c).toMatchObject({ groupName: "Preliminares", kind: "cef", dreCategory: "Custo Fixo", tenantId });
     const log = await db.select().from(schema.auditLog).where(eq(schema.auditLog.tenantId, tenantId));
     expect(log.some((l) => JSON.stringify(l.meta).includes("assistente"))).toBe(true);

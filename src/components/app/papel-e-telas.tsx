@@ -19,7 +19,7 @@ export function PapelETelas({ papeis, sugestoes, padrao = "membro" }: { papeis: 
   const sugeridasDe = (p: string) => new Set((sugestoes[p] ?? []).filter((t) => t.sugerida).map((t) => t.id));
   const [marcadas, setMarcadas] = useState<Set<string>>(() => sugeridasDe(padrao));
   const [crisMsg, setCrisMsg] = useState<string | null>(null);
-  const telas = sugestoes[papel] ?? [];
+  const telas = useMemo(() => sugestoes[papel] ?? [], [sugestoes, papel]);
   const porModulo = useMemo(() => {
     const m = new Map<string, TelaSugerida[]>();
     for (const t of telas) m.set(t.modulo, [...(m.get(t.modulo) ?? []), t]);
