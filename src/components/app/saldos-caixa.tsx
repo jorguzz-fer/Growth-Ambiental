@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { brl0 } from "@/lib/utils";
 import { LIMITE_ATUALIZACAO_DIAS } from "@/lib/calc/cadeia-caixa";
 import type { SaldoDoCartao } from "@/lib/caixa-cartoes";
+import { seloDoOpenFinance } from "@/lib/openfinance/selo";
 
 export interface SaldoDaConta {
   id: string;
@@ -36,7 +37,7 @@ export interface FiltroDeConta {
  * saldo em conta foi obtido (1.0.1), alerta quando está velho (1.0.2),
  * importar extrato em destaque (1.0.3) e o caminho do Open Finance (1.0.4).
  */
-export function SaldosCaixa({ contas, total, importar, openFinance, totalAjustes, baixadoSemConciliar, cartoes, filtro, faixaDeAcao, ocultarAcoes }: { contas: SaldoDaConta[]; total: { emConta: number; conciliado: number }; importar: React.ReactNode; openFinance: { configurado: boolean; podeConfigurar: boolean }; totalAjustes?: { valor: number; n: number }; baixadoSemConciliar?: { total: number; despesas: number; dias: number | null }; /** Prompt AT §4.2 — cartões, depois das contas, no mesmo formato. */ cartoes?: SaldoDoCartao[]; filtro?: FiltroDeConta; /** Prompt AT §8.1 — a faixa de ação no topo do bloco (Caixa por conta). */ faixaDeAcao?: React.ReactNode; /** Com a faixa de ação, os botões de importar e Open Finance moram nela. */ ocultarAcoes?: boolean }) {
+export function SaldosCaixa({ contas, total, importar, openFinance, totalAjustes, baixadoSemConciliar, cartoes, filtro, faixaDeAcao, ocultarAcoes }: { contas: SaldoDaConta[]; total: { emConta: number; conciliado: number }; importar: React.ReactNode; openFinance: { configurado: boolean; podeConfigurar: boolean; contasConectadas?: number }; totalAjustes?: { valor: number; n: number }; baixadoSemConciliar?: { total: number; despesas: number; dias: number | null }; /** Prompt AT §4.2 — cartões, depois das contas, no mesmo formato. */ cartoes?: SaldoDoCartao[]; filtro?: FiltroDeConta; /** Prompt AT §8.1 — a faixa de ação no topo do bloco (Caixa por conta). */ faixaDeAcao?: React.ReactNode; /** Com a faixa de ação, os botões de importar e Open Finance moram nela. */ ocultarAcoes?: boolean }) {
   const diferencaTotal = Math.round((total.emConta - total.conciliado) * 100) / 100;
   return (
     <Card className="mb-6">
@@ -51,13 +52,17 @@ export function SaldosCaixa({ contas, total, importar, openFinance, totalAjustes
           </div>
           {!ocultarAcoes && <div className="flex flex-wrap items-center gap-2">
             {importar}
-            {openFinance.podeConfigurar ? (
-              <Link href="/contas" className="text-[12px] text-[var(--color-accent2)] hover:underline" title="Informe o ID Open Finance da conta em Contas Correntes">
-                Open Finance {openFinance.configurado ? "ativo" : "não configurado"} → configurar
-              </Link>
-            ) : (
-              <Badge tone={openFinance.configurado ? "success" : "neutral"}>Open Finance {openFinance.configurado ? "ativo" : "não configurado"}</Badge>
-            )}
+            {/* Prompt AT §1-B.9 — o selo diz a verdade: "disponível" sem conexão, "N contas conectadas" com; nada sem configuração. */}
+            {openFinance.configurado &&
+              (openFinance.podeConfigurar ? (
+                <Link href="/contas" className="text-[12px] text-[var(--color-accent2)] hover:underline" data-selo-openfinance>
+                  {seloDoOpenFinance(true, openFinance.contasConectadas ?? 0)} → {openFinance.contasConectadas ? "ver conexões" : "conectar"}
+                </Link>
+              ) : (
+                <Badge tone={openFinance.contasConectadas ? "success" : "neutral"} data-selo-openfinance>
+                  {seloDoOpenFinance(true, openFinance.contasConectadas ?? 0)}
+                </Badge>
+              ))}
           </div>}
         </div>
         <div className="overflow-x-auto">

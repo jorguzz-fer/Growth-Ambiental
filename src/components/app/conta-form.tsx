@@ -78,10 +78,7 @@ export function ContaForm() {
               <option value="auto">Automático (quando conectado)</option>
             </Select>
           </div>
-          <div>
-            <Label>ID Open Finance (opcional)</Label>
-            <Input name="openFinanceId" placeholder="" />
-          </div>
+          {/* Prompt AT §1-B: conectar não é mais digitar um ID — é o botão "Conectar banco", no topo desta tela. */}
           {aviso && (
             <p className="col-span-2 rounded-[8px] border border-[var(--color-warning)]/40 bg-[#fef3c7]/60 px-3 py-2 text-[12.5px] text-[#92400e] sm:col-span-4" role="status">
               {aviso} Pode cadastrar mesmo assim (ex.: conta em abertura).

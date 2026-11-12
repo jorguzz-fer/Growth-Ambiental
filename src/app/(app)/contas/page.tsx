@@ -5,6 +5,9 @@ import { AssistenteContas } from "@/components/app/assistente-contas";
 import { hojeISO } from "@/lib/despesa-status";
 import { can } from "@/lib/permissions";
 import { isPluggyConfigured } from "@/lib/openfinance/pluggy";
+import { openFinanceDaEmpresa } from "@/lib/openfinance/situacao";
+import { ConectarBanco, ConexoesOpenFinance } from "@/components/app/open-finance";
+import { getCartoes } from "@/lib/queries";
 import { totaisPorTipo } from "@/lib/contas-regras";
 import { brl0 } from "@/lib/utils";
 import { PageHeader } from "@/components/app/page-header";
@@ -41,13 +44,32 @@ export default async function ContasPage() {
   const total = ativas.reduce((a, c) => a + Number(c.saldo), 0);
   const porTipo = totaisPorTipo(contas);
   const ofConfigured = isPluggyConfigured();
+  // Prompt AT §1-B — conexões do Open Finance: o selo diz a verdade (1-B.9) e cada conta mostra a situação (1-B.8).
+  const [of, cartoes] = await Promise.all([openFinanceDaEmpresa(ctx.tenant.id), getCartoes(ctx.tenant.id)]);
+  const opcoesContas = contas.filter((c) => c.ativo).map((c) => ({ id: c.id, nome: `${c.banco}${c.cc ? " · " + c.cc : ""}` }));
+  const opcoesCartoes = cartoes.filter((k) => k.ativo).map((k) => ({ id: k.id, nome: `${k.apelido}${k.ultimos4 ? " •••• " + k.ultimos4 : ""}` }));
 
   return (
     <>
       <PageHeader
         title="Contas Correntes"
         subtitle={`${ativas.length} conta(s) ativa(s)${contas.length !== ativas.length ? ` · ${contas.length - ativas.length} inativa(s)` : ""} · saldo total ${brl0(total)} (só ativas)`}
-        actions={<Badge tone={ofConfigured ? "success" : "neutral"}>Open Finance {ofConfigured ? "ativo" : "não configurado"}</Badge>}
+        actions={
+          ofConfigured ? (
+            <div className="flex items-center gap-2">
+              {of.selo && <Badge tone={of.contasConectadas ? "success" : "neutral"} data-selo-openfinance>{of.selo}</Badge>}
+              {canEditar && <ConectarBanco contas={opcoesContas} cartoes={opcoesCartoes} />}
+            </div>
+          ) : null
+        }
+      />
+      <ConexoesOpenFinance
+        conexoes={of.conexoes}
+        contas={opcoesContas}
+        cartoes={opcoesCartoes}
+        podeEditar={canEditar}
+        podeDecidir={can(ctx.perms, "caixa", "editar")}
+        duplicados={of.possiveisDuplicados.map((d) => ({ id: d.id, conta: opcoesContas.find((c) => c.id === d.bankAccountId)?.nome ?? "conta", data: d.data, descricao: d.descricao, valor: d.valor }))}
       />
 
       {/* 1.1 — o que entra aqui; 1.2 — o texto antigo (Open Finance / manual) preservado. */}
@@ -93,6 +115,10 @@ export default async function ContasPage() {
               saldoSource: c.saldoSource,
               openFinanceId: c.openFinanceId,
               ativo: c.ativo,
+              conexao: (() => {
+                const x = of.porConta.get(c.id);
+                return x ? { situacao: x.situacao, ultimaAtualizacao: x.ultimaAtualizacao, erro: x.ultimoErro } : null;
+              })(),
             }))}
             canEditar={canEditar}
             canExcluir={canExcluir}

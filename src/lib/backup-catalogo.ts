@@ -133,6 +133,10 @@ export const FORA_DO_PACOTE: readonly { tabela: string; grupo: string; motivo: s
   { tabela: "tenant_flag", grupo: "Configuração", motivo: "chaves de mudança ligadas ou desligadas — configuração, não lançamento" },
   { tabela: "ia_uso", grupo: "Consumo", motivo: "registro de uso do assistente de IA — consumo, não lançamento" },
   { tabela: "backup_pacote", grupo: "Backup", motivo: "registro dos próprios pacotes gerados — não é lançamento" },
+  { tabela: "openfinance_item", grupo: "Open Finance", motivo: "conexão com o banco pela Pluggy — configuração, não lançamento; os movimentos que ela trouxe vão em cash_entry e extrato_cartao" },
+  { tabela: "openfinance_conta", grupo: "Open Finance", motivo: "associação das contas do banco conectado — configuração, não lançamento" },
+  { tabela: "openfinance_evento", grupo: "Open Finance", motivo: "avisos técnicos recebidos da Pluggy — registro de integração, não lançamento" },
+  { tabela: "openfinance_possivel_duplicado", grupo: "Open Finance", motivo: "fila de transações do banco aguardando decisão — ainda não é lançamento" },
 ];
 
 export const ehMovimento = (t: TabelaDoPacote) => t.recorte.tipo !== "cadastro";

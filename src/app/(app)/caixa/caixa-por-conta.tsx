@@ -10,6 +10,7 @@ import { SaldosCaixa } from "@/components/app/saldos-caixa";
 import { hojeISO as hojeDoServidor } from "@/lib/despesa-status";
 import { getBankAccounts, getBaixadoSemConciliar, getConciliacaoData, getContasPagar, getContasReceber, getReceivables, getAutoresDosAjustes } from "@/lib/queries";
 import { isPluggyConfigured } from "@/lib/openfinance/pluggy";
+import { openFinanceDaEmpresa } from "@/lib/openfinance/situacao";
 import { isAiConfigured } from "@/lib/ai/despesa-extract";
 import { can } from "@/lib/permissions";
 import { brl0, dateInRange } from "@/lib/utils";
@@ -59,7 +60,7 @@ export async function CaixaPorConta({ ctx, sp, avisoRemovida, diasFechados }: { 
   const hoje = hojeDoServidor();
   const aiConfigured = isAiConfigured();
 
-  const [contas, cartoes, empresa, conciliacaoDaEmpresa, baixado, contasPagarDoTenant, contasReceberAbertas, recebiveisDasVendas] = await Promise.all([
+  const [contas, cartoes, empresa, conciliacaoDaEmpresa, baixado, contasPagarDoTenant, contasReceberAbertas, recebiveisDasVendas, of] = await Promise.all([
     getBankAccounts(ctx.tenant.id),
     saldosDosCartoes(ctx.tenant.id, hoje),
     cadeiaDaEmpresa(ctx.tenant.id, { hojeISO: hoje }),
@@ -68,6 +69,7 @@ export async function CaixaPorConta({ ctx, sp, avisoRemovida, diasFechados }: { 
     getContasPagar(ctx.tenant.id),
     getContasReceber(ctx.tenant.id),
     getReceivables(ctx.tenant.id),
+    openFinanceDaEmpresa(ctx.tenant.id),
   ]);
   // 4.3 — a conta (ou o cartão) escolhida; um id que não é da empresa é ignorado.
   const contaSel = contas.find((c) => c.id === sp.conta) ?? null;
@@ -103,7 +105,7 @@ export async function CaixaPorConta({ ctx, sp, avisoRemovida, diasFechados }: { 
       origem: (c.saldoSource === "auto" ? "auto" : "manual") as "auto" | "manual",
       atualizadoEm,
       diasDesde: diasDesdeAtualizacao(atualizadoEm, hoje),
-      conectada: !!c.openFinanceId,
+      conectada: of.porConta.get(c.id)?.situacao === "conectado",
       pendentes: pendentesPorConta.get(c.id) ?? 0,
     };
   });
@@ -223,7 +225,7 @@ export async function CaixaPorConta({ ctx, sp, avisoRemovida, diasFechados }: { 
             cartoes={cartoes}
             total={{ emConta: saldoTotal, conciliado: cadeiaEmpresa.dias.find((d) => d.dia === hoje)?.conciliado.final ?? saldoTotal }}
             importar={importar}
-            openFinance={{ configurado: isPluggyConfigured(), podeConfigurar: can(ctx.perms, "contas", "editar") }}
+            openFinance={{ configurado: isPluggyConfigured(), podeConfigurar: can(ctx.perms, "contas", "editar"), contasConectadas: of.contasConectadas }}
             totalAjustes={totalAjustes}
             baixadoSemConciliar={baixadoComDias}
             filtro={{ selecionada: filtroId, href: (id) => urlDoCaixa({ ...params, conta: id }), todas: urlDoCaixa({ ...params, conta: "" }) }}

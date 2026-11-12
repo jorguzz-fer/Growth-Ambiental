@@ -802,6 +802,8 @@ export const extratoCartao = pgTable("extrato_cartao", {
   conciliadoEm: timestamp("conciliado_em"),
   /** Prompt AT §1-B.6 — id da transação no Open Finance; único por cartão. */
   externalId: text("external_id"),
+  /** Prompt AT §1-B.6 — alterada ou removida pelo banco depois de entrar: revisão. */
+  revisaoBanco: text("revisao_banco"),
 }, (r) => [uniqueIndex("extrato_cartao_externo_uq").on(r.cartaoId, r.externalId).where(sql`${r.externalId} is not null`)]);
 
 /**
@@ -1522,6 +1524,8 @@ export const cashEntries = pgTable("cash_entry", {
    * quando preenchido: a mesma transação sincronizada de novo não entra duas vezes.
    */
   externalId: text("external_id"),
+  /** Prompt AT §1-B.6 — o banco alterou ("alterada") ou removeu ("removida") a transação depois de ela entrar: revisão. */
+  revisaoBanco: text("revisao_banco"),
 }, (r) => [uniqueIndex("cash_entry_conta_externo_uq").on(r.bankAccountId, r.externalId).where(sql`${r.externalId} is not null`)]);
 
 /**
@@ -2274,3 +2278,93 @@ export const backupPacotes = pgTable(
   },
   (t) => [index("backup_pacote_tenant_idx").on(t.tenantId, t.createdAt)],
 );
+
+// ─────────────────────── Open Finance (Prompt AT §1-B) ───────────────────────
+
+/** A conexão do cliente com um banco pela Pluggy (um "item"). */
+export const openfinanceItens = pgTable(
+  "openfinance_item",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    itemId: text("item_id").notNull(),
+    banco: text("banco"),
+    /** conectado | atualizando | precisa_acao | erro | desconectado */
+    situacao: text("situacao").notNull().default("atualizando"),
+    ultimaAtualizacao: timestamp("ultima_atualizacao"),
+    ultimoErro: text("ultimo_erro"),
+    consentimentoExpiraEm: timestamp("consentimento_expira_em"),
+    conectadoPor: text("conectado_por"),
+    conectadoEm: timestamp("conectado_em").notNull().defaultNow(),
+    desconectadoEm: timestamp("desconectado_em"),
+    desconectadoPor: text("desconectado_por"),
+    primeiraSincronizacaoEm: timestamp("primeira_sincronizacao_em"),
+  },
+  (t) => [uniqueIndex("openfinance_item_item_uq").on(t.itemId)],
+);
+
+/** Cada conta ou cartão do banco conectado e a associação no app. */
+export const openfinanceContas = pgTable(
+  "openfinance_conta",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    itemId: text("item_id").notNull(),
+    pluggyAccountId: text("pluggy_account_id").notNull(),
+    /** BANK | CREDIT */
+    tipo: text("tipo").notNull(),
+    nome: text("nome"),
+    numero: text("numero"),
+    bankAccountId: uuid("bank_account_id").references(() => bankAccounts.id, { onDelete: "set null" }),
+    cartaoId: uuid("cartao_id").references(() => cartoesCredito.id, { onDelete: "set null" }),
+    ignorada: boolean("ignorada").notNull().default(false),
+    associadaPor: text("associada_por"),
+    associadaEm: timestamp("associada_em"),
+  },
+  (t) => [uniqueIndex("openfinance_conta_pluggy_uq").on(t.pluggyAccountId)],
+);
+
+/** Avisos recebidos pelo webhook; únicos pelo eventId (idempotência). */
+export const openfinanceEventos = pgTable(
+  "openfinance_evento",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    eventId: text("event_id").notNull(),
+    evento: text("evento").notNull(),
+    itemId: text("item_id"),
+    tenantId: uuid("tenant_id").references(() => tenants.id, { onDelete: "cascade" }),
+    payload: jsonb("payload"),
+    recebidoEm: timestamp("recebido_em").notNull().defaultNow(),
+    processadoEm: timestamp("processado_em"),
+    erro: text("erro"),
+  },
+  (t) => [uniqueIndex("openfinance_evento_event_uq").on(t.eventId)],
+);
+
+/** Primeira sincronização: transação igual a um movimento já importado espera a decisão. */
+export const openfinancePossiveisDuplicados = pgTable(
+  "openfinance_possivel_duplicado",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    bankAccountId: uuid("bank_account_id").references(() => bankAccounts.id, { onDelete: "cascade" }),
+    externalId: text("external_id").notNull(),
+    data: text("data"),
+    descricao: text("descricao"),
+    valor: numeric("valor", { precision: 15, scale: 2 }).notNull(),
+    existenteId: uuid("existente_id").references(() => cashEntries.id, { onDelete: "set null" }),
+    criadoEm: timestamp("criado_em").notNull().defaultNow(),
+    /** null = aguardando; "mesmo" = é o movimento já importado; "importar" = entra como novo. */
+    decisao: text("decisao"),
+    decididoPor: text("decidido_por"),
+    decididoEm: timestamp("decidido_em"),
+  },
+  (t) => [uniqueIndex("openfinance_dup_conta_externo_uq").on(t.bankAccountId, t.externalId)],
+);
+

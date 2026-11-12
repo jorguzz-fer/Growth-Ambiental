@@ -185,3 +185,65 @@ DATABASE_URL=postgres://... npx tsx scripts/medicao-at-receita-dobrada.ts > medi
 | Parcial e estorno | Duas entradas quitam a parcela; valor acima do saldo é recusado; estorno com motivo devolve a pendência |
 | BAT-6 | Com a chave, o recebido sai do previsto do Fluxo no mês da parcela; desligada, nada muda |
 | §3 | Movimento sem obra conciliado com parcela vai para a obra da unidade |
+
+---
+
+# Seção 1-B · O cliente conecta o Open Finance pela tela
+
+Detalhe para quem opera e para quem configura: `docs/OPENFINANCE-CONEXAO.md`.
+
+## O que mudou
+
+- **Migração 0076** (aditiva, com `down/`): `openfinance_item` (a conexão e a
+  situação), `openfinance_conta` (cada conta do banco e a associação),
+  `openfinance_evento` (avisos, únicos pelo `eventId`),
+  `openfinance_possivel_duplicado` e a coluna `revisao_banco` em `cash_entry`
+  e `extrato_cartao`. A 0074 já tinha criado `extrato_cartao.external_id` e
+  `cartao_credito.open_finance_id`.
+- **1-B.1 / 1-B.2:** botão **Conectar banco** em Contas Correntes e em Cartões
+  (Contas/editar), com o aviso de consentimento antes da janela da Pluggy. O
+  campo "ID Open Finance" do cadastro de conta saiu.
+- **1-B.3 / 1-B.4:** a conexão é guardada; as contas do banco são associadas
+  a conta corrente, cartão, conta nova ou ignoradas. Item de outra empresa é
+  recusado.
+- **1-B.5:** `/api/openfinance/webhook`, com cabeçalho secreto, responde na
+  hora e processa depois, idempotente pelo `eventId`.
+- **1-B.6:** as regras de gravação (conta, cartão, saldo, alterada, removida,
+  possível duplicado), num só módulo (`src/lib/openfinance/sincronizar.ts`).
+- **1-B.7:** `/api/openfinance/sync`, para o agendador do Coolify, com o mesmo
+  código.
+- **1-B.8 / 1-B.9:** situação em Contas Correntes (por conta), em Cartões e
+  no Caixa; Reconectar, Atualizar agora, Desconectar; o selo diz a verdade.
+- **1-B.10:** `PLUGGY_ENV` (sandbox ou produção). Nenhum teste chama a Pluggy.
+- Pacote novo: `pluggy-connect-sdk` 2.14.2 (o widget oficial). O `npm audit`
+  é o mesmo antes e depois (nenhuma vulnerabilidade nova).
+
+## Onde a documentação da Pluggy foi conferida
+
+A documentação web (`docs.pluggy.ai`) não abre a partir desta sessão. Os
+endpoints, campos, situações e avisos foram conferidos no **SDK oficial** da
+Pluggy no npm (`pluggy-sdk` 0.94.2) e no `pluggy-connect-sdk`. A regra do
+sinal usa o **tipo** da transação (DEBIT/CREDIT), que o SDK declara, e não o
+sinal do valor, que o SDK não documenta.
+
+## Decisões provisórias
+
+| Bloqueio | O que foi feito |
+| --- | --- |
+| BAT-9 (contrato da Pluggy) | Em aberto. O código usa as credenciais do servidor e funciona com um contrato só ou com um por cliente |
+| BAT-10 (histórico na primeira conexão) | Proposta do revisor: desde o dia seguinte ao último dia fechado, até 90 dias |
+
+## Testes (`src/lib/openfinance/openfinance.test.ts`, com a Pluggy simulada)
+
+| Teste | O que confere |
+| --- | --- |
+| AT-T20 | Webhook com o cabeçalho secreto errado, ou sem ele → 401, nada gravado |
+| AT-T21 | O mesmo `transactions/created` duas vezes → os movimentos entram uma vez |
+| AT-T22 | `transactions/updated` num movimento conciliado → não muda e vai para revisão; não conciliado → atualiza |
+| AT-T23 | Primeira sincronização com um movimento igual a um importado → não entra; "possível duplicado"; decidir "é o mesmo" não cria nada novo |
+| AT-T24 | Transação de cartão → `extrato_cartao` do cartão, nunca `cash_entry` |
+| AT-T25 | `item/waiting_user_action` → "precisa de ação"; reabrir usa o mesmo item |
+| Outros | Token, registro, associação (tipo trocado recusado), item de outra empresa recusado, removida pelo banco, sincronização diária com segredo, desconectar mantém tudo |
+
+**Pendente do relatório 1-B:** o vídeo do sandbox, que depende das credenciais
+da Pluggy.
