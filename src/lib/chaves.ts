@@ -101,6 +101,14 @@ export const CHAVES = [
     origem: "Prompt Q2 (Fase 3, BQ2-1)",
     previa: { href: "/chaves#previa-incc", rotulo: "Prévia — obras cuja série difere da série da empresa" },
   },
+  {
+    id: "plano_definicao_nova",
+    titulo: "Plano de pagamento pela definição nova (caixa)",
+    efeito:
+      "Nos recebíveis das vendas (Contas a Receber, Fluxo de Caixa, Caixa, \"A receber\" do Dashboard e Projeção): só contam as seções do plano com a caixinha \"Usar\" marcada; o financiamento do banco sai (o dinheiro chega como liberação de obra); a permuta do plano sai (não é dinheiro). Na Projeção, o subsídio ainda não recebido entra como previsto. O INCC continua só na Projeção. Nada é gravado. Antes de ligar, confira na prévia as unidades com seção preenchida e caixinha desmarcada: elas perdem essas parcelas até a caixinha ser marcada na tela de Unidades.",
+    origem: "Prompt AR, Fase 2 (BAR-1 a BAR-5, decisões de 11/11/2026)",
+    previa: { href: "/chaves#previa-plano", rotulo: "Prévia — recebíveis de hoje × definição nova, e as unidades a conferir" },
+  },
 ] as const satisfies readonly Chave[];
 
 export type ChaveId = (typeof CHAVES)[number]["id"];

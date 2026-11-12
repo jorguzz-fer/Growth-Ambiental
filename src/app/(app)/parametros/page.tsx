@@ -8,6 +8,7 @@ import { SERIE_DA_EMPRESA } from "@/lib/incc-empresa";
 import { InccEmpresaCard } from "@/components/app/incc-empresa-card";
 import { CrisDaTela } from "@/components/app/cris-contexto";
 import { expandUnitReceivables } from "@/lib/calc/receivables";
+import { chaveLigada } from "@/lib/chaves-tenant";
 import { analisarIncc, mesDaData } from "@/lib/incc-analise";
 import { ordDeHoje } from "@/lib/incc-regras";
 import { AssistenteIncc } from "@/components/app/assistente-incc";
@@ -47,12 +48,13 @@ export default async function ParametrosPage({
   // cobertura (vencimentos das vendas da versão Atual e janela da obra).
   // Prompt Q2: na série da empresa, a cobertura junta todas as obras.
   const obras = project ? [project] : ctx.projects;
+  const planoNovo = await chaveLigada(ctx.tenant.id, "plano_definicao_nova");
   const mesesComVencimento = (
     await Promise.all(
       obras.map(async (p) => {
         const atual = await getAtualVersion(ctx.tenant.id, p.id);
         const unidades = atual ? await getUnits(ctx.tenant.id, atual.id) : [];
-        return unidades.flatMap((u) => expandUnitReceivables(u.paymentPlan, u.status).map((r) => mesDaData(r.dia)));
+        return unidades.flatMap((u) => expandUnitReceivables(u.paymentPlan, u.status, { definicaoNova: planoNovo }).map((r) => mesDaData(r.dia)));
       }),
     )
   )

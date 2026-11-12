@@ -1074,8 +1074,10 @@ export async function getReceivables(tenantId: string, projectId?: string): Prom
     );
 
   const out: ReceivableRow[] = [];
+  // Chave `plano_definicao_nova` (Prompt AR, Fase 2): regras das BAR-1 a BAR-4.
+  const definicaoNova = await chaveLigada(tenantId, "plano_definicao_nova");
   for (const r of rows) {
-    const recs = expandUnitReceivables(r.u.paymentPlan, r.u.status);
+    const recs = expandUnitReceivables(r.u.paymentPlan, r.u.status, { definicaoNova });
     for (let i = 0; i < recs.length; i++) {
       const rec = recs[i];
       out.push({
@@ -2682,7 +2684,7 @@ export async function getMonthlyRevenue(
   }
 
   // As três leituras da Atual em paralelo (antes, contas a receber esperava as outras duas).
-  const [unitRows, reembRows, crRows] = await Promise.all([
+  const [unitRows, reembRows, crRows, planoNovo] = await Promise.all([
     getUnits(versao?.tenantId ?? "", versionId),
     getReembolsos(versao?.tenantId ?? "", versionId),
     db
@@ -2697,6 +2699,7 @@ export async function getMonthlyRevenue(
           eq(schema.contasReceber.cancelado, false),
         ),
       ),
+    versao?.tenantId ? chaveLigada(versao.tenantId, "plano_definicao_nova") : Promise.resolve(false),
   ]);
   const out: MonthlyProjection = {};
   // Receita da versão Atual = recebíveis das vendas (MESMA fonte da tela Contas
@@ -2704,7 +2707,7 @@ export async function getMonthlyRevenue(
   // das flags usar*). Assim DRE e Fluxo batem com os recebíveis exibidos.
   // Agrega por mês do vencimento ("MM/DD/YYYY" → "MM/YYYY").
   for (const r of unitRows) {
-    for (const rec of expandUnitReceivables(r.paymentPlan, r.status)) {
+    for (const rec of expandUnitReceivables(r.paymentPlan, r.status, { definicaoNova: planoNovo })) {
       const p = rec.dia.split("/");
       if (p.length !== 3) continue;
       const mk = bucket ? bucket(rec.dia) : `${p[0]}/${p[2]}`;
@@ -2997,13 +3000,14 @@ export async function getRevenueBySource(
     return { sources, reemb };
   }
 
-  const [unitRows, reembRows, incc] = await Promise.all([
+  const [unitRows, reembRows, incc, planoNovo] = await Promise.all([
     getUnits(versao?.tenantId ?? "", versionId),
     getReembolsos(versao?.tenantId ?? "", versionId),
     getInccRows(versao?.tenantId ?? "", projectId),
+    versao?.tenantId ? chaveLigada(versao.tenantId, "plano_definicao_nova") : Promise.resolve(false),
   ]);
   for (const u of unitRows) {
-    const bs = calcProjectionBySource(toCalcUnit(u), incc);
+    const bs = calcProjectionBySource(toCalcUnit(u), incc, { definicaoNova: planoNovo });
     for (const s of PROJECTION_SOURCES)
       for (const [mm, v] of Object.entries(bs[s]))
         sources[s][mm] = (sources[s][mm] || 0) + v;

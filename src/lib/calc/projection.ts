@@ -80,6 +80,12 @@ export type ProjectionSource = (typeof PROJECTION_SOURCES)[number];
 export function calcProjectionBySource(
   u: CalcUnit,
   incc: readonly InccRow[] = [],
+  /**
+   * Chave `plano_definicao_nova` (Revisão 4): BAR-2, o subsídio ainda não
+   * conciliado entra como previsto (antes, só "Recebido"); BAR-4, a permuta do
+   * plano sai (não é dinheiro). O INCC continua só aqui (BAR-5).
+   */
+  opts: { definicaoNova?: boolean } = {},
 ): Record<ProjectionSource, MonthlyProjection> {
   const out = {
     "AS/Sinais": {},
@@ -100,7 +106,8 @@ export function calcProjectionBySource(
   for (const p of lerPlano(u, u.status)) {
     if (!p.ligada || !(p.valorBase > 0) || !p.mes) continue;
     if (p.origem === "Banco") continue;
-    if (p.origem === "Subsidio" && p.situacao !== "Recebido") continue;
+    if (p.origem === "Subsidio" && p.situacao !== "Recebido" && !opts.definicaoNova) continue;
+    if (p.origem === "Permuta" && opts.definicaoNova) continue;
     const fonte = FONTE_DA_ORIGEM[p.origem];
     const v = p.periodica
       ? Math.round(p.valorBase * (1 + (p.numero >= INCC_FROM_INSTALLMENT ? getIncc(incc, p.mes) : 0) / 100) * 100) / 100
