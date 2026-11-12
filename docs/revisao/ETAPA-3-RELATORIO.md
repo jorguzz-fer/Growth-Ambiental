@@ -77,8 +77,8 @@ A tela de Clientes não declara formulário para a Cris, então ela não preench
 a ficha. Mas um documento anexado ali vai inteiro ao modelo. A frase da linha
 ~28 foi corrigida para dizer isso.
 
-**Decisão sua, se quiser:** bloquear o anexo na tela de Clientes (e em
-Funcionários). Hoje não há bloqueio. É o item 5 da bateria de anexos.
+**Decisão do dono (12/11/2026):** deixa como está. Clientes e Funcionários
+continuam aceitando anexo na Cris.
 
 ## §2 · Permissão da Cris pelo item do menu (C4)
 

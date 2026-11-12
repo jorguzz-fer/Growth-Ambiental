@@ -228,7 +228,7 @@ Estas decisões valem como requisito. Não reabrir.
 | Código | Prompt | Pergunta | Proposta do revisor |
 | --- | --- | --- | --- |
 | BAQ-1 | AQ | `perguntarAoAssistente` e `interpretarPergunta` são chamados por alguma rota do agente? | Resposta do código; não apagar se forem |
-| BAQ-2 | AQ | A tela de Clientes aceita anexo para a Cris? | Resposta do código |
+| BAQ-2 | AQ | A tela de Clientes aceita anexo para a Cris? | Resposta do código: aceita. **Decidido (12/11): deixa como está** (Clientes e Funcionários continuam aceitando) |
 | BAR-1 | AR | Seção do plano preenchida e com a chave `usar*` desligada conta? | **Decidido (11/11): não conta; só a seção com a caixinha marcada.** Atrás de chave, com lista de conferência antes (ver `docs/AR-MEDICAO.md`) |
 | BAR-2 | AR | Subsídio pendente entra na projeção? | **Decidido (11/11): enquanto não conciliado, entra como previsto** |
 | BAR-3 | AR | Financiamento entra em todas as leituras? | **Decidido (11/11): não entra como recebível; chega como liberação de obra** |
@@ -242,19 +242,19 @@ Estas decisões valem como requisito. Não reabrir.
 | BAT-3 | AT | Ajuste de caixa: obra opcional ou sempre da empresa? | — |
 | BAT-4 | AT | Contas a receber criadas do extrato que dobraram a receita: um a um ou por regra? | Depois da medição |
 | BAT-5 | AT | Plano editado depois de recebimento: recebimento vira "sem parcela" para revisão? | Sim |
-| BAT-6 | AT | Parcela recebida sai do previsto e entra no realizado do Fluxo? | Depende de BAR-6 |
+| BAT-6 | AT | Parcela recebida sai do previsto e entra no realizado do Fluxo? | **Decidido (12/11): sim** |
 | BAT-7 | AT | Formulário de despesa no Caixa: painel lateral ou ir para Despesas? | Painel lateral |
 | BAT-8 | AT | Limite do lote de conciliações? | 20 |
 | BAT-9 | AT | Titular do contrato Pluggy e custo por conexão | — |
 | BAT-10 | AT | Dias de histórico na primeira conexão | Desde o último dia fechado, até 90 dias |
-| **(11/11)** BAC-1 | Etapa 7 | Começar pelas despesas ou por todos os módulos? | Despesas primeiro, agrupando por obra e por categoria da DRE: é o que o caso da reunião (C20) pede |
+| **(11/11)** BAC-1 | Etapa 7 | Começar pelas despesas ou por todos os módulos? | **Decidido (12/11): todos os módulos** |
 | **(11/11)** BVZ-1 | AV | Qual erro o ditado mostrou, em qual navegador e computador, e com qual frase? | Pedir ao Thiago um print ou a descrição; o prompt começa pela reprodução |
-| **(11/11)** BIA-1 | AU | Quantos níveis de Cris: dois (sem custo e ampliada) ou três (básica, intermediária e premium)? | Na reunião, o fechamento foi dois níveis, "pra simplificar" |
-| **(11/11)** BIA-2 | AU | O que a Cris sem custo faz e o que só o pacote ampliado faz? | Sem custo: tela, as quatro métricas, preenchimento e anexo. Ampliada: catálogo de leitura da Etapa 7 e análises livres. Depende da medição da Fase 1 |
-| **(11/11)** BIA-3 | AU | Unidade da cota mensal: reais de consumo, tokens ou número de perguntas? E o valor do pacote? | Reais de consumo (a pessoa entende), com o valor definido depois da Fase 1 |
-| **(11/11)** BIA-4 | AU | Ao esgotar a cota: bloqueia, volta para a Cris sem custo, ou oferece pacote de expansão comprado na hora? | Volta para a Cris sem custo e oferece o pacote. A compra na hora depende de meio de pagamento, que o sistema não tem |
-| **(11/11)** BIA-5 | AU | Chave de IA própria do cliente (BYOK: GPT, Claude ou outra)? | Não nesta rodada. Na reunião, ficou para clientes de customização |
-| **(11/11)** BIA-6 | AU | Empresa de demonstração com a Cris no nível máximo, para reuniões comerciais: onde e com que dados? | Empresa própria de demonstração em produção, só com dados fictícios, com cota fixa |
+| **(11/11)** BIA-1 | AU | Quantos níveis de Cris: dois (sem custo e ampliada) ou três (básica, intermediária e premium)? | **Adiado (12/11): por enquanto a plataforma arca com o custo, com a chave da Anthropic da própria plataforma; sem planos nem cota por empresa** |
+| **(11/11)** BIA-2 | AU | O que a Cris sem custo faz e o que só o pacote ampliado faz? | **Adiado (12/11): por enquanto a plataforma arca com o custo, com a chave da Anthropic da própria plataforma; sem planos nem cota por empresa** |
+| **(11/11)** BIA-3 | AU | Unidade da cota mensal: reais de consumo, tokens ou número de perguntas? E o valor do pacote? | **Adiado (12/11): por enquanto a plataforma arca com o custo, com a chave da Anthropic da própria plataforma; sem planos nem cota por empresa** |
+| **(11/11)** BIA-4 | AU | Ao esgotar a cota: bloqueia, volta para a Cris sem custo, ou oferece pacote de expansão comprado na hora? | **Adiado (12/11): por enquanto a plataforma arca com o custo, com a chave da Anthropic da própria plataforma; sem planos nem cota por empresa** |
+| **(11/11)** BIA-5 | AU | Chave de IA própria do cliente (BYOK: GPT, Claude ou outra)? | **Adiado (12/11): por enquanto a plataforma arca com o custo, com a chave da Anthropic da própria plataforma; sem planos nem cota por empresa** |
+| **(11/11)** BIA-6 | AU | Empresa de demonstração com a Cris no nível máximo, para reuniões comerciais: onde e com que dados? | **Adiado (12/11): por enquanto a plataforma arca com o custo, com a chave da Anthropic da própria plataforma; sem planos nem cota por empresa** |
 
 ---
 
