@@ -33,7 +33,16 @@ export const MAX_DADOS_DA_TELA = 12_000;
 export const MAX_CAMPOS = 60;
 /** Anexo: PDF ou imagem, até 4 MB (base64 ≈ 5,4 MB). */
 export const MAX_ANEXO_BYTES = 4 * 1024 * 1024;
-export const TIPOS_DE_ANEXO = ["application/pdf", "image/png", "image/jpeg", "image/webp", "image/gif"] as const;
+/**
+ * Prompt AT §8.3.1 — planilha de extrato (XLSX ou CSV): aceita como anexo, mas
+ * NÃO vai ao modelo. Só a ferramenta `ler_extrato` (tela do Caixa) a lê, no
+ * servidor, com o mesmo leitor do diálogo de importação.
+ */
+export const TIPOS_DE_PLANILHA = ["text/csv", "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"] as const;
+export const TIPOS_DE_ANEXO = ["application/pdf", "image/png", "image/jpeg", "image/webp", "image/gif", ...TIPOS_DE_PLANILHA] as const;
+export function ehPlanilha(tipo: string): boolean {
+  return (TIPOS_DE_PLANILHA as readonly string[]).includes(tipo);
+}
 export type TipoDeAnexo = (typeof TIPOS_DE_ANEXO)[number];
 /** Voltas de ferramenta por pergunta (consulta → resposta). */
 export const MAX_VOLTAS = 4;
@@ -72,6 +81,20 @@ export interface ContextoDeTela {
 export interface FalaDaCris {
   de: "usuario" | "cris";
   texto: string;
+}
+
+/** Prompt AT §8.3.4 — lote de conciliações proposto pela Cris; quem grava é o botão da tela. */
+export interface PropostaDeConciliacao {
+  itens: { movimento: string; ref: string; rotulo: string; tipo: string; descricaoDoMovimento: string; valor: number | null }[];
+  recusados: { movimento: string; ref: string; motivo: string }[];
+}
+
+/** Prompt AT §8.3.3 — o extrato lido por `ler_extrato`, para abrir o diálogo de importação já preenchido. */
+export interface PropostaDeImportacao {
+  nome: string;
+  linhas: { data: string; descricao: string; doc: string; valor: number }[];
+  saldoFinal: number | null;
+  contaSugerida: string | null;
 }
 
 export interface PropostaDePreenchimento {

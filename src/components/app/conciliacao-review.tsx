@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { conciliarMovimento, desfazerConciliacao, conciliarContaReceber, criarContaAPartirDoExtrato, conciliarParcelaDeVenda } from "@/lib/actions/caixa";
 import { conciliarPagamentoDeFatura } from "@/lib/actions/cartao-conciliacao";
+import { useCris } from "@/components/app/cris-contexto";
 import type { MovimentoPendente, MovimentoPendenteEntrada, MovimentoConciliado } from "@/lib/queries";
 import { brl0, dateBR } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
@@ -104,6 +105,19 @@ export function ConciliacaoReview({ pendentes, pendentesEntrada, conciliados, ca
         ))}
       </select>
     ) : null;
+  // Prompt AT §8.1 — "Perguntar à Cris": abre o chat já com o movimento; ela busca os candidatos do servidor.
+  const cris = useCris();
+  const perguntarACris = (m: { cashEntryId: string; data: string | null; descricao: string | null; valor: number }) =>
+    cris ? (
+      <button
+        type="button"
+        className="text-[12px] text-[var(--color-accent2)] hover:underline"
+        data-perguntar-cris={m.cashEntryId}
+        onClick={() => cris.perguntar(`Concilie o movimento ${m.cashEntryId}: ${m.data ? dateBR(m.data) : "sem data"} · ${m.descricao ?? "sem descrição"} · ${brl0(m.valor)}. Use os candidatos do servidor e me pergunte se tiver dúvida; se não houver par, diga o que falta lançar.`)}
+      >
+        Perguntar à Cris
+      </button>
+    ) : null;
   const desfazer = (c: MovimentoConciliado) => {
     const motivo = window.prompt("Motivo para desfazer a conciliação (fica na auditoria):", "");
     if (motivo === null) return;
@@ -195,6 +209,7 @@ export function ConciliacaoReview({ pendentes, pendentesEntrada, conciliados, ca
                 )}
                 <div className="mt-2 flex flex-wrap items-center gap-3">
                   {/* Prompt L, 3-A.2 / 7.2 — encaminhar: o lançamento acontece em Despesas, com os dados do extrato; o movimento fica reservado e é conciliado ao gravar. */}
+                  {perguntarACris(m)}
                   <Link href={linkParaLancar({ id: m.cashEntryId, data: m.data, descricao: m.descricao, valor: m.valor }, projectId).href} className="text-[12px] text-[var(--color-accent2)] hover:underline">
                     Lançar em Despesas com estes dados →
                   </Link>
@@ -261,6 +276,7 @@ export function ConciliacaoReview({ pendentes, pendentesEntrada, conciliados, ca
                 </div>
               )}
               <div className="mt-2 flex flex-wrap items-center gap-3">
+                {perguntarACris(m)}
                 <Link href={linkParaLancar({ id: m.cashEntryId, data: m.data, descricao: m.descricao, valor: m.valor }, projectId).href} className="text-[12px] text-[var(--color-accent2)] hover:underline">
                   Lançar em Contas a Receber com estes dados →
                 </Link>

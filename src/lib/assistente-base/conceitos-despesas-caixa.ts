@@ -61,7 +61,7 @@ Cada despesa tem três datas, e confundi-las é o erro mais caro do sistema:
   - **A exceção é o anexo:** o documento vai inteiro ao modelo, com tudo o que estiver escrito nele, inclusive nome, CPF ou endereço de uma pessoa. A Cris não usa nome de cliente nem de funcionário para preencher o formulário, mas o modelo lê o documento. Só anexe o que precisa ser lido.
   - **A conversa não é gravada.** O sistema registra só o consumo (quantas perguntas e quantos tokens, por empresa e pessoa), nunca o conteúdo.
   - Sem a permissão de ver a tela de origem, ela diz que não tem acesso.
-  - **Como mandar:** digite (Enter envia; Shift+Enter quebra a linha) ou cole. Texto colado com várias linhas, como uma tabela do Excel, chega como está. Um print ou arquivo colado, arrastado sobre o painel ou escolhido no 📎 vira o anexo da mensagem: PDF ou imagem (PNG, JPG, WEBP), até 4 MB. Um anexo novo troca o anterior, com aviso. A mensagem vai até 6.000 caracteres; o que passar disso fica de fora, e a tela avisa quantos.
+  - **Como mandar:** digite (Enter envia; Shift+Enter quebra a linha) ou cole. Texto colado com várias linhas, como uma tabela do Excel, chega como está. Um print ou arquivo colado, arrastado sobre o painel ou escolhido no 📎 vira o anexo da mensagem: PDF ou imagem (PNG, JPG, WEBP), até 4 MB; na tela do Caixa, também a planilha do extrato (XLSX ou CSV), que é lida no servidor e não vai ao modelo. Um anexo novo troca o anterior, com aviso. A mensagem vai até 6.000 caracteres; o que passar disso fica de fora, e a tela avisa quantos.
   - **Ditado (🎤):** o ditado é do navegador. No Chrome, no Edge e no Safari, o reconhecimento roda no serviço de fala do fabricante do navegador; o áudio não passa pelo servidor do Growth Construction e não vai ao modelo da Cris. O texto ditado entra no campo para a pessoa conferir e enviar. Se der erro, a mensagem aparece abaixo do campo (por exemplo, "Não ouvi nada" ou "O serviço de voz do navegador não respondeu"). No Firefox, o botão não aparece.
 - **Leitura de documentos por IA** (Despesas, Fornecedores, extrato em PDF escaneado): a IA **propõe** o preenchimento e marca com alerta o que faltou ou ficou em dúvida. **Nada é gravado** antes de a pessoa conferir e confirmar. Sem a chave de IA, os campos são preenchidos à mão e o anexo funciona normalmente.
 
@@ -241,6 +241,27 @@ Cada despesa tem três datas, e confundi-las é o erro mais caro do sistema:
 - **Desfazer conciliação**: preserva o movimento do extrato e desfaz só o vínculo.
 - Aba **Ajustes**: o único lançamento direto desta tela. Exige motivo, para mais ou para menos, e afeta só o saldo conciliado. É o último recurso.
 - Comparar 2 ou 3 versões (entradas, saídas e saldo líquido).
+
+**Com a chave "Caixa: conciliação por conta" ligada** (o Caixa vira "Conciliação de Caixa"):
+- Não há seletor de obra nem de versão, nem comparação de versões: a tela mostra a versão Atual de todas as obras.
+- Os **cartões de crédito** aparecem no bloco de saldos, depois das contas: fatura aberta, conciliado, pendentes e o último extrato.
+- **Cada conta ou cartão é clicável** e filtra a tela; "Todas as contas" volta ao consolidado. Cada linha mostra quantos movimentos faltam conciliar.
+- O extrato importado nasce **só com a conta**: a obra de cada movimento é a do item com que ele foi conciliado (despesa, conta a receber, parcela de venda ou pagamento de fatura). Movimento sem vínculo é da empresa e não entra no realizado de nenhuma obra.
+- No topo do bloco de saldos, os **três caminhos**: **Subir extrato** (o diálogo de importação), **Conciliar com a Cris** e **Open Finance** (conectado, conectar ou indisponível, com o motivo). Ao lado, o contador "N movimentos a conciliar em M contas · mais antigo há X dias".
+- **Cartão escolhido**: a aba Conciliação mostra as linhas do extrato da fatura, cada uma com a compra lançada no cartão sugerida; "Lançar despesa a partir desta linha" abre Despesas preenchida e, ao salvar, a linha fica conciliada. Cada fatura mostra total do extrato, conciliado e diferença. Crédito ou estorno segue o fluxo de estorno de Cartões.
+- **Pagamento da fatura**: a saída da conta corrente concilia com o pagamento da fatura (sugestão própria), sem saída nova.
+
+**Entrada do comprador (parcela de venda):** as entradas pendentes sugerem também as **parcelas de venda** em aberto (valor, data e o primeiro nome do comprador na descrição). "Conciliar com a parcela" grava o recebimento; parcial é permitido; não cria conta a receber e não muda a receita da DRE. Criar conta a receber a partir de uma entrada que parece parcela exige confirmar que não é a parcela, para a receita não contar duas vezes. Com a chave "Parcela do comprador: situação, atrasados e previsto do Fluxo" ligada, Contas a Receber mostra a situação de cada parcela (a vencer, recebida, parcial, vencida), a faixa do Caixa conta as vencidas não recebidas nos atrasados e o Fluxo tira do previsto a parte recebida.
+
+**Conciliar com a Cris (só nesta tela):**
+- Anexe o extrato na conversa (PDF, imagem, XLSX ou CSV). A Cris lê com o **mesmo leitor da importação**, no servidor, e oferece abrir o diálogo de importação já preenchido; ela pergunta a conta quando não reconhece. Quem importa é o botão do diálogo. PDF ou imagem vai inteiro ao modelo de IA, com os nomes de quem pagou e recebeu; planilha não vai.
+- Para os pendentes, em rodadas de até 20 (do mais antigo para o mais novo), a Cris consulta os **candidatos que o servidor calcula** (despesas, contas a receber, parcelas de venda, pagamentos de fatura) e propõe os pares; com mais de um candidato, faz uma pergunta de cada vez. A proposta vem como lista com o botão **"Confirmar N conciliações"**; cada vínculo é gravado por si, com auditoria, e o resultado diz qual não foi.
+- Ela não procura candidatos por conta própria, não concilia sozinha e não amplia a conciliação automática. Proposta com um item que não é candidato daquele movimento é recusada no servidor.
+- Sem par, ela diz o que falta lançar e o caminho (Despesas ou Contas a Receber, já preenchidos com os dados do extrato; ao salvar, o movimento fica conciliado, sem segunda saída).
+- Permissões: importar exige Caixa/criar; conciliar, Caixa/editar; lançar despesa, Despesas/criar. Sem Caixa/editar, a Cris não tem as ferramentas de conciliação e explica por quê.
+- "Perguntar à Cris", em cada movimento pendente, abre a conversa já com aquele movimento.
+
+**Open Finance:** o cliente conecta o banco em Contas Correntes (ou Cartões), no botão "Conectar banco": um aviso diz o que é lido, para quê, por quanto tempo e como desconectar; a senha do banco é digitada no banco, na janela da Pluggy, e não passa pelo app. Depois, cada conta do banco é associada a uma conta corrente, a um cartão, a uma conta nova, ou ignorada. Os movimentos chegam pendentes. Movimento alterado pelo banco depois de conciliado não muda (vai para revisão); removido nunca é apagado. Na primeira busca, o que for igual a um extrato já importado espera a decisão em "Possíveis duplicados".
 
 **Campos que confundem:**
 - **Conciliar** uma saída com uma despesa registra o pagamento na data do extrato, sem criar uma segunda saída. Já o botão **Pagar**, em Despesas, cria a saída por conta própria. Quem importa extrato evita saída em dobro conciliando a linha do extrato com a despesa em aberto, em vez de pagar pelo botão.

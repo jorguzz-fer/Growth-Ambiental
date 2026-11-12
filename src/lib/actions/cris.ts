@@ -7,11 +7,22 @@ import { comUsoDeIa, limiteDeConversa } from "@/lib/ai/uso";
 import { responderComoCris } from "@/lib/ai/cris";
 import { interpretarLocalmente, normalizarIntencao } from "@/lib/assistente-chat";
 import { responderMetrica } from "@/lib/chat-metricas";
-import { anexoValido, contextoValido, historicoDaCris, type PropostaDePreenchimento } from "@/lib/cris";
+import { anexoValido, contextoValido, historicoDaCris, type PropostaDeConciliacao, type PropostaDeImportacao, type PropostaDePreenchimento } from "@/lib/cris";
+import { can } from "@/lib/permissions";
+import { ferramentasDoCaixa } from "@/lib/conciliacao-cris-ferramentas";
 
 export type ResultadoDaCris =
-  | { ok: true; texto: string; proposta: PropostaDePreenchimento | null; via: "ia" | "local" }
+  | { ok: true; texto: string; proposta: PropostaDePreenchimento | null; via: "ia" | "local"; conciliacoes?: PropostaDeConciliacao | null; importacao?: PropostaDeImportacao | null }
   | { ok: false; error: string };
+
+/** A tela do Caixa (com ou sem filtro de conta). */
+function rotaDoCaixa(rota: string): boolean {
+  return rota.split("?")[0] === "/caixa";
+}
+/** A conta escolhida na tela do Caixa (`?conta=`). */
+function contaDaRota(rota: string): string | null {
+  return new URLSearchParams(rota.split("?")[1] ?? "").get("conta");
+}
 
 /** Projeto citado na rota da tela (`?proj=`), só se a pessoa o vê. */
 function projetoDaRota(rotaComQuery: unknown, projetos: readonly { id: string }[]): string | null {
@@ -42,7 +53,7 @@ export async function perguntarACris(entrada: { conversa: unknown; tela: unknown
   if (!conversa) return { ok: false, error: "Escreva a pergunta." };
   const tela = contextoValido(entrada?.tela);
   const anexo = entrada?.anexo ? anexoValido(entrada.anexo) : null;
-  if (entrada?.anexo && !anexo) return { ok: false, error: "Anexo não aceito: envie PDF ou imagem (PNG, JPG, WEBP) de até 4 MB." };
+  if (entrada?.anexo && !anexo) return { ok: false, error: "Anexo não aceito: envie PDF, imagem (PNG, JPG, WEBP) ou planilha de extrato (XLSX, CSV) de até 4 MB." };
 
   // Prompt AQ §2 — a permissão vem do item do menu da rota (com as exigências
   // dele, como as do Acerto), e falha fechada: rota sem item não libera nada.
@@ -74,9 +85,11 @@ export async function perguntarACris(entrada: { conversa: unknown; tela: unknown
           const resposta = await responderMetrica(ctx, normalizarIntencao(input), projetoDaTela, "ia");
           return [resposta.texto, ...resposta.detalhes].join("\n");
         },
+        // Prompt AT §8 — na tela do Caixa, as ferramentas de conciliação, pela permissão da pessoa (AT-T18).
+        caixa: tela && rotaDoCaixa(tela.rota) && dadosPermitidos ? ferramentasDoCaixa(ctx, { podeConciliar: can(ctx.perms, "caixa", "editar"), podeImportar: can(ctx.perms, "caixa", "criar"), anexo, contaDaTela: contaDaRota(tela.rota) }) : undefined,
       }),
     );
-    return { ok: true, texto: r.texto, proposta: r.proposta, via: "ia" };
+    return { ok: true, texto: r.texto, proposta: r.proposta, via: "ia", conciliacoes: r.conciliacoes ?? null, importacao: r.importacao ?? null };
   } catch (e) {
     console.error("[cris] falha:", e instanceof Error ? e.name : "erro");
     return { ok: false, error: e instanceof Error ? e.message : "Não consegui responder agora. Tente de novo." };

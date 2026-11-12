@@ -126,6 +126,8 @@ describe("Prompt AQ §4 — o que não muda", () => {
       "@/lib/ai/uso",
       "@/lib/ai/cris",
       "@/lib/chat-metricas",
+      // Prompt AT §8.5 — as ferramentas de conciliação da Cris (só leem; conferidas abaixo).
+      "@/lib/conciliacao-cris-ferramentas",
     ]);
     for (const arq of ["src/lib/ai/cris.ts", "src/lib/actions/cris.ts"]) {
       const imps = importsDe(arq);
@@ -134,6 +136,15 @@ describe("Prompt AQ §4 — o que não muda", () => {
       expect(imps.filter((i) => !permitidos.has(i))).toEqual([]);
       expect(imps.some((i) => i.startsWith("@/lib/actions/") || i.startsWith("./"))).toBe(false);
       expect(readFileSync(arq, "utf8")).not.toMatch(/\.(insert|update|delete)\(\s*schema\./);
+    }
+    // AT §8.5 — as ferramentas novas (ler_extrato, candidatos_de_conciliacao,
+    // propor_conciliacoes) só leem: nenhum módulo delas grava nem importa quem grava.
+    const soLeitura = new Set(["drizzle-orm", "@/lib/db", "@/lib/context", "@/lib/cris", "@/lib/conciliacao-cris", "@/lib/extrato-leitura", "@/lib/ai/cris", "@/lib/queries", "@/lib/ai/despesa-extract", "@/lib/ai/extrato-extract", "@/lib/ai/uso", "@/lib/extrato-planilha", "server-only"]);
+    for (const arq of ["src/lib/conciliacao-cris-ferramentas.ts", "src/lib/conciliacao-cris.ts", "src/lib/extrato-leitura.ts"]) {
+      const imps = importsDe(arq);
+      expect(imps.filter((i) => !soLeitura.has(i)), arq).toEqual([]);
+      expect(readFileSync(arq, "utf8"), arq).not.toMatch(/\.(insert|update|delete)\(\s*schema\./);
+      expect(readFileSync(arq, "utf8"), arq).not.toMatch(/gravarVinculos|gravarRecebimento|aplicarLote/);
     }
   });
 });

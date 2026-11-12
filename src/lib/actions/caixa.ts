@@ -1448,3 +1448,23 @@ export async function estornarRecebimentoDeParcela(id: string, motivo: string): 
   return r;
 }
 
+
+/**
+ * Prompt AT §8.3.4 — "Confirmar N conciliações": o lote que a Cris propôs. O
+ * servidor valida de novo cada item contra os candidatos que ele mesmo
+ * calcula (AT-T16) e grava um a um, cada vínculo atômico e auditado; uma
+ * falha não desfaz as outras e o resultado diz qual falhou (AT-T17).
+ */
+export async function confirmarConciliacoes(itens: { movimento: string; ref: string; valor?: number | null }[]): Promise<{ ok: true; gravadas: number; resultados: { movimento: string; ref: string; ok: boolean; erro?: string }[] } | { ok: false; error: string }> {
+  const ctx = await getTenantContext();
+  if (!ctx || !can(ctx.perms, "caixa", "editar")) return { ok: false, error: "Conciliar exige a permissão Caixa/editar." };
+  if (!Array.isArray(itens) || itens.length === 0) return { ok: false, error: "Nada a confirmar." };
+  const { MAX_RODADA } = await import("@/lib/conciliacao-cris");
+  const { aplicarLote } = await import("@/lib/conciliacao-cris-gravar");
+  if (itens.length > MAX_RODADA) return { ok: false, error: `Até ${MAX_RODADA} conciliações por vez.` };
+  const r = await aplicarLote({ tenantId: ctx.tenant.id, userId: ctx.userId, userEmail: ctx.userEmail }, itens.map((i) => ({ movimento: String(i.movimento), ref: String(i.ref), valor: typeof i.valor === "number" ? i.valor : null })));
+  revalidatePath("/caixa");
+  revalidatePath("/contasreceber");
+  revalidatePath("/despesas");
+  return { ok: true, gravadas: r.ok, resultados: r.resultados };
+}
