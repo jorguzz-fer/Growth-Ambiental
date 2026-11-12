@@ -11,6 +11,7 @@ import { previaFluxoDefinicaoNova } from "@/lib/fluxo-caixa";
 import { previaDashboardDefinicaoNova } from "@/lib/dashboard-previa";
 import { previaResumoDefinicaoNova } from "@/lib/resumo-previa";
 import { previaPlanoDefinicaoNova } from "@/lib/plano-previa";
+import { previaRateioDaReceita } from "@/lib/rateio-previa";
 import { previaCategoriaDoPlano } from "@/lib/categoria-do-plano-servidor";
 import { getLinhasDaSerieIncc, toInccRows } from "@/lib/queries";
 import { SERIE_DA_EMPRESA, diferencaDaSerie, mudaAlgo } from "@/lib/incc-empresa";
@@ -58,6 +59,7 @@ export default async function ChavesPage() {
   // Prompt AE, 6.2: prévia da chave "resumo_definicao_nova" (só leitura).
   const previaResumo = await previaResumoDefinicaoNova(ctx.tenant.id, ctx.projects);
   const previaPlano = await previaPlanoDefinicaoNova(ctx.tenant.id, ctx.projects);
+  const previaRateio = await previaRateioDaReceita(ctx.tenant.id, ctx.projects);
   // Prompt DP (BDP-3): prévia da chave "despesa_categoria_do_plano" (só leitura).
   const previaCategoria = await previaCategoriaDoPlano(ctx.tenant.id);
   const totalQueMuda = previaCategoria.reduce((a, m) => a + m.despesas, 0);
@@ -479,6 +481,67 @@ export default async function ChavesPage() {
             </div>
           ) : (
             <p className="mt-3 text-[12.5px] text-[var(--color-ink3)]">Nenhuma unidade com seção preenchida e caixinha desmarcada.</p>
+          )}
+        </CardContent>
+      </Card>
+      <Card className="mt-6" id="previa-rateio">
+        <CardContent className="p-5">
+          <h2 className="text-sm font-semibold text-[var(--color-ink)]">Prévia · Receita da DRE pelo rateio do contrato</h2>
+          <p className="mt-1.5 text-[13px] text-[var(--color-ink2)]">
+            Por obra (versão Atual): a receita da DRE hoje (parcelas pelo vencimento, liberações, contas a receber e revenda de
+            permuta) e pelo rateio (total do contrato de cada unidade vendida dividido pelos meses da obra, mais as contas a receber).
+            A coluna &ldquo;meses passados&rdquo; mostra quanto a DRE dos meses já encerrados muda: com o rateio, cada venda nova
+            revisa os meses anteriores. O caixa não muda. Nada é gravado.
+          </p>
+          <div className="mt-3 overflow-x-auto">
+            <table className="w-full text-[12.5px]" aria-label="Prévia da receita da DRE pelo rateio">
+              <thead>
+                <tr className="border-b border-[var(--color-line)] text-left text-[11px] uppercase tracking-wide text-[var(--color-ink3)]">
+                  <th className="py-1.5 pr-3">Obra</th>
+                  <th className="py-1.5 pr-3 text-right">Receita hoje</th>
+                  <th className="py-1.5 pr-3 text-right">Pelo rateio</th>
+                  <th className="py-1.5 pr-3 text-right">Meses passados: hoje</th>
+                  <th className="py-1.5 text-right">Meses passados: rateio</th>
+                </tr>
+              </thead>
+              <tbody>
+                {previaRateio.map((o) => (
+                  <tr key={o.projeto} className="border-b border-[var(--color-line)]/60" data-previa-rateio={o.projeto}>
+                    <td className="py-1.5 pr-3">
+                      {o.projeto}
+                      {!o.temAtual && <span className="ml-1 text-[11px] text-[var(--color-warning)]">sem versão Atual: nada a comparar</span>}
+                    </td>
+                    <td className="py-1.5 pr-3 text-right tabular-nums">{brl(o.hoje)}</td>
+                    <td className="py-1.5 pr-3 text-right tabular-nums">{brl(o.rateio)}</td>
+                    <td className="py-1.5 pr-3 text-right tabular-nums">{brl(o.passadoHoje)}</td>
+                    <td className="py-1.5 text-right tabular-nums">{brl(o.passadoRateio)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {previaRateio.some((o) => o.pendencias.length || o.contasComUnidade.qtd) ? (
+            <ul className="mt-3 space-y-0.5 text-[12.5px]" data-previa-rateio-atencao>
+              {previaRateio.flatMap((o) => [
+                ...o.pendencias.map((pd) => (
+                  <li key={`${o.projeto}-${pd.unidade}`} className="text-[var(--color-warning)]">
+                    <span className="font-medium">{o.projeto}</span> · unidade {pd.unidade}: o rateio não reconhece, porque {pd.motivo}
+                    {pd.valor ? ` (${brl(pd.valor)})` : ""}.
+                  </li>
+                )),
+                ...(o.contasComUnidade.qtd
+                  ? [
+                      <li key={`${o.projeto}-cr`}>
+                        <span className="font-medium">{o.projeto}</span> · {o.contasComUnidade.qtd} conta(s) a receber ligada(s) a unidade (
+                        {brl(o.contasComUnidade.valor)}): continuam na receita e podem repetir a venda que o rateio já reconhece. Confira antes
+                        de ligar.
+                      </li>,
+                    ]
+                  : []),
+              ])}
+            </ul>
+          ) : (
+            <p className="mt-3 text-[12.5px] text-[var(--color-ink3)]">Nenhuma pendência: todas as vendas têm contrato e janela de obra.</p>
           )}
         </CardContent>
       </Card>

@@ -248,7 +248,7 @@ export function StatusProjetoPanel({ st }: { st: StatusProjeto }) {
             hint={
               definicaoNova && janela
                 ? `receita da Atual − custo e despesa variáveis da Atual · ${TEXTO_DA_JANELA[janela]}`
-                : "receita da Atual (vencimento, todo o horizonte) − custo e despesa variáveis lançados na Atual (qualquer competência)"
+                : "receita da Atual (como na DRE, todo o horizonte) − custo e despesa variáveis lançados na Atual (qualquer competência)"
             }
             tone={st.margemContribuicao >= 0 ? "good" : "warn"}
           />

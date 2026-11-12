@@ -98,6 +98,7 @@ export default async function DREPage({
   const rascunhoFora = await chaveLigada(ctx.tenant.id, "rascunho_fora_dos_relatorios");
   // Prompt AC, Parte 10 — a definição nova da DRE (nasce desligada).
   const definicaoNova = await chaveLigada(ctx.tenant.id, "dre_definicao_nova");
+  const receitaRateio = await chaveLigada(ctx.tenant.id, "dre_receita_rateio");
   const sp = await searchParams;
   // Prompt AC2 (revisão V5): a visão anual e a mensal aparecem juntas, a
   // mensal abaixo, com os mesmos seletores. `?view=` antigo é ignorado.
@@ -389,6 +390,14 @@ export default async function DREPage({
         )}
         {isAll && <CenarioMultiSelect selected={cenarios} />}
       </div>
+      {/* Revisão 4, parte 5c: a receita da Atual vem do rateio do contrato e os meses passados são revisados. */}
+      {receitaRateio && (
+        <p className="mb-3 rounded-[8px] border border-[var(--color-line)] bg-[var(--color-surface2)] px-3 py-2 text-[12.5px] text-[var(--color-ink2)]" data-dre-rateio>
+          Receita da versão Atual pelo rateio do contrato: o total de cada unidade vendida é dividido igualmente pelos meses da obra,
+          inclusive os que já passaram. Por isso, uma venda nova (ou um distrato) revisa a receita dos meses anteriores. Liberações de
+          obra e parcelas pelo vencimento ficam no Fluxo de Caixa.
+        </p>
+      )}
       {escopo.tipo === "projeto" && <LembrarProjeto projectId={escopo.projeto.id} />}
       <CrisDaTela
         titulo="DRE — Demonstração de Resultado"
