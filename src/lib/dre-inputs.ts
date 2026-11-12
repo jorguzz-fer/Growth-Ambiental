@@ -8,7 +8,7 @@ import { cache } from "react";
 import { and, asc, eq, sql } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import type { Project } from "@/lib/context";
-import { getBudgetLines, getExpenseRows, getExpenseRowsAgrupadas, getMonthlyRevenue, getPermutas, permToResale } from "@/lib/queries";
+import { getBudgetLines, getExpenseRows, getExpenseRowsAgrupadas, getMonthlyRevenue, getPermutas, getReceitaDaDrePorRateio, permToResale, tipoDaVersao } from "@/lib/queries";
 import { permutaRevenueByMonth } from "@/lib/calc";
 import { getEncargosByVersion } from "@/lib/actions/pagamentos";
 import { aggregateInputs, emptyInputs, NO_COMP, waterfall, type Inputs } from "@/lib/calc/dre-cascata";
@@ -55,11 +55,31 @@ export async function versionInputsByMonth(
    * DESLIGADA). Desligada (padrão): exatamente o cálculo de antes.
    * Ligada: (2) despesa classificada como "Receita" não soma na receita;
    * (3.1) encargos entram na competência da despesa que os gerou.
+   *
+   * `receitaRateio` (Revisão 4, parte 5c): a chave "dre_receita_rateio". Sem
+   * o parâmetro, lê a chave da empresa.
    */
-  opts: { definicaoNova?: boolean } = {},
+  opts: { definicaoNova?: boolean; receitaRateio?: boolean } = {},
 ): Promise<Record<string, Inputs>> {
+  const rateio = opts.receitaRateio ?? (await chaveLigada(tenantId, "dre_receita_rateio"));
   // Cópia: o resultado memorizado é compartilhado na requisição e quem chama pode somar em cima.
-  return structuredClone(await inputsMemorizados(tenantId, vid, projectId, !!opts.definicaoNova));
+  return structuredClone(await inputsMemorizados(tenantId, vid, projectId, !!opts.definicaoNova, rateio));
+}
+
+/**
+ * Receita da versão para a DRE. Chave "dre_receita_rateio" desligada (padrão):
+ * exatamente como sempre, `getMonthlyRevenue` (recebíveis pelo vencimento,
+ * liberações e contas a receber) mais a revenda da permuta pelo valor cheio.
+ * Ligada, na versão Atual: o rateio do contrato pela janela da obra mais as
+ * contas a receber avulsas (`getReceitaDaDrePorRateio`); a revenda da permuta
+ * deixa de somar (o bem já está no contrato rateado). Orçamento e Previsão não
+ * mudam.
+ */
+async function receitaParaADre(tenantId: string, vid: string, projectId: string, rateio: boolean): Promise<{ receita: Record<string, number>; somaRevendaDePermuta: boolean }> {
+  if (rateio && (await tipoDaVersao(vid)) === "atual") {
+    return { receita: (await getReceitaDaDrePorRateio(tenantId, vid, projectId)).porMes, somaRevendaDePermuta: false };
+  }
+  return { receita: await getMonthlyRevenue(vid, projectId), somaRevendaDePermuta: true };
 }
 
 /**
@@ -67,9 +87,9 @@ export async function versionInputsByMonth(
  * Empresa toda, a Atual de um projeto sem Orçamento/Previsão entrava nos três
  * cenários e era lida três vezes. Mesmos números (teste `dre-inputs-desempenho`).
  */
-const inputsMemorizados = cache(async (tenantId: string, vid: string, projectId: string, nova: boolean): Promise<Record<string, Inputs>> => {
-  const [revenue, despesas, permutas, encargosMes] = await Promise.all([
-    getMonthlyRevenue(vid, projectId),
+const inputsMemorizados = cache(async (tenantId: string, vid: string, projectId: string, nova: boolean, rateio: boolean): Promise<Record<string, Inputs>> => {
+  const [{ receita: revenue, somaRevendaDePermuta }, despesas, permutas, encargosMes] = await Promise.all([
+    receitaParaADre(tenantId, vid, projectId, rateio),
     getExpenseRowsAgrupadas(vid),
     getPermutas(tenantId, vid),
     nova ? getEncargosPorCompetencia(vid) : getEncargosByVersion(vid),
@@ -79,9 +99,12 @@ const inputsMemorizados = cache(async (tenantId: string, vid: string, projectId:
 
   // Receita do projeto.
   for (const [mm, v] of Object.entries(revenue)) bucket(mm).receita += v;
-  // Receita da revenda de bens de permuta (inclui escambo), item 10.
-  const permRev = permutaRevenueByMonth(permToResale(permutas));
-  for (const [mm, v] of Object.entries(permRev)) bucket(mm).receita += v;
+  // Receita da revenda de bens de permuta (inclui escambo), item 10. Com o
+  // rateio (parte 5c), não soma: o bem já está no contrato rateado.
+  if (somaRevendaDePermuta) {
+    const permRev = permutaRevenueByMonth(permToResale(permutas));
+    for (const [mm, v] of Object.entries(permRev)) bucket(mm).receita += v;
+  }
   // Despesas por categoria da DRE (já somadas no banco por conta, categoria e competência).
   for (const d of despesas) {
     if (!d.categoriaDre) continue;
@@ -115,11 +138,12 @@ export async function versionAnaliticaByMonth(
   tenantId: string,
   vid: string,
   projectId: string,
-  opts: { definicaoNova?: boolean } = {},
+  opts: { definicaoNova?: boolean; receitaRateio?: boolean } = {},
 ): Promise<Record<string, EntradaAnalitica>> {
   const nova = !!opts.definicaoNova;
-  const [revenue, despesas, permutas, encargosMes] = await Promise.all([
-    getMonthlyRevenue(vid, projectId),
+  const rateio = opts.receitaRateio ?? (await chaveLigada(tenantId, "dre_receita_rateio"));
+  const [{ receita: revenue, somaRevendaDePermuta }, despesas, permutas, encargosMes] = await Promise.all([
+    receitaParaADre(tenantId, vid, projectId, rateio),
     getExpenseRows(vid),
     getPermutas(tenantId, vid),
     nova ? getEncargosPorCompetencia(vid) : getEncargosByVersion(vid),
@@ -127,7 +151,7 @@ export async function versionAnaliticaByMonth(
   const out: Record<string, EntradaAnalitica> = {};
   const bucket = (mm: string | null) => (out[mm ?? NO_COMP] ??= entradaVazia());
   for (const [mm, v] of Object.entries(revenue)) bucket(mm).receitaVendas += v;
-  for (const [mm, v] of Object.entries(permutaRevenueByMonth(permToResale(permutas)))) bucket(mm).receitaPermuta += v;
+  if (somaRevendaDePermuta) for (const [mm, v] of Object.entries(permutaRevenueByMonth(permToResale(permutas)))) bucket(mm).receitaPermuta += v;
   for (const d of despesas) {
     if (!d.categoriaDre) continue;
     if (nova && d.categoriaDre === "Receita") continue;

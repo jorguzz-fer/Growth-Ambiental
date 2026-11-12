@@ -170,3 +170,98 @@ operador da plataforma, sem erro.
 - `npm run test:all` (typecheck + lint + suíte com banco): **272 arquivos,
   2.197 testes, todos passaram, 0 pulados.**
 - `next build`: ok.
+
+## 5c · Receita da DRE pelo rateio do contrato (chave `dre_receita_rateio`)
+
+Chave nova por empresa, **nascendo desligada**: "Receita da DRE pelo rateio do
+contrato". Com ela desligada, a DRE é exatamente a de antes.
+
+### O que muda quando a chave é ligada (só a versão Atual; Orçamento e Previsão não mudam)
+
+A receita da DRE passa a ter **duas fontes, e só elas** (Prompt I, §57.3):
+
+1. **Venda de unidade:**
+   - O valor é o **total do contrato**: a soma do plano de pagamento, com
+     permuta e financiamento, contando só as seções com a caixinha "Usar"
+     marcada. Não é o preço de tabela.
+   - Ele é dividido **igualmente pelos meses da obra** (início e fim do
+     cadastro do projeto), **inclusive os meses que já passaram**. Uma venda
+     nova, ou um distrato, revisa a DRE dos meses anteriores.
+   - O resíduo de centavos vai para o último mês, para a soma fechar com o
+     contrato.
+2. **Contas a receber lançadas** do projeto, pelo mês do vencimento, como
+   sempre.
+
+**Saem da receita da DRE**, e continuam no caixa (Fluxo, Contas a Receber,
+Caixa):
+
+- as parcelas do plano pelo vencimento;
+- as liberações de obra;
+- a revenda da permuta pelo valor cheio (o bem já está no contrato rateado).
+
+**Onde aparece:**
+
+- DRE e DRE Analítica;
+- gráfico "DRE por mês" do Dashboard;
+- card "Orçado x Realizado" de Projetos;
+- a margem de contribuição do Dashboard (`getStatusProjeto`);
+- as métricas de receita da Cris.
+
+Todos leem a mesma função. A DRE mostra um aviso quando a chave está ligada:
+"…uma venda nova (ou um distrato) revisa a receita dos meses anteriores".
+
+### O que ficou de fora, de propósito
+
+- **Ganho ou perda na revenda da permuta, em linha própria:** é proposta do
+  §57.4.3, a confirmar com o contador. Exige uma linha nova na cascata da DRE
+  e em todas as telas que a leem. Com esta chave, a revenda simplesmente deixa
+  de somar na receita.
+- **Contas a receber ligadas a uma unidade** podem repetir a venda que o
+  rateio já reconhece (§54.7). **Não são excluídas:** a prévia conta quantas
+  são e quanto somam, para decisão.
+
+### Prévia (tela Chaves, `#previa-rateio`)
+
+Por obra, na versão Atual:
+
+- a receita da DRE hoje e pelo rateio;
+- a receita dos **meses já encerrados**, hoje e pelo rateio (quanto o passado
+  muda).
+
+Abaixo, as pendências:
+
+- unidades que o rateio não reconhece, com o motivo (obra sem início ou fim,
+  ou contrato sem caixinha marcada);
+- contas a receber ligadas a unidade.
+
+Conferido no navegador, com uma venda de teste no banco local (depois apagada):
+
+- a obra mostra R$ 580 mil hoje (parcelas de 555 mil + liberação de 25 mil);
+- pelo rateio, R$ 555 mil;
+- a DRE com a chave ligada mostra a receita de 555 mil e o aviso.
+
+### Testes novos
+
+| Teste | O que prova |
+| --- | --- |
+| `src/lib/calc/receita-rateio.test.ts` | Total do contrato (555 mil, não os 537 mil da tabela); só caixinha marcada; R$ 500 mil em 10 meses = 50 mil por mês, inclusive meses anteriores à venda; o resíduo fecha; unidade não vendida não conta; obra sem janela e contrato sem caixinha viram pendência, nunca zero calado |
+| `src/lib/dre-rateio-chave.test.ts` (com banco) | Desligada: a receita de sempre (676 mil). Ligada: 556 mil (contrato rateado + avulsa), 55,5 mil já em janeiro, sem liberação e sem revenda; DRE Analítica igual; Orçamento intacto; a prévia; pendência de obra sem janela; conta a receber ligada à unidade contada |
+
+### Validação
+
+- `npm run test:all` (typecheck + lint + suíte com banco): **274 arquivos,
+  2.207 testes, todos passaram, 0 pulados.**
+- `next build`: ok.
+- Conferido no navegador: DRE com a chave ligada e as duas prévias novas na
+  tela de Chaves, sem erro na página.
+
+## Antes de ligar as chaves numa empresa
+
+1. Rodar `scripts/medicao-ar.ts` na produção (somente leitura).
+2. Na tela Chaves, conferir a prévia `#previa-plano` e a lista de unidades com
+   caixinha desmarcada. Marcar as caixinhas que forem venda de verdade, na
+   tela de Unidades.
+3. Conferir a prévia `#previa-rateio`: obras sem início e fim cadastrados e
+   contas a receber ligadas a unidade.
+4. Ligar `plano_definicao_nova` (caixa) e `dre_receita_rateio` (DRE). Elas
+   são independentes.

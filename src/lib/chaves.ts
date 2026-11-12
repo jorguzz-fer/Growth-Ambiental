@@ -109,6 +109,14 @@ export const CHAVES = [
     origem: "Prompt AR, Fase 2 (BAR-1 a BAR-5, decisões de 11/11/2026)",
     previa: { href: "/chaves#previa-plano", rotulo: "Prévia — recebíveis de hoje × definição nova, e as unidades a conferir" },
   },
+  {
+    id: "dre_receita_rateio",
+    titulo: "Receita da DRE pelo rateio do contrato",
+    efeito:
+      "Na DRE (e onde ela aparece: DRE Analítica, gráfico do Dashboard, card Orçado x Realizado de Projetos), a receita da versão Atual passa a ser o total do contrato de cada unidade vendida (soma do plano de pagamento, só as seções com a caixinha \"Usar\" marcada), dividido igualmente pelos meses da obra, inclusive os que já passaram: cada venda nova revisa a DRE dos meses anteriores. Somam-se as contas a receber lançadas. Saem da receita da DRE as parcelas pelo vencimento, as liberações de obra e a revenda da permuta (o bem já está no contrato). O caixa (Fluxo, Contas a Receber, Caixa) não muda. Nada é gravado.",
+    origem: "Prompt AR, Fase 2 (BAR-6 e decisões de 11/11/2026); Prompt I, §54 e §57",
+    previa: { href: "/chaves#previa-rateio", rotulo: "Prévia — receita da DRE de hoje × rateio, por obra, e as pendências" },
+  },
 ] as const satisfies readonly Chave[];
 
 export type ChaveId = (typeof CHAVES)[number]["id"];

@@ -14,6 +14,8 @@ import {
   type ProjectionSource,
 } from "./calc/projection";
 import { expandUnitReceivables } from "./calc/receivables";
+import { receitaPorRateio, type PendenciaDoRateio } from "./calc/receita-rateio";
+import { janelaDoProjeto } from "./dre";
 import { naturezaDoGrupo } from "./natureza-grupo";
 import { gruposDisponiveis, linhasDoBloco, totalReceitasDoProjeto, type GrupoDoPlano } from "./orcamento-regras";
 import {
@@ -1751,6 +1753,11 @@ const versaoKindETenant = cache(async (versionId: string): Promise<{ kind: strin
   return v ?? null;
 });
 
+/** Tipo da versão ("atual", "budget", "forecast"…), lido uma vez por requisição. */
+export async function tipoDaVersao(versionId: string): Promise<string | null> {
+  return (await versaoKindETenant(versionId))?.kind ?? null;
+}
+
 /**
  * FILTRO POR SITUAÇÃO — Prompt H, seção 1.
  *
@@ -2737,6 +2744,53 @@ export async function getMonthlyRevenue(
     if (mk) out[mk] = (out[mk] || 0) + Number(c.valor);
   }
   return out;
+}
+
+/**
+ * Prompt AR, Fase 2 (Revisão 4), parte 5c — receita da DRE da versão Atual
+ * pelo RATEIO do contrato (chave `dre_receita_rateio`). Duas fontes, e só elas
+ * (Prompt I, §57.3):
+ *  1. venda de unidade: o total do contrato rateado pela janela da obra
+ *     (`receitaPorRateio`), inclusive os meses passados;
+ *  2. contas a receber lançadas do projeto (avulsas), pelo mês do vencimento,
+ *     como sempre.
+ * Saem da receita da DRE: os recebíveis do plano pelo vencimento (ficam no
+ * caixa), as liberações de obra (caixa) e a revenda da permuta pelo valor cheio
+ * (o bem já está no contrato rateado). Nada é gravado.
+ */
+export async function getReceitaDaDrePorRateio(
+  tenantId: string,
+  versionId: string,
+  projectId: string,
+): Promise<{ porMes: MonthlyProjection; pendencias: PendenciaDoRateio[]; contasComUnidade: { qtd: number; valor: number } }> {
+  const [unitRows, crRows, [proj]] = await Promise.all([
+    getUnits(tenantId, versionId),
+    db
+      .select({ valor: schema.contasReceber.valor, vencimento: schema.contasReceber.vencimento, unitCode: schema.contasReceber.unitCode })
+      .from(schema.contasReceber)
+      .where(and(eq(schema.contasReceber.projectId, projectId), eq(schema.contasReceber.cancelado, false))),
+    db
+      .select({ startDate: schema.projects.startDate, endDate: schema.projects.endDate })
+      .from(schema.projects)
+      .where(and(eq(schema.projects.id, projectId), eq(schema.projects.tenantId, tenantId)))
+      .limit(1),
+  ]);
+  const { porMes, pendencias } = receitaPorRateio(unitRows, proj ? janelaDoProjeto(proj) : null);
+  const out: MonthlyProjection = { ...porMes };
+  // Prompt I, §54.7: conta a receber ligada a uma unidade pode repetir a venda
+  // que o rateio já reconhece. NÃO é excluída: é contada e mostrada para decisão.
+  const contasComUnidade = { qtd: 0, valor: 0 };
+  for (const c of crRows) {
+    const p = (c.vencimento ?? "").split("/");
+    if (p.length !== 3) continue;
+    const mk = `${p[0]}/${p[2]}`;
+    out[mk] = Math.round(((out[mk] || 0) + Number(c.valor)) * 100) / 100;
+    if (c.unitCode) {
+      contasComUnidade.qtd++;
+      contasComUnidade.valor = Math.round((contasComUnidade.valor + Number(c.valor)) * 100) / 100;
+    }
+  }
+  return { porMes: out, pendencias, contasComUnidade };
 }
 
 export interface ReceitaProjetoRow {
@@ -3868,16 +3922,18 @@ export async function getStatusProjeto(
   const custoVariavel = porCat("Custo Variável");
   const despesaVariavel = porCat("Despesa Variável");
 
-  // Receita realizada da versão Atual (mesma fonte da DRE).
+  // Receita realizada da versão Atual (mesma fonte da DRE). Com a chave
+  // "dre_receita_rateio" (Revisão 4, parte 5c), o rateio do contrato.
   let receitaAtual = 0;
   let semAtual = 0;
+  const rateio = await chaveLigada(tenantId, "dre_receita_rateio");
   for (const pid of projectIds) {
     const vid = versoesProj.find((v) => v.projectId === pid && v.kind === "atual")?.id;
     if (!vid) {
       if (projs.some((p) => p.id === pid)) semAtual++;
       continue;
     }
-    const mensal = await getMonthlyRevenue(vid, pid);
+    const mensal = rateio ? (await getReceitaDaDrePorRateio(tenantId, vid, pid)).porMes : await getMonthlyRevenue(vid, pid);
     receitaAtual += Object.entries(mensal)
       .filter(([mm]) => !janela || naJanela(mm, janela, de, ate))
       .reduce((a, [, v]) => a + v, 0);
