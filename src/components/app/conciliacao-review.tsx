@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { conciliarMovimento, desfazerConciliacao, conciliarContaReceber, criarContaFromExtrato } from "@/lib/actions/caixa";
+import { conciliarMovimento, desfazerConciliacao, conciliarContaReceber, criarContaAPartirDoExtrato, conciliarParcelaDeVenda } from "@/lib/actions/caixa";
 import { conciliarPagamentoDeFatura } from "@/lib/actions/cartao-conciliacao";
 import type { MovimentoPendente, MovimentoPendenteEntrada, MovimentoConciliado } from "@/lib/queries";
 import { brl0, dateBR } from "@/lib/utils";
@@ -64,7 +64,30 @@ export function ConciliacaoReview({ pendentes, pendentesEntrada, conciliados, ca
   const conciliarReceber = (cashEntryId: string, contaReceberId: string) => run(() => conciliarContaReceber({ cashEntryId, contaReceberId }), "Movimento conciliado: conta a receber marcada como recebida.");
   // Prompt AT §3: o movimento da conta não tem obra; a conta criada vai para a obra escolhida aqui.
   const [obraDaConta, setObraDaConta] = useState<Record<string, string>>({});
-  const criarConta = (cashEntryId: string, entrada: boolean) => run(() => criarContaFromExtrato(cashEntryId, projetos ? obraDaConta[cashEntryId] || null : undefined), entrada ? "Conta a receber criada a partir do extrato." : "Conta a pagar criada a partir do extrato.");
+  const criarConta = (cashEntryId: string, entrada: boolean) =>
+    run(async () => {
+      const projectId = projetos ? obraDaConta[cashEntryId] || null : undefined;
+      let r = await criarContaAPartirDoExtrato({ cashEntryId, projectId });
+      // Prompt AT §5.4 — há parcela de venda compatível: mostra a parcela e pede
+      // a confirmação explícita de que a entrada NÃO é ela.
+      if (!r.ok && r.parcelas?.length) {
+        const lista = r.parcelas.map((p) => `• ${p.unidade} · ${p.rotulo} · ${p.comprador ?? "sem comprador"} · ${brl0(p.saldo)} (venc. ${dateBR(p.vencimento)})`).join("\n");
+        const naoE = window.confirm(`${r.error}\n\n${lista}\n\nConfirmo que esta entrada NÃO é nenhuma dessas parcelas?`);
+        if (!naoE) {
+          setMsg("Nada foi criado. Concilie a entrada com a parcela na lista acima.");
+          return;
+        }
+        r = await criarContaAPartirDoExtrato({ cashEntryId, projectId, naoEParcela: true });
+      }
+      if (!r.ok) throw new Error(r.error);
+      setMsg(entrada ? "Conta a receber criada a partir do extrato." : "Conta a pagar criada a partir do extrato.");
+    }, "");
+  const conciliarParcela = (cashEntryId: string, p: { unitId: string; chave: string }) =>
+    run(async () => {
+      const r = await conciliarParcelaDeVenda({ cashEntryId, unitId: p.unitId, chave: p.chave });
+      if (!r.ok) throw new Error(r.error);
+      setMsg(r.concluida ? `Entrada conciliada com a parcela (${brl0(r.valor)}).` : `Recebimento parcial gravado (${brl0(r.valor)}); a entrada ainda tem valor a conciliar.`);
+    }, "");
   const escolherObra = (cashEntryId: string) =>
     projetos ? (
       <select
@@ -203,6 +226,23 @@ export function ConciliacaoReview({ pendentes, pendentesEntrada, conciliados, ca
                 </div>
                 <span className="font-[family-name:var(--font-mono)] text-[13px] font-semibold text-[var(--color-success)]">+{brl0(Math.abs(m.valor))}</span>
               </div>
+              {m.livre != null && <p className="mb-1 text-[12px] text-[var(--color-ink3)]">Falta conciliar {brl0(m.livre)} desta entrada.</p>}
+              {/* Prompt AT §5.2 — a parcela do comprador, pela chave estável do plano. */}
+              {(m.parcelas ?? []).length > 0 && (
+                <div className="mb-2 divide-y divide-[var(--color-accent2)]/8 rounded-[8px] border border-[var(--color-accent2)]/12" data-sugestao-parcela>
+                  {(m.parcelas ?? []).map((p) => (
+                    <div key={`${p.unitId}|${p.chave}`} className="flex flex-wrap items-center gap-2 px-3 py-2">
+                      <Badge tone={grauTone(p.grau)}>{grauLabel(p.grau)}</Badge>
+                      <span className="text-[13px] text-[var(--color-ink)]">Parcela de venda · {p.rotulo}</span>
+                      <span className="text-[12px] text-[var(--color-ink3)]">{p.comprador ?? "sem comprador"} · {p.projectName} · venc. {dateBR(p.vencimento)}</span>
+                      <span className="font-[family-name:var(--font-mono)] text-[12px] text-[var(--color-ink2)]">{brl0(p.saldo)}</span>
+                      <Button size="sm" className="ml-auto" onClick={() => conciliarParcela(m.cashEntryId, p)} disabled={pending}>
+                        Conciliar com a parcela
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
               {m.sugestoes.length === 0 ? (
                 <p className="text-[12px] text-[var(--color-ink4)]">Sem contas a receber compatíveis. Lance em Contas a Receber ou mantenha pendente.</p>
               ) : (

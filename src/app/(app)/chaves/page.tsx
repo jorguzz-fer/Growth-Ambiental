@@ -13,6 +13,7 @@ import { previaResumoDefinicaoNova } from "@/lib/resumo-previa";
 import { previaPlanoDefinicaoNova } from "@/lib/plano-previa";
 import { previaRateioDaReceita } from "@/lib/rateio-previa";
 import { previaCaixaPorConta } from "@/lib/caixa-conta-previa";
+import { previaParcelaRecebida } from "@/lib/parcela-previa";
 import { previaCategoriaDoPlano } from "@/lib/categoria-do-plano-servidor";
 import { getLinhasDaSerieIncc, toInccRows } from "@/lib/queries";
 import { SERIE_DA_EMPRESA, diferencaDaSerie, mudaAlgo } from "@/lib/incc-empresa";
@@ -63,6 +64,8 @@ export default async function ChavesPage() {
   const previaRateio = await previaRateioDaReceita(ctx.tenant.id, ctx.projects);
   // Prompt AT §3 e §4: prévia da chave "caixa_conciliacao_por_conta" (só leitura).
   const previaCaixa = await previaCaixaPorConta(ctx.tenant.id);
+  // Prompt AT §5.3 e BAT-6: prévia da chave "parcela_recebida_situacao" (só leitura).
+  const previaParcela = await previaParcelaRecebida(ctx.tenant.id);
   // Prompt DP (BDP-3): prévia da chave "despesa_categoria_do_plano" (só leitura).
   const previaCategoria = await previaCategoriaDoPlano(ctx.tenant.id);
   const totalQueMuda = previaCategoria.reduce((a, m) => a + m.despesas, 0);
@@ -615,6 +618,46 @@ export default async function ChavesPage() {
               ? "Nenhum movimento sem obra ainda: eles só nascem depois de ligar a chave."
               : `${previaCaixa.semObra.qtd} movimento(s) sem obra; ${brl(previaCaixa.semObra.naoAtribuido)} ainda não atribuído(s) a obra (sem vínculo): entram no saldo da empresa e no realizado de nenhuma obra.`}
           </p>
+        </CardContent>
+      </Card>
+      <Card className="mt-6" id="previa-parcela">
+        <CardContent className="p-5">
+          <h2 className="text-sm font-semibold text-[var(--color-ink)]">Prévia · Parcela do comprador: situação e atrasados</h2>
+          <p className="mt-1.5 text-[13px] text-[var(--color-ink2)]">
+            Por obra (versão Atual): as parcelas de venda vencidas que ainda não têm recebimento conciliado no Caixa. Com a chave
+            ligada, elas aparecem como &ldquo;vencida&rdquo; em Contas a Receber e entram nos atrasados da faixa do Caixa. Se forem
+            parcelas já pagas, concilie a entrada do extrato com a parcela antes de ligar. O recebido pela conciliação sai do
+            previsto do Fluxo de Caixa. Nada é gravado.
+          </p>
+          <div className="mt-3 overflow-x-auto">
+            <table className="w-full text-[12.5px]" aria-label="Prévia da situação das parcelas">
+              <thead>
+                <tr className="border-b border-[var(--color-line)] text-left text-[11px] uppercase tracking-wide text-[var(--color-ink3)]">
+                  <th className="py-1.5 pr-3">Obra</th>
+                  <th className="py-1.5 pr-3 text-right">Vencidas sem recebimento</th>
+                  <th className="py-1.5 pr-3 text-right">Valor vencido</th>
+                  <th className="py-1.5 text-right">Recebido pela conciliação</th>
+                </tr>
+              </thead>
+              <tbody>
+                {previaParcela.map((o) => (
+                  <tr key={o.projeto} className="border-b border-[var(--color-line)]/60" data-previa-parcela={o.projeto}>
+                    <td className="py-1.5 pr-3">{o.projeto}</td>
+                    <td className="py-1.5 pr-3 text-right tabular-nums">{o.vencidasSemRecebimento}</td>
+                    <td className="py-1.5 pr-3 text-right tabular-nums">{brl(o.valorVencido)}</td>
+                    <td className="py-1.5 text-right tabular-nums">{brl(o.recebidoConciliado)}</td>
+                  </tr>
+                ))}
+                {previaParcela.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="py-3 text-center text-[var(--color-ink3)]">
+                      Nenhuma parcela de venda na versão Atual.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </CardContent>
       </Card>
       <Card className="mt-6" id="previa-categoria">

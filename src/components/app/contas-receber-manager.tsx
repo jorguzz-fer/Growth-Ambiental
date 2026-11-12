@@ -37,7 +37,12 @@ export interface UnitReceb {
   descricao: string;
   dia: string;
   valor: number;
+  /** Prompt AT §5.3 — recebido pela conciliação da entrada e a situação da parcela. */
+  recebido?: number;
+  situacao?: "a vencer" | "recebida" | "parcial" | "vencida";
 }
+
+const TOM_DA_SITUACAO = { "a vencer": "neutral", recebida: "success", parcial: "warning", vencida: "danger" } as const;
 
 /** Formulário de criação (client por causa do campo condicional "Outras Receitas"). */
 export interface PrefillContaReceber {
@@ -576,6 +581,7 @@ export function ContasReceberManager({
                   <SortTH coluna="descricao" estado={recebOrd.estado} onSort={recebOrd.onSort}>Descrição</SortTH>
                   <SortTH coluna="previsto" estado={recebOrd.estado} onSort={recebOrd.onSort}>Previsto</SortTH>
                   <SortTH coluna="valor" estado={recebOrd.estado} onSort={recebOrd.onSort} className="text-right">Valor</SortTH>
+                  {unitReceb.some((r) => r.situacao) && <TH>Situação</TH>}
                 </tr>
               </THead>
               <tbody>
@@ -591,11 +597,19 @@ export function ContasReceberManager({
                     <TD className="text-right font-[family-name:var(--font-mono)] text-[var(--color-success)]">
                       {brl0(r.valor)}
                     </TD>
+                    {r.situacao && (
+                      <TD data-situacao-parcela={r.situacao}>
+                        <Badge tone={TOM_DA_SITUACAO[r.situacao]} title={r.recebido ? `Recebido ${brl0(r.recebido)} pela conciliação do extrato` : undefined}>
+                          {r.situacao}
+                          {r.situacao === "parcial" || (r.situacao === "vencida" && (r.recebido ?? 0) > 0) ? ` · ${brl0(r.recebido ?? 0)}` : ""}
+                        </Badge>
+                      </TD>
+                    )}
                   </TR>
                 ))}
                 {recebOrd.rows.length === 0 && (
                   <TR>
-                    <TD colSpan={6} className="py-6 text-center text-[var(--color-ink4)]">
+                    <TD colSpan={unitReceb.some((r) => r.situacao) ? 7 : 6} className="py-6 text-center text-[var(--color-ink4)]">
                       Sem recebíveis de vendas (unidades vendidas geram recebíveis pelo plano de pagamento).
                     </TD>
                   </TR>

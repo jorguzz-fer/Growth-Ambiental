@@ -120,3 +120,68 @@ Suíte completa com banco: 278 arquivos, 2.234 testes, nenhum pulado. Build ok.
 2. Ligar a chave. Desligar volta à tela de antes; os movimentos que nasceram
    sem obra continuam no saldo da empresa (a migração de volta da 0073 só roda
    depois de decidir a obra deles).
+
+---
+
+# Seção 5 · Entradas: conciliar com a parcela do comprador
+
+## O que mudou
+
+- **Migração 0075** (aditiva, com `down/`): tabela `recebimento_parcela`. A
+  parcela é a **chave estável** do plano, "origem#número" (`Mensais#12`,
+  `S1#2`, `FGTS#1`), nunca a posição na lista de recebíveis.
+- **5.2 · Conciliar com a parcela** (sem chave: não muda número): as entradas
+  pendentes do Caixa passam a sugerir as parcelas de venda em aberto, pela
+  mesma regra de grau das contas a receber (valor exato ou aproximado, data,
+  primeiro nome do comprador na descrição). "Conciliar com a parcela" grava o
+  recebimento; parcial é permitido. Não cria conta a receber e não mexe na
+  receita da DRE (AT-T8). Permuta e financiamento não aparecem (BAR-3, BAR-4).
+- **5.4 · Criar conta a receber a partir do extrato:** se houver parcela de
+  venda compatível, a conta não é criada; a tela mostra as parcelas e pede a
+  confirmação explícita de que a entrada **não** é nenhuma delas. A
+  verificação é do servidor (a função antiga deixou de ser chamável pela tela).
+- **BAT-5 (provisório, proposta do revisor):** plano editado depois do
+  recebimento não apaga o recebimento; se a parcela sumiu, Contas a Receber
+  mostra "recebimento sem parcela" para revisão.
+- **Estorno** do recebimento é lógico, com motivo; a entrada volta a pendente.
+- Movimento sem obra (§3) conciliado com parcela vai para a obra da unidade.
+
+## Chave nova: "parcela_recebida_situacao" (desligada)
+
+Separei em chave o que muda número exibido. Motivo: **hoje nenhuma parcela tem
+recebimento gravado**, então toda parcela passada apareceria como "vencida",
+mesmo as que foram pagas, até alguém conciliar. Ligada:
+
+- **5.3** · Contas a Receber, recebíveis das vendas: coluna "Situação" (a
+  vencer, recebida, parcial, vencida).
+- **5.3** · a faixa do Caixa conta nos atrasados as parcelas vencidas e não
+  recebidas, pelo saldo.
+- **BAT-6 (decidido 12/11)** · no Fluxo de Caixa, a parte recebida da parcela
+  sai do previsto, no mês do vencimento dela (ela já está no realizado, pela
+  entrada do extrato).
+
+Prévia em Chaves ("Parcela do comprador: situação e atrasados"): por obra,
+quantas parcelas vencidas não têm recebimento e o valor. **Antes de ligar,
+concilie as parcelas já pagas** (ou aceite que apareçam como vencidas).
+
+## 5.5 · Medição da receita dobrada (somente leitura)
+
+`scripts/medicao-at-receita-dobrada.ts` lista as contas a receber criadas do
+extrato cujo valor e data (até 10 dias) batem com uma parcela de venda da
+mesma obra. A decisão sobre os casos é a **BAT-4**, do dono, depois do
+relatório. Rodar na produção:
+
+```
+DATABASE_URL=postgres://... npx tsx scripts/medicao-at-receita-dobrada.ts > medicao-receita-dobrada.md
+```
+
+## Testes (`src/lib/recebimento-parcela.test.ts`)
+
+| Teste | O que confere |
+| --- | --- |
+| AT-T7 | Entrada de R$ 2.345,67 com o nome do comprador → sugestão alta da `Mensais#12`; conciliar → parcela recebida |
+| AT-T8 | A receita da DRE não muda e nenhuma conta a receber nasce; criar conta depois de recusar exige a confirmação da 5.4 |
+| AT-T9 | Editar o plano não apaga o recebimento; a chave sumida vira "sem parcela" |
+| Parcial e estorno | Duas entradas quitam a parcela; valor acima do saldo é recusado; estorno com motivo devolve a pendência |
+| BAT-6 | Com a chave, o recebido sai do previsto do Fluxo no mês da parcela; desligada, nada muda |
+| §3 | Movimento sem obra conciliado com parcela vai para a obra da unidade |

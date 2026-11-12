@@ -9,7 +9,8 @@ import { CadeiaDias } from "@/components/app/cadeia-dias";
 import { BalancoDiaTable } from "@/components/app/balanco-dia-table";
 import { CrisDaTela } from "@/components/app/cris-contexto";
 import { AvisoTelaRemovida } from "@/components/app/aviso-tela-removida";
-import { aReceberDaFaixa, previstoPorDia, saldosProjetados } from "@/lib/calc/previsto-caixa";
+import { previstoPorDia, saldosProjetados } from "@/lib/calc/previsto-caixa";
+import { aReceberDaFaixaDaEmpresa } from "@/lib/recebimento-parcela";
 import { SaldosCaixa } from "@/components/app/saldos-caixa";
 import { hojeISO } from "@/lib/despesa-status";
 import {
@@ -294,7 +295,8 @@ export default async function CaixaPage({
   // e o saldo projetado. Só a versão Atual entra, como no Contas a Pagar.
   const [contasReceberAbertas, recebiveisDasVendas] = await Promise.all([getContasReceber(ctx.tenant.id), getReceivables(ctx.tenant.id)]);
   // Contas lançadas e parcelas dos planos de venda, sem a permuta (Prompt AT §2.1).
-  const aReceberEmAberto = aReceberDaFaixa(contasReceberAbertas, recebiveisDasVendas, hoje);
+  // Prompt AT §5.3: com a chave "parcela_recebida_situacao", pelo saldo e com as vencidas nos atrasados.
+  const aReceberEmAberto = await aReceberDaFaixaDaEmpresa(ctx.tenant.id, contasReceberAbertas, recebiveisDasVendas, hoje);
   const { porDia: previstoPorDiaDaFaixa, atrasados } = previstoPorDia(
     cadeia.dias.map((d) => d.dia),
     hoje,

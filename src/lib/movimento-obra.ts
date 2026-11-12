@@ -139,14 +139,14 @@ const partesMemorizadas = cache(async (tenantId: string): Promise<ParteDoMovimen
   return out;
 });
 
-/**
- * Vínculos de parcela de venda (§5). Enquanto a tabela `recebimento_parcela`
- * não existe, nada. Ponto único para a §5 ligar.
- */
+/** Vínculos de parcela de venda (§5): a obra é a da unidade (versão Atual onde ela está). */
 async function vinculosDeParcela(tenantId: string, ids: string[]): Promise<{ cashEntryId: string; versionId: string | null; valor: number }[]> {
-  void tenantId;
-  void ids;
-  return [];
+  const rows = await db
+    .select({ cashEntryId: schema.recebimentosParcela.cashEntryId, valor: schema.recebimentosParcela.valor, versionId: schema.units.versionId })
+    .from(schema.recebimentosParcela)
+    .innerJoin(schema.units, eq(schema.recebimentosParcela.unitId, schema.units.id))
+    .where(and(eq(schema.recebimentosParcela.tenantId, tenantId), eq(schema.recebimentosParcela.estornado, false), inArray(schema.recebimentosParcela.cashEntryId, ids)));
+  return rows.filter((r): r is typeof r & { cashEntryId: string } => !!r.cashEntryId).map((r) => ({ cashEntryId: r.cashEntryId, versionId: r.versionId, valor: Number(r.valor) }));
 }
 
 /**

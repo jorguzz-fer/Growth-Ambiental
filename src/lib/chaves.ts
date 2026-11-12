@@ -125,6 +125,14 @@ export const CHAVES = [
     origem: "Prompt AT, seções 3 e 4 (decisão do dono de 08/11/2026)",
     previa: { href: "/chaves#previa-caixa-conta", rotulo: "Prévia — movimentos e pendências por conta, e os movimentos sem obra" },
   },
+  {
+    id: "parcela_recebida_situacao",
+    titulo: "Parcela do comprador: situação, atrasados e previsto do Fluxo",
+    efeito:
+      "As parcelas de venda passam a ter situação em Contas a Receber (a vencer, recebida, parcial, vencida), pelos recebimentos conciliados no Caixa. A faixa do Caixa passa a contar nos atrasados as parcelas vencidas e não recebidas. No Fluxo de Caixa, a parte recebida da parcela sai do previsto (ela já está no realizado, pela entrada do extrato). Atenção: parcela antiga paga mas nunca conciliada aparece como vencida até ser conciliada. Conciliar a parcela no Caixa não depende desta chave.",
+    origem: "Prompt AT, seção 5.3, e BAT-6 (decisão do dono de 12/11/2026)",
+    previa: { href: "/chaves#previa-parcela", rotulo: "Prévia — parcelas vencidas sem recebimento, por obra" },
+  },
 ] as const satisfies readonly Chave[];
 
 export type ChaveId = (typeof CHAVES)[number]["id"];

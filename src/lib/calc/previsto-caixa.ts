@@ -114,3 +114,20 @@ export function aReceberDaFaixa(
       .map((r) => ({ vencimento: r.dia, saldo: r.valor })),
   ];
 }
+
+/**
+ * Prompt AT §5.3 (chave "parcela_recebida_situacao") — a mesma faixa, com as
+ * parcelas de venda pelo SALDO (o que ainda não foi recebido pela conciliação)
+ * e SEM cortar as vencidas: a parcela vencida e não recebida entra nos
+ * atrasados. Permuta continua fora (não é dinheiro).
+ */
+export function aReceberDaFaixaComRecebimentos(
+  contasReceber: readonly { status: string | null; vencimento: string | null; valor: number; valorRecebido: number }[],
+  parcelasDeVenda: readonly { dia: string; saldo: number; secao: string }[],
+): TituloEmAberto[] {
+  return [
+    ...contasReceber.filter((c) => c.status !== "Recebido").map((c) => ({ vencimento: c.vencimento, saldo: c.valor - c.valorRecebido })),
+    ...parcelasDeVenda.filter((r) => r.secao !== "Permuta" && r.saldo > 0.005).map((r) => ({ vencimento: r.dia, saldo: r.saldo })),
+  ];
+}
+

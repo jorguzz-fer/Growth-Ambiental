@@ -1043,6 +1043,9 @@ export interface ReceivableRow {
   status: string;
   /** Seção do plano de pagamento (ver `Receivable.secao`). */
   secao: string;
+  /** Prompt AT §5 — a unidade e a chave estável da parcela ("Mensais#12"). */
+  unitId: string;
+  chave: string;
 }
 
 /**
@@ -1095,6 +1098,8 @@ export async function getReceivables(tenantId: string, projectId?: string): Prom
         clienteNome: r.clienteNome,
         status: "A receber",
         secao: rec.secao,
+        unitId: r.u.id,
+        chave: rec.chave,
       });
     }
   }
@@ -3305,6 +3310,10 @@ export interface MovimentoPendenteEntrada {
   doc: string | null;
   valor: number;
   sugestoes: SugestaoReceber[];
+  /** Prompt AT §5.2 — o que falta conciliar desta entrada (valor − já usado em contas e parcelas). */
+  livre?: number;
+  /** Prompt AT §5.2 — parcelas de venda em aberto compatíveis (mesma regra de grau). */
+  parcelas?: import("@/lib/recebimento-parcela").SugestaoParcela[];
 }
 export interface MovimentoConciliado {
   cashEntryId: string;
@@ -3451,12 +3460,20 @@ export async function getConciliacaoData(
     });
   }
 
-  // Entradas do extrato (crédito) ainda não conciliadas → sugere contas a receber.
+  // Entradas do extrato (crédito) ainda não conciliadas → sugere contas a
+  // receber e (Prompt AT §5.2) as parcelas de venda em aberto.
   const pendentesEntrada: MovimentoPendenteEntrada[] = [];
+  const rp = await import("@/lib/recebimento-parcela");
+  const entradasAbertas = entries.filter((e) => !(e.rec || e.conciliadoDespesaId || e.conciliadoContaReceberId) && Number(e.valor) > 0);
+  const [usadoDasEntradas, parcelasAbertas] = entradasAbertas.length
+    ? await Promise.all([rp.usadoDasEntradas(db, tenantId, entradasAbertas.map((e) => e.id)), rp.parcelasDeVenda(tenantId, (await import("@/lib/despesa-status")).hojeISO())])
+    : [new Map<string, number>(), []];
   for (const e of entries) {
     if (e.rec || e.conciliadoDespesaId || e.conciliadoContaReceberId) continue;
     const valor = Number(e.valor);
     if (!valor || valor <= 0) continue; // só entradas
+    const livre = Math.round((valor - (usadoDasEntradas.get(e.id) ?? 0)) * 100) / 100;
+    if (livre <= 0.005) continue;
     const movCents = Math.round(Math.abs(valor) * 100);
     const movDia = diaSerial(e.data);
     const desc = normStr(e.descricao ?? "");
@@ -3487,6 +3504,7 @@ export async function getConciliacaoData(
       });
     }
     sugestoes.sort((a, b) => rankGrau[a.grau] - rankGrau[b.grau] || a._prox - b._prox);
+    const parcelas = rp.sugestoesDeParcela({ valor: livre, data: e.data, descricao: e.descricao }, parcelasAbertas);
     pendentesEntrada.push({
       cashEntryId: e.id,
       data: e.data,
@@ -3494,6 +3512,8 @@ export async function getConciliacaoData(
       doc: e.doc,
       valor,
       sugestoes: sugestoes.slice(0, 4).map(({ _prox, ...s }) => { void _prox; return s; }),
+      ...(livre < valor - 0.005 ? { livre } : {}),
+      ...(parcelas.length ? { parcelas } : {}),
     });
   }
 

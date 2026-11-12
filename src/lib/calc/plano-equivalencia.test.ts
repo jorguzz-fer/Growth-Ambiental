@@ -3,6 +3,13 @@ import { serieVencimentos } from "./carencia";
 import { getIncc } from "./incc";
 import { addMonths, monthKey, parseDate, calcProjection, calcProjectionBySource, calcTotals, calcUnitTotal, type ProjectionSource } from "./projection";
 import { expandUnitReceivables, type Receivable } from "./receivables";
+
+/** O recebível como era antes da chave da parcela (Prompt AT §5.1). */
+type ReceivableAntigo = Omit<Receivable, "chave">;
+const semChave = ({ chave, ...r }: Receivable): ReceivableAntigo => {
+  void chave;
+  return r;
+};
 import { lerPlano } from "./plano";
 import type { CalcPermuta, CalcReembolso, CalcUnit, InccRow, MonthlyProjection, PaymentPlan, UnitStatus, VersionTotals } from "./types";
 
@@ -27,9 +34,9 @@ void PROJECTION_SOURCES_ANTIGO;
 function antigoExpand(
   plan: PaymentPlan | null | undefined,
   status: UnitStatus,
-): Receivable[] {
+): ReceivableAntigo[] {
   if (status !== "Vendido" || !plan) return [];
-  const out: Receivable[] = [];
+  const out: ReceivableAntigo[] = [];
   const fmt = (mo: number, d: number, yr: number) =>
     `${String(mo).padStart(2, "0")}/${String(d).padStart(2, "0")}/${yr}`;
 
@@ -412,7 +419,8 @@ describe("leitura única do plano: nenhum número muda (AR-T1, AR-T3)", () => {
 
   it("recebíveis (Contas a Receber, DRE, Fluxo): idênticos, na mesma ordem", () => {
     for (const { plano, status } of casos) {
-      expect(expandUnitReceivables(plano as unknown as PaymentPlan, status)).toEqual(antigoExpand(plano as unknown as PaymentPlan, status) as Receivable[]);
+      // Prompt AT §5.1: a chave da parcela é campo NOVO; o resto é idêntico ao de antes.
+      expect(expandUnitReceivables(plano as unknown as PaymentPlan, status).map(semChave)).toEqual(antigoExpand(plano as unknown as PaymentPlan, status));
     }
   });
 

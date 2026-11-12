@@ -20,6 +20,7 @@ import type { Version } from "@/lib/context";
 // `vencMonth` vive em módulo puro para poder ser testada sem puxar banco/sessão.
 import { vencMonth } from "@/lib/calc/mes-caixa";
 import { realizadoDaVersao } from "@/lib/movimento-obra";
+import { chaveLigada } from "@/lib/chaves-tenant";
 
 export { vencMonth };
 
@@ -84,6 +85,14 @@ export async function entradasDoFluxo(
       // A revenda parcelada só tem o mês: no balde semanal, a semana do dia 1º.
       const k = opts.bucket ? opts.bucket(mm) : mm;
       if (k) permuta[k] = (permuta[k] || 0) + v;
+    }
+  }
+  // BAT-6 (chave "parcela_recebida_situacao"): a parte recebida da parcela sai
+  // do previsto da Atual (ela já está no realizado, pela entrada do extrato).
+  if (version.kind === "atual" && (await chaveLigada(version.tenantId, "parcela_recebida_situacao"))) {
+    const { recebidoNoPrevistoDaVersao } = await import("@/lib/recebimento-parcela");
+    for (const [mm, v] of Object.entries(await recebidoNoPrevistoDaVersao(version, opts.bucket ?? vencMonth))) {
+      vendas[mm] = Math.round(((vendas[mm] ?? 0) - v) * 100) / 100;
     }
   }
   return { vendas, permuta };
