@@ -1,4 +1,5 @@
 import { getIncc } from "./incc";
+import { lerPlano, type OrigemDaParcela } from "./plano";
 import type {
   CalcPermuta,
   CalcReembolso,
@@ -46,98 +47,16 @@ const INCC_FROM_INSTALLMENT = 4; // correção a partir da 5ª parcela (i >= 4)
 
 /**
  * Projeta os recebíveis de uma unidade vendida mês a mês (matriz "MM/YYYY" →
- * valor). Espelha `calcProj()` do protótipo: percorre a cascata de fontes,
- * cada uma liberada pela flag da anterior, aplicando INCC nas fontes
- * periódicas a partir da 5ª parcela. Retorna {} se a unidade não estiver
- * vendida.
+ * valor). Espelha `calcProj()` do protótipo: soma as fontes de
+ * `calcProjectionBySource`. Retorna {} se a unidade não estiver vendida.
  */
 export function calcProjection(
   u: CalcUnit,
   incc: readonly InccRow[] = [],
 ): MonthlyProjection {
   const proj: MonthlyProjection = {};
-  const add = (mm: string, v: number) => {
-    if (v > 0) proj[mm] = (proj[mm] || 0) + v;
-  };
-  if (u.status !== "Vendido") return proj;
-
-  const periodic = (val: number, i: number, mk: string) =>
-    Math.round(
-      val * (1 + (i >= INCC_FROM_INSTALLMENT ? getIncc(incc, mk) : 0) / 100) *
-        100,
-    ) / 100;
-
-  if (u.usarAS && u.AS.val > 0) {
-    const d = parseDate(u.AS.venc);
-    if (d)
-      for (let i = 0; i < (u.AS.n || 1); i++) {
-        const dt = addMonths(d.mo, d.yr, i);
-        add(monthKey(dt.mo, dt.yr), u.AS.val);
-      }
-  }
-  if (u.AS.usarS1 && u.S1.val > 0) {
-    const d = parseDate(u.S1.venc);
-    if (d)
-      for (let i = 0; i < (u.S1.n || 1); i++) {
-        const dt = addMonths(d.mo, d.yr, i);
-        add(monthKey(dt.mo, dt.yr), u.S1.val);
-      }
-  }
-  if (u.S1.usarS2 && u.S2.val > 0) {
-    const d = parseDate(u.S2.venc);
-    if (d)
-      for (let i = 0; i < (u.S2.n || 1); i++) {
-        const dt = addMonths(d.mo, d.yr, i);
-        add(monthKey(dt.mo, dt.yr), u.S2.val);
-      }
-  }
-  if (u.S2.usarS3 && u.S3.val > 0) {
-    const d = parseDate(u.S3.venc);
-    if (d)
-      for (let i = 0; i < (u.S3.n || 1); i++) {
-        const dt = addMonths(d.mo, d.yr, i);
-        add(monthKey(dt.mo, dt.yr), u.S3.val);
-      }
-  }
-  if (u.S3.usarMens && u.Mensais.val > 0) {
-    const d = parseDate(u.Mensais.venc);
-    if (d)
-      for (let i = 0; i < (u.Mensais.n || 0); i++) {
-        const dt = addMonths(d.mo, d.yr, i);
-        const mk = monthKey(dt.mo, dt.yr);
-        add(mk, periodic(u.Mensais.val, i, mk));
-      }
-  }
-  if (u.Mensais.usarSem && u.Semestrais.val > 0) {
-    const d = parseDate(u.Semestrais.venc);
-    if (d)
-      for (let i = 0; i < (u.Semestrais.n || 0); i++) {
-        const dt = addMonths(d.mo, d.yr, i * 6);
-        const mk = monthKey(dt.mo, dt.yr);
-        add(mk, periodic(u.Semestrais.val, i, mk));
-      }
-  }
-  if (u.Semestrais.usarAnu && u.Anuais.val > 0) {
-    const d = parseDate(u.Anuais.venc);
-    if (d)
-      for (let i = 0; i < (u.Anuais.n || 0); i++) {
-        const dt = addMonths(d.mo, d.yr, i * 12);
-        const mk = monthKey(dt.mo, dt.yr);
-        add(mk, periodic(u.Anuais.val, i, mk));
-      }
-  }
-  if (u.Anuais.usarFGTS && u.FGTS.val > 0) {
-    const d = parseDate(u.FGTS.dataPrev);
-    if (d) add(monthKey(d.mo, d.yr), u.FGTS.val);
-  }
-  if (u.FGTS.usarSub && u.Subsidio.val > 0 && u.Subsidio.statusSub === "Recebido") {
-    const d = parseDate(u.Subsidio.dataPrev);
-    if (d) add(monthKey(d.mo, d.yr), u.Subsidio.val);
-  }
-  if (u.Subsidio.usarPer && u.Permuta.val > 0) {
-    const d = parseDate(u.Permuta.dataPrev);
-    if (d) add(monthKey(d.mo, d.yr), u.Permuta.val);
-  }
+  for (const fonte of Object.values(calcProjectionBySource(u, incc)))
+    for (const [mm, v] of Object.entries(fonte)) proj[mm] = (proj[mm] || 0) + v;
   return proj;
 }
 
@@ -171,95 +90,46 @@ export function calcProjectionBySource(
     Subsídio: {},
     Permuta: {},
   } as Record<ProjectionSource, MonthlyProjection>;
-  if (u.status !== "Vendido") return out;
   const add = (key: ProjectionSource, mm: string, v: number) => {
     if (v > 0) out[key][mm] = (out[key][mm] || 0) + v;
   };
-  const periodic = (val: number, i: number, mk: string) =>
-    Math.round(
-      val * (1 + (i >= INCC_FROM_INSTALLMENT ? getIncc(incc, mk) : 0) / 100) * 100,
-    ) / 100;
-
-  const signals: { use: boolean; val: number; venc: string; n: number }[] = [
-    { use: u.usarAS, val: u.AS.val, venc: u.AS.venc, n: u.AS.n },
-    { use: u.AS.usarS1, val: u.S1.val, venc: u.S1.venc, n: u.S1.n },
-    { use: u.S1.usarS2, val: u.S2.val, venc: u.S2.venc, n: u.S2.n },
-    { use: u.S2.usarS3, val: u.S3.val, venc: u.S3.venc, n: u.S3.n },
-  ];
-  for (const s of signals) {
-    if (s.use && s.val > 0) {
-      const d = parseDate(s.venc);
-      if (d)
-        for (let i = 0; i < (s.n || 1); i++) {
-          const dt = addMonths(d.mo, d.yr, i);
-          add("AS/Sinais", monthKey(dt.mo, dt.yr), s.val);
-        }
-    }
-  }
-  if (u.S3.usarMens && u.Mensais.val > 0) {
-    const d = parseDate(u.Mensais.venc);
-    if (d)
-      for (let i = 0; i < (u.Mensais.n || 0); i++) {
-        const dt = addMonths(d.mo, d.yr, i);
-        const mk = monthKey(dt.mo, dt.yr);
-        add("Mensais", mk, periodic(u.Mensais.val, i, mk));
-      }
-  }
-  if (u.Mensais.usarSem && u.Semestrais.val > 0) {
-    const d = parseDate(u.Semestrais.venc);
-    if (d)
-      for (let i = 0; i < (u.Semestrais.n || 0); i++) {
-        const dt = addMonths(d.mo, d.yr, i * 6);
-        const mk = monthKey(dt.mo, dt.yr);
-        add("Semestrais", mk, periodic(u.Semestrais.val, i, mk));
-      }
-  }
-  if (u.Semestrais.usarAnu && u.Anuais.val > 0) {
-    const d = parseDate(u.Anuais.venc);
-    if (d)
-      for (let i = 0; i < (u.Anuais.n || 0); i++) {
-        const dt = addMonths(d.mo, d.yr, i * 12);
-        const mk = monthKey(dt.mo, dt.yr);
-        add("Anuais", mk, periodic(u.Anuais.val, i, mk));
-      }
-  }
-  if (u.Anuais.usarFGTS && u.FGTS.val > 0) {
-    const d = parseDate(u.FGTS.dataPrev);
-    if (d) add("FGTS", monthKey(d.mo, d.yr), u.FGTS.val);
-  }
-  if (u.FGTS.usarSub && u.Subsidio.val > 0 && u.Subsidio.statusSub === "Recebido") {
-    const d = parseDate(u.Subsidio.dataPrev);
-    if (d) add("Subsídio", monthKey(d.mo, d.yr), u.Subsidio.val);
-  }
-  if (u.Subsidio.usarPer && u.Permuta.val > 0) {
-    const d = parseDate(u.Permuta.dataPrev);
-    if (d) add("Permuta", monthKey(d.mo, d.yr), u.Permuta.val);
+  // Prompt AR, Fase 2: lê o plano por `lerPlano`. Regras de sempre da
+  // projeção: só seção com a caixinha "Usar" marcada; subsídio só quando
+  // "Recebido"; o financiamento não entra; INCC nas periódicas a partir da
+  // 5ª parcela.
+  for (const p of lerPlano(u, u.status)) {
+    if (!p.ligada || !(p.valorBase > 0) || !p.mes) continue;
+    if (p.origem === "Banco") continue;
+    if (p.origem === "Subsidio" && p.situacao !== "Recebido") continue;
+    const fonte = FONTE_DA_ORIGEM[p.origem];
+    const v = p.periodica
+      ? Math.round(p.valorBase * (1 + (p.numero >= INCC_FROM_INSTALLMENT ? getIncc(incc, p.mes) : 0) / 100) * 100) / 100
+      : p.valorBase;
+    add(fonte, p.mes, v);
   }
   return out;
 }
+
+const FONTE_DA_ORIGEM: Record<Exclude<OrigemDaParcela, "Banco">, ProjectionSource> = {
+  AS: "AS/Sinais",
+  S1: "AS/Sinais",
+  S2: "AS/Sinais",
+  S3: "AS/Sinais",
+  Mensais: "Mensais",
+  Semestrais: "Semestrais",
+  Anuais: "Anuais",
+  FGTS: "FGTS",
+  Subsidio: "Subsídio",
+  Permuta: "Permuta",
+};
 
 /**
  * Total contratado da unidade (soma de todas as fontes). Comparado ao VGV
  * gera o saldo. Espelha `calcUnitTotal()`. Retorna 0 se não vendida.
  */
 export function calcUnitTotal(u: CalcUnit): number {
-  if (u.status !== "Vendido") return 0;
-  let t = 0;
-  t +=
-    (u.AS.val || 0) * (u.AS.n || 1) +
-    (u.S1.val || 0) * (u.S1.n || 1) +
-    (u.S2.val || 0) * (u.S2.n || 1) +
-    (u.S3.val || 0) * (u.S3.n || 1);
-  t +=
-    (u.Mensais.val || 0) * (u.Mensais.n || 0) +
-    (u.Semestrais.val || 0) * (u.Semestrais.n || 0) +
-    (u.Anuais.val || 0) * (u.Anuais.n || 0);
-  t +=
-    (u.FGTS.val || 0) +
-    (u.Subsidio.val || 0) +
-    (u.Permuta.val || 0) +
-    (u.Banco.valFinanc || 0);
-  return t;
+  // Todas as fontes, com ou sem caixinha e com ou sem data (Prompt AR: leitura única).
+  return lerPlano(u, u.status).reduce((t, p) => t + p.valorBase, 0);
 }
 
 /** Revenda de um bem recebido em permuta (item 10). */
@@ -396,19 +266,19 @@ export function calcTotals(
     permVend = 0,
     banco = 0;
 
+  // Prompt AR, Fase 2: lê o plano por `lerPlano`. Regras de sempre do Resumo:
+  // não olha caixinha nem data; a permuta do plano não entra (vem da tabela de
+  // permutas); na definição antiga, S1 a S3 contam uma vez (`sinaisUmaVez`).
   units.forEach((u) => {
-    if (u.status !== "Vendido") return;
-    sinais +=
-      (u.AS.val || 0) * (u.AS.n || 1) +
-      (u.S1.val || 0) * (nova ? u.S1.n || 1 : 1) +
-      (u.S2.val || 0) * (nova ? u.S2.n || 1 : 1) +
-      (u.S3.val || 0) * (nova ? u.S3.n || 1 : 1);
-    mens += (u.Mensais.val || 0) * (u.Mensais.n || 0);
-    sem += (u.Semestrais.val || 0) * (u.Semestrais.n || 0);
-    anu += (u.Anuais.val || 0) * (u.Anuais.n || 0);
-    fgts += u.FGTS.val || 0;
-    sub += u.Subsidio.val || 0;
-    banco += u.Banco.valFinanc || 0;
+    for (const p of lerPlano(u, u.status, { sinaisUmaVez: !nova })) {
+      if (p.origem === "AS" || p.origem === "S1" || p.origem === "S2" || p.origem === "S3") sinais += p.valorBase;
+      else if (p.origem === "Mensais") mens += p.valorBase;
+      else if (p.origem === "Semestrais") sem += p.valorBase;
+      else if (p.origem === "Anuais") anu += p.valorBase;
+      else if (p.origem === "FGTS") fgts += p.valorBase;
+      else if (p.origem === "Subsidio") sub += p.valorBase;
+      else if (p.origem === "Banco") banco += p.valorBase;
+    }
   });
 
   permutas.forEach((p) => {

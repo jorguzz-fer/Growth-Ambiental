@@ -23,11 +23,11 @@ import { saldosReaisDasDespesas } from "@/lib/acerto-saldo";
 import {
   getDespesas,
   getUnits,
-  toCalcUnit,
   getContasPagar,
   getContasReceber,
 } from "@/lib/queries";
 import { reserveDespesaNumber } from "@/lib/db/numbering";
+import { lerPlano } from "@/lib/calc/plano";
 import { getAtualVersion } from "@/lib/queries";
 import { isR2Configured, putObject } from "@/lib/storage/r2";
 import { isAiConfigured } from "@/lib/ai/despesa-extract";
@@ -375,21 +375,11 @@ export async function importCash(
   }
   // Receitas previstas: conjunto de valores de parcela esperados (em centavos).
   const receitaVals = new Set<number>();
+  // Prompt AR, Fase 2: valores pela leitura única do plano. Como sempre, de
+  // todas as unidades (vendidas ou não), uma vez por seção, sem o financiamento.
   for (const u of units) {
-    const c = toCalcUnit(u);
-    for (const val of [
-      c.AS.val,
-      c.S1.val,
-      c.S2.val,
-      c.S3.val,
-      c.Mensais.val,
-      c.Semestrais.val,
-      c.Anuais.val,
-      c.FGTS.val,
-      c.Subsidio.val,
-      c.Permuta.val,
-    ]) {
-      if (val && val > 0) receitaVals.add(cents(val));
+    for (const p of lerPlano(u.paymentPlan, u.status, { qualquerStatus: true, periodicaMinimaUm: true })) {
+      if (p.origem !== "Banco" && p.valorBase > 0) receitaVals.add(cents(p.valorBase));
     }
   }
 
