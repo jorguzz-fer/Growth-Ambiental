@@ -20,7 +20,12 @@ export interface ContaData {
   saldoSource: string;
   openFinanceId: string | null;
   ativo: boolean;
+  /** Prompt AT §1-B.8 — a situação da conexão do Open Finance desta conta. */
+  conexao?: { situacao: "conectado" | "atualizando" | "precisa_acao" | "erro" | "desconectado"; ultimaAtualizacao: string | null; erro: string | null } | null;
 }
+
+const ROTULO_DA_CONEXAO = { conectado: "conectada", atualizando: "atualizando", precisa_acao: "precisa de ação", erro: "erro", desconectado: "desconectada" } as const;
+const TOM_DA_CONEXAO = { conectado: "success", atualizando: "info", precisa_acao: "warning", erro: "danger", desconectado: "neutral" } as const;
 
 /**
  * Lista das contas correntes (Prompt X). Saldo editável com Salvar por
@@ -99,7 +104,14 @@ function Row({ conta, canEditar, canExcluir }: { conta: ContaData; canEditar: bo
         <Badge tone={conta.tipo === "Imobiliária" ? "info" : conta.tipo === "Terceiros" ? "warning" : "neutral"}>{conta.tipo}</Badge>
       </TD>
       <TD>
-        <Badge tone={conta.openFinanceId ? "success" : "neutral"}>{conta.openFinanceId ? "conectada" : "não conectada"}</Badge>
+        {conta.conexao ? (
+          <Badge tone={TOM_DA_CONEXAO[conta.conexao.situacao]} title={conta.conexao.erro ?? (conta.conexao.ultimaAtualizacao ? `atualizada em ${new Date(conta.conexao.ultimaAtualizacao).toLocaleString("pt-BR")}` : undefined)} data-situacao-conta={conta.conexao.situacao}>
+            {ROTULO_DA_CONEXAO[conta.conexao.situacao]}
+            {conta.conexao.situacao === "conectado" && conta.conexao.ultimaAtualizacao ? ` · ${new Date(conta.conexao.ultimaAtualizacao).toLocaleDateString("pt-BR")}` : ""}
+          </Badge>
+        ) : (
+          <Badge tone="neutral">não conectada</Badge>
+        )}
       </TD>
       <TD className="text-right">
         {canEditar ? (

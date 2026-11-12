@@ -25,6 +25,7 @@ import {
   getAutoresDosAjustes,
 } from "@/lib/queries";
 import { isPluggyConfigured as pluggyCfg } from "@/lib/openfinance/pluggy";
+import { openFinanceDaEmpresa } from "@/lib/openfinance/situacao";
 import { isAiConfigured } from "@/lib/ai/despesa-extract";
 import { can } from "@/lib/permissions";
 import { brl0, dateInRange } from "@/lib/utils";
@@ -411,7 +412,7 @@ export default async function CaixaPage({
             projectId={project.id}
           />
         }
-        openFinance={{ configurado: pluggyCfg(), podeConfigurar: can(ctx.perms, "contas", "editar") }}
+        openFinance={{ configurado: pluggyCfg(), podeConfigurar: can(ctx.perms, "contas", "editar"), contasConectadas: (await openFinanceDaEmpresa(ctx.tenant.id)).contasConectadas }}
         totalAjustes={totalAjustes}
         baixadoSemConciliar={baixadoComDias}
       />

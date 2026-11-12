@@ -8,6 +8,9 @@ import { can } from "@/lib/permissions";
 import { hojeISO } from "@/lib/despesa-status";
 import { cicloAberto } from "@/lib/calc/cartao-ciclo";
 import { PageHeader } from "@/components/app/page-header";
+import { Badge } from "@/components/ui/badge";
+import { openFinanceDaEmpresa } from "@/lib/openfinance/situacao";
+import { ConectarBanco } from "@/components/app/open-finance";
 import { CartaoForm } from "@/components/app/cartao-form";
 import { CartoesManager } from "@/components/app/cartoes-manager";
 import { FaturasCartao } from "@/components/app/faturas-cartao";
@@ -32,6 +35,7 @@ export default async function CartoesPage({ searchParams }: { searchParams: Prom
   const sp = await searchParams;
   const [cartoes, bancos, faturas, vinculos] = await Promise.all([getCartoes(ctx.tenant.id), getBankAccounts(ctx.tenant.id), getFaturasCartao(ctx.tenant.id), getVinculosDosCartoes(ctx.tenant.id)]);
   const contas = bancos.map((b) => ({ id: b.id, nome: `${b.banco}${b.cc ? " · " + b.cc : ""}` }));
+  const of = await openFinanceDaEmpresa(ctx.tenant.id);
   const hoje = hojeISO();
   // 1.3 — "usado no ciclo": o acumulado da fatura ABERTA de cada cartão (as
   // compras e parcelas que caem no ciclo em curso).
@@ -63,7 +67,23 @@ export default async function CartoesPage({ searchParams }: { searchParams: Prom
 
   return (
     <>
-      <PageHeader title="Cartões de Crédito" subtitle={`${cartoes.filter((c) => c.ativo).length} ativo(s) · ${cartoes.length} cadastrado(s)`} />
+      <PageHeader
+        title="Cartões de Crédito"
+        subtitle={`${cartoes.filter((c) => c.ativo).length} ativo(s) · ${cartoes.length} cadastrado(s)`}
+        actions={
+          // Prompt AT §1-B.1 e 1-B.8 — conectar o banco do cartão; a situação de cada cartão conectado.
+          of.configurado ? (
+            <div className="flex flex-wrap items-center gap-2">
+              {[...of.porCartao.entries()].map(([id, c]) => (
+                <Badge key={id} tone={c.situacao === "conectado" ? "success" : c.situacao === "erro" ? "danger" : c.situacao === "precisa_acao" ? "warning" : "info"} data-situacao-cartao={c.situacao}>
+                  {cartoes.find((k) => k.id === id)?.apelido ?? "cartão"}: {c.situacao === "precisa_acao" ? "precisa de ação" : c.situacao === "conectado" ? "conectado" : c.situacao}
+                </Badge>
+              ))}
+              {can(ctx.perms, "contas", "editar") && <ConectarBanco contas={contas} cartoes={cartoes.filter((k) => k.ativo).map((k) => ({ id: k.id, nome: `${k.apelido}${k.ultimos4 ? " •••• " + k.ultimos4 : ""}` }))} rotulo="Conectar banco do cartão" />}
+            </div>
+          ) : null
+        }
+      />
       <div className="mb-5 flex items-start gap-2 rounded-[10px] border border-[var(--color-accent2)]/12 bg-[var(--color-accent4)] px-4 py-3 text-[13px] leading-relaxed text-[var(--color-ink2)]">
         <span aria-hidden className="mt-px">ⓘ</span>
         <p>
