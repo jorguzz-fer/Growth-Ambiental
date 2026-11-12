@@ -1,3 +1,4 @@
+import { cache } from "react";
 import {
   getDespesas,
   getExpenseRows,
@@ -129,11 +130,33 @@ export async function saidasDoFluxo(version: Version, opts: OpcoesDoFluxo = {}):
   return out;
 }
 
-/** Mapas de entradas e saídas mensais de uma versão (budget-aware). */
+/**
+ * Mapas de entradas e saídas mensais de uma versão (budget-aware).
+ *
+ * Desempenho (Revisão 4): na "Empresa toda", a tabela, o assistente do
+ * Orçamento e o da Previsão pediam o MESMO cálculo da Atual de cada obra, e
+ * ele relia tudo do banco a cada vez. Agora é calculado uma vez por requisição
+ * (`cache`, chaveado pelo conteúdo da versão, pela obra e pelas opções) e cada
+ * chamador recebe uma CÓPIA. O cálculo não mudou.
+ */
 export async function flowMaps(
   version: Version,
   projectId: string,
   opts: OpcoesDoFluxo = {},
+): Promise<{ entradas: Record<string, number>; saidas: Record<string, number> }> {
+  return structuredClone(await flowMapsMemorizado(JSON.stringify(version), projectId, !!opts.definicaoNova, opts.bucket));
+}
+
+const flowMapsMemorizado = cache(async (versaoJson: string, projectId: string, definicaoNova: boolean, bucket: OpcoesDoFluxo["bucket"]) => {
+  const v = JSON.parse(versaoJson) as Version & { createdAt?: string | Date };
+  const version = { ...v, ...(v.createdAt ? { createdAt: new Date(v.createdAt) } : {}) } as Version;
+  return calcularFlowMaps(version, projectId, { definicaoNova, bucket });
+});
+
+async function calcularFlowMaps(
+  version: Version,
+  projectId: string,
+  opts: OpcoesDoFluxo,
 ): Promise<{ entradas: Record<string, number>; saidas: Record<string, number> }> {
   const [{ vendas, permuta }, lista] = await Promise.all([entradasDoFluxo(version, projectId, opts), saidasDoFluxo(version, opts)]);
   const entradas = vendas;
@@ -168,6 +191,11 @@ export async function flowMapsRealizado(
   /** Prompt AD2 — balde de tempo; ausente, o mês. */
   bucket: (data: string | null) => string | null = vencMonth,
 ): Promise<{ entradas: Record<string, number>; saidas: Record<string, number>; semData: { qtd: number; valor: number } }> {
+  // Desempenho (Revisão 4): uma vez por requisição; cada chamador recebe uma cópia.
+  return structuredClone(await realizadoMemorizado(versionId, bucket));
+}
+
+const realizadoMemorizado = cache(async (versionId: string, bucket: (data: string | null) => string | null) => {
   const entradas: Record<string, number> = {};
   const saidas: Record<string, number> = {};
   // Prompt AD, 3.3: o que fica fora dos meses é CONTADO, para a tela mostrar.
@@ -192,7 +220,7 @@ export async function flowMapsRealizado(
     else saidas[mm] = (saidas[mm] || 0) + Math.abs(v);
   }
   return { entradas, saidas, semData };
-}
+});
 
 export interface PreviaFluxoObra {
   projeto: string;

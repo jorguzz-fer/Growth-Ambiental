@@ -3975,11 +3975,20 @@ export async function getStatusProjeto(
 }
 
 /** Todas as versões de um projeto (para o seletor de versões das telas). */
+/**
+ * Versões de uma obra. Desempenho (Revisão 4): lidas uma vez por requisição
+ * (o Fluxo "Empresa toda" pedia as mesmas versões seis vezes por obra); cada
+ * chamador recebe cópias das linhas.
+ */
 export async function getVersionsDoProjeto(
   tenantId: string,
   projectId: string,
 ): Promise<(typeof schema.versions.$inferSelect)[]> {
-  return db
+  return (await versoesDoProjetoMemorizadas(tenantId, projectId)).map((v) => ({ ...v }));
+}
+
+const versoesDoProjetoMemorizadas = cache(async (tenantId: string, projectId: string): Promise<(typeof schema.versions.$inferSelect)[]> =>
+  db
     .select()
     .from(schema.versions)
     .where(
@@ -3988,8 +3997,8 @@ export async function getVersionsDoProjeto(
         eq(schema.versions.projectId, projectId),
       ),
     )
-    .orderBy(asc(schema.versions.createdAt));
-}
+    .orderBy(asc(schema.versions.createdAt)),
+);
 
 /**
  * Documentos fiscais das despesas informadas, agrupados por despesa (item 1.2).
