@@ -11,10 +11,10 @@
  *   único por conta). Antes era por descrição + data, sem o valor: dois
  *   "PIX RECEBIDO" no mesmo dia, de valores diferentes, viravam um só.
  *
- * Destino provisório: até a seção 3 do Prompt AT (o movimento pertence à
- * conta, não à obra), `cash_entry.version_id` é obrigatório. O movimento vai
- * para a versão Atual mais antiga da empresa (a primeira criada). É uma regra
- * fixa, para não depender da ordem do banco; a seção 3 a substitui.
+ * Destino (Prompt AT §3): com a chave "caixa_conciliacao_por_conta" ligada, o
+ * movimento nasce só com a conta (sem obra); a obra vem do vínculo. Desligada,
+ * vai para a versão Atual mais antiga da empresa (a primeira criada), regra
+ * fixa para não depender da ordem do banco.
  *
  * Execução: agendado pelo Coolify (Scheduled Tasks) ou BullMQ. Ver
  * docs/STACK.md §2 (Jobs) e §7 (Fase 4). Requer PLUGGY_* configurado.
@@ -23,6 +23,7 @@
  */
 import { and, asc, eq, isNotNull } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
+import { chaveLigada } from "@/lib/chaves-tenant";
 import {
   authenticate,
   isPluggyConfigured,
@@ -57,8 +58,9 @@ export async function gravarTransacoesDaConta(
 ): Promise<number> {
   const validas = txs.filter((t) => t.id);
   if (validas.length === 0) return 0;
-  const versionId = await versaoDeDestinoProvisoria(conta.tenantId);
-  if (!versionId) return 0;
+  const daConta = await chaveLigada(conta.tenantId, "caixa_conciliacao_por_conta");
+  const versionId = daConta ? null : await versaoDeDestinoProvisoria(conta.tenantId);
+  if (!daConta && !versionId) return 0;
   const inseridos = await db
     .insert(schema.cashEntries)
     .values(

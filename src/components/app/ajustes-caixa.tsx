@@ -25,11 +25,11 @@ export interface AjusteLinha {
  * e o total sempre à vista no topo. Se esse total cresce, não é o ajuste que
  * está errado: é o lançamento que não está sendo feito.
  */
-export function AjustesCaixa({ ajustes, contas, contaFiltro, projectId, canAjustar, de, ate }: { ajustes: AjusteLinha[]; contas: { id: string; banco: string; cc: string | null }[]; contaFiltro: string; projectId: string; canAjustar: boolean; de: string; ate: string }) {
+export function AjustesCaixa({ ajustes, contas, contaFiltro, projectId = "", projetos, canAjustar, de, ate }: { ajustes: AjusteLinha[]; contas: { id: string; banco: string; cc: string | null }[]; contaFiltro: string; projectId?: string; projetos?: { id: string; nome: string }[]; canAjustar: boolean; de: string; ate: string }) {
   const total = Math.round(ajustes.reduce((a, x) => a + x.valor, 0) * 100) / 100;
   return (
     <>
-      {canAjustar ? <AjusteCaixaForm contas={contas} projectId={projectId} /> : <p className="mb-4 text-[12.5px] text-[var(--color-ink3)]">Lançar ajuste exige a permissão própria &quot;Conciliação — ajustar e desfazer: criar&quot;.</p>}
+      {canAjustar ? <AjusteCaixaForm contas={contas} projectId={projectId} projetos={projetos} contaInicial={contaFiltro} /> : <p className="mb-4 text-[12.5px] text-[var(--color-ink3)]">Lançar ajuste exige a permissão própria &quot;Conciliação — ajustar e desfazer: criar&quot;.</p>}
       <Card>
         <CardContent className="p-5">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
@@ -38,7 +38,7 @@ export function AjustesCaixa({ ajustes, contas, contaFiltro, projectId, canAjust
             </h3>
             <form method="get" action="/caixa" className="flex items-center gap-2 text-[12px]">
               <input type="hidden" name="tab" value="ajustes" />
-              <input type="hidden" name="proj" value={projectId} />
+              {projectId && <input type="hidden" name="proj" value={projectId} />}
               {de && <input type="hidden" name="de" value={de} />}
               {ate && <input type="hidden" name="ate" value={ate} />}
               <label className="text-[var(--color-ink3)]">Conta</label>

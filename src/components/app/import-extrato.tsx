@@ -35,13 +35,20 @@ export function ImportExtratoButton({
   contas,
   aiConfigured = false,
   projetos = [],
-  projectId,
+  projectId = "",
+  contaInicial = "",
 }: {
   contas: Conta[];
   aiConfigured?: boolean;
   projetos?: { id: string; nome: string }[];
-  /** obra da tela (Prompt A): os movimentos de caixa vão para a versão de trabalho dela. */
-  projectId: string;
+  /**
+   * obra da tela (Prompt A): os movimentos de caixa vão para a versão de
+   * trabalho dela. Vazia no Caixa por conta (Prompt AT §3 e §4.4): o
+   * movimento nasce só com a conta.
+   */
+  projectId?: string;
+  /** Prompt AT §4.4 — a conta escolhida na tela já vem preenchida. */
+  contaInicial?: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
@@ -49,7 +56,7 @@ export function ImportExtratoButton({
   const [reading, startReading] = useTransition();
   const [msg, setMsg] = useState<string | null>(null);
   const [erro, setErro] = useState<string | null>(null);
-  const [bankAccountId, setBankAccountId] = useState("");
+  const [bankAccountId, setBankAccountId] = useState(contaInicial);
   const [saldoFinal, setSaldoFinal] = useState("");
   const [preview, setPreview] = useState<PreviewRow[] | null>(null);
   const [resumo, setResumo] = useState<{ reconhecidos: number; ignorados: number } | null>(null);

@@ -602,6 +602,17 @@ async function lancarDespesa(
     avisoConciliacao = r.ok ? null : `Despesa lançada, mas o movimento do extrato não foi conciliado: ${r.error} Concilie na tela do Caixa.`;
     revalidatePath("/caixa");
   }
+  // Prompt AT §6.2 — lançada a partir de uma linha do extrato do cartão: a
+  // linha é conciliada com esta compra, pela mesma conferência do servidor.
+  // Falha aqui não desfaz a despesa: vira aviso.
+  const extratoCartaoId = (formData.get("extratoCartaoId") as string | null) || null;
+  if (extratoCartaoId) {
+    const { vincularLinhaDoCartao } = await import("@/lib/cartao-conciliacao");
+    const r = await vincularLinhaDoCartao(ctx.tenant.id, extratoCartaoId, row.id, ctx.userEmail ?? ctx.userId ?? null);
+    if (r.ok) await logAudit({ tenantId: ctx.tenant.id, userId: ctx.userId, action: "cartao.extrato.conciliar", entity: "extrato_cartao", entityId: extratoCartaoId, meta: { despesaId: row.id, origem: "lancada da linha" } });
+    else avisoConciliacao = [avisoConciliacao, `Despesa lançada, mas a linha do extrato do cartão não foi conciliada: ${r.error} Concilie no Caixa.`].filter(Boolean).join(" ");
+    revalidatePath("/caixa");
+  }
   revalidatePath("/despesas");
   const avisos = [
     falhas.length ? `Despesa ${row.numDoc ?? ""} gravada, mas ${falhas.length} anexo(s) não subiram (${falhas.join(", ")}). Anexe de novo pela ficha.` : null,

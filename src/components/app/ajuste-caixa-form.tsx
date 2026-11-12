@@ -15,7 +15,22 @@ import { DateField } from "@/components/ui/date-field";
  * ajuste compõe o saldo conciliado e nunca o saldo do extrato (4.2.3), e
  * continua fora da DRE (4.1).
  */
-export function AjusteCaixaForm({ contas, projectId }: { contas: { id: string; banco: string; cc: string | null }[]; projectId: string }) {
+export function AjusteCaixaForm({
+  contas,
+  projectId = "",
+  projetos,
+  contaInicial = "",
+}: {
+  contas: { id: string; banco: string; cc: string | null }[];
+  /** obra da tela (Caixa por obra, chave desligada). */
+  projectId?: string;
+  /**
+   * Prompt AT §3 (BAT-3, provisório) — Caixa por conta: a obra do ajuste é
+   * opcional; sem obra, o ajuste é da empresa.
+   */
+  projetos?: { id: string; nome: string }[];
+  contaInicial?: string;
+}) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [erro, setErro] = useState<string | null>(null);
@@ -28,7 +43,8 @@ export function AjusteCaixaForm({ contas, projectId }: { contas: { id: string; b
   });
   const [motivo, setMotivo] = useState("");
   const [valor, setValor] = useState("");
-  const [bankAccountId, setBankAccountId] = useState("");
+  const [bankAccountId, setBankAccountId] = useState(contaInicial);
+  const [obra, setObra] = useState(projectId);
 
   return (
     <Card className="mb-6">
@@ -64,6 +80,19 @@ export function AjusteCaixaForm({ contas, projectId }: { contas: { id: string; b
               ))}
             </Select>
           </div>
+          {projetos && (
+            <div>
+              <Label>Obra (opcional)</Label>
+              <Select value={obra} onChange={(e) => setObra(e.target.value)} aria-label="Obra do ajuste">
+                <option value="">Empresa (sem obra)</option>
+                {projetos.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.nome}
+                  </option>
+                ))}
+              </Select>
+            </div>
+          )}
           <div className="col-span-2 sm:col-span-2">
             <Label>Motivo (obrigatório)</Label>
             <Input value={motivo} onChange={(e) => setMotivo(e.target.value)} placeholder="Ex.: diferença de centavos do extrato de 09/2026 não localizada" aria-label="Motivo do ajuste" />
@@ -76,7 +105,7 @@ export function AjusteCaixaForm({ contas, projectId }: { contas: { id: string; b
                 setErro(null);
                 setOk(null);
                 const fd = new FormData();
-                fd.set("projectId", projectId);
+                fd.set("projectId", obra);
                 fd.set("data", data);
                 fd.set("motivo", motivo);
                 fd.set("valor", valor);

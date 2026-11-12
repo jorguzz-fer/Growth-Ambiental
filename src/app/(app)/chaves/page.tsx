@@ -12,6 +12,7 @@ import { previaDashboardDefinicaoNova } from "@/lib/dashboard-previa";
 import { previaResumoDefinicaoNova } from "@/lib/resumo-previa";
 import { previaPlanoDefinicaoNova } from "@/lib/plano-previa";
 import { previaRateioDaReceita } from "@/lib/rateio-previa";
+import { previaCaixaPorConta } from "@/lib/caixa-conta-previa";
 import { previaCategoriaDoPlano } from "@/lib/categoria-do-plano-servidor";
 import { getLinhasDaSerieIncc, toInccRows } from "@/lib/queries";
 import { SERIE_DA_EMPRESA, diferencaDaSerie, mudaAlgo } from "@/lib/incc-empresa";
@@ -60,6 +61,8 @@ export default async function ChavesPage() {
   const previaResumo = await previaResumoDefinicaoNova(ctx.tenant.id, ctx.projects);
   const previaPlano = await previaPlanoDefinicaoNova(ctx.tenant.id, ctx.projects);
   const previaRateio = await previaRateioDaReceita(ctx.tenant.id, ctx.projects);
+  // Prompt AT §3 e §4: prévia da chave "caixa_conciliacao_por_conta" (só leitura).
+  const previaCaixa = await previaCaixaPorConta(ctx.tenant.id);
   // Prompt DP (BDP-3): prévia da chave "despesa_categoria_do_plano" (só leitura).
   const previaCategoria = await previaCategoriaDoPlano(ctx.tenant.id);
   const totalQueMuda = previaCategoria.reduce((a, m) => a + m.despesas, 0);
@@ -543,6 +546,75 @@ export default async function ChavesPage() {
           ) : (
             <p className="mt-3 text-[12.5px] text-[var(--color-ink3)]">Nenhuma pendência: todas as vendas têm contrato e janela de obra.</p>
           )}
+        </CardContent>
+      </Card>
+      <Card className="mt-6" id="previa-caixa-conta">
+        <CardContent className="p-5">
+          <h2 className="text-sm font-semibold text-[var(--color-ink)]">Prévia · Caixa: conciliação por conta</h2>
+          <p className="mt-1.5 text-[13px] text-[var(--color-ink2)]">
+            Com a chave ligada, o Caixa deixa de ter seletor de obra e de versão e mostra a conciliação da empresa, conta a conta (a
+            versão Atual de todas as obras). O extrato importado depois de ligar nasce só com a conta; a obra de cada movimento passa a
+            ser a do item com que ele for conciliado. Os movimentos que já existem ficam na obra que têm: a tabela de obras abaixo
+            confere que o realizado de cada uma é o mesmo pelas duas leituras. Nada é gravado.
+          </p>
+          <div className="mt-3 overflow-x-auto">
+            <table className="w-full text-[12.5px]" aria-label="Prévia do Caixa por conta">
+              <thead>
+                <tr className="border-b border-[var(--color-line)] text-left text-[11px] uppercase tracking-wide text-[var(--color-ink3)]">
+                  <th className="py-1.5 pr-3">Conta</th>
+                  <th className="py-1.5 pr-3 text-right">Movimentos</th>
+                  <th className="py-1.5 pr-3 text-right">A conciliar</th>
+                  <th className="py-1.5 text-right">Sem obra</th>
+                </tr>
+              </thead>
+              <tbody>
+                {previaCaixa.contas.map((c) => (
+                  <tr key={c.id} className="border-b border-[var(--color-line)]/60" data-previa-caixa-conta={c.nome}>
+                    <td className="py-1.5 pr-3">
+                      {c.nome}
+                      {c.terceiros && <span className="ml-1 text-[11px] text-[var(--color-ink3)]">fora do total (terceiros ou inativa)</span>}
+                    </td>
+                    <td className="py-1.5 pr-3 text-right tabular-nums">{c.movimentos}</td>
+                    <td className="py-1.5 pr-3 text-right tabular-nums">{c.pendentes}</td>
+                    <td className="py-1.5 text-right tabular-nums">{c.semObra}</td>
+                  </tr>
+                ))}
+                {previaCaixa.semConta.movimentos > 0 && (
+                  <tr className="border-b border-[var(--color-line)]/60 text-[var(--color-warning)]" data-previa-caixa-sem-conta>
+                    <td className="py-1.5 pr-3">Sem conta (lançados antes do cadastro da conta)</td>
+                    <td className="py-1.5 pr-3 text-right tabular-nums">{previaCaixa.semConta.movimentos}</td>
+                    <td className="py-1.5 pr-3 text-right tabular-nums">{previaCaixa.semConta.pendentes}</td>
+                    <td className="py-1.5 text-right">—</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+          <div className="mt-3 overflow-x-auto">
+            <table className="w-full text-[12.5px]" aria-label="Realizado por obra nas duas leituras">
+              <thead>
+                <tr className="border-b border-[var(--color-line)] text-left text-[11px] uppercase tracking-wide text-[var(--color-ink3)]">
+                  <th className="py-1.5 pr-3">Obra (versão Atual)</th>
+                  <th className="py-1.5 pr-3 text-right">Realizado hoje</th>
+                  <th className="py-1.5 text-right">Pelo vínculo</th>
+                </tr>
+              </thead>
+              <tbody>
+                {previaCaixa.obras.map((o) => (
+                  <tr key={o.projeto} className="border-b border-[var(--color-line)]/60" data-previa-caixa-obra={o.projeto}>
+                    <td className="py-1.5 pr-3">{o.projeto}</td>
+                    <td className="py-1.5 pr-3 text-right tabular-nums">{brl(o.hoje)}</td>
+                    <td className={`py-1.5 text-right tabular-nums ${Math.abs(o.hoje - o.peloVinculo) > 0.005 ? "text-[var(--color-warning)]" : ""}`}>{brl(o.peloVinculo)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="mt-3 text-[12.5px] text-[var(--color-ink3)]" data-previa-caixa-sem-obra>
+            {previaCaixa.semObra.qtd === 0
+              ? "Nenhum movimento sem obra ainda: eles só nascem depois de ligar a chave."
+              : `${previaCaixa.semObra.qtd} movimento(s) sem obra; ${brl(previaCaixa.semObra.naoAtribuido)} ainda não atribuído(s) a obra (sem vínculo): entram no saldo da empresa e no realizado de nenhuma obra.`}
+          </p>
         </CardContent>
       </Card>
       <Card className="mt-6" id="previa-categoria">

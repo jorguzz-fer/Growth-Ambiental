@@ -382,7 +382,7 @@ function ContaRow({
     {receber && (
       <TR>
         <TD colSpan={7} className="py-2">
-          <ContaReceberRecebimentos key={`${estado.estado}:${estado.saldo}`} contaId={c.id} estado={estado} recebimentos={recebimentos} entradas={entradas.filter((m) => m.projectId === c.projectId)} canEdit={canEditar} />
+          <ContaReceberRecebimentos key={`${estado.estado}:${estado.saldo}`} contaId={c.id} estado={estado} recebimentos={recebimentos} entradas={entradas.filter((m) => m.projectId === c.projectId || m.projectId == null)} canEdit={canEditar} />
         </TD>
       </TR>
     )}

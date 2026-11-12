@@ -19,6 +19,7 @@ import { getRestituicoesPendentesByVersion } from "@/lib/actions/restituicoes";
 import type { Version } from "@/lib/context";
 // `vencMonth` vive em módulo puro para poder ser testada sem puxar banco/sessão.
 import { vencMonth } from "@/lib/calc/mes-caixa";
+import { realizadoDaVersao } from "@/lib/movimento-obra";
 
 export { vencMonth };
 
@@ -200,7 +201,8 @@ const realizadoMemorizado = cache(async (versionId: string, bucket: (data: strin
   const saidas: Record<string, number> = {};
   // Prompt AD, 3.3: o que fica fora dos meses é CONTADO, para a tela mostrar.
   const semData = { qtd: 0, valor: 0 };
-  const lancamentos = await getCash(versionId);
+  // Prompt AT §3: os gravados na versão e a parte dos movimentos sem obra que o vínculo atribui a ela.
+  const lancamentos = await realizadoDaVersao(versionId);
   for (const c of lancamentos) {
     // Sem data não há competência de caixa a atribuir — o lançamento existe,
     // mas não entra em nenhum mês (e some-lo do total seria pior do que

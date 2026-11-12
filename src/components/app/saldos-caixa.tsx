@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { brl0 } from "@/lib/utils";
 import { LIMITE_ATUALIZACAO_DIAS } from "@/lib/calc/cadeia-caixa";
+import type { SaldoDoCartao } from "@/lib/caixa-cartoes";
 
 export interface SaldoDaConta {
   id: string;
@@ -13,6 +14,19 @@ export interface SaldoDaConta {
   atualizadoEm: string | null;
   diasDesde: number | null;
   conectada: boolean;
+  /** Prompt AT §8.1 — movimentos a conciliar desta conta (Caixa por conta). */
+  pendentes?: number;
+}
+
+/**
+ * Prompt AT §4.3 — Caixa por conta: cada conta ou cartão é clicável e vira o
+ * filtro da tela (`?conta=`). `href(id)` monta o link; `todas` volta ao
+ * consolidado.
+ */
+export interface FiltroDeConta {
+  selecionada: string;
+  href: (id: string) => string;
+  todas: string;
 }
 
 /**
@@ -22,11 +36,12 @@ export interface SaldoDaConta {
  * saldo em conta foi obtido (1.0.1), alerta quando está velho (1.0.2),
  * importar extrato em destaque (1.0.3) e o caminho do Open Finance (1.0.4).
  */
-export function SaldosCaixa({ contas, total, importar, openFinance, totalAjustes, baixadoSemConciliar }: { contas: SaldoDaConta[]; total: { emConta: number; conciliado: number }; importar: React.ReactNode; openFinance: { configurado: boolean; podeConfigurar: boolean }; totalAjustes?: { valor: number; n: number }; baixadoSemConciliar?: { total: number; despesas: number; dias: number | null } }) {
+export function SaldosCaixa({ contas, total, importar, openFinance, totalAjustes, baixadoSemConciliar, cartoes, filtro, faixaDeAcao, ocultarAcoes }: { contas: SaldoDaConta[]; total: { emConta: number; conciliado: number }; importar: React.ReactNode; openFinance: { configurado: boolean; podeConfigurar: boolean }; totalAjustes?: { valor: number; n: number }; baixadoSemConciliar?: { total: number; despesas: number; dias: number | null }; /** Prompt AT §4.2 — cartões, depois das contas, no mesmo formato. */ cartoes?: SaldoDoCartao[]; filtro?: FiltroDeConta; /** Prompt AT §8.1 — a faixa de ação no topo do bloco (Caixa por conta). */ faixaDeAcao?: React.ReactNode; /** Com a faixa de ação, os botões de importar e Open Finance moram nela. */ ocultarAcoes?: boolean }) {
   const diferencaTotal = Math.round((total.emConta - total.conciliado) * 100) / 100;
   return (
     <Card className="mb-6">
       <CardContent className="p-5">
+        {faixaDeAcao}
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-sm font-semibold text-[var(--color-ink)]">Os dois saldos</h2>
@@ -34,7 +49,7 @@ export function SaldosCaixa({ contas, total, importar, openFinance, totalAjustes
               <strong>Em conta</strong> é o do extrato (fato do banco). <strong>Conciliado</strong> é o que os lançamentos sustentam. Num dia inteiramente conciliado, os dois coincidem; a diferença é o que a tela existe para mostrar.
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          {!ocultarAcoes && <div className="flex flex-wrap items-center gap-2">
             {importar}
             {openFinance.podeConfigurar ? (
               <Link href="/contas" className="text-[12px] text-[var(--color-accent2)] hover:underline" title="Informe o ID Open Finance da conta em Contas Correntes">
@@ -43,7 +58,7 @@ export function SaldosCaixa({ contas, total, importar, openFinance, totalAjustes
             ) : (
               <Badge tone={openFinance.configurado ? "success" : "neutral"}>Open Finance {openFinance.configurado ? "ativo" : "não configurado"}</Badge>
             )}
-          </div>
+          </div>}
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] text-[12.5px]">
@@ -60,9 +75,23 @@ export function SaldosCaixa({ contas, total, importar, openFinance, totalAjustes
               {contas.map((c) => {
                 const dif = Math.round((c.emConta - c.conciliado) * 100) / 100;
                 const velho = c.diasDesde == null || c.diasDesde > LIMITE_ATUALIZACAO_DIAS;
+                const ativa = filtro?.selecionada === c.id;
                 return (
-                  <tr key={c.id} className="border-t border-[var(--color-line)]">
-                    <td className="py-1.5 font-medium text-[var(--color-ink)]">{c.nome}</td>
+                  <tr key={c.id} className={`border-t border-[var(--color-line)] ${ativa ? "bg-[var(--color-accent2)]/8" : ""}`} data-conta-saldo={c.id} aria-current={ativa ? "true" : undefined}>
+                    <td className="py-1.5 font-medium text-[var(--color-ink)]">
+                      {filtro ? (
+                        <Link href={filtro.href(c.id)} className="hover:underline" title="Filtrar a tela por esta conta">
+                          {c.nome}
+                        </Link>
+                      ) : (
+                        c.nome
+                      )}
+                      {filtro && (c.pendentes ?? 0) > 0 && (
+                        <Link href={filtro.href(c.id)} className="ml-1.5" data-pendentes-da-conta={c.pendentes} title="Movimentos desta conta a conciliar">
+                          <Badge tone="warning">{c.pendentes} a conciliar</Badge>
+                        </Link>
+                      )}
+                    </td>
                     <td className="py-1.5 text-right font-[family-name:var(--font-mono)]">{brl0(c.emConta)}</td>
                     <td className="py-1.5 text-right font-[family-name:var(--font-mono)]">{brl0(c.conciliado)}</td>
                     <td className={`py-1.5 text-right font-[family-name:var(--font-mono)] ${Math.abs(dif) > 0.005 ? "text-[var(--color-danger)]" : "text-[var(--color-success)]"}`}>{brl0(dif)}</td>
@@ -73,8 +102,45 @@ export function SaldosCaixa({ contas, total, importar, openFinance, totalAjustes
                   </tr>
                 );
               })}
+              {(cartoes ?? []).map((k) => {
+                const ativa = filtro?.selecionada === k.id;
+                const velho = k.ultimoExtrato == null;
+                return (
+                  <tr key={k.id} className={`border-t border-[var(--color-line)] ${ativa ? "bg-[var(--color-accent2)]/8" : ""}`} data-cartao-saldo={k.id} aria-current={ativa ? "true" : undefined}>
+                    <td className="py-1.5 font-medium text-[var(--color-ink)]">
+                      <span className="mr-1 text-[10px] uppercase tracking-wide text-[var(--color-ink4)]">Cartão</span>
+                      {filtro ? (
+                        <Link href={filtro.href(k.id)} className="hover:underline" title="Filtrar a tela por este cartão">
+                          {k.nome}
+                        </Link>
+                      ) : (
+                        k.nome
+                      )}
+                      {filtro && k.pendentes > 0 && (
+                        <Link href={filtro.href(k.id)} className="ml-1.5" data-pendentes-da-conta={k.pendentes} title="Linhas do extrato do cartão a conciliar">
+                          <Badge tone="warning">{k.pendentes} a conciliar</Badge>
+                        </Link>
+                      )}
+                    </td>
+                    <td className="py-1.5 text-right font-[family-name:var(--font-mono)]" title="Fatura aberta: o que falta pagar do ciclo em curso">{brl0(k.faturaAberta)}</td>
+                    <td className="py-1.5 text-right font-[family-name:var(--font-mono)]" title="Linhas do extrato do cartão já conciliadas com a compra lançada">{brl0(k.conciliado)}</td>
+                    <td className="py-1.5 text-right text-[11.5px] text-[var(--color-ink3)]">fatura aberta · conciliado</td>
+                    <td className="py-1.5 pl-4 text-[11.5px] text-[var(--color-ink2)]">
+                      {k.ultimoExtrato ? `último extrato ${k.ultimoExtrato.split("-").reverse().join("/")}${k.conectado ? " · Open Finance" : ""}` : "nenhum extrato do cartão"}
+                      {velho && <Badge tone="neutral" className="ml-1.5">suba a fatura</Badge>}
+                    </td>
+                  </tr>
+                );
+              })}
               <tr className="border-t-2 border-[var(--color-line)] font-semibold text-[var(--color-ink)]">
-                <td className="py-1.5">Total (contas ativas da empresa)</td>
+                <td className="py-1.5">
+                  Total (contas ativas da empresa)
+                  {filtro && filtro.selecionada && (
+                    <Link href={filtro.todas} className="ml-2 text-[11.5px] font-normal text-[var(--color-accent2)] hover:underline" data-todas-as-contas>
+                      Todas as contas
+                    </Link>
+                  )}
+                </td>
                 <td className="py-1.5 text-right font-[family-name:var(--font-mono)]">{brl0(total.emConta)}</td>
                 <td className="py-1.5 text-right font-[family-name:var(--font-mono)]">{brl0(total.conciliado)}</td>
                 <td className={`py-1.5 text-right font-[family-name:var(--font-mono)] ${Math.abs(diferencaTotal) > 0.005 ? "text-[var(--color-danger)]" : "text-[var(--color-success)]"}`}>{brl0(diferencaTotal)}</td>
