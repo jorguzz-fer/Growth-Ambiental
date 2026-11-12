@@ -1,8 +1,10 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
+import { useCris } from "@/components/app/cris-contexto";
+import { EVENTO_IMPORTAR_EXTRATO } from "@/components/app/cris-conciliacao";
+import type { PropostaDeImportacao } from "@/lib/cris";
 import { useRouter } from "next/navigation";
-import * as XLSX from "xlsx";
 import {
   importCash,
   extractExtratoPdf,
@@ -18,7 +20,8 @@ import { categoriasDeDespesa } from "@/lib/calc/natureza-dre";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { dateBR } from "@/lib/utils";
-import { parseMoney, parseSheet, type PreviewRow } from "@/lib/extrato-parse";
+import { parseMoney, type PreviewRow } from "@/lib/extrato-parse";
+import { linhasDaPlanilha } from "@/lib/extrato-planilha";
 
 interface Conta {
   id: string;
@@ -51,6 +54,10 @@ export function ImportExtratoButton({
   contaInicial?: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const caixaRef = useRef<HTMLDivElement>(null);
+  const cris = useCris();
+  // Prompt AT §8.2 — terminou de importar: oferece conciliar os pendentes com a Cris.
+  const [importou, setImportou] = useState(false);
   const router = useRouter();
   const [pending, start] = useTransition();
   const [reading, startReading] = useTransition();
@@ -60,6 +67,24 @@ export function ImportExtratoButton({
   const [saldoFinal, setSaldoFinal] = useState("");
   const [preview, setPreview] = useState<PreviewRow[] | null>(null);
   const [resumo, setResumo] = useState<{ reconhecidos: number; ignorados: number } | null>(null);
+  // Prompt AT §8.3.3 — a Cris leu o extrato (`ler_extrato`): o MESMO diálogo abre
+  // já preenchido, com a conta proposta. Quem importa é o botão do diálogo.
+  useEffect(() => {
+    const abrir = (e: Event) => {
+      const p = (e as CustomEvent<PropostaDeImportacao>).detail;
+      if (!p?.linhas?.length) return;
+      setErro(null);
+      setMsg(null);
+      setImportou(false);
+      if (p.contaSugerida && contas.some((c) => c.id === p.contaSugerida)) setBankAccountId(p.contaSugerida);
+      if (p.saldoFinal != null) setSaldoFinal(String(p.saldoFinal));
+      setPreview(p.linhas.map((l) => ({ incluir: true, data: l.data, descricao: l.descricao, doc: l.doc, valor: l.valor, tipo: l.valor >= 0 ? "entrada" : "saida" })));
+      setResumo({ reconhecidos: p.linhas.length, ignorados: 0 });
+      setTimeout(() => caixaRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
+    };
+    window.addEventListener(EVENTO_IMPORTAR_EXTRATO, abrir);
+    return () => window.removeEventListener(EVENTO_IMPORTAR_EXTRATO, abrir);
+  }, [contas]);
   // Pareamento (modal): linha em conciliação, candidatos e estados de carga.
   const [matching, setMatching] = useState<PreviewRow | null>(null);
   const [cands, setCands] = useState<CandidatoMatch[] | null>(null);
@@ -122,15 +147,8 @@ export function ImportExtratoButton({
     }
     // XLSX/CSV: parsing local (comportamento existente, inalterado).
     try {
-      const wb = XLSX.read(await file.arrayBuffer(), { cellDates: true });
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const aoa = XLSX.utils.sheet_to_json<unknown[]>(ws, {
-        header: 1,
-        raw: false,
-        defval: "",
-        blankrows: false,
-      });
-      const res = parseSheet(aoa);
+      // Prompt AT §8.3.1: a mesma leitura da ferramenta `ler_extrato` da Cris.
+      const res = linhasDaPlanilha(await file.arrayBuffer());
       if (res.rows.length === 0) {
         setErro(
           `Nenhum lançamento com valor foi reconhecido (${res.ignorados} linhas ignoradas). Confira as colunas de Data e Valor do arquivo.`,
@@ -275,6 +293,7 @@ export function ImportExtratoButton({
         if (res.skipped > 0) parts.push(`${res.skipped} ignorados (já importados)`);
         if (res.saldoUpdated && saldo != null) parts.push(`saldo atualizado para ${brl(saldo)}`);
         setMsg(parts.join(" · ") + ".");
+        setImportou(res.inserted - res.conciliated > 0);
         setPreview(null);
         setResumo(null);
         setSaldoFinal("");
@@ -286,7 +305,7 @@ export function ImportExtratoButton({
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" ref={caixaRef} data-importar-extrato>
       <div className="rounded-[10px] border border-[var(--color-accent2)]/12 bg-[var(--color-surface2)] p-4">
         <input
           ref={inputRef}
@@ -348,6 +367,11 @@ export function ImportExtratoButton({
         )}
         {erro && <p className="mt-2 text-xs text-[var(--color-danger)]">{erro}</p>}
         {msg && <p className="mt-2 text-xs text-[var(--color-success)]">{msg}</p>}
+        {importou && cris && (
+          <button type="button" className="mt-1 text-xs text-[var(--color-accent2)] hover:underline" data-conciliar-com-cris onClick={() => cris.perguntar("Concilie comigo os movimentos pendentes que acabei de importar, em rodadas de até 20, do mais antigo para o mais novo.")}>
+            Conciliar os pendentes com a Cris →
+          </button>
+        )}
       </div>
 
       {/* Pré-visualização / triagem: cada linha tem 3 ações (Adicionar / Parear /

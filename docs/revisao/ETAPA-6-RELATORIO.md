@@ -247,3 +247,86 @@ sinal do valor, que o SDK não documenta.
 
 **Pendente do relatório 1-B:** o vídeo do sandbox, que depende das credenciais
 da Pluggy.
+
+---
+
+# Seções 7 e 8 · A IA na conciliação e os três caminhos
+
+## 8.1 · O que ficou mais evidente (Caixa por conta, sem mudar o layout)
+
+- Título "Conciliação de Caixa" e o subtítulo da spec.
+- **Faixa de ação** no topo do bloco de saldos: **Subir extrato**, **Conciliar
+  com a Cris** e **Open Finance** (conectado com a data, conectar para quem
+  edita Contas, ou indisponível com o motivo), mais o contador "N movimentos
+  a conciliar em M contas · mais antigo há X dias", que leva à aba
+  Conciliação.
+- Cada conta ou cartão mostra as pendências como selo clicável (§4).
+- Cada movimento pendente ganhou **"Perguntar à Cris"**, que abre a conversa
+  já com aquele movimento.
+- Sem extrato no período, o vazio explica os três caminhos, com os botões.
+
+## 8.2 · Caminho 1 (tela)
+
+Igual a antes. Depois de importar, se ficaram pendentes, aparece **"Conciliar
+os pendentes com a Cris"**.
+
+## 8.3 · Caminho 2 (Cris)
+
+Só na tela do Caixa, e pela permissão da pessoa:
+
+| Ferramenta | O que faz | Permissão |
+| --- | --- | --- |
+| `ler_extrato` | Lê o anexo com o **mesmo leitor da importação** (planilha pelo `linhasDaPlanilha`, PDF ou imagem pela leitura de extrato) e devolve à **tela** as linhas; a conversa recebe só o resumo. A tela abre o mesmo diálogo de prévia, já preenchido, com a conta proposta | Caixa/criar |
+| `pendentes_de_conciliacao` | A rodada: até 20 pendentes, do mais antigo para o mais novo | Caixa/editar |
+| `candidatos_de_conciliacao` | Os candidatos que o **servidor** calcula para um movimento: despesas, contas a receber, parcelas de venda, pagamentos de fatura, com grau | Caixa/editar |
+| `propor_conciliacoes` | Lote de até 20 (BAT-8). Ref que não veio dos candidatos daquele movimento é **recusada no servidor**. Vira a lista com o botão **"Confirmar N conciliações"** | Caixa/editar |
+
+- Todas **só leem**; o AQ-T6 passou a conferir os módulos delas.
+- O botão "Confirmar N conciliações" valida tudo de novo e grava **um a um**:
+  cada vínculo pelo caminho próprio da tela, atômico e auditado; uma falha não
+  desfaz as outras e o resultado diz qual falhou.
+- A planilha anexada (XLSX, CSV) **não vai ao modelo**: só o `ler_extrato` a
+  lê. PDF ou imagem vai inteiro, e a tela avisa disso ao lado do anexo; a base
+  de conhecimento também.
+- Sem Caixa/editar, a Cris não recebe as ferramentas e explica por quê.
+- A conciliação automática não mudou (só na importação, com candidata única).
+
+## 8.4 · Caminho 3 (Open Finance)
+
+Os movimentos sincronizados chegam pendentes, com a mesma ajuda (§1-B).
+
+## 7.4 · A Cris recebe o resumo da conta escolhida
+
+Com uma conta ou cartão escolhido, o resumo que a tela manda é o dela; sem
+filtro, o consolidado.
+
+## Decisão provisória (a confirmar)
+
+| Bloqueio | O que foi feito | Por quê |
+| --- | --- | --- |
+| BAT-7 (formulário de despesa no Caixa) | **Não fiz o painel lateral.** "Lançar o que falta" continua levando a Despesas (ou Contas a Receber), já preenchida com o movimento; ao salvar, o movimento é conciliado, sem segunda saída (AT-T19) | O formulário de despesa tem muitas dependências (fornecedores, plano de contas, cartões, anexos). Pô-lo num painel dentro do Caixa é uma mudança grande de tela, e a ida e volta já funciona sem risco. Se o dono quiser o painel, é o próximo passo |
+| BAT-8 (limite do lote) | 20, igual à rodada | Proposta do revisor |
+
+## Testes (`src/lib/conciliacao-cris.test.ts` e `src/lib/cris.test.ts`)
+
+| Teste | O que confere |
+| --- | --- |
+| AT-T15 | `ler_extrato` devolve as mesmas linhas que o diálogo de importação para XLSX, CSV e PDF de texto |
+| AT-T16 | Proposta com despesa que não é candidata do movimento → recusada no servidor (na ferramenta e no botão) |
+| AT-T17 | Lote de 5, com uma despesa cancelada no meio → 4 vínculos, 4 auditorias; o resultado diz qual falhou; acima de 20 é recusado |
+| AT-T18 | Sem Caixa/editar: nenhuma ferramenta de conciliação, o aviso, e o botão também recusa |
+| AT-T19 | Despesa lançada a partir do movimento nasce paga na data do extrato, vinculada a ele, sem segunda saída |
+| AQ-T6 | As ferramentas novas só leem (imports e escrita conferidos) |
+
+## O que não deu para conferir aqui
+
+- **A conversa com o modelo de verdade** (a Cris escolhendo ferramentas,
+  perguntando uma coisa de cada vez): esta sessão não tem a chave da
+  Anthropic. As ferramentas, a validação e o lote foram testados no servidor;
+  o roteiro dos três caminhos fica para o vídeo do relatório, com a chave.
+- **Vídeo dos três caminhos** (relatório 5): depende da chave da IA e das
+  credenciais da Pluggy.
+
+## Suíte
+
+281 arquivos, 2.267 testes, nenhum pulado. Build ok.

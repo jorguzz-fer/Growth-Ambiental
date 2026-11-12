@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { perguntarACris } from "@/lib/actions/cris";
-import { NOME_DA_CRIS, TIPOS_DE_ANEXO, trechosDaCris, type FalaDaCris, type PropostaDePreenchimento, type TrechoDaCris, type TrechoEmLinha } from "@/lib/cris";
+import { NOME_DA_CRIS, TIPOS_DE_ANEXO, trechosDaCris, type FalaDaCris, type PropostaDeConciliacao, type PropostaDeImportacao, type PropostaDePreenchimento, type TrechoDaCris, type TrechoEmLinha } from "@/lib/cris";
+import { ImportacaoDaCris, LoteDaCris } from "@/components/app/cris-conciliacao";
 import { validarAnexo } from "@/lib/cris-colagem";
 import { juntarDitado } from "@/lib/voz-ditado";
 import { CampoDeMensagem, tratarTransferencia, type AvisoDoCampo } from "@/components/app/campo-de-mensagem";
@@ -27,7 +28,7 @@ import { Button } from "@/components/ui/button";
 
 type Mensagem =
   | { de: "usuario"; texto: string; anexo?: string }
-  | { de: "cris"; texto: string; proposta: PropostaDePreenchimento | null; aplicada?: boolean }
+  | { de: "cris"; texto: string; proposta: PropostaDePreenchimento | null; aplicada?: boolean; conciliacoes?: PropostaDeConciliacao | null; importacao?: PropostaDeImportacao | null }
   | { de: "erro"; texto: string };
 
 const SUGESTOES_PADRAO = [
@@ -80,7 +81,7 @@ export function ChatAssistente() {
       try {
         const falas: FalaDaCris[] = nova.filter((m): m is Exclude<Mensagem, { de: "erro" }> => m.de !== "erro").map((m) => ({ de: m.de, texto: m.texto }));
         const r = await perguntarACris({ conversa: falas, tela, anexo: anexoAgora ? await lerAnexo(anexoAgora) : undefined });
-        setConversa((c) => [...c, r.ok ? { de: "cris", texto: r.texto, proposta: r.proposta } : { de: "erro", texto: r.error }]);
+        setConversa((c) => [...c, r.ok ? { de: "cris", texto: r.texto, proposta: r.proposta, conciliacoes: r.conciliacoes ?? null, importacao: r.importacao ?? null } : { de: "erro", texto: r.error }]);
       } catch {
         setConversa((c) => [...c, { de: "erro", texto: "Não consegui responder agora. Tente de novo." }]);
       }
@@ -194,6 +195,8 @@ export function ChatAssistente() {
               ) : (
                 <div key={i} className="space-y-2" data-chat-resposta>
                   <RespostaDaCris texto={m.texto} />
+                  {m.conciliacoes && <LoteDaCris proposta={m.conciliacoes} />}
+                  {m.importacao && <ImportacaoDaCris proposta={m.importacao} />}
                   {m.proposta && (
                     <div className="rounded-[10px] border border-[#e9d5ff] bg-[#fcfaff] p-3" data-cris-proposta>
                       <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-[var(--color-ink3)]">Proposta para a tela</p>
@@ -236,6 +239,12 @@ export function ChatAssistente() {
               </button>
             </div>
           )}
+          {/* Prompt AT §8.5 — no Caixa, a tela diz o que vai ao modelo quando o extrato é anexado. */}
+          {tela?.rota?.split("?")[0] === "/caixa" && (
+            <p className="border-t border-[var(--color-line)] px-3 py-1.5 text-[11.5px] text-[var(--color-ink3)]" data-cris-privacidade-extrato>
+              Extrato em PDF ou imagem anexado aqui vai inteiro ao modelo de IA, com os nomes de quem pagou e recebeu. Planilha (XLSX, CSV) não vai: é lida no servidor.
+            </p>
+          )}
           {aviso && (
             <p role={aviso.tom === "erro" ? "alert" : "status"} data-cris-aviso className={`border-t border-[var(--color-line)] px-3 py-1.5 text-[12px] ${aviso.tom === "erro" ? "text-[var(--color-danger)]" : "text-[var(--color-ink2)]"}`}>
               {aviso.texto}
@@ -259,7 +268,7 @@ export function ChatAssistente() {
                 if (f) anexar(f);
               }}
             />
-            <button type="button" onClick={() => arquivo.current?.click()} title="Anexar documento (PDF ou imagem)" aria-label="Anexar documento" className="text-[16px] text-[var(--color-ink3)] hover:text-[var(--color-ink)]">
+            <button type="button" onClick={() => arquivo.current?.click()} title="Anexar documento (PDF, imagem ou, no Caixa, planilha do extrato)" aria-label="Anexar documento" className="text-[16px] text-[var(--color-ink3)] hover:text-[var(--color-ink)]">
               📎
             </button>
             <BotaoDeVoz onTexto={(t) => setTexto((atual) => juntarDitado(atual, t))} onErro={(m) => setAviso(m ? { texto: m, tom: "erro" } : null)} />

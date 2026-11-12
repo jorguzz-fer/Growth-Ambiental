@@ -26,6 +26,7 @@ import { Conciliacao } from "@/components/app/caixa-conciliacao";
 import { saldosDosCartoes } from "@/lib/caixa-cartoes";
 import { CartaoNaConciliacao } from "@/components/app/cartao-conciliacao";
 import { urlDoCaixa, type ParamsDoCaixa } from "@/lib/caixa-url";
+import { FaixaDeConciliacao, VazioDaConciliacao, type EstadoDoOpenFinance } from "@/components/app/faixa-conciliacao";
 
 /**
  * Prompt AT §4 (Revisão 4) — o Caixa como tela de CONCILIAÇÃO DA EMPRESA,
@@ -178,6 +179,35 @@ export async function CaixaPorConta({ ctx, sp, avisoRemovida, diasFechados }: { 
     };
   });
 
+  // Prompt AT §8.1 — a faixa de ação: os três caminhos e o contador de pendências (da empresa).
+  const todosPendentes = [...conciliacaoDaEmpresa.pendentes, ...conciliacaoDaEmpresa.pendentesEntrada];
+  const contasComPendencia = new Set(todosPendentes.map((m) => contaDe.get(m.cashEntryId) ?? "sem conta")).size;
+  const maisAntigo = todosPendentes
+    .map((m) => (m.data && /^\d{2}\/\d{2}\/\d{4}$/.test(m.data) ? `${m.data.slice(6)}-${m.data.slice(0, 2)}-${m.data.slice(3, 5)}` : null))
+    .filter((x): x is string => !!x)
+    .sort()[0];
+  const conectada = of.conexoes.find((c) => c.situacao === "conectado");
+  const estadoOF: EstadoDoOpenFinance = conectada
+    ? { tipo: "conectado", ultima: conectada.ultimaAtualizacao }
+    : !of.configurado
+      ? { tipo: "indisponivel", motivo: "o Open Finance não está configurado neste servidor (credenciais da Pluggy)." }
+      : can(ctx.perms, "contas", "editar")
+        ? { tipo: "conectar" }
+        : { tipo: "indisponivel", motivo: "conectar o banco exige a permissão Contas/editar." };
+  const opcoesContas = contas.filter((c) => c.ativo).map((c) => ({ id: c.id, nome: `${c.banco}${c.cc ? " · " + c.cc : ""}` }));
+  const opcoesCartoes = cartoes.map((k) => ({ id: k.id, nome: k.nome }));
+  const faixa = (
+    <FaixaDeConciliacao
+      pendentes={todosPendentes.length}
+      contasComPendencia={contasComPendencia}
+      maisAntigoDias={maisAntigo ? Math.max(0, Math.round((Date.parse(hoje) - Date.parse(maisAntigo)) / 86_400_000)) : null}
+      hrefConciliacao={urlDoCaixa({ ...params, tab: "conciliacao" })}
+      openFinance={estadoOF}
+      contas={opcoesContas}
+      cartoes={opcoesCartoes}
+    />
+  );
+
   const importar = (
     <ImportExtratoButton contas={contas.map((c) => ({ id: c.id, banco: c.banco, cc: c.cc }))} aiConfigured={aiConfigured} projetos={projetos} contaInicial={contaSel?.id ?? ""} />
   );
@@ -229,6 +259,7 @@ export async function CaixaPorConta({ ctx, sp, avisoRemovida, diasFechados }: { 
             totalAjustes={totalAjustes}
             baixadoSemConciliar={baixadoComDias}
             filtro={{ selecionada: filtroId, href: (id) => urlDoCaixa({ ...params, conta: id }), todas: urlDoCaixa({ ...params, conta: "" }) }}
+            faixaDeAcao={faixa}
           />
 
           {/* 7.4 — a Cris recebe o resumo da conta escolhida, ou o consolidado. */}
@@ -274,6 +305,7 @@ export async function CaixaPorConta({ ctx, sp, avisoRemovida, diasFechados }: { 
                 conciliacaoData={conciliacaoData}
                 canDesfazer={can(ctx.perms, "conciliacao", "excluir")}
                 projetos={projetos}
+                vazio={<VazioDaConciliacao openFinance={estadoOF} contas={opcoesContas} cartoes={opcoesCartoes} />}
                 obraDe={(c) => {
                   const projectId = "projectId" in c ? (c as { projectId: string | null }).projectId : null;
                   return projectId ? nomeDaObra.get(projectId) ?? "—" : "sem obra (da conta)";

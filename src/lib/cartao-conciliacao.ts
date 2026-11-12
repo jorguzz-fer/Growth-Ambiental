@@ -1,5 +1,6 @@
 import { and, eq, isNull } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
+import { logAudit } from "@/lib/audit";
 import { getComprasDoCartao, getEstornosDoCartao, getExtratoCartao } from "@/lib/queries";
 import { conferirExtrato, type CompraParaConferir } from "@/lib/calc/conferencia-cartao";
 import { faturaDaCompra, type CicloDoCartao } from "@/lib/calc/cartao-ciclo";
@@ -172,4 +173,46 @@ export async function vincularLinhaDoCartao(tenantId: string, linhaId: string, d
     .returning({ id: schema.extratoCartao.id });
   if (feitos.length === 0) return { ok: false, error: "A linha acabou de ser conciliada por outra pessoa. Recarregue a tela." };
   return { ok: true, cartaoId: l.cartaoId };
+}
+
+/**
+ * Prompt AT §6.4 — núcleo da conciliação da saída do pagamento da fatura com o
+ * `fatura_pagamento`. A linha do extrato passa a ser a saída; a saída gerada
+ * no pagamento (sem extrato) sai, inteira na auditoria. Fora do "use server".
+ */
+export async function conciliarPagamentoDeFaturaComQuem(q: { tenantId: string; userId: string | null; userEmail: string | null }, input: { cashEntryId: string; faturaPagamentoId: string }): Promise<{ ok: true } | { ok: false; error: string }> {
+  const tenantId = q.tenantId;
+  const quem = q.userEmail ?? q.userId ?? null;
+  try {
+    const r = await db.transaction(async (tx) => {
+      const [mov] = await tx.select().from(schema.cashEntries).where(and(eq(schema.cashEntries.id, input.cashEntryId), eq(schema.cashEntries.tenantId, tenantId))).for("update");
+      if (!mov) return { ok: false as const, error: "Movimento não encontrado." };
+      if (!mov.importHash && !mov.externalId) return { ok: false as const, error: "Só a linha que veio do extrato concilia com o pagamento da fatura." };
+      if (mov.rec || mov.conciliadoDespesaId || mov.conciliadoContaReceberId) return { ok: false as const, error: "Este movimento já está conciliado." };
+      const [pag] = await tx.select().from(schema.faturaPagamentos).where(and(eq(schema.faturaPagamentos.id, input.faturaPagamentoId), eq(schema.faturaPagamentos.tenantId, tenantId))).for("update");
+      if (!pag) return { ok: false as const, error: "Pagamento da fatura não encontrado." };
+      if (Math.round(Number(pag.valor) * 100) !== Math.round(-Number(mov.valor) * 100)) return { ok: false as const, error: "O valor do movimento não é o do pagamento da fatura." };
+      if (pag.bankAccountId && mov.bankAccountId && pag.bankAccountId !== mov.bankAccountId) return { ok: false as const, error: "O pagamento da fatura saiu de outra conta." };
+      const [gerada] = pag.cashEntryId ? await tx.select().from(schema.cashEntries).where(eq(schema.cashEntries.id, pag.cashEntryId)).for("update") : [];
+      if (gerada && (gerada.importHash || gerada.externalId)) return { ok: false as const, error: "Este pagamento da fatura já está conciliado com uma linha do extrato." };
+      await tx.update(schema.faturaPagamentos).set({ cashEntryId: mov.id }).where(eq(schema.faturaPagamentos.id, pag.id));
+      await tx.update(schema.cashEntries).set({ rec: true, cat: "fatura", conciliadoPor: quem, conciliadoEm: new Date().toISOString() }).where(eq(schema.cashEntries.id, mov.id));
+      if (gerada) await tx.delete(schema.cashEntries).where(eq(schema.cashEntries.id, gerada.id));
+      await logAudit(
+        {
+          tenantId,
+          userId: q.userId,
+          action: "cartao.fatura.conciliar",
+          entity: "cash_entry",
+          entityId: mov.id,
+          meta: { faturaPagamentoId: pag.id, valor: pag.valor, saidaGeradaRemovida: gerada ? { ...gerada } : null },
+        },
+        tx,
+      );
+      return { ok: true as const };
+    });
+    return r;
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Falha ao conciliar." };
+  }
 }
