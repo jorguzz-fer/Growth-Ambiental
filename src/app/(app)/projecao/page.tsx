@@ -160,10 +160,11 @@ export default async function ProjecaoPage({
 
   // ─────────────────────── Modo detalhado (1 versão) ───────────────────────
   const version = compareVersions[0];
-  const [unitRows, reembRows, incc] = await Promise.all([
+  const [unitRows, reembRows, incc, planoNovo] = await Promise.all([
     getUnits(version.tenantId, version.id),
     getReembolsos(version.tenantId, version.id),
     getInccRows(obra.tenantId, obra.id),
+    chaveLigada(ctx.tenant.id, "plano_definicao_nova"),
   ]);
 
   // Projeção por unidade a partir dos RECEBÍVEIS do plano de pagamento — mesma
@@ -173,7 +174,7 @@ export default async function ProjecaoPage({
   // saía zerada mesmo havendo recebíveis.
   const perUnit = unitRows.map((u) => {
     const proj: MonthlyProjection = {};
-    for (const rec of expandUnitReceivables(u.paymentPlan, u.status)) {
+    for (const rec of expandUnitReceivables(u.paymentPlan, u.status, { definicaoNova: planoNovo })) {
       const p = rec.dia.split("/");
       if (p.length !== 3) continue;
       const mk = `${p[0]}/${p[2]}`; // MM/DD/YYYY → MM/YYYY

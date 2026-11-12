@@ -10,6 +10,7 @@ import { previaDreDefinicaoNova } from "@/lib/dre-inputs";
 import { previaFluxoDefinicaoNova } from "@/lib/fluxo-caixa";
 import { previaDashboardDefinicaoNova } from "@/lib/dashboard-previa";
 import { previaResumoDefinicaoNova } from "@/lib/resumo-previa";
+import { previaPlanoDefinicaoNova } from "@/lib/plano-previa";
 import { previaCategoriaDoPlano } from "@/lib/categoria-do-plano-servidor";
 import { getLinhasDaSerieIncc, toInccRows } from "@/lib/queries";
 import { SERIE_DA_EMPRESA, diferencaDaSerie, mudaAlgo } from "@/lib/incc-empresa";
@@ -56,6 +57,7 @@ export default async function ChavesPage() {
   const previaDashboard = await previaDashboardDefinicaoNova(ctx.tenant.id, ctx.projects);
   // Prompt AE, 6.2: prévia da chave "resumo_definicao_nova" (só leitura).
   const previaResumo = await previaResumoDefinicaoNova(ctx.tenant.id, ctx.projects);
+  const previaPlano = await previaPlanoDefinicaoNova(ctx.tenant.id, ctx.projects);
   // Prompt DP (BDP-3): prévia da chave "despesa_categoria_do_plano" (só leitura).
   const previaCategoria = await previaCategoriaDoPlano(ctx.tenant.id);
   const totalQueMuda = previaCategoria.reduce((a, m) => a + m.despesas, 0);
@@ -419,6 +421,65 @@ export default async function ChavesPage() {
               </tbody>
             </table>
           </div>
+        </CardContent>
+      </Card>
+      <Card className="mt-6" id="previa-plano">
+        <CardContent className="p-5">
+          <h2 className="text-sm font-semibold text-[var(--color-ink)]">Prévia · Plano de pagamento pela definição nova (caixa)</h2>
+          <p className="mt-1.5 text-[13px] text-[var(--color-ink2)]">
+            Por obra (versão Atual): o total dos recebíveis das vendas hoje e pela definição nova. Saem o financiamento do banco (o
+            dinheiro chega como liberação de obra), a permuta do plano (não é dinheiro) e as seções com a caixinha &ldquo;Usar&rdquo;
+            desmarcada. Nada é gravado e nenhuma caixinha é marcada sozinha.
+          </p>
+          <div className="mt-3 overflow-x-auto">
+            <table className="w-full text-[12.5px]" aria-label="Prévia do plano de pagamento pela definição nova">
+              <thead>
+                <tr className="border-b border-[var(--color-line)] text-left text-[11px] uppercase tracking-wide text-[var(--color-ink3)]">
+                  <th className="py-1.5 pr-3">Obra</th>
+                  <th className="py-1.5 pr-3 text-right">Recebíveis hoje</th>
+                  <th className="py-1.5 pr-3 text-right">Definição nova</th>
+                  <th className="py-1.5 pr-3 text-right">Sai: financiamento</th>
+                  <th className="py-1.5 pr-3 text-right">Sai: permuta</th>
+                  <th className="py-1.5 text-right">Sai: caixinha desmarcada</th>
+                </tr>
+              </thead>
+              <tbody>
+                {previaPlano.map((o) => (
+                  <tr key={o.projeto} className="border-b border-[var(--color-line)]/60" data-previa-plano={o.projeto}>
+                    <td className="py-1.5 pr-3">
+                      {o.projeto}
+                      {!o.temAtual && <span className="ml-1 text-[11px] text-[var(--color-warning)]">sem versão Atual: nada a comparar</span>}
+                    </td>
+                    <td className="py-1.5 pr-3 text-right tabular-nums">{brl(o.hoje)}</td>
+                    <td className="py-1.5 pr-3 text-right tabular-nums">{brl(o.nova)}</td>
+                    <td className="py-1.5 pr-3 text-right tabular-nums">{o.saiFinanciamento ? brl(o.saiFinanciamento) : "—"}</td>
+                    <td className="py-1.5 pr-3 text-right tabular-nums">{o.saiPermuta ? brl(o.saiPermuta) : "—"}</td>
+                    <td className={`py-1.5 text-right tabular-nums ${o.saiCaixinha ? "font-semibold text-[var(--color-warning)]" : ""}`}>{o.saiCaixinha ? brl(o.saiCaixinha) : "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {previaPlano.some((o) => o.aConferir.length) ? (
+            <div className="mt-4" data-previa-plano-conferir>
+              <h3 className="text-[13px] font-semibold text-[var(--color-ink)]">Unidades a conferir antes de ligar</h3>
+              <p className="mt-1 text-[12.5px] text-[var(--color-ink2)]">
+                Seção do plano com valor e data, mas com a caixinha &ldquo;Usar&rdquo; desmarcada. Se a parcela foi mesmo vendida, marque a
+                caixinha na tela de Unidades antes de ligar a chave; senão ela sai de Contas a Receber e do Fluxo.
+              </p>
+              <ul className="mt-2 space-y-0.5 text-[12.5px]">
+                {previaPlano.flatMap((o) =>
+                  o.aConferir.map((u) => (
+                    <li key={`${o.projeto}-${u.unidade}`}>
+                      <span className="font-medium">{o.projeto}</span> · unidade {u.unidade}: {u.secoes.join(", ")} ({brl(u.valor)})
+                    </li>
+                  )),
+                )}
+              </ul>
+            </div>
+          ) : (
+            <p className="mt-3 text-[12.5px] text-[var(--color-ink3)]">Nenhuma unidade com seção preenchida e caixinha desmarcada.</p>
+          )}
         </CardContent>
       </Card>
       <Card className="mt-6" id="previa-categoria">

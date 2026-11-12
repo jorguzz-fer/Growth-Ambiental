@@ -28,7 +28,18 @@ export interface Receivable {
 export function expandUnitReceivables(
   plan: PaymentPlan | null | undefined,
   status: UnitStatus,
+  opts: { definicaoNova?: boolean } = {},
 ): Receivable[] {
+  if (opts.definicaoNova) {
+    // Chave `plano_definicao_nova` (Revisão 4, decisões do dono de 11/11):
+    // BAR-1: só seção com a caixinha "Usar" marcada; BAR-3: o financiamento
+    // não é recebível (o dinheiro do banco chega como liberação de obra);
+    // BAR-4: a permuta do plano não é dinheiro. Seção periódica com
+    // quantidade zero não gera parcela (a herança `periodicaMinimaUm` cai).
+    return lerPlano(plan, status)
+      .filter((p) => p.data && p.valorBase > 0 && p.ligada && p.origem !== "Banco" && p.origem !== "Permuta")
+      .map((p) => ({ dia: p.data!, valor: p.valorBase, label: p.rotulo, secao: p.origem }));
+  }
   return lerPlano(plan, status, { periodicaMinimaUm: true })
     .filter((p) => p.data && p.valorBase > 0)
     .map((p) => ({ dia: p.data!, valor: p.valorBase, label: p.rotulo, secao: p.origem }));

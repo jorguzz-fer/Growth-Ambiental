@@ -108,3 +108,65 @@ Os 17 testes de paridade com o protótipo continuam passando sem mudança.
 - `npm run test:all` (typecheck + lint + suíte com banco): **270 arquivos,
   2.188 testes, todos passaram, 0 pulados.**
 - `next build`: ok.
+
+## 5b · Regras novas nas leituras de caixa (chave `plano_definicao_nova`)
+
+Chave nova por empresa, **nascendo desligada**: "Plano de pagamento pela
+definição nova (caixa)". Com ela desligada, todas as telas mostram o mesmo de
+antes, e o teste de equivalência da 5a continua valendo.
+
+### O que muda quando a chave é ligada
+
+| Decisão | Recebíveis (Contas a Receber, Fluxo, Caixa, "A receber" do Dashboard, Projeção de uma versão) | Projeção por fonte (Projeção, comparando versões) |
+| --- | --- | --- |
+| **BAR-1** · só conta a seção com a caixinha "Usar" marcada | passa a respeitar a caixinha (antes, ignorava) | já respeitava |
+| **BAR-2** · subsídio não conciliado entra como previsto | já entrava | passa a entrar (antes, só "Recebido") |
+| **BAR-3** · o financiamento chega como liberação de obra | sai | já não entrava |
+| **BAR-4** · a permuta do plano não é dinheiro | sai | sai |
+| **BAR-5** · INCC só nas projeções | continua sem INCC | continua com INCC |
+
+Também pela definição nova, uma seção periódica com quantidade zero deixa de
+gerar uma parcela. Era a herança `periodicaMinimaUm`, e agora todas as
+leituras seguem a mesma regra.
+
+**Resultado (AR-T1):** pela definição nova, recebíveis e projeção dão o mesmo
+total. A unidade da spec dá R$ 440 mil nas duas leituras: o contrato de
+555 mil menos a permuta (90 mil) e o financiamento (25 mil). Os cenários B, C
+e D dão 435, 440 e 450 mil, também iguais nas duas leituras. A única diferença
+que sobra é o INCC, só na projeção, como decidido.
+
+**O que fica de fora:**
+
+- **Resumo:** não muda. O financiamento já aparece lá como informação, fora
+  dos totais; a permuta vem da tabela de permutas.
+- **Geração de Orçamento ("Replicar da Atual"):** continua na regra antiga.
+  O botão está num componente que nenhuma tela usa hoje.
+- **DRE:** com só esta chave ligada, a DRE (que hoje lê os recebíveis pelo
+  vencimento) também perde o financiamento e a permuta do plano. Isso segue
+  as BAR-3 e BAR-4. A troca da DRE para o rateio do contrato é a parte 5c,
+  com chave própria.
+
+### Prévia e lista de conferência (tela Chaves, `#previa-plano`)
+
+Por obra, na versão Atual:
+
+- os recebíveis hoje e pela definição nova;
+- quanto sai por financiamento, por permuta e por caixinha desmarcada.
+
+Abaixo, a **lista das unidades a conferir**: obra, código da unidade, as seções
+com valor e data e a caixinha desmarcada, e quanto somam. Sem nenhum dado do
+comprador. Conferido no navegador: o cartão aparece na tela de Chaves para o
+operador da plataforma, sem erro.
+
+### Testes novos
+
+| Teste | O que prova |
+| --- | --- |
+| `src/lib/calc/plano-definicao-nova.test.ts` | Os quatro cenários da spec pela definição nova (recebíveis = projeção); cada BAR isolada; unidade não vendida; a prévia separa o que sai por financiamento, permuta e caixinha e lista as unidades |
+| `src/lib/plano-chave.test.ts` (com banco) | AR-T4: desligada, Contas a Receber, a receita mensal e a Projeção por fonte dão os números de sempre (555 e 525 mil); ligada, 435 mil nas três |
+
+### Validação
+
+- `npm run test:all` (typecheck + lint + suíte com banco): **272 arquivos,
+  2.197 testes, todos passaram, 0 pulados.**
+- `next build`: ok.
