@@ -117,6 +117,14 @@ export const CHAVES = [
     origem: "Prompt AR, Fase 2 (BAR-6 e decisões de 11/11/2026); Prompt I, §54 e §57",
     previa: { href: "/chaves#previa-rateio", rotulo: "Prévia — receita da DRE de hoje × rateio, por obra, e as pendências" },
   },
+  {
+    id: "caixa_conciliacao_por_conta",
+    titulo: "Caixa: conciliação por conta, sem obra no extrato",
+    efeito:
+      "O Caixa vira a tela de conciliação da empresa: saem o seletor de obra, o de versão e o modo comparação; a tela mostra a versão Atual de todas as obras; os cartões entram no bloco de saldos e cada conta ou cartão vira o filtro da tela. O extrato importado (e o do Open Finance) passa a nascer só com a conta: a obra de cada movimento vem do vínculo (a despesa, a conta a receber ou a parcela com que foi conciliado). Movimento sem vínculo aparece no realizado da empresa como \"não atribuído a obra\". Os movimentos que já existem mantêm a obra que têm: nenhum número antigo muda.",
+    origem: "Prompt AT, seções 3 e 4 (decisão do dono de 08/11/2026)",
+    previa: { href: "/chaves#previa-caixa-conta", rotulo: "Prévia — movimentos e pendências por conta, e os movimentos sem obra" },
+  },
 ] as const satisfies readonly Chave[];
 
 export type ChaveId = (typeof CHAVES)[number]["id"];

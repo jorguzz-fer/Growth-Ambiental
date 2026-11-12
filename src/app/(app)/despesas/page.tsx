@@ -63,6 +63,7 @@ export default async function DespesasPage({
     pf_data?: string;
     pf_obs?: string;
     pf_cash?: string;
+    pf_extrato_cartao?: string;
     pf_valor?: string;
     pf_venc?: string;
     pf_comp?: string;
@@ -404,6 +405,8 @@ export default async function DespesasPage({
                         obs: sp.pf_obs ?? null,
                         // Prompt L, 3-A.2 — movimento do extrato reservado para conciliação.
                         cashEntryId: sp.pf_cash ?? null,
+                        // Prompt AT §6.2 — linha do extrato do cartão a conciliar com esta compra.
+                        extratoCartaoId: sp.pf_extrato_cartao ?? null,
                         // Prompt Z, BZ-1 — diárias da equipe: a despesa nasce aqui, com o autônomo como fornecedor.
                         fornecedorId: sp.pf_fornecedor ?? null,
                         diariasIds: sp.pf_diarias ?? null,

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { conciliarMovimento, desfazerConciliacao, conciliarContaReceber, criarContaFromExtrato } from "@/lib/actions/caixa";
+import { conciliarPagamentoDeFatura } from "@/lib/actions/cartao-conciliacao";
 import type { MovimentoPendente, MovimentoPendenteEntrada, MovimentoConciliado } from "@/lib/queries";
 import { brl0, dateBR } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,7 +25,7 @@ import { linkParaLancar } from "@/lib/caixa-encaminhamento";
 const grauTone = (g: "alta" | "media" | "baixa") => (g === "alta" ? "success" : g === "media" ? "warning" : "neutral");
 const grauLabel = (g: "alta" | "media" | "baixa") => (g === "alta" ? "alta compatibilidade" : g === "media" ? "média" : "baixa");
 
-export function ConciliacaoReview({ pendentes, pendentesEntrada, conciliados, canDesfazer, projectId }: { pendentes: MovimentoPendente[]; pendentesEntrada: MovimentoPendenteEntrada[]; conciliados: MovimentoConciliado[]; canDesfazer: boolean; projectId: string }) {
+export function ConciliacaoReview({ pendentes, pendentesEntrada, conciliados, canDesfazer, projectId = "", projetos }: { pendentes: MovimentoPendente[]; pendentesEntrada: MovimentoPendenteEntrada[]; conciliados: MovimentoConciliado[]; canDesfazer: boolean; projectId?: string; /** Prompt AT §3: Caixa por conta — a obra da conta criada a partir do movimento. */ projetos?: { id: string; nome: string }[] }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [msg, setMsg] = useState<string | null>(null);
@@ -61,7 +62,25 @@ export function ConciliacaoReview({ pendentes, pendentesEntrada, conciliados, ca
       setMsg(r.concluida ? `Movimento conciliado com ${itens.length} despesa(s).` : `${itens.length} vínculo(s) gravado(s) (${brl0(r.soma)} de ${brl0(Math.abs(m.valor))}); a conciliação só conclui quando a soma fechar.`);
     }, "");
   const conciliarReceber = (cashEntryId: string, contaReceberId: string) => run(() => conciliarContaReceber({ cashEntryId, contaReceberId }), "Movimento conciliado: conta a receber marcada como recebida.");
-  const criarConta = (cashEntryId: string, entrada: boolean) => run(() => criarContaFromExtrato(cashEntryId), entrada ? "Conta a receber criada a partir do extrato." : "Conta a pagar criada a partir do extrato.");
+  // Prompt AT §3: o movimento da conta não tem obra; a conta criada vai para a obra escolhida aqui.
+  const [obraDaConta, setObraDaConta] = useState<Record<string, string>>({});
+  const criarConta = (cashEntryId: string, entrada: boolean) => run(() => criarContaFromExtrato(cashEntryId, projetos ? obraDaConta[cashEntryId] || null : undefined), entrada ? "Conta a receber criada a partir do extrato." : "Conta a pagar criada a partir do extrato.");
+  const escolherObra = (cashEntryId: string) =>
+    projetos ? (
+      <select
+        value={obraDaConta[cashEntryId] ?? ""}
+        onChange={(e) => setObraDaConta((s) => ({ ...s, [cashEntryId]: e.target.value }))}
+        className="h-8 rounded-[8px] border border-[var(--color-line)] bg-white px-2 text-xs"
+        aria-label="Obra da conta criada"
+      >
+        <option value="">Obra da conta…</option>
+        {projetos.map((p) => (
+          <option key={p.id} value={p.id}>
+            {p.nome}
+          </option>
+        ))}
+      </select>
+    ) : null;
   const desfazer = (c: MovimentoConciliado) => {
     const motivo = window.prompt("Motivo para desfazer a conciliação (fica na auditoria):", "");
     if (motivo === null) return;
@@ -126,11 +145,37 @@ export function ConciliacaoReview({ pendentes, pendentesEntrada, conciliados, ca
                     )}
                   </div>
                 )}
+                {/* Prompt AT §6.4 — a saída da fatura do cartão concilia com o pagamento da fatura. */}
+                {(m.faturas ?? []).length > 0 && (
+                  <div className="mt-2 divide-y divide-[var(--color-line)] rounded-[8px] border border-[var(--color-line)]" data-sugestao-fatura>
+                    {(m.faturas ?? []).map((f) => (
+                      <div key={f.faturaPagamentoId} className="flex flex-wrap items-center gap-2 px-3 py-2 text-[12.5px]">
+                        <Badge tone={grauTone(f.grau)}>{grauLabel(f.grau)}</Badge>
+                        <span>Pagamento da fatura do cartão {f.cartao} (venc. {dateBR(f.vencimento)}), registrado em {dateBR(f.data)}</span>
+                        <span className="font-[family-name:var(--font-mono)]">{brl0(f.valor)}</span>
+                        <Button
+                          size="sm"
+                          className="ml-auto"
+                          disabled={pending}
+                          onClick={() =>
+                            run(async () => {
+                              const r = await conciliarPagamentoDeFatura({ cashEntryId: m.cashEntryId, faturaPagamentoId: f.faturaPagamentoId });
+                              if (!r.ok) throw new Error(r.error);
+                            }, "Saída conciliada com o pagamento da fatura. Nenhuma saída nova: a linha do extrato passou a ser a saída do pagamento.")
+                          }
+                        >
+                          Conciliar com o pagamento da fatura
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 <div className="mt-2 flex flex-wrap items-center gap-3">
                   {/* Prompt L, 3-A.2 / 7.2 — encaminhar: o lançamento acontece em Despesas, com os dados do extrato; o movimento fica reservado e é conciliado ao gravar. */}
                   <Link href={linkParaLancar({ id: m.cashEntryId, data: m.data, descricao: m.descricao, valor: m.valor }, projectId).href} className="text-[12px] text-[var(--color-accent2)] hover:underline">
                     Lançar em Despesas com estes dados →
                   </Link>
+                  {escolherObra(m.cashEntryId)}
                   <Button variant="ghost" size="sm" onClick={() => criarConta(m.cashEntryId, false)} disabled={pending}>
                     Converter em conta a pagar (já paga)
                   </Button>
@@ -179,6 +224,7 @@ export function ConciliacaoReview({ pendentes, pendentesEntrada, conciliados, ca
                 <Link href={linkParaLancar({ id: m.cashEntryId, data: m.data, descricao: m.descricao, valor: m.valor }, projectId).href} className="text-[12px] text-[var(--color-accent2)] hover:underline">
                   Lançar em Contas a Receber com estes dados →
                 </Link>
+                {escolherObra(m.cashEntryId)}
                 <Button variant="ghost" size="sm" onClick={() => criarConta(m.cashEntryId, true)} disabled={pending}>
                   Converter em conta a receber (já recebida)
                 </Button>

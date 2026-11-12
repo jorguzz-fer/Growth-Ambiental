@@ -174,7 +174,7 @@ describe.skipIf(!HAS_DB)("Prompt AA-1 — mesmos números do Dashboard (oráculo
 
     // Recebido = entradas de caixa das versões do projeto.
     const recebido = cashRows
-      .filter((c) => todosIds.includes(c.versionId) && num(c.valor) > 0)
+      .filter((c) => c.versionId != null && todosIds.includes(c.versionId) && num(c.valor) > 0)
       .reduce((a, c) => a + num(c.valor), 0);
 
     // Despesa prevista = planejamento da versão Budget.

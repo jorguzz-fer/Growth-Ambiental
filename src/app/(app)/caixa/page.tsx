@@ -23,18 +23,13 @@ import {
   getDailyClosings,
   getAutoresDosAjustes,
 } from "@/lib/queries";
-import { ConciliacaoReview } from "@/components/app/conciliacao-review";
 import { isPluggyConfigured as pluggyCfg } from "@/lib/openfinance/pluggy";
 import { isAiConfigured } from "@/lib/ai/despesa-extract";
 import { can } from "@/lib/permissions";
-import type { ConciliacaoData } from "@/lib/queries";
-import { brl0, dateBR, dateInRange } from "@/lib/utils";
+import { brl0, dateInRange } from "@/lib/utils";
 import { PageHeader } from "@/components/app/page-header";
 import { DateRangeFilter } from "@/components/app/date-range-filter";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Table, THead, TH, TR, TD } from "@/components/ui/table";
-import { ConciliarToggle } from "@/components/app/conciliar-toggle";
 import { ImportExtratoButton } from "@/components/app/import-extrato";
 import { AjustesCaixa, type AjusteLinha } from "@/components/app/ajustes-caixa";
 import { cadeiaDaEmpresa } from "@/lib/cadeia-da-empresa";
@@ -47,6 +42,9 @@ import {
 } from "@/components/app/version-compare";
 import { resolveCompareVersions } from "@/lib/report-versions";
 import { AccessDenied } from "@/components/app/access-denied";
+import { Conciliacao } from "@/components/app/caixa-conciliacao";
+import { chaveLigada } from "@/lib/chaves-tenant";
+import { CaixaPorConta } from "./caixa-por-conta";
 
 /** "dd/mm/aaaa hh:mm" de um fechamento. */
 function dataHoraBR(d: Date): string {
@@ -124,6 +122,14 @@ export default async function CaixaPage({
     </details>
   ) : null;
   const avisoRemovida = <AvisoTelaRemovida de={sp.saiu} />;
+
+  // Prompt AT §4 — chave "caixa_conciliacao_por_conta": a conciliação da
+  // empresa, conta a conta, sem seletor de obra nem de versão. `?proj=` e
+  // `?vs=` de links antigos são ignorados (4.7). Desligada, tudo abaixo segue
+  // exatamente como antes.
+  if (await chaveLigada(ctx.tenant.id, "caixa_conciliacao_por_conta")) {
+    return <CaixaPorConta ctx={ctx} sp={{ tab: sp.tab, de: sp.de, ate: sp.ate, conta: sp.conta }} avisoRemovida={avisoRemovida} diasFechados={diasFechados} />;
+  }
 
   const pickerProjetos = ctx.projects.map((p) => ({ id: p.id, label: p.name }));
   const selecao = lerSelecaoDeProjeto(ctx.projects, sp);
@@ -461,123 +467,5 @@ export default async function CaixaPage({
       <AssistenteCaixa usuario={ctx.userEmail ?? "anon"} projectId={project.id} analise={analise} canConciliar={can(ctx.perms, "caixa", "editar")} />
       </div>
     </>
-  );
-}
-
-function Conciliacao({
-  cash,
-  conciliados,
-  conciliacaoData,
-  canDesfazer,
-  projectId,
-}: {
-  cash: Awaited<ReturnType<typeof getCash>>;
-  conciliados: number;
-  conciliacaoData: ConciliacaoData;
-  canDesfazer: boolean;
-  projectId: string;
-}) {
-  return (
-    <>
-      <div className="mb-3 flex flex-wrap gap-2">
-        <Badge tone="success">{conciliados} conciliados</Badge>
-        <Badge tone="warning">{cash.length - conciliados} pendentes</Badge>
-        {conciliacaoData.pendentes.length > 0 && (
-          <Badge tone="danger">{conciliacaoData.pendentes.length} saídas a conciliar</Badge>
-        )}
-      </div>
-
-      {/* Revisão com sugestões (grau de compatibilidade) + desfazer/auditoria. */}
-      <ConciliacaoReview
-        pendentes={conciliacaoData.pendentes}
-        pendentesEntrada={conciliacaoData.pendentesEntrada}
-        conciliados={conciliacaoData.conciliados}
-        canDesfazer={canDesfazer}
-        projectId={projectId}
-      />
-
-      <div className="mt-6">
-        <h3 className="mb-2 text-sm font-semibold text-[var(--color-ink)]">
-          Todos os lançamentos de caixa
-        </h3>
-        <CashTable cash={cash} withToggle />
-      </div>
-    </>
-  );
-}
-
-const CAT_LABEL: Record<string, string> = {
-  ajuste: "Ajuste de caixa",
-  despesa_extrato: "Despesa (extrato)",
-  receita_extrato: "Receita (extrato)",
-  extrato: "Extrato",
-};
-const catLabel = (c: string | null) => (c ? CAT_LABEL[c] ?? c : "—");
-
-function CashTable({
-  cash,
-  withToggle,
-}: {
-  cash: Awaited<ReturnType<typeof getCash>>;
-  withToggle: boolean;
-}) {
-  return (
-    <Table>
-      <THead>
-        <tr>
-          <TH>Data</TH>
-          <TH>Descrição</TH>
-          <TH>Categoria</TH>
-          <TH className="text-right">Valor</TH>
-          <TH>Conciliação</TH>
-        </tr>
-      </THead>
-      <tbody>
-        {cash.map((c) => {
-          const v = Number(c.valor);
-          return (
-          <TR key={c.id}>
-            <TD className="font-[family-name:var(--font-mono)]">{dateBR(c.data)}</TD>
-            <TD>{c.descricao ?? "—"}</TD>
-            <TD>
-              <Badge tone={c.cat === "ajuste" ? "info" : "neutral"}>{catLabel(c.cat)}</Badge>
-            </TD>
-            <TD
-              className={`text-right font-[family-name:var(--font-mono)] ${
-                v < 0 ? "text-[var(--color-danger)]" : "text-[var(--color-success)]"
-              }`}
-            >
-              {brl0(v)}
-            </TD>
-            <TD>
-              {withToggle ? (
-                <div className="flex items-center gap-2">
-                  <ConciliarToggle id={c.id} rec={c.rec} />
-                  {!c.rec && c.cat === "extrato" && (
-                    <Badge tone="danger">divergência</Badge>
-                  )}
-                  {/* BL-2 / 6.6 — `rec` sem vínculo é estado próprio, não "conciliado". */}
-                  {c.rec && c.cat !== "ajuste" && !c.conciliadoDespesaId && !c.conciliadoContaReceberId && (
-                    <Badge tone="warning" title="Marcado como conciliado sem registro de com o quê casou. Veja a lista de conferência na Conciliação.">sem vínculo</Badge>
-                  )}
-                </div>
-              ) : (
-                <Badge tone={c.rec ? "success" : "warning"}>
-                  {c.rec ? "conciliado" : "pendente"}
-                </Badge>
-              )}
-            </TD>
-          </TR>
-          );
-        })}
-        {cash.length === 0 && (
-          <TR>
-            <TD colSpan={5} className="py-6 text-center text-[var(--color-ink3)]">
-              Nenhum lançamento de caixa nesta versão.
-            </TD>
-          </TR>
-        )}
-      </tbody>
-    </Table>
   );
 }

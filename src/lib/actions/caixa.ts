@@ -16,6 +16,7 @@ import { registroCasa } from "@/lib/busca";
 import { can } from "@/lib/permissions";
 import { gravarRecebimento } from "@/lib/conta-receber-recebimento";
 import { logAudit } from "@/lib/audit";
+import { chaveLigada } from "@/lib/chaves-tenant";
 import { desfazerVinculosDoMovimento, gravarVinculos } from "@/lib/conciliacao-db";
 import { correspondenciaInequivoca, type ItemDeVinculo } from "@/lib/conciliacao-regras";
 import { somaDosVinculosPorMovimento } from "@/lib/conciliacao-vinculos";
@@ -168,6 +169,23 @@ async function versaoDoCaixa(tenantId: string, projectId: unknown): Promise<Vers
 }
 const SEM_OBRA = "Escolha o projeto do caixa.";
 
+/**
+ * Prompt AT §3 — onde nasce um movimento NOVO de extrato. Chave
+ * "caixa_conciliacao_por_conta" ligada: em nenhuma obra (é da conta; a obra
+ * vem do vínculo). Desligada: na versão de trabalho da obra da tela, como
+ * sempre foi.
+ */
+async function destinoDoMovimentoNovo(
+  tenantId: string,
+  projectId: unknown,
+): Promise<{ ok: true; versionId: string | null; version: Version | null } | { ok: false; error: string }> {
+  if (await chaveLigada(tenantId, "caixa_conciliacao_por_conta")) return { ok: true, versionId: null, version: null };
+  const version = await versaoDoCaixa(tenantId, projectId);
+  if (!version) return { ok: false, error: SEM_OBRA };
+  if (version.locked) return { ok: false, error: "Versão congelada." };
+  return { ok: true, versionId: version.id, version };
+}
+
 export async function addCash(formData: FormData) {
   const ctx = await getTenantContext();
   if (!ctx || !can(ctx.perms, "caixa", "criar")) return;
@@ -245,14 +263,19 @@ export async function addAjuste(formData: FormData): Promise<{ ok: true; id: str
   if (!(magnitude > 0)) return { ok: false, error: "Informe um valor maior que zero." };
   const data = ((formData.get("data") as string | null) ?? "").trim();
   if (!data) return { ok: false, error: "Informe a data do ajuste." };
-  const version = await versaoDoCaixa(ctx.tenant.id, formData.get("projectId"));
-  if (!version) return { ok: false, error: SEM_OBRA };
-  if (version.locked) return { ok: false, error: "Versão congelada." };
+  // Prompt AT §3 (BAT-3, provisório): com a chave "caixa_conciliacao_por_conta"
+  // ligada, a obra do ajuste é OPCIONAL: com obra, vai para a versão de
+  // trabalho dela; sem obra, é da empresa ("não atribuído a obra").
+  const porConta = await chaveLigada(ctx.tenant.id, "caixa_conciliacao_por_conta");
+  const obraInformada = typeof formData.get("projectId") === "string" && !!formData.get("projectId");
+  const version = porConta && !obraInformada ? null : await versaoDoCaixa(ctx.tenant.id, formData.get("projectId"));
+  if (!version && !(porConta && !obraInformada)) return { ok: false, error: SEM_OBRA };
+  if (version?.locked) return { ok: false, error: "Versão congelada." };
   const sinal = (formData.get("sinal") as string) === "menos" ? -1 : 1;
   const bankAccountId = ((formData.get("bankAccountId") as string | null) || "").trim() || null;
   const [row] = await db
     .insert(schema.cashEntries)
-    .values({ versionId: version.id, tenantId: ctx.tenant.id, data, descricao: motivo, valor: String(sinal * magnitude), cat: "ajuste", bankAccountId, rec: true })
+    .values({ versionId: version?.id ?? null, tenantId: ctx.tenant.id, data, descricao: motivo, valor: String(sinal * magnitude), cat: "ajuste", bankAccountId, rec: true })
     .returning();
   await logAudit({
     tenantId: ctx.tenant.id,
@@ -318,9 +341,8 @@ export async function importCash(
   if (!ctx || !can(ctx.perms, "caixa", "criar")) {
     throw new Error("Sem permissão para importar extrato.");
   }
-  const version = await versaoDoCaixa(ctx.tenant.id, input.projectId);
-  if (!version) throw new Error(SEM_OBRA);
-  if (version.locked) throw new Error("Versão congelada.");
+  const destino = await destinoDoMovimentoNovo(ctx.tenant.id, input.projectId);
+  if (!destino.ok) throw new Error(destino.error);
 
   const { rows, saldoFinal } = input;
   // Valida a conta (deve pertencer ao tenant).
@@ -356,10 +378,15 @@ export async function importCash(
     return true;
   });
 
-  // Pools para conciliação automática.
+  // Pools para conciliação automática. Movimento da conta (§3): as despesas e
+  // unidades da versão Atual de TODAS as obras; a regra continua a mesma
+  // (só concilia com uma única candidata).
+  const versoesDoPool = destino.version
+    ? [destino.version.id]
+    : (await db.select({ id: schema.versions.id }).from(schema.versions).where(and(eq(schema.versions.tenantId, ctx.tenant.id), eq(schema.versions.kind, "atual")))).map((v) => v.id);
   const [despesas, units] = await Promise.all([
-    getDespesas(version.id),
-    getUnits(version.tenantId, version.id),
+    Promise.all(versoesDoPool.map((id) => getDespesas(id))).then((xs) => xs.flat()),
+    Promise.all(versoesDoPool.map((id) => getUnits(ctx.tenant.id, id))).then((xs) => xs.flat()),
   ]);
   // Despesas em aberto: chave (centavos|mês) → candidatas. Prompt L, 2.7 — a
   // importação só grava vínculo quando a correspondência é INEQUÍVOCA (uma
@@ -409,7 +436,7 @@ export async function importCash(
       propostos++;
     }
     return {
-      versionId: version.id,
+      versionId: destino.versionId,
       tenantId: ctx.tenant.id,
       bankAccountId,
       data: r.data || null,
@@ -492,8 +519,9 @@ export async function toggleConciliado(id: string, rec: boolean, contraparte?: {
   // escolhida, grava o VÍNCULO com valor em vez de só alternar a marca.
   const [alvo] = await db
     .select({ id: schema.cashEntries.id, locked: schema.versions.locked })
+    // Prompt AT §3: o movimento sem obra (da conta) não tem versão a congelar.
     .from(schema.cashEntries)
-    .innerJoin(schema.versions, eq(schema.cashEntries.versionId, schema.versions.id))
+    .leftJoin(schema.versions, eq(schema.cashEntries.versionId, schema.versions.id))
     .where(and(eq(schema.cashEntries.id, id), eq(schema.cashEntries.tenantId, ctx.tenant.id)))
     .limit(1);
   if (!alvo) throw new Error("Movimento não encontrado.");
@@ -540,7 +568,7 @@ export async function conciliarMovimento(input: { cashEntryId: string; itens: It
   const [alvo] = await db
     .select({ locked: schema.versions.locked })
     .from(schema.cashEntries)
-    .innerJoin(schema.versions, eq(schema.cashEntries.versionId, schema.versions.id))
+    .leftJoin(schema.versions, eq(schema.cashEntries.versionId, schema.versions.id))
     .where(and(eq(schema.cashEntries.id, input.cashEntryId), eq(schema.cashEntries.tenantId, ctx.tenant.id)))
     .limit(1);
   if (!alvo) return { ok: false, error: "Movimento não encontrado." };
@@ -743,7 +771,11 @@ async function disponivelDoMovimento(tenantId: string, cashEntryId: string): Pro
  * recebida). Vincula o movimento à conta criada (rastreabilidade) e o marca como
  * processado, impedindo que o mesmo item seja conciliado E convertido.
  */
-export async function criarContaFromExtrato(cashEntryId: string): Promise<void> {
+export async function criarContaFromExtrato(
+  cashEntryId: string,
+  /** Prompt AT §3: obra da conta nova, quando o movimento não tem obra (é da conta). */
+  projectId?: string | null,
+): Promise<void> {
   const ctx = await getTenantContext();
   if (!ctx || !can(ctx.perms, "caixa", "editar")) {
     throw new Error("Sem permissão.");
@@ -757,11 +789,16 @@ export async function criarContaFromExtrato(cashEntryId: string): Promise<void> 
   if (mov.rec || mov.conciliadoDespesaId || mov.conciliadoContaReceberId) {
     throw new Error("Este movimento já foi processado (conciliado ou convertido).");
   }
-  const [ver] = await db
-    .select({ projectId: schema.versions.projectId })
-    .from(schema.versions)
-    .where(eq(schema.versions.id, mov.versionId))
-    .limit(1);
+  // O movimento antigo tem obra; o da conta (Prompt AT §3) recebe a obra que a
+  // pessoa escolhe, na versão de trabalho dela.
+  const ver = mov.versionId
+    ? (await db.select({ id: schema.versions.id, projectId: schema.versions.projectId }).from(schema.versions).where(eq(schema.versions.id, mov.versionId)).limit(1))[0]
+    : await (async () => {
+        const v = await versaoDoCaixa(ctx.tenant.id, projectId);
+        if (!v) throw new Error("Este movimento não tem obra: escolha a obra da conta que será criada.");
+        if (v.locked) throw new Error("Versão congelada.");
+        return { id: v.id, projectId: v.projectId };
+      })();
   if (!ver) throw new Error("Versão do movimento não encontrada.");
   const valor = Number(mov.valor);
   // Trava contra registros de valor ZERO: antes, um movimento de valor 0 caía
@@ -781,7 +818,7 @@ export async function criarContaFromExtrato(cashEntryId: string): Promise<void> 
     const [desp] = await db
       .insert(schema.despesas)
       .values({
-        versionId: mov.versionId,
+        versionId: ver.id,
         tenantId: ctx.tenant.id,
         numDoc,
         valor: String(Math.abs(valor)),
@@ -1046,9 +1083,8 @@ export async function pairMovimento(
   if (!ctx || !can(ctx.perms, "caixa", "editar")) {
     return { ok: false, error: "Sem permissão para conciliar." };
   }
-  const version = await versaoDoCaixa(ctx.tenant.id, input.projectId);
-  if (!version) return { ok: false, error: SEM_OBRA };
-  if (version.locked) return { ok: false, error: "Versão congelada." };
+  const destino = await destinoDoMovimentoNovo(ctx.tenant.id, input.projectId);
+  if (!destino.ok) return destino;
   const { mov, alvoId, alvoTipo } = input;
   const valor = Number(mov.valor);
   if (!Number.isFinite(valor) || valor === 0) {
@@ -1098,7 +1134,7 @@ export async function pairMovimento(
       const [row] = await db
         .insert(schema.cashEntries)
         .values({
-          versionId: version.id,
+          versionId: destino.versionId,
           tenantId: ctx.tenant.id,
           bankAccountId,
           data: mov.data || null,
@@ -1174,9 +1210,8 @@ export async function criarLancamentoDoExtrato(input: {
   if (!ctx || !can(ctx.perms, "caixa", "editar")) {
     return { ok: false, error: "Sem permissão." };
   }
-  const version = await versaoDoCaixa(ctx.tenant.id, input.caixaProjectId);
-  if (!version) return { ok: false, error: SEM_OBRA };
-  if (version.locked) return { ok: false, error: "Versão congelada." };
+  const destino = await destinoDoMovimentoNovo(ctx.tenant.id, input.caixaProjectId);
+  if (!destino.ok) return destino;
   // A obra do lançamento criado também precisa ser desta empresa (Prompt A,
   // 38). A despesa já passava por `getAtualVersion` (filtra o tenant); a conta
   // a receber gravava o `projectId` recebido sem conferir.
@@ -1230,7 +1265,7 @@ export async function criarLancamentoDoExtrato(input: {
       const [row] = await db
         .insert(schema.cashEntries)
         .values({
-          versionId: version.id,
+          versionId: destino.versionId,
           tenantId: ctx.tenant.id,
           bankAccountId,
           data: input.mov.data || null,

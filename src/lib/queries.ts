@@ -1,7 +1,8 @@
 import { cache } from "react";
 import { and, asc, count, desc, eq, gte, inArray, isNotNull, isNull, lt, lte, max, ne, or, sql, type AnyColumn, type SQL } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
-import { vinculosDaVersao } from "@/lib/conciliacao-vinculos";
+import { vinculosDaVersao, vinculosDosMovimentos } from "@/lib/conciliacao-vinculos";
+import { partesDosMovimentosSemObra } from "@/lib/movimento-obra";
 import { chaveCompetencia, chaveDataBR } from "./db/ordem-data";
 import type { CalcPermutaRevenda } from "@/lib/calc/permuta-ganho";
 import { db, schema } from "./db";
@@ -936,13 +937,14 @@ export async function getComprasDosCartoes(tenantId: string): Promise<{ despesaI
 }
 
 /** Prompt U, 5 — itens do extrato subido de um cartão. */
-export async function getExtratoCartao(tenantId: string, cartaoId: string): Promise<{ id: string; data: string | null; descricao: string | null; valor: number }[]> {
+export async function getExtratoCartao(tenantId: string, cartaoId: string): Promise<{ id: string; data: string | null; descricao: string | null; valor: number; despesaId: string | null; conciliadoPor: string | null }[]> {
   const rows = await db
     .select()
     .from(schema.extratoCartao)
     .where(and(eq(schema.extratoCartao.tenantId, tenantId), eq(schema.extratoCartao.cartaoId, cartaoId)))
     .orderBy(schema.extratoCartao.data, schema.extratoCartao.createdAt);
-  return rows.map((r) => ({ id: r.id, data: r.data, descricao: r.descricao, valor: Number(r.valor) }));
+  // Prompt AT §6: `despesaId` = a compra com que a linha foi conciliada.
+  return rows.map((r) => ({ id: r.id, data: r.data, descricao: r.descricao, valor: Number(r.valor), despesaId: r.despesaId, conciliadoPor: r.conciliadoPor }));
 }
 
 /** Prompt U, 6 — estornos de um cartão (com o PED da compra). */
@@ -2389,7 +2391,8 @@ export interface EntradaDisponivel {
   valor: number;
   /** valor − vínculos ativos com contas a receber (4.2). */
   disponivel: number;
-  projectId: string;
+  /** null = movimento sem obra (Prompt AT §3: da conta). */
+  projectId: string | null;
 }
 
 /**
@@ -2400,14 +2403,17 @@ export async function getEntradasDisponiveis(tenantId: string, projectId?: strin
   const rows = await db
     .select({ e: schema.cashEntries, projectId: schema.versions.projectId })
     .from(schema.cashEntries)
-    .innerJoin(schema.versions, eq(schema.cashEntries.versionId, schema.versions.id))
+    .leftJoin(schema.versions, eq(schema.cashEntries.versionId, schema.versions.id))
     .where(
       and(
         eq(schema.cashEntries.tenantId, tenantId),
-        eq(schema.versions.kind, "atual"),
         sql`${schema.cashEntries.valor} > 0`,
         isNull(schema.cashEntries.conciliadoDespesaId),
-        ...(projectId ? [eq(schema.versions.projectId, projectId)] : []),
+        // Prompt AT §3: a entrada sem obra (da conta) serve a qualquer obra.
+        or(
+          isNull(schema.cashEntries.versionId),
+          and(eq(schema.versions.kind, "atual"), ...(projectId ? [eq(schema.versions.projectId, projectId)] : [])),
+        ),
       ),
     )
     .orderBy(asc(chaveDataBR(schema.cashEntries.data)), asc(schema.cashEntries.id));
@@ -2445,24 +2451,31 @@ export async function getCash(versionId: string): Promise<CashRow[]> {
     .orderBy(asc(chaveDataBR(schema.cashEntries.data)), asc(schema.cashEntries.id));
 }
 
-/** Lançamentos de caixa de todas as versões Atual do tenant (caixa real). */
+/**
+ * Lançamentos de caixa de todas as versões Atual do tenant (caixa real), e os
+ * que não têm obra (Prompt AT §3: o movimento do extrato é da conta).
+ */
 export async function getCashByTenant(tenantId: string): Promise<CashRow[]> {
   const rows = await db
     .select({ c: schema.cashEntries })
     .from(schema.cashEntries)
-    .innerJoin(schema.versions, eq(schema.cashEntries.versionId, schema.versions.id))
-    .where(and(eq(schema.cashEntries.tenantId, tenantId), eq(schema.versions.kind, "atual")))
+    .leftJoin(schema.versions, eq(schema.cashEntries.versionId, schema.versions.id))
+    .where(and(eq(schema.cashEntries.tenantId, tenantId), or(eq(schema.versions.kind, "atual"), isNull(schema.cashEntries.versionId))))
     .orderBy(asc(chaveDataBR(schema.cashEntries.data)), asc(schema.cashEntries.id));
   return rows.map((r) => r.c);
 }
 
-/** Prompt L, 9.9 — o caixa da empresa: todas as versões Atual, com a obra de cada lançamento. */
-export async function getCashDaEmpresa(tenantId: string): Promise<(CashRow & { projectId: string })[]> {
+/**
+ * Prompt L, 9.9 — o caixa da empresa: todas as versões Atual, com a obra de
+ * cada lançamento. Prompt AT §3: entram também os movimentos sem obra
+ * (`projectId` nulo), que são da conta e somam no saldo da empresa.
+ */
+export async function getCashDaEmpresa(tenantId: string): Promise<(CashRow & { projectId: string | null })[]> {
   const rows = await db
     .select({ c: schema.cashEntries, projectId: schema.versions.projectId })
     .from(schema.cashEntries)
-    .innerJoin(schema.versions, eq(schema.cashEntries.versionId, schema.versions.id))
-    .where(and(eq(schema.cashEntries.tenantId, tenantId), eq(schema.versions.kind, "atual")))
+    .leftJoin(schema.versions, eq(schema.cashEntries.versionId, schema.versions.id))
+    .where(and(eq(schema.cashEntries.tenantId, tenantId), or(eq(schema.versions.kind, "atual"), isNull(schema.cashEntries.versionId))))
     .orderBy(asc(chaveDataBR(schema.cashEntries.data)), asc(schema.cashEntries.id));
   return rows.map((r) => ({ ...r.c, projectId: r.projectId }));
 }
@@ -3262,6 +3275,20 @@ export interface MovimentoPendente {
   /** Prompt L, Parte 2 — já vinculado com valor (parcial); o que falta é |valor| − vinculado. */
   vinculado: number;
   sugestoes: ConciliacaoSugestao[];
+  /**
+   * Prompt AT §6.4 — pagamentos de fatura de cartão compatíveis (mesmo valor,
+   * mesma conta, data próxima): a saída da fatura concilia com o pagamento,
+   * não com as compras da fatura.
+   */
+  faturas?: SugestaoFatura[];
+}
+export interface SugestaoFatura {
+  faturaPagamentoId: string;
+  cartao: string;
+  vencimento: string;
+  valor: number;
+  data: string;
+  grau: "alta" | "media";
 }
 export interface SugestaoReceber {
   contaReceberId: string;
@@ -3320,31 +3347,47 @@ const diaSerial = (s: string | null | undefined): number | null => {
  */
 export async function getConciliacaoData(
   tenantId: string,
-  versionId: string,
+  /**
+   * A versão (a tela de antes, por obra) ou, com a chave
+   * "caixa_conciliacao_por_conta" (Prompt AT §4), a EMPRESA: a versão Atual de
+   * todas as obras e os movimentos sem obra, opcionalmente de uma conta só.
+   */
+  escopo: string | { conta?: string | null },
 ): Promise<ConciliacaoData> {
   const [entries, contas, receber] = await Promise.all([
-    db
-      .select()
-      .from(schema.cashEntries)
-      .where(
-        and(
-          eq(schema.cashEntries.tenantId, tenantId),
-          eq(schema.cashEntries.versionId, versionId),
-        ),
-      ),
+    typeof escopo === "string"
+      ? db
+          .select()
+          .from(schema.cashEntries)
+          .where(
+            and(
+              eq(schema.cashEntries.tenantId, tenantId),
+              eq(schema.cashEntries.versionId, escopo),
+            ),
+          )
+      : getCashDaEmpresa(tenantId).then((xs) => (escopo.conta ? xs.filter((c) => c.bankAccountId === escopo.conta) : xs)),
     getContasPagar(tenantId),
     getContasReceber(tenantId),
   ]);
   const despById = new Map(contas.map((c) => [c.id, c]));
   const recById = new Map(receber.map((c) => [c.id, c]));
   const abertas = contas.filter((c) => c.status !== "Pago");
-  // Prompt L, Parte 2 — vínculos com valor dos movimentos desta versão.
-  const vinculos = await vinculosDaVersao(tenantId, versionId);
+  // Prompt L, Parte 2 — vínculos com valor dos movimentos desta versão (ou da empresa).
+  const vinculos = typeof escopo === "string" ? await vinculosDaVersao(tenantId, escopo) : await vinculosDosMovimentos(tenantId, entries.map((e) => e.id));
   const vinculosPorMov = new Map<string, typeof vinculos>();
   for (const v of vinculos) vinculosPorMov.set(v.cashEntryId, [...(vinculosPorMov.get(v.cashEntryId) ?? []), v]);
   const vinculadoDe = (id: string) => Math.round((vinculosPorMov.get(id) ?? []).reduce((a, v) => a + v.valor, 0) * 100) / 100;
   const receberAbertas = receber.filter((c) => c.status !== "Recebido" && c.status !== "Cancelada");
 
+  // Prompt AT §6.4 — pagamentos de fatura cuja saída ainda é a que o app gerou
+  // no pagamento (sem linha do extrato): candidatos das saídas pendentes.
+  const pagamentosDeFatura = await db
+    .select({ id: schema.faturaPagamentos.id, valor: schema.faturaPagamentos.valor, data: schema.faturaPagamentos.data, bankAccountId: schema.faturaPagamentos.bankAccountId, vencimento: schema.faturasCartao.vencimento, apelido: schema.cartoesCredito.apelido, ultimos4: schema.cartoesCredito.ultimos4 })
+    .from(schema.faturaPagamentos)
+    .innerJoin(schema.faturasCartao, eq(schema.faturaPagamentos.faturaId, schema.faturasCartao.id))
+    .innerJoin(schema.cartoesCredito, eq(schema.faturasCartao.cartaoId, schema.cartoesCredito.id))
+    .innerJoin(schema.cashEntries, eq(schema.faturaPagamentos.cashEntryId, schema.cashEntries.id))
+    .where(and(eq(schema.faturaPagamentos.tenantId, tenantId), isNull(schema.cashEntries.importHash), isNull(schema.cashEntries.externalId)));
   const pendentes: MovimentoPendente[] = [];
   const rankGrau = { alta: 0, media: 1, baixa: 2 } as const;
   for (const e of entries) {
@@ -3383,6 +3426,19 @@ export async function getConciliacaoData(
       });
     }
     sugestoes.sort((a, b) => rankGrau[a.grau] - rankGrau[b.grau] || a._prox - b._prox);
+    // Só o movimento que veio do extrato (importado ou Open Finance) casa com o pagamento da fatura.
+    const faturas: SugestaoFatura[] = e.importHash || e.externalId
+      ? pagamentosDeFatura
+          .filter((f) => Math.round(Number(f.valor) * 100) === movCents && (!f.bankAccountId || !e.bankAccountId || f.bankAccountId === e.bankAccountId))
+          .map((f) => {
+            const fDia = diaSerial(f.data);
+            const dias = movDia != null && fDia != null ? Math.abs(fDia - movDia) : 9999;
+            return { f, dias };
+          })
+          .filter((x) => x.dias <= 10)
+          .sort((a, b) => a.dias - b.dias)
+          .map(({ f, dias }) => ({ faturaPagamentoId: f.id, cartao: `${f.apelido}${f.ultimos4 ? " •••• " + f.ultimos4 : ""}`, vencimento: f.vencimento, valor: Number(f.valor), data: f.data, grau: dias <= 3 ? ("alta" as const) : ("media" as const) }))
+      : [];
     pendentes.push({
       cashEntryId: e.id,
       data: e.data,
@@ -3391,6 +3447,7 @@ export async function getConciliacaoData(
       valor,
       vinculado: vinculadoDe(e.id),
       sugestoes: sugestoes.slice(0, 4).map(({ _prox, ...s }) => { void _prox; return s; }),
+      ...(faturas.length ? { faturas } : {}),
     });
   }
 
@@ -3867,9 +3924,16 @@ export async function getStatusProjeto(
   let erroOrcamento = false;
   const [cashRows, despRows, budgetRows] = await Promise.all([
     todosIds.length
-      ? db.select({ valor: schema.cashEntries.valor, versionId: schema.cashEntries.versionId, data: schema.cashEntries.data })
-          .from(schema.cashEntries)
-          .where(and(eq(schema.cashEntries.tenantId, tenantId), inArray(schema.cashEntries.versionId, todosIds)))
+      ? Promise.all([
+          db.select({ valor: schema.cashEntries.valor, versionId: schema.cashEntries.versionId, data: schema.cashEntries.data })
+            .from(schema.cashEntries)
+            .where(and(eq(schema.cashEntries.tenantId, tenantId), inArray(schema.cashEntries.versionId, todosIds))),
+          // Prompt AT §3: a parte dos movimentos sem obra que o vínculo atribui a estas versões.
+          partesDosMovimentosSemObra(tenantId),
+        ]).then(([proprios, partes]) => [
+          ...proprios,
+          ...partes.filter((p) => p.versionId && todosIds.includes(p.versionId)).map((p) => ({ valor: String(p.valor), versionId: p.versionId, data: p.data })),
+        ])
       : Promise.resolve([]),
     idsAtual.length
       ? db.select({
@@ -3903,7 +3967,7 @@ export async function getStatusProjeto(
   const entradas = cashRows.filter((c) => num(c.valor) > 0 && (!comPeriodo || dateInRange(c.data, de, ate)));
   const recebido = entradas.reduce((a, c) => a + num(c.valor), 0);
   const atuais = new Set(idsAtual);
-  const caixaForaDaAtual = entradas.filter((c) => !atuais.has(c.versionId)).reduce((a, c) => a + num(c.valor), 0);
+  const caixaForaDaAtual = entradas.filter((c) => !c.versionId || !atuais.has(c.versionId)).reduce((a, c) => a + num(c.valor), 0);
 
   // Despesa prevista = planejamento da versão Budget.
   const despesaPrevista = budgetRows

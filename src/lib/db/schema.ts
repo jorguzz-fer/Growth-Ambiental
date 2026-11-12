@@ -721,6 +721,8 @@ export const cartoesCredito = pgTable("cartao_credito", {
   taxaRotativo: numeric("taxa_rotativo", { precision: 8, scale: 4 }),
   ativo: boolean("ativo").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
+  /** Prompt AT §1-B.4 — id da conta de cartão na Pluggy (Open Finance). */
+  openFinanceId: text("open_finance_id"),
 });
 
 /**
@@ -794,7 +796,13 @@ export const extratoCartao = pgTable("extrato_cartao", {
   descricao: text("descricao"),
   valor: numeric("valor", { precision: 15, scale: 2 }).notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+  /** Prompt AT §6.1 — a compra lançada no cartão com que a linha foi conciliada. */
+  despesaId: uuid("despesa_id").references(() => despesas.id, { onDelete: "set null" }),
+  conciliadoPor: text("conciliado_por"),
+  conciliadoEm: timestamp("conciliado_em"),
+  /** Prompt AT §1-B.6 — id da transação no Open Finance; único por cartão. */
+  externalId: text("external_id"),
+}, (r) => [uniqueIndex("extrato_cartao_externo_uq").on(r.cartaoId, r.externalId).where(sql`${r.externalId} is not null`)]);
 
 /**
  * Estorno de compra no cartão (Prompt U, seção 6): lançamento PRÓPRIO que
@@ -1476,8 +1484,12 @@ export const clientes = pgTable("cliente", {
 /** Lançamento de caixa (real) por versão, conciliável. Ver docs/SPEC.md §9.4. */
 export const cashEntries = pgTable("cash_entry", {
   id: uuid("id").primaryKey().defaultRandom(),
+  /**
+   * Prompt AT §3 — opcional desde a 0073: o movimento do extrato pertence à
+   * conta; a obra vem do vínculo (`src/lib/movimento-obra.ts`). Os movimentos
+   * antigos mantêm a obra que têm.
+   */
   versionId: uuid("version_id")
-    .notNull()
     .references(() => versions.id, { onDelete: "cascade" }),
   tenantId: uuid("tenant_id")
     .notNull()

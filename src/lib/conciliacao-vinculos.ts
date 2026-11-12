@@ -53,3 +53,16 @@ export async function vinculosDaVersao(tenantId: string, versionId: string): Pro
     .orderBy(schema.conciliacoesDespesa.criadoEm);
   return rows.map((r) => ({ id: r.v.id, cashEntryId: r.v.cashEntryId, despesaId: r.v.despesaId, numDoc: r.numDoc, fornecedor: r.fornecedor, valor: Number(r.v.valor), origem: r.v.origem, criadoPor: r.v.criadoPor, criadoEm: r.v.criadoEm.toISOString() }));
 }
+
+/** Vínculos ativos de um conjunto de movimentos (Prompt AT §4: a conciliação da empresa). */
+export async function vinculosDosMovimentos(tenantId: string, cashEntryIds: readonly string[]): Promise<VinculoView[]> {
+  if (cashEntryIds.length === 0) return [];
+  const rows = await db
+    .select({ v: schema.conciliacoesDespesa, numDoc: schema.despesas.numDoc, fornecedor: schema.stakeholders.nome })
+    .from(schema.conciliacoesDespesa)
+    .innerJoin(schema.despesas, eq(schema.conciliacoesDespesa.despesaId, schema.despesas.id))
+    .leftJoin(schema.stakeholders, eq(schema.despesas.fornecedorId, schema.stakeholders.id))
+    .where(and(eq(schema.conciliacoesDespesa.tenantId, tenantId), eq(schema.conciliacoesDespesa.desfeito, false), inArray(schema.conciliacoesDespesa.cashEntryId, [...cashEntryIds])))
+    .orderBy(schema.conciliacoesDespesa.criadoEm);
+  return rows.map((r) => ({ id: r.v.id, cashEntryId: r.v.cashEntryId, despesaId: r.v.despesaId, numDoc: r.numDoc, fornecedor: r.fornecedor, valor: Number(r.v.valor), origem: r.v.origem, criadoPor: r.v.criadoPor, criadoEm: r.v.criadoEm.toISOString() }));
+}

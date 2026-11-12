@@ -26,7 +26,8 @@ export interface ContaParaAnalise {
 
 export interface EntradaParaAnalise {
   id: string;
-  projectId: string;
+  /** null = movimento sem obra (Prompt AT §3): pode casar com conta de qualquer obra. */
+  projectId: string | null;
   data: string | null;
   descricao: string | null;
   valor: number;
@@ -191,7 +192,7 @@ export function proporConciliacoes(contas: readonly ContaParaAnalise[], entradas
     if (!(m.disponivel > 0)) continue;
     const dm = ymdNumero(m.data);
     for (const { c, e } of abertas) {
-      if (c.projectId !== m.projectId) continue;
+      if (m.projectId != null && c.projectId !== m.projectId) continue;
       if (Math.abs(e.saldo - m.disponivel) > 0.05) continue;
       const motivos = ["mesmo valor"];
       let pontos = 1;

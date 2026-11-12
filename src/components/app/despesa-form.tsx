@@ -136,6 +136,8 @@ export interface PrefillDespesa {
   obs?: string | null;
   /** Prompt L, 3-A.2 — movimento do extrato que originou o lançamento: fica reservado e é conciliado ao gravar. */
   cashEntryId?: string | null;
+  /** Prompt AT §6.2 — linha do extrato do cartão que originou a compra: é conciliada com ela ao gravar. */
+  extratoCartaoId?: string | null;
   /** Prompt Z, BZ-1 — proposta vinda de Equipes: fornecedor (autônomo) e as diárias que passam a apontar para a despesa. */
   fornecedorId?: string | null;
   diariasIds?: string | null;
@@ -753,6 +755,7 @@ export function DespesaForm({
     // Prompt L, 3-A.2 — veio do extrato: o movimento é conciliado com este lançamento ao gravar.
     if (!isEdit && prefill?.cashEntryId) fd.set("cashEntryId", prefill.cashEntryId);
     if (!isEdit && prefill?.diariasIds) fd.set("diariasIds", prefill.diariasIds);
+    if (!isEdit && prefill?.extratoCartaoId) fd.set("extratoCartaoId", prefill.extratoCartaoId);
     // Prompt U — compra no cartão: o servidor calcula as faturas pelo ciclo.
     if (noCartao) {
       fd.set("cartaoId", cartaoId);
@@ -865,6 +868,12 @@ export function DespesaForm({
         {!isEdit && prefill?.cashEntryId && (
           <p role="status" className="rounded-[8px] border border-[var(--color-accent2)]/30 bg-[var(--color-accent4)] px-3 py-2 text-[12.5px] text-[var(--color-ink2)]">
             Veio do extrato: data, valor e histórico já vieram preenchidos. Complete a competência, a categoria e o documento fiscal; ao lançar, o movimento do extrato é conciliado com esta despesa.
+          </p>
+        )}
+        {/* Prompt AT §6.2 — compra lançada a partir da linha do extrato do cartão. */}
+        {!isEdit && prefill?.extratoCartaoId && (
+          <p role="status" className="rounded-[8px] border border-[var(--color-accent2)]/30 bg-[var(--color-accent4)] px-3 py-2 text-[12.5px] text-[var(--color-ink2)]" data-veio-do-cartao>
+            Veio do extrato do cartão: cartão, data da compra, valor e descrição já vieram preenchidos. Complete a obra, a categoria e o fornecedor; ao lançar, a linha do extrato é conciliada com esta compra.
           </p>
         )}
         {/* Prompt U — compra no cartão: valor, vencimento, forma e status seguem a fatura. */}

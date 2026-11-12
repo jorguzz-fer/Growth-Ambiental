@@ -1,6 +1,5 @@
-import { and, eq } from "drizzle-orm";
 import { totalPendente } from "@/lib/contas-pagar-regras";
-import { db, schema } from "@/lib/db";
+import { realizadoDaVersao } from "@/lib/movimento-obra";
 import { getTenantContext, type Version } from "@/lib/context";
 import { avisoNoSeletor } from "@/lib/situacao-versao";
 import { chaveLigada } from "@/lib/chaves-tenant";
@@ -74,11 +73,9 @@ async function versionSummary(
   const [unitRows, revenueAll, cashRows] = await Promise.all([
     idDoVgv ? getUnits(version.tenantId, idDoVgv) : Promise.resolve([]),
     getMonthlyRevenue(version.id, projectId),
-    db
-      .select({ valor: schema.cashEntries.valor, data: schema.cashEntries.data })
-      .from(schema.cashEntries)
-      // Prompt AA, 8.3: tenant explícito no SQL.
-      .where(and(eq(schema.cashEntries.tenantId, version.tenantId), eq(schema.cashEntries.versionId, version.id))),
+    // Prompt AT §3: os gravados na versão e a parte dos movimentos sem obra
+    // que o vínculo atribui a ela (a função lê com o tenant da versão).
+    realizadoDaVersao(version.id),
   ]);
   // Filtro de período (item 3): receita por mês e realizado por data.
   const revenue = hasRange
