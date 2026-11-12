@@ -1573,6 +1573,37 @@ export const contasReceber = pgTable("conta_receber", {
  * linhas (`conta-receber-estado.ts`); `conta_receber.status`/`valor_recebido`
  * são só o cache dessa derivação. Estorno é lógico (4.3).
  */
+/**
+ * Prompt AT §5.1 (Revisão 4) — recebimento da parcela do COMPRADOR (plano de
+ * pagamento da unidade), conciliado com a entrada do extrato. A parcela é a
+ * chave estável "origem#número" do plano (ex.: "Mensais#12"), nunca a posição
+ * na lista de recebíveis. Parcial é permitido. Estorno é lógico.
+ */
+export const recebimentosParcela = pgTable(
+  "recebimento_parcela",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    unitId: uuid("unit_id")
+      .notNull()
+      .references(() => units.id, { onDelete: "cascade" }),
+    chave: text("chave").notNull(),
+    valor: numeric("valor", { precision: 15, scale: 2 }).notNull(),
+    /** "MM/DD/YYYY" — a data da entrada. */
+    data: text("data"),
+    cashEntryId: uuid("cash_entry_id").references(() => cashEntries.id, { onDelete: "set null" }),
+    criadoPor: text("criado_por"),
+    criadoEm: timestamp("criado_em").notNull().defaultNow(),
+    estornado: boolean("estornado").notNull().default(false),
+    estornadoEm: timestamp("estornado_em"),
+    estornadoPor: text("estornado_por"),
+    motivoEstorno: text("motivo_estorno"),
+  },
+  (t) => [index("recebimento_parcela_unidade_idx").on(t.tenantId, t.unitId), index("recebimento_parcela_mov_idx").on(t.cashEntryId)],
+);
+
 export const contaReceberRecebimentos = pgTable("conta_receber_recebimento", {
   id: uuid("id").primaryKey().defaultRandom(),
   tenantId: uuid("tenant_id")

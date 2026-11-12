@@ -69,6 +69,8 @@ export const TABELAS_DO_PACOTE: readonly TabelaDoPacote[] = [
   { tabela: "reembolso", chave: "reembolsos", familia: "Receita", recorte: { tipo: "cadastro" } },
   { tabela: "conta_receber", chave: "contasReceber", familia: "Receita", recorte: { tipo: "data", colunas: ["vencimento", "dataRecebimento"] } },
   { tabela: "conta_receber_recebimento", chave: "contaReceberRecebimentos", familia: "Receita", recorte: { tipo: "data", colunas: ["data"] } },
+  // Prompt AT §5 — recebimento da parcela do comprador, conciliado com a entrada do extrato.
+  { tabela: "recebimento_parcela", chave: "recebimentosParcela", familia: "Receita", recorte: { tipo: "data", colunas: ["data"] } },
   { tabela: "recebimento_terceiro", chave: "recebimentosTerceiros", familia: "Receita", recorte: { tipo: "data", colunas: ["dataRecebimento"] } },
   { tabela: "repasse", chave: "repasses", familia: "Receita", recorte: { tipo: "data", colunas: ["dataRepasse"] } },
   // ── Despesa ───────────────────────────────────────────────────────────────

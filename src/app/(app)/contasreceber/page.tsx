@@ -1,4 +1,8 @@
 import { getTenantContext } from "@/lib/context";
+import { brl0, dateBR } from "@/lib/utils";
+import { chaveLigada } from "@/lib/chaves-tenant";
+import { recebidoPorParcela, recebimentosSemParcela, situacaoDaParcela } from "@/lib/recebimento-parcela";
+import { hojeISO } from "@/lib/despesa-status";
 import {
   getContasReceber,
   getReceivables,
@@ -40,14 +44,17 @@ export default async function ContasReceberPage({
   const projSel = isAll ? null : (ctx.projects.find((p) => p.id === sp.proj) ?? null);
   const filtroObra = projSel?.id;
 
-  const [contas, receivables, clientes, bancos, unidadesPorObra] = await Promise.all([
+  const [contas, receivables, clientes, bancos, unidadesPorObra, recebidoDasParcelas, semParcela] = await Promise.all([
     getContasReceber(ctx.tenant.id, filtroObra),
     getReceivables(ctx.tenant.id, filtroObra),
     getClientes(ctx.tenant.id),
     getBankAccounts(ctx.tenant.id),
     // CR-07 — o seletor de unidade só oferece as unidades da obra escolhida.
     getUnidadesAtuaisPorObra(ctx.tenant.id),
+    recebidoPorParcela(ctx.tenant.id),
+    recebimentosSemParcela(ctx.tenant.id),
   ]);
+  const situacaoLigada = await chaveLigada(ctx.tenant.id, "parcela_recebida_situacao");
 
   // 6.2 — anexos das contas listadas, com link assinado para abrir.
   const r2 = isR2Configured();
@@ -158,6 +165,21 @@ export default async function ContasReceberPage({
       <div className="mb-3">
         <ReceitaSearch rows={receitasBuscaveis} />
       </div>
+      {/* Prompt AT §5 (BAT-5) — o plano foi editado depois do recebimento: o recebimento fica, para revisão. */}
+      {semParcela.length > 0 && (
+        <div className="mb-4 rounded-[8px] border border-[var(--color-warning)]/40 bg-[#fef3c7]/60 px-3 py-2 text-[12.5px] text-[#92400e]" role="note" data-recebimento-sem-parcela>
+          <strong>{semParcela.length} recebimento(s) sem parcela:</strong> o plano de pagamento da unidade foi editado depois do recebimento, e a parcela
+          não existe mais. O recebimento não foi apagado; confira e, se for o caso, estorne no Caixa e concilie com a parcela certa.
+          <ul className="mt-1 list-disc pl-5">
+            {semParcela.map((r) => (
+              <li key={r.id}>
+                {r.unidade} · {r.chave} · {brl0(r.valor)}
+                {r.data ? ` · ${dateBR(r.data)}` : ""}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <ContasReceberManager
         // Prompt L, 3-A.2 — entrada do extrato encaminhada: valor, vencimento e histórico preenchidos.
@@ -173,6 +195,14 @@ export default async function ContasReceberPage({
         entradas={entradas}
         r2={r2}
         unitReceb={receivables.map((r) => ({
+          // Prompt AT §5.3 — situação da parcela pelos recebimentos conciliados.
+          // Só com a chave "parcela_recebida_situacao": sem ela, a coluna fica vazia.
+          ...(situacaoLigada
+            ? (() => {
+                const recebido = recebidoDasParcelas.get(`${r.unitId}|${r.chave}`) ?? 0;
+                return { recebido, situacao: situacaoDaParcela({ valor: r.valor, recebido, dia: r.dia, hojeISO: hojeISO() }).situacao };
+              })()
+            : {}),
           // CR-08 — o identificador do recebível (unidade:índice da parcela)
           // chega à tabela; é a chave de qualquer vínculo futuro.
           refId: r.refId,

@@ -17,6 +17,7 @@ import { can } from "@/lib/permissions";
 import { gravarRecebimento } from "@/lib/conta-receber-recebimento";
 import { logAudit } from "@/lib/audit";
 import { chaveLigada } from "@/lib/chaves-tenant";
+import { hojeISO } from "@/lib/despesa-status";
 import { desfazerVinculosDoMovimento, gravarVinculos } from "@/lib/conciliacao-db";
 import { correspondenciaInequivoca, type ItemDeVinculo } from "@/lib/conciliacao-regras";
 import { somaDosVinculosPorMovimento } from "@/lib/conciliacao-vinculos";
@@ -771,7 +772,44 @@ async function disponivelDoMovimento(tenantId: string, cashEntryId: string): Pro
  * recebida). Vincula o movimento à conta criada (rastreabilidade) e o marca como
  * processado, impedindo que o mesmo item seja conciliado E convertido.
  */
-export async function criarContaFromExtrato(
+/**
+ * Prompt AT §5.4 — a mesma conversão, devolvendo o resultado (a mensagem chega
+ * à tela em produção). Numa ENTRADA, se houver parcela de venda compatível, a
+ * conta NÃO é criada sem a confirmação explícita de que a entrada não é a
+ * parcela (`naoEParcela`): criar a conta e deixar a parcela no plano somaria a
+ * receita duas vezes.
+ */
+export async function criarContaAPartirDoExtrato(input: {
+  cashEntryId: string;
+  projectId?: string | null;
+  naoEParcela?: boolean;
+}): Promise<{ ok: true } | { ok: false; error: string; parcelas?: import("@/lib/recebimento-parcela").SugestaoParcela[] }> {
+  const ctx = await getTenantContext();
+  if (!ctx || !can(ctx.perms, "caixa", "editar")) return { ok: false, error: "Sem permissão." };
+  if (!input.naoEParcela) {
+    const [mov] = await db.select().from(schema.cashEntries).where(and(eq(schema.cashEntries.id, input.cashEntryId), eq(schema.cashEntries.tenantId, ctx.tenant.id))).limit(1);
+    if (mov && Number(mov.valor) > 0) {
+      const rp = await import("@/lib/recebimento-parcela");
+      const parcelas = rp.sugestoesDeParcela({ valor: Number(mov.valor), data: mov.data, descricao: mov.descricao }, await rp.parcelasDeVenda(ctx.tenant.id, hojeISO())).filter((p) => p.grau !== "baixa");
+      if (parcelas.length > 0) {
+        return {
+          ok: false,
+          error: "Esta entrada pode ser uma parcela de venda. Concilie com a parcela; criar uma conta a receber e deixar a parcela no plano soma a receita duas vezes. Se não for a parcela, confirme.",
+          parcelas,
+        };
+      }
+    }
+  }
+  try {
+    await criarContaFromExtrato(input.cashEntryId, input.projectId);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Falha ao criar a conta." };
+  }
+}
+
+// Prompt AT §5.4: sem export — a tela usa `criarContaAPartirDoExtrato`, que confere a parcela antes.
+async function criarContaFromExtrato(
   cashEntryId: string,
   /** Prompt AT §3: obra da conta nova, quando o movimento não tem obra (é da conta). */
   projectId?: string | null,
@@ -1380,3 +1418,33 @@ export async function criarLancamentoDoExtrato(input: {
     };
   }
 }
+
+/**
+ * Prompt AT §5.2 — conciliar a entrada do extrato com a parcela do comprador
+ * (chave estável "origem#número"). Grava o recebimento; parcial é permitido.
+ * Não cria conta a receber e não mexe na receita da DRE (AT-T8).
+ */
+export async function conciliarParcelaDeVenda(input: { cashEntryId: string; unitId: string; chave: string; valor?: number | null }): Promise<{ ok: true; concluida: boolean; valor: number } | { ok: false; error: string }> {
+  const ctx = await getTenantContext();
+  if (!ctx || !can(ctx.perms, "caixa", "editar")) return { ok: false, error: "Conciliar exige a permissão Caixa/editar." };
+  const { gravarRecebimentoDeParcela } = await import("@/lib/recebimento-parcela");
+  const r = await gravarRecebimentoDeParcela({ tenantId: ctx.tenant.id, userId: ctx.userId, userEmail: ctx.userEmail }, input);
+  if (!r.ok) return r;
+  revalidatePath("/caixa");
+  revalidatePath("/contasreceber");
+  return { ok: true, concluida: r.concluida, valor: r.valor };
+}
+
+/** Prompt AT §5 — estorno lógico do recebimento de uma parcela, com motivo. */
+export async function estornarRecebimentoDeParcela(id: string, motivo: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const ctx = await getTenantContext();
+  if (!ctx || !can(ctx.perms, "conciliacao", "excluir")) return { ok: false, error: "Estornar exige a permissão \"Conciliação — ajustar e desfazer: excluir\"." };
+  const rp = await import("@/lib/recebimento-parcela");
+  const r = await rp.estornarRecebimentoDeParcela({ tenantId: ctx.tenant.id, userId: ctx.userId, userEmail: ctx.userEmail }, id, motivo);
+  if (r.ok) {
+    revalidatePath("/caixa");
+    revalidatePath("/contasreceber");
+  }
+  return r;
+}
+

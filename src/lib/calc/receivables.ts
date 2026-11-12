@@ -12,6 +12,12 @@ export interface Receivable {
    * §2.1: quem projeta dinheiro precisa separar a permuta, que não entra no caixa.
    */
   secao: string;
+  /**
+   * Prompt AT §5.1 — chave estável da parcela no plano: "origem#número"
+   * (ex.: "Mensais#12", "S1#2", "FGTS#1"). Não muda quando outra seção é
+   * editada; é o que o recebimento da parcela guarda.
+   */
+  chave: string;
 }
 
 /**
@@ -38,9 +44,14 @@ export function expandUnitReceivables(
     // quantidade zero não gera parcela (a herança `periodicaMinimaUm` cai).
     return lerPlano(plan, status)
       .filter((p) => p.data && p.valorBase > 0 && p.ligada && p.origem !== "Banco" && p.origem !== "Permuta")
-      .map((p) => ({ dia: p.data!, valor: p.valorBase, label: p.rotulo, secao: p.origem }));
+      .map((p) => ({ dia: p.data!, valor: p.valorBase, label: p.rotulo, secao: p.origem, chave: chaveDaParcela(p) }));
   }
   return lerPlano(plan, status, { periodicaMinimaUm: true })
     .filter((p) => p.data && p.valorBase > 0)
-    .map((p) => ({ dia: p.data!, valor: p.valorBase, label: p.rotulo, secao: p.origem }));
+    .map((p) => ({ dia: p.data!, valor: p.valorBase, label: p.rotulo, secao: p.origem, chave: chaveDaParcela(p) }));
+}
+
+/** Prompt AT §5.1 — "origem#número" (1, 2, 3…), a chave estável da parcela no plano. */
+export function chaveDaParcela(p: { origem: string; numero: number }): string {
+  return `${p.origem}#${p.numero + 1}`;
 }

@@ -4,7 +4,8 @@ import { isContaDaEmpresa, saldoDisponivel } from "@/lib/contas-saldo";
 import { cadeiaDeSaldo, diasDesdeAtualizacao } from "@/lib/calc/cadeia-caixa";
 import { CadeiaDias } from "@/components/app/cadeia-dias";
 import { CrisDaTela } from "@/components/app/cris-contexto";
-import { aReceberDaFaixa, previstoPorDia, saldosProjetados } from "@/lib/calc/previsto-caixa";
+import { previstoPorDia, saldosProjetados } from "@/lib/calc/previsto-caixa";
+import { aReceberDaFaixaDaEmpresa } from "@/lib/recebimento-parcela";
 import { SaldosCaixa } from "@/components/app/saldos-caixa";
 import { hojeISO as hojeDoServidor } from "@/lib/despesa-status";
 import { getBankAccounts, getBaixadoSemConciliar, getConciliacaoData, getContasPagar, getContasReceber, getReceivables, getAutoresDosAjustes } from "@/lib/queries";
@@ -122,7 +123,8 @@ export async function CaixaPorConta({ ctx, sp, avisoRemovida, diasFechados }: { 
   const abertas = contasPagarDoTenant
     .filter((c) => c.versionKind === "atual" && (c.origem ?? "despesa") === "despesa" && !c.parcela && c.saldo > 0.005 && c.status !== "Pago" && c.status !== "Cancelada")
     .map((c) => ({ despesaId: c.despesaId ?? c.id, numDoc: c.numDoc, fornecedor: c.fornecedorNome, saldo: c.saldo, vencimento: c.vencimento }));
-  const aReceberEmAberto = aReceberDaFaixa(contasReceberAbertas, recebiveisDasVendas, hoje);
+  // Prompt AT §5.3: com a chave "parcela_recebida_situacao", pelo saldo e com as vencidas nos atrasados.
+  const aReceberEmAberto = await aReceberDaFaixaDaEmpresa(ctx.tenant.id, contasReceberAbertas, recebiveisDasVendas, hoje);
   const { porDia: previstoPorDiaDaFaixa, atrasados } = previstoPorDia(
     cadeia.dias.map((d) => d.dia),
     hoje,
