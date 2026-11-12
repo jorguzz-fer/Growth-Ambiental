@@ -128,6 +128,9 @@ describe("Prompt AQ §4 — o que não muda", () => {
       "@/lib/chat-metricas",
       // Prompt AT §8.5 — as ferramentas de conciliação da Cris (só leem; conferidas abaixo).
       "@/lib/conciliacao-cris-ferramentas",
+      // Etapa 7 — o catálogo de leitura (conferido abaixo).
+      "@/lib/cris-dados",
+      "@/lib/cris-dados-ferramentas",
     ]);
     for (const arq of ["src/lib/ai/cris.ts", "src/lib/actions/cris.ts"]) {
       const imps = importsDe(arq);
@@ -140,7 +143,10 @@ describe("Prompt AQ §4 — o que não muda", () => {
     // AT §8.5 — as ferramentas novas (ler_extrato, candidatos_de_conciliacao,
     // propor_conciliacoes) só leem: nenhum módulo delas grava nem importa quem grava.
     const soLeitura = new Set(["drizzle-orm", "@/lib/db", "@/lib/context", "@/lib/cris", "@/lib/conciliacao-cris", "@/lib/extrato-leitura", "@/lib/ai/cris", "@/lib/queries", "@/lib/ai/despesa-extract", "@/lib/ai/extrato-extract", "@/lib/ai/uso", "@/lib/extrato-planilha", "server-only"]);
-    for (const arq of ["src/lib/conciliacao-cris-ferramentas.ts", "src/lib/conciliacao-cris.ts", "src/lib/extrato-leitura.ts"]) {
+    // Etapa 7 — o catálogo de leitura também só lê.
+    for (const i of importsDe("src/lib/cris-dados.ts")) soLeitura.add(i);
+    expect(importsDe("src/lib/cris-dados.ts").some((i) => i.startsWith("@/lib/actions/") || i.includes("conciliacao-cris-gravar") || i.includes("conciliacao-db"))).toBe(false);
+    for (const arq of ["src/lib/conciliacao-cris-ferramentas.ts", "src/lib/conciliacao-cris.ts", "src/lib/extrato-leitura.ts", "src/lib/cris-dados.ts"]) {
       const imps = importsDe(arq);
       expect(imps.filter((i) => !soLeitura.has(i)), arq).toEqual([]);
       expect(readFileSync(arq, "utf8"), arq).not.toMatch(/\.(insert|update|delete)\(\s*schema\./);

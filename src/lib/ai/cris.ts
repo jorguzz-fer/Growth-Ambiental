@@ -3,6 +3,7 @@ import type Anthropic from "@anthropic-ai/sdk";
 import { aiClient, createMessageWithFallback } from "@/lib/ai/client";
 import { BASE_DE_CONHECIMENTO } from "@/lib/assistente-base";
 import { CATALOGO } from "@/lib/assistente-chat";
+import { FERRAMENTAS_DE_DADOS, NOMES_DAS_FERRAMENTAS_DE_DADOS } from "@/lib/cris-dados-ferramentas";
 import {
   MAX_VOLTAS,
   blocoDaTela,
@@ -36,6 +37,8 @@ export interface PedidoDaCris {
   anexo: { tipo: TipoDeAnexo; base64: string; nome: string } | null;
   /** Executa `consultar_numero` no servidor (o contexto vem de quem chama). */
   consultar: (entrada: unknown) => Promise<string>;
+  /** Etapa 7 — executa uma ferramenta de dados do catálogo, com o acesso da pessoa. */
+  dados?: (nome: string, entrada: unknown) => Promise<string>;
   /**
    * Prompt AT §8 — as ferramentas de conciliação, só na tela do Caixa e com a
    * permissão da pessoa. Todas só LEEM; a proposta volta para a tela.
@@ -148,7 +151,7 @@ function textoDe(content: Anthropic.ContentBlock[]): string {
 }
 
 export async function responderComoCris(p: PedidoDaCris): Promise<RespostaDaCris> {
-  const tools: Anthropic.Tool[] = [FERRAMENTA_CONSULTA];
+  const tools: Anthropic.Tool[] = [FERRAMENTA_CONSULTA, ...(p.dados ? FERRAMENTAS_DE_DADOS : [])];
   if (p.tela?.formulario) tools.push(ferramentaDeProposta(p.tela));
   if (p.caixa?.pendentes) tools.push(FERRAMENTA_PENDENTES);
   if (p.caixa?.candidatos) tools.push(FERRAMENTA_CANDIDATOS);
@@ -188,7 +191,7 @@ export async function responderComoCris(p: PedidoDaCris): Promise<RespostaDaCris
   const fim = (texto: string): RespostaDaCris => ({ texto, proposta, consultas, conciliacoes, importacao });
 
   // A rodada de conciliação (pendentes → candidatos → proposta) pede mais voltas.
-  const voltas = p.caixa?.propor ? MAX_VOLTAS + 2 : MAX_VOLTAS;
+  const voltas = p.caixa?.propor || p.dados ? MAX_VOLTAS + 2 : MAX_VOLTAS;
   for (let volta = 0; volta < voltas; volta++) {
     const msg = await createMessageWithFallback(client, { max_tokens: 2000, system, tools, messages });
     if (msg.stop_reason === "refusal") return fim("Não posso ajudar com esse pedido.");
@@ -218,6 +221,13 @@ export async function responderComoCris(p: PedidoDaCris): Promise<RespostaDaCris
             : "Nenhum campo válido: use os nomes e as opções do <formulario>.",
           is_error: !v,
         });
+      } else if (p.dados && NOMES_DAS_FERRAMENTAS_DE_DADOS.has(uso.name)) {
+        consultas++;
+        try {
+          resultados.push({ type: "tool_result", tool_use_id: uso.id, content: await p.dados(uso.name, uso.input) });
+        } catch (e) {
+          resultados.push({ type: "tool_result", tool_use_id: uso.id, content: e instanceof Error ? e.message : "falha na consulta", is_error: true });
+        }
       } else if (uso.name === "pendentes_de_conciliacao" && p.caixa?.pendentes) {
         consultas++;
         resultados.push({ type: "tool_result", tool_use_id: uso.id, content: await p.caixa.pendentes(String((uso.input as { conta?: unknown }).conta ?? "")) });

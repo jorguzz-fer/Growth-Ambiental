@@ -10,6 +10,7 @@ import { responderMetrica } from "@/lib/chat-metricas";
 import { anexoValido, contextoValido, historicoDaCris, type PropostaDeConciliacao, type PropostaDeImportacao, type PropostaDePreenchimento } from "@/lib/cris";
 import { can } from "@/lib/permissions";
 import { ferramentasDoCaixa } from "@/lib/conciliacao-cris-ferramentas";
+import { executarFerramentaDeDados } from "@/lib/cris-dados";
 
 export type ResultadoDaCris =
   | { ok: true; texto: string; proposta: PropostaDePreenchimento | null; via: "ia" | "local"; conciliacoes?: PropostaDeConciliacao | null; importacao?: PropostaDeImportacao | null }
@@ -85,6 +86,8 @@ export async function perguntarACris(entrada: { conversa: unknown; tela: unknown
           const resposta = await responderMetrica(ctx, normalizarIntencao(input), projetoDaTela, "ia");
           return [resposta.texto, ...resposta.detalhes].join("\n");
         },
+        // Etapa 7 — o catálogo de leitura, em qualquer tela, com o acesso da pessoa (AC-T2).
+        dados: (nome, e) => executarFerramentaDeDados(ctx, nome, e),
         // Prompt AT §8 — na tela do Caixa, as ferramentas de conciliação, pela permissão da pessoa (AT-T18).
         caixa: tela && rotaDoCaixa(tela.rota) && dadosPermitidos ? ferramentasDoCaixa(ctx, { podeConciliar: can(ctx.perms, "caixa", "editar"), podeImportar: can(ctx.perms, "caixa", "criar"), anexo, contaDaTela: contaDaRota(tela.rota) }) : undefined,
       }),
