@@ -79,13 +79,13 @@ describe("Plano de Contas — classificação (§3, §8, §11)", () => {
   });
   it("lançamento: conta do plano, ativa e analítica; manter a anterior é permitido", () => {
     const contas = new Map([
-      ["2.3.03", { code: "2.3.03", ativo: true, natureza: "despesa" }],
-      ["2.3.04", { code: "2.3.04", ativo: false, natureza: "despesa" }],
+      ["2.3.04", { code: "2.3.04", ativo: true, natureza: "despesa" }],
+      ["2.3.03", { code: "2.3.03", ativo: false, natureza: "despesa" }],
     ]);
     const grupos = new Set(["2.3"]);
-    expect(recusaDaContaDoLancamento("2.3.03", contas, grupos)).toBeNull();
-    expect(recusaDaContaDoLancamento("2.3.04", contas, grupos)).toMatch(/inativa/);
-    expect(recusaDaContaDoLancamento("2.3.04", contas, grupos, { anterior: "2.3.04" })).toBeNull();
+    expect(recusaDaContaDoLancamento("2.3.04", contas, grupos)).toBeNull();
+    expect(recusaDaContaDoLancamento("2.3.03", contas, grupos)).toMatch(/inativa/);
+    expect(recusaDaContaDoLancamento("2.3.03", contas, grupos, { anterior: "2.3.03" })).toBeNull();
     expect(recusaDaContaDoLancamento("2.3", contas, grupos)).toMatch(/grupo/);
     expect(recusaDaContaDoLancamento("9.9", contas, grupos)).toMatch(/não existe/);
     expect(recusaDaContaDoLancamento("", contas, grupos)).toBeNull();
@@ -95,22 +95,22 @@ describe("Plano de Contas — classificação (§3, §8, §11)", () => {
 describe("Plano de Contas — Cris: duplicidade e sugestão (§13)", () => {
   const contas = linhasDoPlano("t").map((c) => ({ code: c.code, name: c.name, ativo: true, natureza: c.natureza }));
   it("acha a conta existente para nome parecido; não acusa nomes diferentes", () => {
-    expect(contasSemelhantes("Hospedagem em viagem", contas)[0].code).toBe("2.3.03");
+    expect(contasSemelhantes("Hospedagem em viagem", contas)[0].code).toBe("2.3.04");
     expect(semelhanca("Combustíveis", "Combustível")).toBe(1);
     expect(semelhanca("Aluguel", "Pedágios")).toBe(0);
   });
   it("sugere pela descrição do lançamento, só contas ativas da natureza", () => {
-    expect(sugerirContas("Hospedagem de equipe durante campanha arqueológica", contas)[0].code).toBe("2.3.03");
+    expect(sugerirContas("Hospedagem de equipe durante campanha arqueológica", contas)[0].code).toBe("2.3.04");
     expect(sugerirContas("abastecimento combustível da caminhonete", contas)[0].name).toBe("Combustíveis");
-    expect(sugerirContas("Hospedagens", contas.map((c) => (c.code === "2.3.03" ? { ...c, ativo: false } : c))).map((c) => c.code)).not.toContain("2.3.03");
-    expect(sugerirContas("rendimentos de aplicações", contas, "receita")[0].name).toBe("Rendimentos de aplicações");
+    expect(sugerirContas("Hospedagens", contas.map((c) => (c.code === "2.3.04" ? { ...c, ativo: false } : c))).map((c) => c.code)).not.toContain("2.3.04");
+    expect(sugerirContas("rendimentos de aplicações", contas, "receita")[0].name).toBe("Rendimentos de aplicações financeiras");
   });
 });
 
 describe("Plano de Contas — importação (§17)", () => {
   const existentes = [
-    { id: "1", code: "2.3.03", name: "Hospedagens", descricao: null, groupCode: "2.3", natureza: "despesa", dreCategory: null, categoria: "Custo Variável", ativo: true, usada: true },
-    { id: "2", code: "2.3.04", name: "Alimentação", descricao: null, groupCode: "2.3", natureza: "despesa", dreCategory: null, categoria: "Custo Variável", ativo: true, usada: false },
+    { id: "1", code: "2.3.04", name: "Hospedagens", descricao: null, groupCode: "2.3", natureza: "despesa", dreCategory: null, categoria: "Custo Variável", ativo: true, usada: true },
+    { id: "2", code: "2.3.03", name: "Alimentação", descricao: null, groupCode: "2.3", natureza: "despesa", dreCategory: null, categoria: "Custo Variável", ativo: true, usada: false },
   ];
   const grupos = new Set(["2.3", "2.4"]);
   const l = (linha: number, code: string, name: string, grupo = "2.3", natureza = "Despesa", categoria = "") => ({ linha, code, name, grupo, natureza, categoria });
@@ -118,11 +118,11 @@ describe("Plano de Contas — importação (§17)", () => {
     const p = previaDaImportacao(
       [
         l(2, "2.3.20", "Pernoites"),
-        l(3, "2.3.03", "Hospedagens", "2.3", "Despesa", "Custo Fixo"),
-        l(4, "2.3.04", "Alimentação em campo", "2.4"),
+        l(3, "2.3.04", "Hospedagens", "2.3", "Despesa", "Custo Fixo"),
+        l(4, "2.3.03", "Alimentação em campo", "2.4"),
         l(5, "2.3.20", "Repetida"),
         l(6, "2.3", "Grupo como conta"),
-        l(7, "2.3.03", "Hosp", "2.4"),
+        l(7, "2.3.04", "Hosp", "2.4"),
         l(8, "2.3.21", "Hospedagens"),
         l(9, "2.3.22", "Sem grupo", "9.9"),
       ],
@@ -130,14 +130,14 @@ describe("Plano de Contas — importação (§17)", () => {
       grupos,
     );
     expect(p.novas.map((x) => x.code)).toEqual(["2.3.20", "2.3.21"]);
-    expect(p.alteradas.map((x) => x.linha.code)).toEqual(["2.3.03", "2.3.04"]);
+    expect(p.alteradas.map((x) => x.linha.code)).toEqual(["2.3.04", "2.3.03"]);
     expect(p.alteradas[1].mudancas.join()).toMatch(/grupo: 2.3 → 2.4/);
-    expect(p.impactoDre).toEqual([{ code: "2.3.03", de: "Custo Variável", para: "Custo Fixo", usada: true }]);
-    expect(p.duplicidades.map((d) => d.code).sort()).toEqual(["2.3.03", "2.3.20", "2.3.21"]);
+    expect(p.impactoDre).toEqual([{ code: "2.3.04", de: "Custo Variável", para: "Custo Fixo", usada: true }]);
+    expect(p.duplicidades.map((d) => d.code).sort()).toEqual(["2.3.04", "2.3.20", "2.3.21"]);
     expect(p.erros.map((e) => e.code).sort()).toEqual(["2.3", "2.3.22"]);
   });
   it("conta usada não muda de grupo nem de natureza por importação", () => {
-    const p = previaDaImportacao([l(2, "2.3.03", "Hospedagens", "2.4"), l(3, "2.3.03", "x")], existentes, grupos);
+    const p = previaDaImportacao([l(2, "2.3.04", "Hospedagens", "2.4"), l(3, "2.3.04", "x")], existentes, grupos);
     expect(p.erros[0].motivo).toMatch(/não muda de grupo/);
   });
 });
@@ -146,7 +146,7 @@ describe("Plano de Contas — DRE gerencial (§8)", () => {
   const contas = new Map<string, { name: string; classe: ClasseGerencial }>([
     ["1.1.01", { name: "Receita de consultoria", classe: "receita_bruta" }],
     ["5.1.01", { name: "ISS", classe: "deducao" }],
-    ["2.3.03", { name: "Hospedagens", classe: "custo_servico" }],
+    ["2.3.04", { name: "Hospedagens", classe: "custo_servico" }],
     ["3.1.01", { name: "Aluguel", classe: "despesa_operacional" }],
     ["4.1.01", { name: "Rendimentos", classe: "resultado_financeiro" }],
     ["4.2.01", { name: "Tarifas", classe: "resultado_financeiro" }],
@@ -161,7 +161,7 @@ describe("Plano de Contas — DRE gerencial (§8)", () => {
     lancamentos: [
       { categoria: "Receita", conta: "1.1.01", valor: 5000 },
       { categoria: "Despesa Variável", conta: "5.1.01", valor: 750 },
-      { categoria: "Custo Variável", conta: "2.3.03", valor: 2000 },
+      { categoria: "Custo Variável", conta: "2.3.04", valor: 2000 },
       { categoria: "Despesa Fixa", conta: "3.1.01", valor: 1000 },
       { categoria: "Receita", conta: "4.1.01", valor: 100 },
       { categoria: "Despesas Financeiras", conta: "4.2.01", valor: 30 },

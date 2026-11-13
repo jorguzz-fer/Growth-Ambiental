@@ -348,7 +348,7 @@ async function despesasDaSede(c: Ctx) {
     if (mes % 3 === 1) await lancarDespesa(c, { projectId: c.sedeId, conta: "3.2.07", fornecedor: "sst", descricao: "Exames ocupacionais e PCMSO", valor: varia(690, 0.2), mes, vencimento: dataDoMes(mes, 15) });
     if (mes === 3) await lancarDespesa(c, { projectId: c.sedeId, conta: "3.7.01", fornecedor: "conselho", descricao: "Anuidades CREA/CRBio da equipe técnica", valor: 4380, mes, vencimento: dataDoMes(mes, 30) });
     if (mes === 4 || mes === 10) await lancarDespesa(c, { projectId: c.sedeId, conta: "3.2.05", descricao: "Curso de capacitação técnica (licenciamento e GIS)", valor: varia(2600, 0.2), mes, vencimento: dataDoMes(mes, 20), forma: "PIX" });
-    if (mes === 7) await lancarDespesa(c, { projectId: c.sedeId, conta: "3.5.06", fornecedor: "grafica", descricao: "Documentação e garantias para licitação (PMSB)", valor: 1840, mes, vencimento: dataDoMes(mes, 12) });
+    if (mes === 7) await lancarDespesa(c, { projectId: c.sedeId, conta: "3.5.04", fornecedor: "grafica", descricao: "Documentação e garantias para licitação (PMSB)", valor: 1840, mes, vencimento: dataDoMes(mes, 12) });
     if (mes === 6) await lancarDespesa(c, { projectId: c.sedeId, conta: "6.3.03", descricao: "Notebooks para a equipe de geoprocessamento (2 un.)", valor: 15980, mes, vencimento: dataDoMes(mes, 25), forma: "Transferência bancária" });
   }
 }
@@ -763,7 +763,7 @@ async function estoque(c: Ctx) {
       const ehEpi = cat === "EPI";
       const despesaId = await lancarDespesa(c, {
         projectId: ehEpi ? c.sedeId : c.projetos.agua,
-        conta: ehEpi ? "2.4.07" : "2.4.05",
+        conta: ehEpi ? "2.4.07" : "2.4.04",
         fornecedor: "insumos",
         descricao: `Reposição de estoque — ${cat === "EPI" ? "EPIs de campo" : `materiais de ${cat.toLowerCase()}`}`,
         valor: total,

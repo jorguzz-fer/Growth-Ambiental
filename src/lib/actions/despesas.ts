@@ -212,7 +212,7 @@ async function lancarDespesa(
   // Prompt DP — com a chave ligada, a categoria é a da conta no Plano de
   // Contas, qualquer que seja a enviada.
   // 0079 — a conta precisa ser do plano DESTA empresa, ativa e analítica.
-  const recusaDaConta = await validarContaDoLancamento(ctx.tenant.id, formData.get("contaCef") as string);
+  const recusaDaConta = await validarContaDoLancamento(ctx.tenant.id, formData.get("contaCef") as string, null, undefined, "despesa");
   if (recusaDaConta) throw new Recusa(recusaDaConta);
   const pelaConta = await categoriaParaGravar(ctx.tenant.id, formData.get("contaCef") as string, formData.get("categoriaDre") as string);
   if (!pelaConta.ok) throw new Recusa(pelaConta.error);
@@ -698,7 +698,7 @@ export async function updateDespesa(id: string, patch: DespesaPatch): Promise<Re
   if (patch.tipoCusto !== undefined) set.tipoCusto = ehTipoCusto(patch.tipoCusto) ? patch.tipoCusto : null;
   if (patch.contaCef !== undefined) {
     // 0079 — trocar para conta inativa, de outra empresa ou grupo é recusado; manter a atual, não.
-    const recusa = await validarContaDoLancamento(ctx.tenant.id, patch.contaCef, existing.contaCef);
+    const recusa = await validarContaDoLancamento(ctx.tenant.id, patch.contaCef, existing.contaCef, undefined, "despesa");
     if (recusa) return { ok: false, error: recusa };
     set.contaCef = patch.contaCef || null;
   }

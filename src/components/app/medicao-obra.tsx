@@ -8,7 +8,7 @@ import { isAiConfigured } from "@/lib/ai/client";
 import { legivelPelaIa } from "@/lib/ai/campos";
 import { hojeISO } from "@/lib/despesa-status";
 import { projectPeriodMonthsFromDates } from "@/lib/planning";
-import { escolherOrcamento, gruposDoRelatorioCef, montarRelatorioCef } from "@/lib/medicao-cef";
+import { escolherOrcamento, gruposDoRelatorioCef, montarRelatorioCef, nomesDosGrupos } from "@/lib/medicao-cef";
 import { analisarMedicoes } from "@/lib/medicao-analise";
 import { TIPO_LAUDO, type DocDaMedicao } from "@/lib/medicao-docs-regras";
 import { AssistenteMedicao, type LaudoDisponivel } from "@/components/app/assistente-medicao";
@@ -112,7 +112,7 @@ async function AssistenteDoRelatorio({ ctx, projectId, startDate, endDate, versi
     getDocumentosDasMedicoes(ctx.tenant.id, atual.id),
     getChartAccounts(ctx.tenant.id),
   ]);
-  const rel = montarRelatorioCef({ grupos: gruposDoRelatorioCef(contas), orcamento: budgetLines, medicoes });
+  const rel = montarRelatorioCef({ grupos: gruposDoRelatorioCef(contas), orcamento: budgetLines, medicoes, nomes: nomesDosGrupos(contas) });
   const [y, m] = hojeISO().split("-");
   const analise = analisarMedicoes({
     months: projectPeriodMonthsFromDates(startDate, endDate),
@@ -133,7 +133,7 @@ async function AssistenteDoRelatorio({ ctx, projectId, startDate, endDate, versi
 
 async function AbaNova({ ctx, projectId, locked }: { ctx: TenantContext; projectId: string; locked: boolean }) {
   const chart = await getChartAccounts(ctx.tenant.id);
-  const grupos = [...new Map(chart.filter((c) => c.kind === "cef").map((c) => [c.groupCode, { code: c.groupCode, name: c.groupName }])).values()].sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true }));
+  const grupos = [...new Map(chart.filter((c) => c.kind === "cef" && c.ativo !== false).map((c) => [c.groupCode, { code: c.groupCode, name: c.groupName }])).values()].sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true }));
   return (
     <div data-aba="nova">
       {locked ? (

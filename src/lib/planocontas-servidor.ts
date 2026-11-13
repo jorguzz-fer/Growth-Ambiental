@@ -23,12 +23,12 @@ export async function cadastroDoPlano(tenantId: string, exec: Exec = db) {
  * SERVIDOR (a Server Action é chamável direto). Empresa sem nenhuma conta
  * cadastrada (base antiga ou de teste) não é bloqueada: não há plano a seguir.
  */
-export async function validarContaDoLancamento(tenantId: string, code: string | null | undefined, anterior?: string | null, exec: Exec = db): Promise<string | null> {
+export async function validarContaDoLancamento(tenantId: string, code: string | null | undefined, anterior?: string | null, exec: Exec = db, natureza?: "despesa" | "receita"): Promise<string | null> {
   const c = (code ?? "").trim();
   if (!c || (anterior && c === anterior)) return null;
   const cad = await cadastroDoPlano(tenantId, exec);
   if (cad.contas.size === 0) return null;
-  return recusaDaContaDoLancamento(c, cad.contas, cad.grupos, { anterior });
+  return recusaDaContaDoLancamento(c, cad.contas, cad.grupos, { anterior, natureza });
 }
 
 export interface UsoDoCodigo {

@@ -1,7 +1,7 @@
 import type { Version } from "@/lib/context";
 import { getBudgetLines, getChartAccounts, getMedicoes } from "@/lib/queries";
 import { brl0 } from "@/lib/utils";
-import { escolherOrcamento, gruposDoRelatorioCef, LEGENDA_ESTADO, montarRelatorioCef, recorteDeCompetencia, textoDaEscolha, type LinhaCef } from "@/lib/medicao-cef";
+import { escolherOrcamento, gruposDoRelatorioCef, LEGENDA_ESTADO, montarRelatorioCef, nomesDosGrupos, recorteDeCompetencia, textoDaEscolha, type LinhaCef } from "@/lib/medicao-cef";
 import { PrintButton } from "@/components/app/print-button";
 import { OrcamentoPicker, RecorteDeCompetencia } from "@/components/app/medicao-cef-controls";
 import { Badge } from "@/components/ui/badge";
@@ -25,7 +25,7 @@ export async function RelatorioCef({ tenantId, versions, atual, sp }: { tenantId
     getMedicoes(tenantId, atual.id),
     getChartAccounts(tenantId),
   ]);
-  const rel = montarRelatorioCef({ grupos: gruposDoRelatorioCef(contas), orcamento: budgetLines, medicoes, recorte });
+  const rel = montarRelatorioCef({ grupos: gruposDoRelatorioCef(contas), orcamento: budgetLines, medicoes, recorte, nomes: nomesDosGrupos(contas) });
   const estadosUsados = [...new Set(rel.linhas.map((l) => l.estado).filter((e) => e !== "ok"))] as LinhaCef["estado"][];
   const celula = (v: number | null) => (v == null ? "—" : brl0(v));
 

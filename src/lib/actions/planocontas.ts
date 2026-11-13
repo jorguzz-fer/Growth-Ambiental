@@ -109,6 +109,7 @@ export async function addChartItem(input: {
   natureza?: string;
   /** categoria da DRE; vazia = padrão. */
   dreCategory?: string | null;
+  descricao?: string | null;
 }) {
   const ctx = await getTenantContext();
   if (!ctx || !can(ctx.perms, "planocontas", "criar")) {
@@ -132,6 +133,7 @@ export async function addChartItem(input: {
     kind,
     natureza,
     dreCategory,
+    descricao: (input.descricao ?? "").trim().slice(0, 500) || null,
   });
   await logAudit({
     tenantId: ctx.tenant.id,
@@ -146,7 +148,7 @@ export async function addChartItem(input: {
 /** Edita o código/nome de um subitem. */
 export async function updateChartItem(
   id: string,
-  patch: { code?: string; name?: string; natureza?: string; dreCategory?: string | null; confirmar?: boolean },
+  patch: { code?: string; name?: string; natureza?: string; dreCategory?: string | null; descricao?: string | null; groupCode?: string; confirmar?: boolean },
 ): Promise<{ ok: true } | { ok: false; error: string; precisaConfirmar?: boolean } | void> {
   const ctx = await getTenantContext();
   if (!ctx || !can(ctx.perms, "planocontas", "editar")) return;
@@ -161,7 +163,24 @@ export async function updateChartItem(
     )
     .limit(1);
   if (!current) return;
-  const set: { code?: string; name?: string; natureza?: Natureza; dreCategory?: CategoriaDRE | null } = {};
+  const set: { code?: string; name?: string; natureza?: Natureza; dreCategory?: CategoriaDRE | null; descricao?: string | null; groupCode?: string; groupName?: string; kind?: Kind } = {};
+  if (patch.descricao !== undefined) {
+    const d = (patch.descricao ?? "").trim().slice(0, 500) || null;
+    if (d !== (current.descricao ?? null)) set.descricao = d;
+  }
+  // Mover a conta para outro grupo/subgrupo do plano (a conta leva código, histórico e categoria).
+  if (patch.groupCode && patch.groupCode.trim() !== current.groupCode) {
+    const [destino] = await db
+      .select()
+      .from(schema.chartGroups)
+      .where(and(eq(schema.chartGroups.tenantId, ctx.tenant.id), eq(schema.chartGroups.code, patch.groupCode.trim())))
+      .limit(1);
+    if (!destino) throw new Error(`O grupo "${patch.groupCode.trim()}" não existe no plano.`);
+    if (!destino.ativo) throw new Error(`O grupo ${destino.code} está inativo.`);
+    set.groupCode = destino.code;
+    set.groupName = destino.name;
+    set.kind = destino.kind === "cef" ? "cef" : "complementar";
+  }
   if (patch.code && patch.code.trim() && patch.code.trim() !== current.code) {
     if (await codeExists(ctx.tenant.id, patch.code.trim())) {
       throw new Error(`O código "${patch.code.trim()}" já existe.`);
@@ -190,7 +209,7 @@ export async function updateChartItem(
   if (Object.keys(set).length === 0) return;
   // Conta já usada que muda de natureza ou categoria muda a DRE dos lançamentos
   // dela: a tela mostra o impacto e só grava com a confirmação.
-  if ((set.natureza !== undefined && set.natureza !== current.natureza) || set.dreCategory !== undefined) {
+  if ((set.natureza !== undefined && set.natureza !== current.natureza) || set.dreCategory !== undefined || set.groupCode !== undefined) {
     const u = (await usoDosCodigos(ctx.tenant.id, [current.code])).get(current.code);
     if (usado(u) && !patch.confirmar) {
       const partes = [
@@ -201,7 +220,7 @@ export async function updateChartItem(
       return {
         ok: false,
         precisaConfirmar: true,
-        error: `A conta ${current.code} já é usada (${partes.join(", ") || "lançamentos"}). Mudar a categoria muda a DRE desses lançamentos. Confirmar?`,
+        error: `A conta ${current.code} já é usada (${partes.join(", ") || "lançamentos"}). ${set.groupCode !== undefined ? `Mover para o grupo ${set.groupCode} muda em qual linha do Orçamento/Previsão o realizado dela aparece` : "Mudar a categoria muda a DRE desses lançamentos"}. Confirmar?`,
       };
     }
   }

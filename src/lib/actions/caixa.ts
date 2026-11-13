@@ -1324,7 +1324,7 @@ export async function criarLancamentoDoExtrato(input: {
       const versao = await getAtualVersion(ctx.tenant.id, input.projectId);
       if (!versao) return { ok: false, error: "Versão atual do projeto não encontrada." };
       // 0079 — conta do plano da empresa, ativa e analítica.
-      const recusaDaConta = await validarContaDoLancamento(ctx.tenant.id, input.contaCef);
+      const recusaDaConta = await validarContaDoLancamento(ctx.tenant.id, input.contaCef, null, undefined, "despesa");
       if (recusaDaConta) return { ok: false, error: recusaDaConta };
       // Prompt DP — com a chave ligada, a categoria é a da conta.
       const pelaConta = await categoriaParaGravar(ctx.tenant.id, input.contaCef, input.categoriaDre);

@@ -82,7 +82,7 @@ export interface GrupoDoRelatorio {
   nome: string;
 }
 
-export function montarRelatorioCef(args: { grupos: readonly GrupoDoRelatorio[]; orcamento: readonly LinhaOrcada[]; medicoes: readonly MedicaoDoRelatorio[]; recorte?: { ativo: boolean; de: string | null; ate: string | null } }): RelatorioCef {
+export function montarRelatorioCef(args: { grupos: readonly GrupoDoRelatorio[]; orcamento: readonly LinhaOrcada[]; medicoes: readonly MedicaoDoRelatorio[]; recorte?: { ativo: boolean; de: string | null; ate: string | null }; nomes?: ReadonlyMap<string, string> }): RelatorioCef {
   const recorte = args.recorte ?? { ativo: false, de: null, ate: null };
   const codigos = new Set(args.grupos.map((g) => g.codigo));
   const orcadoPorGrupo = new Map<string, number>();
@@ -96,8 +96,14 @@ export function montarRelatorioCef(args: { grupos: readonly GrupoDoRelatorio[]; 
     if (!dentro(m.competencia, recorte)) continue;
     realizadoPorGrupo.set(m.grupoCode, (realizadoPorGrupo.get(m.grupoCode) || 0) + Number(m.valor ?? 0));
   }
-  // Medição num grupo que saiu do plano não some do relatório: ganha linha própria.
-  const extras = [...realizadoPorGrupo.keys()].filter((c) => !codigos.has(c)).map((c) => ({ codigo: c, nome: "Grupo fora do plano" }));
+  // Orçado ou medido num grupo inativo/fora do plano (ex.: plano anterior
+  // arquivado) não some do relatório nem do total: ganha linha própria.
+  const nomeDaMedicao = new Map(args.medicoes.map((m) => [m.grupoCode, (m as { grupoName?: string }).grupoName]));
+  const extras = [...new Set([...realizadoPorGrupo.keys(), ...orcadoPorGrupo.keys()])]
+    // medição é sempre de custo direto; orçado, só de grupo de custo direto (ativo ou inativo, em `nomes`)
+    .filter((c) => c && !codigos.has(c) && ((realizadoPorGrupo.get(c) ?? 0) > 0 || ((orcadoPorGrupo.get(c) ?? 0) > 0 && !!args.nomes?.has(c))))
+    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
+    .map((c) => ({ codigo: c, nome: args.nomes?.get(c) ?? nomeDaMedicao.get(c) ?? "Grupo fora do plano" }));
   const linhas: LinhaCef[] = [...args.grupos, ...extras].map((g) => {
     const orcado = orcadoPorGrupo.has(g.codigo) && (orcadoPorGrupo.get(g.codigo) || 0) > 0 ? r2(orcadoPorGrupo.get(g.codigo)!) : null;
     const realizado = realizadoPorGrupo.has(g.codigo) && (realizadoPorGrupo.get(g.codigo) || 0) > 0 ? r2(realizadoPorGrupo.get(g.codigo)!) : null;
@@ -158,9 +164,14 @@ export const LEGENDA_ESTADO: Record<LinhaCef["estado"], string> = {
   vazio: "sem orçado e sem medição",
 };
 
-/** Grupos de custo direto (bloco "cef") do plano da empresa, na ordem do código. */
-export function gruposDoRelatorioCef(contas: readonly { kind: string; groupCode: string; groupName: string }[]): GrupoDoRelatorio[] {
-  return [...new Map(contas.filter((c) => c.kind === "cef").map((c) => [c.groupCode, { codigo: c.groupCode, nome: c.groupName }])).values()].sort((a, b) =>
+/** Grupos de custo direto (bloco "cef") ATIVOS do plano da empresa, na ordem do código. */
+export function gruposDoRelatorioCef(contas: readonly { kind: string; groupCode: string; groupName: string; ativo?: boolean | null }[]): GrupoDoRelatorio[] {
+  return [...new Map(contas.filter((c) => c.kind === "cef" && c.ativo !== false).map((c) => [c.groupCode, { codigo: c.groupCode, nome: c.groupName }])).values()].sort((a, b) =>
     a.codigo.localeCompare(b.codigo, undefined, { numeric: true }),
   );
+}
+
+/** Nome de todo grupo de CUSTO DIRETO do plano (inclusive inativo), para a linha extra. */
+export function nomesDosGrupos(contas: readonly { kind: string; groupCode: string; groupName: string }[]): Map<string, string> {
+  return new Map(contas.filter((c) => c.kind === "cef").map((c) => [c.groupCode, c.groupName]));
 }

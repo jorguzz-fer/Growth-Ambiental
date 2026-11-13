@@ -11,11 +11,11 @@ describe("Plano de Contas padrão — consultorias ambientais (§4, §5, §15)",
   it("grupo → subgrupo → conta, com os 6 grupos da estrutura", () => {
     expect(PLANO_AMBIENTAL.map((g) => g.nome)).toEqual([
       "Receitas operacionais",
-      "Custos diretos dos projetos",
-      "Despesas administrativas e indiretas",
+      "Custos diretos dos serviços",
+      "Despesas operacionais e administrativas",
       "Resultado financeiro",
-      "Tributos e obrigações",
-      "Outras contas e classificações",
+      "Tributos e encargos",
+      "Outras classificações",
     ]);
     for (const g of grupos.filter((x) => x.parentCode)) expect(grupos.some((p) => p.code === g.parentCode && !p.parentCode), g.code).toBe(true);
     for (const c of contas) expect(grupos.some((g) => g.code === c.groupCode && g.parentCode), c.code).toBe(true);
@@ -51,8 +51,11 @@ describe("Plano de Contas padrão — consultorias ambientais (§4, §5, §15)",
     expect(de("IRPJ")).toMatchObject({ classeGerencial: "tributo_lucro" });
     expect(de("Hospedagens")).toMatchObject({ classeGerencial: "custo_servico", dreCategory: "Custo Variável", tipoCusto: "direto", kind: "cef" });
     expect(de("Aluguel")).toMatchObject({ classeGerencial: "despesa_operacional", dreCategory: "Despesa Fixa", tipoCusto: "indireto" });
-    expect(de("Coordenação técnica compartilhada")).toMatchObject({ classeGerencial: "custo_servico", tipoCusto: "indireto" });
-    expect(de("Rendimentos de aplicações")).toMatchObject({ natureza: "receita", classeGerencial: "resultado_financeiro" });
+    expect(de("Coordenação administrativa")).toMatchObject({ classeGerencial: "despesa_operacional", dreCategory: "Despesa Fixa", tipoCusto: "indireto" });
+    expect(de("Rendimentos de aplicações financeiras")).toMatchObject({ natureza: "receita", classeGerencial: "resultado_financeiro" });
+    // §5 da spec: tributos sobre faturamento × sobre o lucro × encargos de pessoal, em subgrupos distintos
+    expect(new Set(["ISS", "IRPJ", "INSS"].map((n) => de(n).groupCode)).size).toBe(3);
+    expect(de("INSS")).toMatchObject({ groupCode: "5.3" });
     expect(de("Distribuição de lucros")).toMatchObject({ dreCategory: "Retiradas", classeGerencial: "fora_do_resultado" });
     // custo direto dos projetos (bloco "cef") é sempre custo dos serviços
     for (const c of contas.filter((x) => x.kind === "cef")) expect(c.classeGerencial, c.code).toBe("custo_servico");
@@ -69,7 +72,13 @@ describe("Plano de Contas padrão — consultorias ambientais (§4, §5, §15)",
     expect(new Set(nomes).size).toBe(nomes.length);
     // duplicidades evitadas pelo desenho (EPI só em 2.4; diária de campo × de deslocamento descritas)
     expect(contas.filter((c) => /proteção individual/i.test(c.name))).toHaveLength(1);
-    expect(contas.find((c) => c.name === "Diárias de campo")!.descricao).toMatch(/deslocamento/);
+    expect(contas.find((c) => c.name === "Diárias de campo")!.descricao).toMatch(/2\.3/);
+  });
+
+  it("§17 — nenhuma classificação de construção ou incorporação no plano padrão", () => {
+    const texto = JSON.stringify(PLANO_AMBIENTAL).toLowerCase();
+    for (const termo of ["funda", "supraestrutura", "alvenaria", "pavimenta", "revestiment", "cobertura", "pós-obra", "canteiro", "unidades imobili", "incorpora", "esquadria"])
+      expect(texto, termo).not.toContain(termo);
   });
 
   it("sem dado real: nenhum nome de cliente, CNPJ ou e-mail", () => {
@@ -78,7 +87,7 @@ describe("Plano de Contas padrão — consultorias ambientais (§4, §5, §15)",
   });
 
   it("formato antigo (modelo de planilha) = subgrupos, custo direto separado", () => {
-    expect(PLANO_CONTAS_PADRAO.obra.map((g) => g.id)).toEqual(["2.1", "2.2", "2.3", "2.4", "2.5", "2.6", "2.7"]);
+    expect(PLANO_CONTAS_PADRAO.obra.map((g) => g.id)).toEqual(["2.1", "2.2", "2.3", "2.4", "2.5", "2.6", "2.7", "2.8"]);
     expect(PLANO_CONTAS_PADRAO.complementar.find((g) => g.id === "1.1")!.natureza).toBe("receita");
   });
 

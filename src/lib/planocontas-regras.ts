@@ -264,6 +264,8 @@ export function recusaDaContaDoLancamento(
   const conta = contas.get(c);
   if (!conta) return grupos.has(c) ? `"${c}" é um grupo do Plano de Contas: escolha uma conta dentro dele.` : `A conta "${c}" não existe no Plano de Contas da empresa.`;
   if (!conta.ativo) return `A conta ${c} está inativa: escolha uma conta ativa.`;
+  if (opcoes.natureza && conta.natureza !== opcoes.natureza)
+    return opcoes.natureza === "despesa" ? `A conta ${c} é de receita: escolha uma conta de despesa.` : `A conta ${c} é de despesa: escolha uma conta de receita.`;
   return null;
 }
 

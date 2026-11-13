@@ -33,6 +33,7 @@ COPY --from=build --chown=nextjs:nodejs /app/.next/static ./.next/static
 # migração + seed: bundles + arquivos SQL + entrypoint
 COPY --from=build --chown=nextjs:nodejs /app/.migrate/migrate.mjs ./migrate.mjs
 COPY --from=build --chown=nextjs:nodejs /app/.migrate/seed.mjs ./seed.mjs
+COPY --from=build --chown=nextjs:nodejs /app/.migrate/converter-plano.mjs ./converter-plano.mjs
 COPY --from=build --chown=nextjs:nodejs /app/src/lib/db/migrations ./migrations
 COPY --chown=nextjs:nodejs docker-entrypoint.sh ./docker-entrypoint.sh
 RUN chmod +x docker-entrypoint.sh

@@ -87,7 +87,7 @@ describe.skipIf(!HAS_DB)("Plano de Contas ambiental — integração", async () 
     expect(grupos.filter((g) => !g.parentId).map((g) => g.code)).toEqual(PLANO_AMBIENTAL.map((g) => g.code));
     const sub = grupos.find((g) => g.code === "2.3")!;
     expect(grupos.find((g) => g.id === sub.parentId)!.code).toBe("2");
-    expect(await conta(t.a.id, "2.3.03")).toMatchObject({ name: "Hospedagens", groupCode: "2.3", dreCategory: "Custo Variável", classeGerencial: "custo_servico", tipoCusto: "direto", kind: "cef" });
+    expect(await conta(t.a.id, "2.3.04")).toMatchObject({ name: "Hospedagens", groupCode: "2.3", dreCategory: "Custo Variável", classeGerencial: "custo_servico", tipoCusto: "direto", kind: "cef" });
     const flags = await db.select().from(schema.tenantFlags).where(eq(schema.tenantFlags.tenantId, t.a.id));
     expect(flags.filter((f) => f.ligada).map((f) => f.chave).sort()).toEqual([...CHAVES_DO_PLANO_PADRAO].sort());
     // 14 — cada empresa tem as suas linhas: nenhum id compartilhado; o padrão é só ponto de partida.
@@ -114,7 +114,7 @@ describe.skipIf(!HAS_DB)("Plano de Contas ambiental — integração", async () 
     ok(await E.definirSituacaoDaConta(c.id!, false));
     expect((await conta(t.a.id, "7.1.01")).ativo).toBe(false);
     // 10 — código duplicado (com conta e com grupo)
-    expect(await E.salvarConta({ code: "2.3.03", name: "Outra", grupoCode: "7.1", natureza: "despesa" })).toMatchObject({ ok: false, error: expect.stringMatching(/já existe/) });
+    expect(await E.salvarConta({ code: "2.3.04", name: "Outra", grupoCode: "7.1", natureza: "despesa" })).toMatchObject({ ok: false, error: expect.stringMatching(/já existe/) });
     expect(await E.salvarConta({ code: "2.3", name: "Outra", grupoCode: "7.1", natureza: "despesa" })).toMatchObject({ ok: false, error: expect.stringMatching(/já existe/) });
     expect(await E.salvarGrupoDoPlano({ code: "7.1", name: "Dup" })).toMatchObject({ ok: false });
     // 11 — ciclo e profundidade
@@ -136,9 +136,9 @@ describe.skipIf(!HAS_DB)("Plano de Contas ambiental — integração", async () 
     expect(await despesa(P1, "2.3.50")).toMatchObject({ ok: false, error: expect.stringMatching(/não existe/) });
     expect(await validarContaDoLancamento(t.a.id, "2.3.50")).toMatch(/não existe/);
     // conta ativa: grava
-    const d = ok(await despesa(P1, "2.3.03", "250"));
+    const d = ok(await despesa(P1, "2.3.04", "250"));
     // 9 — conta usada não é excluída, e não muda de código
-    const hosp = await conta(t.a.id, "2.3.03");
+    const hosp = await conta(t.a.id, "2.3.04");
     expect(await E.excluirConta(hosp.id)).toMatchObject({ ok: false, error: expect.stringMatching(/Inativar/) });
     expect(await E.salvarConta({ id: hosp.id, versao: hosp.versao, code: "2.3.99", name: "Hospedagens", grupoCode: "2.3", natureza: "despesa" })).toMatchObject({ ok: false, error: expect.stringMatching(/não muda/) });
     // edição que mantém a conta (mesmo inativa depois) é aceita; trocar para inativa não
@@ -150,14 +150,14 @@ describe.skipIf(!HAS_DB)("Plano de Contas ambiental — integração", async () 
   });
 
   it("12, 13 · isolamento: B não lê nem altera conta de A; personalizar B não muda A", async () => {
-    const hospA = await conta(t.a.id, "2.3.03");
+    const hospA = await conta(t.a.id, "2.3.04");
     comoB();
-    expect(await E.salvarConta({ id: hospA.id, code: "2.3.03", name: "Invadida", grupoCode: "2.3", natureza: "despesa" })).toMatchObject({ ok: false, error: expect.stringMatching(/não encontrada/) });
+    expect(await E.salvarConta({ id: hospA.id, code: "2.3.04", name: "Invadida", grupoCode: "2.3", natureza: "despesa" })).toMatchObject({ ok: false, error: expect.stringMatching(/não encontrada/) });
     expect(await E.definirSituacaoDaConta(hospA.id, false)).toMatchObject({ ok: false });
     expect(await E.excluirConta(hospA.id)).toMatchObject({ ok: false });
-    const hospB = await conta(t.b.id, "2.3.03");
-    ok(await E.salvarConta({ id: hospB.id, versao: hospB.versao, code: "2.3.03", name: "Hospedagem (B)", grupoCode: "2.3", natureza: "despesa" }));
-    expect((await conta(t.a.id, "2.3.03")).name).toBe("Hospedagens");
+    const hospB = await conta(t.b.id, "2.3.04");
+    ok(await E.salvarConta({ id: hospB.id, versao: hospB.versao, code: "2.3.04", name: "Hospedagem (B)", grupoCode: "2.3", natureza: "despesa" }));
+    expect((await conta(t.a.id, "2.3.04")).name).toBe("Hospedagens");
   });
 
   it("16, 20, 21 · despesa herda a categoria; Orçamento por grupo usa a categoria das contas; replicar a Atual agrupa pelo cadastro", async () => {
@@ -172,7 +172,7 @@ describe.skipIf(!HAS_DB)("Plano de Contas ambiental — integração", async () 
     expect(linha("4.2")?.dreCategory).toBe("Despesas Financeiras");
     expect(linha("2.3")?.dreCategory).toBe("Custo Variável");
     expect(plan.receitas.some((l) => l.rowKey === "1.1")).toBe(true); // 17 — receita por conta/grupo no bloco de receitas
-    // 21 — Previsão/Orçamento replicado da Atual: "2.3.03" vai para a linha do grupo "2.3" (não "2")
+    // 21 — Previsão/Orçamento replicado da Atual: "2.3.04" vai para a linha do grupo "2.3" (não "2")
     ok(await replicateFromAtual(P1.budget));
     const linhas = await db.select().from(schema.budgetLines).where(eq(schema.budgetLines.versionId, P1.budget));
     expect(linhas.filter((l) => l.kind === "despesa").map((l) => l.rowKey).sort()).toEqual(["2.3", "3.5"]);
@@ -188,7 +188,7 @@ describe.skipIf(!HAS_DB)("Plano de Contas ambiental — integração", async () 
     const e1 = await entrada("P1-a");
     const e2 = await entrada("P2-a");
     // 18 — analítica: identifica a conta de origem
-    expect(e1.lancamentos.find((l) => l.conta === "2.3.03")).toMatchObject({ categoria: "Custo Variável", valor: 250 });
+    expect(e1.lancamentos.find((l) => l.conta === "2.3.04")).toMatchObject({ categoria: "Custo Variável", valor: 250 });
     // 19 — consolidado = soma dos projetos
     const cons = { receitaVendas: e1.receitaVendas + e2.receitaVendas, receitaPermuta: 0, encargos: e1.encargos + e2.encargos, lancamentos: [...e1.lancamentos, ...e2.lancamentos] };
     const final = (e: typeof cons) => waterfall([paraInputs(e)]).rows.at(-1)!.value;
@@ -216,44 +216,44 @@ describe.skipIf(!HAS_DB)("Plano de Contas ambiental — integração", async () 
   it("26 · reclassificação autorizada: permissão própria, prévia, versão congelada intocada, auditoria", async () => {
     const P1 = proj["P1-a"];
     // lançamento em versão congelada (histórico fechado)
-    await db.insert(schema.despesas).values({ tenantId: t.a.id, versionId: P1.travada, contaCef: "2.3.03", categoriaDre: "Custo Variável", valor: "70", competencia: "08/2026" });
+    await db.insert(schema.despesas).values({ tenantId: t.a.id, versionId: P1.travada, contaCef: "2.3.04", categoriaDre: "Custo Variável", valor: "70", competencia: "08/2026" });
     comoA("membro");
-    expect(await E.reclassificarLancamentos({ de: "2.3.03", para: "2.3.04", confirmar: true })).toMatchObject({ ok: false, error: expect.stringMatching(/permissão/) });
+    expect(await E.reclassificarLancamentos({ de: "2.3.04", para: "2.3.03", confirmar: true })).toMatchObject({ ok: false, error: expect.stringMatching(/permissão/) });
     comoA();
-    const p = await E.previaDaReclassificacao("2.3.03", "2.3.04");
+    const p = await E.previaDaReclassificacao("2.3.04", "2.3.03");
     expect(p).toMatchObject({ ok: true, previa: { lancamentos: 1, valor: 250, congelados: 1 } });
-    expect(await E.reclassificarLancamentos({ de: "2.3.03", para: "2.3.04", confirmar: false })).toMatchObject({ ok: false });
-    expect(await E.reclassificarLancamentos({ de: "2.3.03", para: "7.1.01", confirmar: true })).toMatchObject({ ok: false, error: expect.stringMatching(/inativa/) });
-    ok(await E.reclassificarLancamentos({ de: "2.3.03", para: "2.3.04", confirmar: true }));
-    const restantes = await db.select().from(schema.despesas).where(and(eq(schema.despesas.tenantId, t.a.id), eq(schema.despesas.contaCef, "2.3.03")));
+    expect(await E.reclassificarLancamentos({ de: "2.3.04", para: "2.3.03", confirmar: false })).toMatchObject({ ok: false });
+    expect(await E.reclassificarLancamentos({ de: "2.3.04", para: "7.1.01", confirmar: true })).toMatchObject({ ok: false, error: expect.stringMatching(/inativa/) });
+    ok(await E.reclassificarLancamentos({ de: "2.3.04", para: "2.3.03", confirmar: true }));
+    const restantes = await db.select().from(schema.despesas).where(and(eq(schema.despesas.tenantId, t.a.id), eq(schema.despesas.contaCef, "2.3.04")));
     expect(restantes.map((d) => d.versionId)).toEqual([P1.travada]);
     const [log] = await db.select().from(schema.auditLog).where(and(eq(schema.auditLog.tenantId, t.a.id), eq(schema.auditLog.action, "chart.reclassificar")));
-    expect(log.meta).toMatchObject({ de: "2.3.03", para: "2.3.04", lancamentos: 1, congeladosMantidos: 1 });
+    expect(log.meta).toMatchObject({ de: "2.3.04", para: "2.3.03", lancamentos: 1, congeladosMantidos: 1 });
   });
 
   it("5(impacto) · mudar categoria de conta usada exige confirmar a prévia; sem confirmação nada muda", async () => {
     comoA();
-    const c = await conta(t.a.id, "2.3.04");
+    const c = await conta(t.a.id, "2.3.03");
     const sem = await E.salvarConta({ id: c.id, versao: c.versao, code: c.code, name: c.name, grupoCode: "2.3", natureza: "despesa", dreCategory: "Custo Fixo" });
-    expect(sem).toMatchObject({ ok: false, precisaConfirmar: true, impacto: { conta: "2.3.04", despesas: 1, valorAtual: 250 } });
-    expect((await conta(t.a.id, "2.3.04")).dreCategory).toBe("Custo Variável");
+    expect(sem).toMatchObject({ ok: false, precisaConfirmar: true, impacto: { conta: "2.3.03", despesas: 1, valorAtual: 250 } });
+    expect((await conta(t.a.id, "2.3.03")).dreCategory).toBe("Custo Variável");
     ok(await E.salvarConta({ id: c.id, versao: c.versao, code: c.code, name: c.name, grupoCode: "2.3", natureza: "despesa", dreCategory: "Custo Fixo", confirmar: true }));
-    expect((await conta(t.a.id, "2.3.04")).dreCategory).toBe("Custo Fixo");
+    expect((await conta(t.a.id, "2.3.03")).dreCategory).toBe("Custo Fixo");
     // com a chave ligada, o relatório lê a categoria nova (nada regravado)
-    expect((await getExpenseRows(proj["P1-a"].atual)).find((r) => r.contaCef === "2.3.04")?.categoriaDre).toBe("Custo Fixo");
+    expect((await getExpenseRows(proj["P1-a"].atual)).find((r) => r.contaCef === "2.3.03")?.categoriaDre).toBe("Custo Fixo");
   });
 
   it("28–31 · Cris: sugere conta da empresa, detecta duplicidade, explica, lista sem classificação; criar conta só com confirmação", async () => {
     const ctxA = comoA();
     const sug = JSON.parse(await executarFerramentaDeDados(ctxA as never, "plano_de_contas", { assunto: "sugerir", texto: "Hospedagem de equipe durante campanha arqueológica", natureza: "despesa" }));
-    expect(sug.candidatas[0].codigo).toBe("2.3.03");
+    expect(sug.candidatas[0].codigo).toBe("2.3.04");
     // 30 — a conta própria de B não aparece para A
     expect(JSON.stringify(sug)).not.toMatch(/barco/);
-    const exp = JSON.parse(await executarFerramentaDeDados(ctxA as never, "plano_de_contas", { assunto: "explicar", texto: "2.3.03", natureza: "despesa" }));
+    const exp = JSON.parse(await executarFerramentaDeDados(ctxA as never, "plano_de_contas", { assunto: "explicar", texto: "2.3.04", natureza: "despesa" }));
     expect(exp.conta).toMatchObject({ categoriaDre: "Custo Variável", custoPadrao: "Custo direto" });
     ok(await E.salvarConta({ code: "2.3.60", name: "Hospedagem em viagem", grupoCode: "2.3", natureza: "despesa" }).then((r) => {
       // 29 — a criação avisa da parecida, sem impedir
-      expect(r).toMatchObject({ ok: true, aviso: expect.stringMatching(/2\.3\.03/) });
+      expect(r).toMatchObject({ ok: true, aviso: expect.stringMatching(/2\.3\.04/) });
       return r;
     }));
     const dup = JSON.parse(await executarFerramentaDeDados(ctxA as never, "plano_de_contas", { assunto: "duplicidades", texto: "", natureza: "despesa" }));
@@ -262,14 +262,14 @@ describe.skipIf(!HAS_DB)("Plano de Contas ambiental — integração", async () 
     const sem = JSON.parse(await executarFerramentaDeDados(ctxA as never, "plano_de_contas", { assunto: "sem_classificacao", texto: "", natureza: "despesa" }));
     expect(sem.quantidade).toBe(1);
     // 31 — proposta da Cris só vira conta pelo botão (ação), revalidada no servidor
-    const r = await criarContasPropostas([{ groupCode: "2.3", code: "2.3.61", name: "Barcos de apoio", natureza: "despesa", dreCategory: null }, { groupCode: "2.3", code: "2.3.03", name: "Duplicada", natureza: "despesa", dreCategory: null }]);
+    const r = await criarContasPropostas([{ groupCode: "2.3", code: "2.3.61", name: "Barcos de apoio", natureza: "despesa", dreCategory: null }, { groupCode: "2.3", code: "2.3.04", name: "Duplicada", natureza: "despesa", dreCategory: null }]);
     expect(r).toMatchObject({ ok: true, criadas: ["2.3.61"] });
   });
 
   it("24 · reembolsável: a despesa mantém a conta original", async () => {
     const { reembolsosPorConta } = await import("@/lib/contrato-regras");
-    const linhas = reembolsosPorConta([{ conta: "2.3.03", status: "recebido", solicitado: 100, aprovado: 90, recebido: 90 }, { conta: "2.3.03", status: "rejeitado", solicitado: 50, aprovado: null, recebido: 0 }], new Map([["2.3.03", "Hospedagens"]]));
-    expect(linhas).toEqual([{ conta: "2.3.03", rotulo: "2.3.03 — Hospedagens", solicitado: 150, aprovado: 90, recebido: 90 }]);
+    const linhas = reembolsosPorConta([{ conta: "2.3.04", status: "recebido", solicitado: 100, aprovado: 90, recebido: 90 }, { conta: "2.3.04", status: "rejeitado", solicitado: 50, aprovado: null, recebido: 0 }], new Map([["2.3.04", "Hospedagens"]]));
+    expect(linhas).toEqual([{ conta: "2.3.04", rotulo: "2.3.04 — Hospedagens", solicitado: 150, aprovado: 90, recebido: 90 }]);
   });
 
   it("33, 34 · adoção do padrão por empresa antiga: aditiva, idempotente, não toca lançamentos nem contas existentes", async () => {

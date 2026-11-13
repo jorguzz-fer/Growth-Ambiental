@@ -36,11 +36,12 @@ export const FERRAMENTAS_DE_DADOS: Anthropic.Tool[] = [
   },
   {
     name: "despesas_por_fornecedor_ou_situacao",
-    description: "Despesas lançadas (versão Atual) agregadas por fornecedor, conta do plano, situação (paga, a pagar, vencida) ou obra, com filtro de competência e de situação. Mostra os maiores grupos.",
+    description:
+      "Despesas lançadas (versão Atual) agregadas por fornecedor, conta do plano (código e nome), subgrupo do plano (ex.: 2.3 Mobilização e logística), grupo superior do plano (ex.: 2 Custos diretos dos serviços), obra × conta, situação (paga, a pagar, vencida) ou obra, com filtro de competência e de situação. Mostra os maiores grupos. Use para 'quanto gastamos com hospedagem', 'maiores despesas de logística', 'quais contas concentram os custos', 'hospedagem por projeto'.",
     input_schema: {
       type: "object",
       additionalProperties: false,
-      properties: { ...OBRAS, ...PERIODO, situacao: { type: "string", enum: ["todas", "pagas", "em_aberto", "vencidas"] }, agrupar: { type: "string", enum: ["fornecedor", "conta", "situacao", "obra"] } },
+      properties: { ...OBRAS, ...PERIODO, situacao: { type: "string", enum: ["todas", "pagas", "em_aberto", "vencidas"] }, agrupar: { type: "string", enum: ["fornecedor", "conta", "grupo_do_plano", "grupo_superior", "obra_conta", "situacao", "obra"] } },
       required: ["obras", "de", "ate", "situacao", "agrupar"],
     },
   },
@@ -114,12 +115,12 @@ export const FERRAMENTAS_DE_DADOS: Anthropic.Tool[] = [
   {
     name: "plano_de_contas",
     description:
-      "Plano de Contas da empresa (só as contas DELA). assunto: 'sugerir' = contas candidatas para classificar um lançamento pela descrição (só contas ativas; a pessoa confirma no formulário); 'explicar' = finalidade, categoria da DRE, classe gerencial e custo padrão de uma conta; 'estrutura' = grupos e contas (filtro por texto); 'duplicidades' = pares de contas com nomes muito parecidos; 'sem_classificacao' = despesas da versão Atual sem conta ou com conta fora do plano. Projeto, contrato, fase e modalidade NÃO são contas.",
+      "Plano de Contas da empresa (só as contas DELA). assunto: 'sugerir' = contas candidatas para classificar um lançamento pela descrição (só contas ativas; a pessoa confirma no formulário); 'explicar' = finalidade, categoria da DRE, classe gerencial e custo padrão de uma conta; 'estrutura' = grupos e contas (filtro por texto); 'duplicidades' = pares de contas com nomes muito parecidos; 'sem_classificacao' = despesas da versão Atual sem conta ou com conta fora do plano; 'pouco_uso' = contas ativas de despesa com menos lançamentos (inclui as sem uso). Projeto, contrato, fase e modalidade NÃO são contas.",
     input_schema: {
       type: "object",
       additionalProperties: false,
       properties: {
-        assunto: { type: "string", enum: ["sugerir", "explicar", "estrutura", "duplicidades", "sem_classificacao"] },
+        assunto: { type: "string", enum: ["sugerir", "explicar", "estrutura", "duplicidades", "sem_classificacao", "pouco_uso"] },
         texto: { type: "string", description: "Descrição do lançamento (sugerir), código da conta (explicar) ou filtro (estrutura); vazio nos demais." },
         natureza: { type: "string", enum: ["despesa", "receita"] },
       },

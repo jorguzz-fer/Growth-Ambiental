@@ -313,7 +313,8 @@ export default async function DespesasPage({
     // com todos: lançamento antigo precisa mostrar quem era.
     fornecedores: opcoesDeSelecao(fornecedores, [editRow?.fornecedorId]).map((o) => ({ ...o, doc: fornecedores.find((f) => f.id === o.id)?.doc ?? null })),
     // 0079 — o seletor oferece só contas ativas (a da despesa em edição fica, mesmo inativa).
-    contas: contasOrdenadas.filter((c) => (c.ativo ?? true) || c.code === editRow?.contaCef).map((c) => ({ code: c.code, name: c.name })),
+    // Só contas ATIVAS de DESPESA (a de receita não recebe despesa); a da despesa em edição continua.
+    contas: contasOrdenadas.filter((c) => ((c.ativo ?? true) && c.natureza !== "receita") || c.code === editRow?.contaCef).map((c) => ({ code: c.code, name: c.name })),
     bancos: bancos.map((b) => ({ id: b.id, banco: b.banco, tipo: b.tipo })),
     categorias: CATEGORIAS_DRE,
     // Prompt DP — com a chave ligada, a categoria vem travada da conta.

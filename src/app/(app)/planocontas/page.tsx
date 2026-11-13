@@ -1,7 +1,7 @@
 import { and, eq, isNull, notInArray, or, sql } from "drizzle-orm";
 import { getTenantContext } from "@/lib/context";
 import { db, schema } from "@/lib/db";
-import { getChartAccounts, getUsoDoPlanoDeContas, type ChartAccountRow } from "@/lib/queries";
+import { getChartAccounts, getUsoDoPlanoDeContas } from "@/lib/queries";
 import { analisarPlano } from "@/lib/planocontas-analise";
 import { categoriaDaConta, categoriaPadraoDaConta, recusaDeCategoriaDaConta } from "@/lib/categoria-do-plano";
 import { chaveLigada } from "@/lib/chaves-tenant";
@@ -11,7 +11,11 @@ import { AssistentePlanoContas } from "@/components/app/assistente-planocontas";
 import { can } from "@/lib/permissions";
 import { PageHeader } from "@/components/app/page-header";
 import { Card, CardContent } from "@/components/ui/card";
-import { PlanoContasManager } from "@/components/app/planocontas-manager";
+import { PlanoContasManager, type ContaDaTela, type GrupoDaTela, type SubgrupoDaTela, type UsoNaTela } from "@/components/app/planocontas-manager";
+import { ConversaoDoPlano } from "@/components/app/planocontas/conversao-plano";
+import { previaDaConversao, ultimaConversao } from "@/lib/planocontas-conversao-servidor";
+import { equivalenteSugerido } from "@/lib/planocontas-conversao";
+import { usoDosCodigos } from "@/lib/planocontas-servidor";
 import { AccessDenied } from "@/components/app/access-denied";
 import { PropostaDeContas } from "@/components/app/planocontas-cris";
 import { CrisDaTela } from "@/components/app/cris-contexto";
@@ -20,38 +24,7 @@ import { FerramentasDoPlano } from "@/components/app/planocontas/plano-ferrament
 export const dynamic = "force-dynamic";
 
 type Kind = "cef" | "complementar";
-type Natureza = "receita" | "despesa";
-interface Group {
-  code: string;
-  name: string;
-  kind: Kind;
-  items: { id: string; code: string; name: string; natureza: Natureza; ativo: boolean; categoria: string; categoriaPadrao: string; categoriaEscolhida: string | null }[];
-}
-
-function groupBy(rows: ChartAccountRow[], kind: Kind): Group[] {
-  const map = new Map<string, Group>();
-  for (const r of rows.filter((x) => x.kind === kind)) {
-    if (!map.has(r.groupCode)) {
-      map.set(r.groupCode, { code: r.groupCode, name: r.groupName, kind, items: [] });
-    }
-    map.get(r.groupCode)!.items.push({
-      id: r.id,
-      code: r.code,
-      name: r.name,
-      natureza: (r.natureza === "receita" ? "receita" : "despesa") as Natureza,
-      ativo: r.ativo ?? true,
-      // Prompt DP — a categoria da DRE da conta: a escolhida ou o padrão.
-      categoria: categoriaDaConta(r),
-      categoriaPadrao: categoriaPadraoDaConta(r),
-      categoriaEscolhida: r.dreCategory ?? null,
-    });
-  }
-  const groups = [...map.values()];
-  for (const g of groups) {
-    g.items.sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true }));
-  }
-  return groups.sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true }));
-}
+const ordem = (a: string, b: string) => Number(a.startsWith("ANT-")) - Number(b.startsWith("ANT-")) || a.localeCompare(b, undefined, { numeric: true });
 
 /** Categorias DRE — relatório fixo (não editável). */
 const DRE_CATS = [
@@ -74,24 +47,78 @@ export default async function PlanoContasPage() {
   // não roda de novo na navegação dentro do app.
   if (!can(ctx.perms, "planocontas", "ver")) return <AccessDenied />;
   const tenantId = ctx.tenant.id;
-  const [rows, chaveDespesa, chaveOrcamento] = await Promise.all([
+  const [rows, gruposDb, chaveDespesa, chaveOrcamento] = await Promise.all([
     getChartAccounts(tenantId),
+    db.select().from(schema.chartGroups).where(eq(schema.chartGroups.tenantId, tenantId)),
     chaveLigada(tenantId, "despesa_categoria_do_plano"),
     chaveLigada(tenantId, "orcamento_categoria_do_plano"),
   ]);
-  const cef = groupBy(rows, "cef");
-  const comp = groupBy(rows, "complementar");
+  const podeConverter = can(ctx.perms, "planocontas", "editar") && can(ctx.perms, "planocontasreclass", "editar");
   const perms = {
     criar: can(ctx.perms, "planocontas", "criar"),
     editar: can(ctx.perms, "planocontas", "editar"),
     excluir: can(ctx.perms, "planocontas", "excluir"),
+    reclassificar: can(ctx.perms, "planocontasreclass", "editar"),
   };
+
+  // Árvore Grupo → Subgrupo → Conta, como está GRAVADA para esta empresa.
+  const contaDaTela = (r: (typeof rows)[number]): ContaDaTela => ({
+    id: r.id,
+    code: r.code,
+    name: r.name,
+    natureza: r.natureza === "receita" ? "receita" : "despesa",
+    ativo: r.ativo ?? true,
+    categoria: categoriaDaConta(r),
+    categoriaPadrao: categoriaPadraoDaConta(r),
+    categoriaEscolhida: r.dreCategory ?? null,
+    descricao: r.descricao ?? null,
+    groupCode: r.groupCode,
+  });
+  const contasPorGrupo = new Map<string, ContaDaTela[]>();
+  for (const r of rows) contasPorGrupo.set(r.groupCode, [...(contasPorGrupo.get(r.groupCode) ?? []), contaDaTela(r)]);
+  for (const l of contasPorGrupo.values()) l.sort((x, y) => ordem(x.code, y.code));
+  const kindDe = (k: string): Kind => (k === "cef" ? "cef" : "complementar");
+  const filhos = new Map<string, typeof gruposDb>();
+  for (const g of gruposDb) if (g.parentId) filhos.set(g.parentId, [...(filhos.get(g.parentId) ?? []), g]);
+  const subDe = (g: (typeof gruposDb)[number]): SubgrupoDaTela => ({ id: g.id, code: g.code, name: g.name, kind: kindDe(g.kind), ativo: g.ativo, parentId: g.parentId, contas: contasPorGrupo.get(g.code) ?? [] });
+  const descendentes = (id: string): typeof gruposDb => (filhos.get(id) ?? []).sort((a, b) => ordem(a.code, b.code)).flatMap((f) => [f, ...descendentes(f.id)]);
+  const arvore: GrupoDaTela[] = gruposDb
+    .filter((g) => !g.parentId)
+    .sort((a, b) => ordem(a.code, b.code))
+    .map((g) => ({
+      id: g.id,
+      code: g.code,
+      name: g.name,
+      kind: kindDe(g.kind),
+      ativo: g.ativo,
+      descricao: g.descricao ?? null,
+      direto: contasPorGrupo.has(g.code) ? subDe(g) : null,
+      subgrupos: descendentes(g.id).map(subDe),
+    }));
+  // conta cujo grupo não está no cadastro de grupos (base muito antiga): vira grupo próprio
+  const codigosDeGrupo = new Set(gruposDb.map((g) => g.code));
+  for (const [code, contas] of contasPorGrupo) {
+    if (codigosDeGrupo.has(code)) continue;
+    const r = rows.find((x) => x.groupCode === code)!;
+    const sub: SubgrupoDaTela = { id: null, code, name: r.groupName, kind: kindDe(r.kind), ativo: true, parentId: null, contas };
+    arvore.push({ id: null, code, name: r.groupName, kind: sub.kind, ativo: true, descricao: null, direto: sub, subgrupos: [] });
+  }
+  const gruposAtivos = arvore.filter((g) => g.ativo);
+  const gruposInativos = arvore.filter((g) => !g.ativo);
+  const equivalentes: Record<string, { code: string; nome: string }> = {};
+  for (const r of rows) if (!(r.ativo ?? true)) { const e = equivalenteSugerido(r); if (e) equivalentes[r.code] = e; }
+
   // Prompt G, Parte 2 — assistente somente leitura. 8.5: o uso vem das telas
   // de origem, e só para quem as vê — sem Despesas, nenhuma contagem de
   // lançamento, nem agregada; sem Orçamentos, nenhuma linha de orçamento.
   const comLancamentos = can(ctx.perms, "despesas", "ver");
   const comOrcamento = can(ctx.perms, "budget", "ver");
   const uso = comLancamentos || comOrcamento ? await getUsoDoPlanoDeContas(tenantId, ctx.projects.map((p) => p.id)) : null;
+  const usoPorCodigo = comLancamentos || comOrcamento ? await usoDosCodigos(tenantId, rows.map((r) => r.code)) : null;
+  const usoNaTela: Record<string, UsoNaTela> | null = usoPorCodigo
+    ? Object.fromEntries([...usoPorCodigo.entries()].map(([c, u]) => [c, { despesas: comLancamentos ? u.despesas : 0, orcamento: comOrcamento ? u.orcamento : 0, medicoes: u.medicoes }]))
+    : null;
+  const [conversao, ultima] = await Promise.all([previaDaConversao(tenantId), ultimaConversao(tenantId)]);
   const analise = analisarPlano(
     rows.map((r) => ({
       id: r.id,
@@ -138,13 +165,13 @@ export default async function PlanoContasPage() {
 
   return (
     <>
-      <PageHeader title="Plano de Contas" subtitle="Dupla classificação: grupo do plano + Categoria DRE (uma por conta)" />
+      <PageHeader title="Plano de Contas" subtitle="A natureza econômica de cada lançamento: grupo → subgrupo → conta, cada conta com uma Categoria da DRE. Projeto, contrato, fase e modalidade são dimensões do lançamento, não contas." />
       <CrisDaTela
         titulo="Plano de Contas da empresa"
         dados={{
           regra: "Conta = natureza do lançamento. Projeto, contrato, fase, atividade e modalidade são dimensões, não contas. Use só contas ATIVAS desta lista; não invente conta.",
           contas: rows.filter((r) => r.ativo).map((r) => `${r.code} ${r.name} [${r.natureza === "receita" ? "R" : "D"}/${categoriaDaConta(r)}]`),
-          grupos: [...cef, ...comp].map((g) => `${g.code} ${g.name}`),
+          grupos: gruposAtivos.flatMap((g) => [`${g.code} ${g.name}`, ...g.subgrupos.map((x) => `${x.code} ${x.name}`)]),
           possiveisDuplicidades: duplicidades,
           contasSemMapeamento: semMapeamento.map((r) => r.code),
           lancamentosForaDoPlano: foraDoPlano ? { quantidade: foraDoPlano.n } : "sem acesso a Despesas",
@@ -152,10 +179,12 @@ export default async function PlanoContasPage() {
         sugestoes={["Qual conta uso para hospedagem da equipe em campanha?", "Há contas duplicadas no plano?", "Sugira contas para um programa de educação ambiental"]}
       />
 
+      <ConversaoDoPlano plano={conversao.nadaAFazer ? null : conversao} podeConverter={podeConverter} podeDesfazer={!!ultima} />
+
       {/* Prompt G2 — a Cris propõe contas novas; a pessoa confere e cria. */}
       <PropostaDeContas
-        grupos={[...cef, ...comp].map((g) => ({ code: g.code, name: g.name, kind: g.kind }))}
-        codigos={rows.map((r) => r.code)}
+        grupos={gruposAtivos.flatMap((g) => [...(g.direto ? [g.direto] : []), ...g.subgrupos]).filter((x) => x.ativo).map((g) => ({ code: g.code, name: g.name, kind: g.kind }))}
+        codigos={[...rows.map((r) => r.code), ...gruposDb.map((g) => g.code)]}
         podeCriar={perms.criar}
       />
 
@@ -167,7 +196,7 @@ export default async function PlanoContasPage() {
       )}
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <PlanoContasManager cef={cef} comp={comp} perms={perms} />
+        <PlanoContasManager grupos={gruposAtivos} inativos={gruposInativos} perms={perms} uso={usoNaTela} equivalentes={equivalentes} />
 
         <aside className="space-y-4">
           {/* 8.6 — o painel entra ACIMA da coluna de Categorias DRE, que permanece. */}
@@ -202,7 +231,7 @@ export default async function PlanoContasPage() {
             <CardContent className="p-5">
               <h2 className="mb-3 text-[15px] font-semibold text-[var(--color-v2-ink)]">Ferramentas</h2>
               <FerramentasDoPlano
-                perms={{ ...perms, reclassificar: can(ctx.perms, "planocontasreclass", "editar") }}
+                perms={perms}
                 contas={rows.map((r) => ({ code: r.code, name: r.name, ativo: r.ativo ?? true, natureza: r.natureza }))}
               />
             </CardContent>

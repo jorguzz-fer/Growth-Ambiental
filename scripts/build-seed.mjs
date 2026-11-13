@@ -16,9 +16,14 @@ const troca = {
   "server-only": "server-only.ts",
 };
 
-await build({
-  entryPoints: ["src/lib/db/seed-demo/index.ts"],
-  outfile: ".migrate/seed.mjs",
+const alvos = [
+  ["src/lib/db/seed-demo/index.ts", ".migrate/seed.mjs"],
+  // Conversão do Plano de Contas de empresa existente (prévia/aplicar/desfazer).
+  ["src/lib/planocontas-conversao-cli.ts", ".migrate/converter-plano.mjs"],
+];
+for (const [entrada, saida] of alvos) await build({
+  entryPoints: [entrada],
+  outfile: saida,
   bundle: true,
   platform: "node",
   target: "node22",
@@ -47,4 +52,4 @@ await build({
     },
   ],
 });
-console.log("seed empacotado em .migrate/seed.mjs");
+console.log("seed empacotado em .migrate/seed.mjs; conversão do plano em .migrate/converter-plano.mjs");

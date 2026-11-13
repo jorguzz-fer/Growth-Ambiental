@@ -64,9 +64,15 @@ describe("Prompt V · Relatório CEF (seção 3)", () => {
     expect(doPlano).toEqual([{ codigo: "2.2", nome: "Terceiros" }, { codigo: "2.10", nome: "Dez" }]);
     const r = montarRelatorioCef({ grupos: doPlano, orcamento: [orc("2.2", "01/2026", 100), orc("3.1", "01/2026", 999)], medicoes: [med("2.2", "01/2026", 40), med("X", "01/2026", 5)] });
     expect(r.linhas.map((l) => l.codigo)).toEqual(["2.2", "2.10", "X"]);
-    expect(r.linhas[0]).toMatchObject({ orcado: 100, realizado: 40 });
-    expect(r.linhas[2]).toMatchObject({ nome: "Grupo fora do plano", realizado: 5 });
     expect(r.totalOrcado).toBe(100); // despesa administrativa (3.1) não é custo direto
+    expect(r.linhas[0]).toMatchObject({ orcado: 100, realizado: 40 });
+    expect(r.linhas.find((l) => l.codigo === "X")).toMatchObject({ nome: "Grupo fora do plano", realizado: 5 });
+    // grupo inativo (plano anterior) com dado: linha própria com o nome dele, e entra no total
+    const inativo = gruposDoRelatorioCef([{ kind: "cef", groupCode: "ANT-1", groupName: "Serviços Preliminares Gerais", ativo: false }, { kind: "cef", groupCode: "2.2", groupName: "Terceiros" }]);
+    expect(inativo.map((g) => g.codigo)).toEqual(["2.2"]);
+    const r2 = montarRelatorioCef({ grupos: inativo, orcamento: [orc("ANT-1", "01/2026", 900)], medicoes: [med("ANT-1", "01/2026", 500)], nomes: new Map([["ANT-1", "Serviços Preliminares Gerais"]]) });
+    expect(r2.linhas.find((l) => l.codigo === "ANT-1")).toMatchObject({ nome: "Serviços Preliminares Gerais", orcado: 900, realizado: 500 });
+    expect(r2.totalOrcado).toBe(900);
   });
 
   it("3.8 — escolha do Orçamento: pedido > padrão > mais recente; declara o motivo", () => {

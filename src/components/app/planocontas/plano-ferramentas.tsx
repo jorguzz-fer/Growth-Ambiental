@@ -4,13 +4,10 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/input";
 import {
-  adotarPlanoPadrao,
   confirmarImportacaoDoPlano,
-  previaDaAdocaoDoPadrao,
   previaDaImportacaoDoPlano,
   previaDaReclassificacao,
   reclassificarLancamentos,
-  type PreviaDaAdocao,
   type PreviaDaReclassificacao,
 } from "@/lib/actions/planocontas-estrutura";
 import type { LinhaImportada, PreviaDeImportacao } from "@/lib/planocontas-regras";
@@ -22,9 +19,9 @@ export interface PermissoesDoPlano {
   reclassificar: boolean;
 }
 
-type Aberto = "importar" | "padrao" | "reclassificar" | null;
+type Aberto = "importar" | "reclassificar" | null;
 
-/** Exportar, importar (com prévia), adotar o plano padrão e reclassificar lançamentos. */
+/** Exportar, importar (com prévia) e reclassificar lançamentos. A troca do plano anterior pelo ambiental é a "Conversão", no topo da tela. */
 export function FerramentasDoPlano({ perms, contas }: { perms: PermissoesDoPlano; contas: { code: string; name: string; ativo: boolean; natureza: string }[] }) {
   const [aberto, setAberto] = useState<Aberto>(null);
   const alternar = (a: Aberto) => setAberto(aberto === a ? null : a);
@@ -42,11 +39,6 @@ export function FerramentasDoPlano({ perms, contas }: { perms: PermissoesDoPlano
             Importar planilha
           </Button>
         )}
-        {perms.criar && (
-          <Button size="sm" variant="outline" onClick={() => alternar("padrao")}>
-            Plano padrão ambiental
-          </Button>
-        )}
         {perms.reclassificar && (
           <Button size="sm" variant="outline" onClick={() => alternar("reclassificar")}>
             Reclassificar lançamentos
@@ -54,7 +46,6 @@ export function FerramentasDoPlano({ perms, contas }: { perms: PermissoesDoPlano
         )}
       </div>
       {aberto === "importar" && <Importar />}
-      {aberto === "padrao" && <AdotarPadrao />}
       {aberto === "reclassificar" && <Reclassificar contas={contas} />}
     </div>
   );
@@ -132,46 +123,6 @@ function Lista({ titulo, itens }: { titulo: string; itens: string[] }) {
         ))}
       </ul>
     </details>
-  );
-}
-
-function AdotarPadrao() {
-  const { rodar, pendente, msg, setMsg } = useAcao();
-  const [previa, setPrevia] = useState<PreviaDaAdocao | null>(null);
-  return (
-    <div className={caixa} data-testid="adotar-padrao">
-      <p className="mb-2 text-[var(--color-ink2)]">
-        Acrescenta ao plano da empresa os grupos e contas do <strong>plano padrão para consultorias ambientais</strong> que ainda não existem. É aditivo: nada existente é
-        renomeado, recodificado ou apagado, e as contas que não forem usadas podem ser inativadas. Depois, use “Reclassificar lançamentos” para mover o histórico, se quiser.
-      </p>
-      <Button
-        size="sm"
-        variant="outline"
-        onClick={async () => {
-          setMsg(null);
-          const r = await previaDaAdocaoDoPadrao();
-          if (r.ok) setPrevia(r.previa);
-          else setMsg({ tom: "erro", texto: r.error });
-        }}
-      >
-        Ver o que entraria
-      </Button>
-      {previa && (
-        <div className="mt-3 space-y-2">
-          <p>
-            Versão {previa.versao}: <strong>{previa.gruposNovos.length}</strong> grupo(s) e <strong>{previa.contasNovas.length}</strong> conta(s) novos · {previa.jaExistem} já
-            existem · {previa.ajustados.length} grupo(s) com código ajustado · <strong>{previa.conflitos.length}</strong> conta(s) com código ocupado (não entram)
-          </p>
-          {previa.ajustados.length > 0 && <Lista titulo="Grupos com código ajustado" itens={previa.ajustados.map((c) => `${c.code}: ${c.motivo}`)} />}
-          {previa.conflitos.length > 0 && <Lista titulo="Contas que não entram" itens={previa.conflitos.map((c) => `${c.code}: ${c.motivo}`)} />}
-          {previa.contasNovas.length > 0 && <Lista titulo="Contas novas" itens={previa.contasNovas.map((c) => `${c.code} — ${c.name} (grupo ${c.grupo})`)} />}
-          <Button size="sm" disabled={pendente || (!previa.gruposNovos.length && !previa.contasNovas.length)} onClick={() => rodar(() => adotarPlanoPadrao(), "Plano padrão acrescentado.", () => setPrevia(null))}>
-            Acrescentar ao plano
-          </Button>
-        </div>
-      )}
-      <Mensagem msg={msg} />
-    </div>
   );
 }
 
