@@ -54,6 +54,8 @@ import {
 import { sessaoDoSeed } from "./stubs/auth";
 import {
   EMPRESA,
+  NOMES_ANTERIORES,
+  EMAILS_ANTERIORES,
   CLIENTES,
   FORNECEDORES,
   FUNCIONARIOS,
@@ -170,7 +172,7 @@ async function criarEmpresa(email: string): Promise<{ tenantId: string; senha: s
       codigoMunicipio: "4106902",
       cep: "80420-000",
       telefone: "(41) 3000-0000",
-      emailFiscal: "financeiro@veredas-ambiental.exemplo",
+      emailFiscal: "financeiro@consultoria-ambiental.exemplo",
       fiscalAmbiente: "homologacao",
     })
     .returning();
@@ -190,7 +192,7 @@ async function criarEmpresa(email: string): Promise<{ tenantId: string; senha: s
   // Usuário sem empresa (ex.: sobra de uma demonstração recriada): recebe a
   // senha desta execução, como um usuário novo.
   senha = process.env.SEED_ADMIN_PASSWORD?.trim() || `Demo-${randomBytes(9).toString("base64url")}9a`;
-  const dadosDoLogin = { name: "Demonstração Veredas", passwordHash: hashPassword(senha), mustChangePassword: !process.env.SEED_ADMIN_PASSWORD, passwordChangedAt: null };
+  const dadosDoLogin = { name: "Demonstração", passwordHash: hashPassword(senha), mustChangePassword: !process.env.SEED_ADMIN_PASSWORD, passwordChangedAt: null };
   if (existente) {
     await db.update(schema.users).set(dadosDoLogin).where(eq(schema.users.id, existente.id));
     userId = existente.id;
@@ -800,14 +802,21 @@ async function main() {
     process.exit(1);
   }
 
-  const [existe] = await db.select().from(schema.tenants).where(eq(schema.tenants.name, EMPRESA.nome)).limit(1);
-  if (existe) {
+  const existentes = await db.select().from(schema.tenants).where(inArray(schema.tenants.name, [EMPRESA.nome, ...NOMES_ANTERIORES]));
+  if (existentes.length > 0) {
     if (process.env.SEED_DEMO_RECRIAR !== "sim") {
-      console.log(`A empresa "${EMPRESA.nome}" já existe — nada a fazer. Para recriar do zero, rode com SEED_DEMO_RECRIAR=sim.`);
+      console.log(`A empresa "${existentes[0].name}" já existe — nada a fazer. Para recriar do zero, rode com SEED_DEMO_RECRIAR=sim.`);
       return;
     }
     console.log("Apagando a demonstração anterior...");
-    await db.delete(schema.tenants).where(eq(schema.tenants.id, existe.id));
+    await db.delete(schema.tenants).where(inArray(schema.tenants.id, existentes.map((t) => t.id)));
+    // Equipe fictícia de versões anteriores que ficou sem empresa.
+    for (const e of EMAILS_ANTERIORES) {
+      const [u] = await db.select({ id: schema.users.id }).from(schema.users).where(eq(schema.users.email, e)).limit(1);
+      if (!u) continue;
+      const vinculos = await db.select().from(schema.memberships).where(eq(schema.memberships.userId, u.id));
+      if (vinculos.length === 0) await db.delete(schema.users).where(eq(schema.users.id, u.id));
+    }
   }
 
   console.log(`Criando "${EMPRESA.nome}" (mês 0 = ${comp(0)}, mês corrente = ${comp(MES_CORRENTE)})...`);
