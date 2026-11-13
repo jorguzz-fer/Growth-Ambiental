@@ -3,6 +3,8 @@ import type { Project } from "@/lib/context";
 import { getUnits, getVersionsDoProjeto } from "@/lib/queries";
 import { custoOrcadoRealizado } from "@/lib/custo-orcado";
 import type { DadosDaObra } from "@/lib/indicadores-negocio";
+import { listarContratos } from "@/lib/contratos-queries";
+import { resumoDosContratos } from "@/lib/valor-contratado";
 
 /** Um mês distante: o Orçamento "no horizonte todo". */
 const HORIZONTE = "12/2099";
@@ -19,6 +21,7 @@ export async function dadosDasObras(
 ): Promise<DadosDaObra[]> {
   const d = opts.hoje ?? new Date();
   const mesAtual = `${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+  const contratos = await listarContratos(tenantId);
   return Promise.all(
     obras.map(async (p) => {
       const atual = (await getVersionsDoProjeto(tenantId, p.id)).find((v) => v.kind === "atual");
@@ -33,8 +36,10 @@ export async function dadosDasObras(
           ? await Promise.all([custoOrcadoRealizado(tenantId, p.id, mesAtual, opts.rascunhoFora), custoOrcadoRealizado(tenantId, p.id, HORIZONTE, opts.rascunhoFora)])
           : [null, null];
       const metragem = p.metragem == null ? null : Number(p.metragem);
+      const s = resumoDosContratos(contratos, new Set([p.id]));
       return {
         obra: p.name,
+        servicos: { contratado: s.contratado, medido: s.medido, faturado: s.faturado, recebido: s.recebido, aReceber: s.aReceber },
         vgv: valor(unidades),
         vgvVendido: valor(vendidas),
         unidades: unidades.length,

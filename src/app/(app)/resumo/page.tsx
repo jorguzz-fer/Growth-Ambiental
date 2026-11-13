@@ -302,6 +302,7 @@ export default async function ResumoPage({
     definicaoNova: resumoNovo,
     indicadores,
     unidades: { total: unitRows.length, vendidas: totals.vend },
+    servicos,
     vendas: blocos?.vendas ?? null,
     exposicao: blocos?.exposicao ?? null,
     atencao: blocos?.atencao ?? null,
