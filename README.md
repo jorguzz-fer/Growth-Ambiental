@@ -151,7 +151,7 @@ deploy aplica só o que falta.
 
 **Seed de demonstração (opcional):** o banco funciona vazio — empresas reais
 nascem pelo console da plataforma (`/plataforma`). Para apresentar o app, o
-seed cria a **Veredas Consultoria Ambiental**, uma consultoria **fictícia**
+seed cria a **Consultoria Ambiental**, uma empresa de consultoria **fictícia**
 com ~12 meses de histórico e ~12 de projeção, relativos à data em que roda:
 6 projetos com contrato, itens, marcos, medições, aditivo, faturas e
 recebimentos conciliados; ~350 despesas pagas (projetos, sede, folha, DAS,
