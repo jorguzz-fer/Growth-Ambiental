@@ -9,6 +9,7 @@ import { relatorioDeReembolsos } from "@/lib/contratos-queries";
 import { ROTULO_STATUS_REEMBOLSO, type StatusReembolso } from "@/lib/contrato-regras";
 import { dateBR } from "@/lib/utils";
 import { Kpi, brl } from "@/components/app/contratos/visual";
+import { reembolsosPorConta } from "@/lib/contrato-regras";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +29,9 @@ export default async function ReembolsosPage({ searchParams }: { searchParams: P
   const recebido = soma((l) => l.recebido);
   const pendente = soma((l) => l.pendente);
   const contrato = contratos.find((c) => c.id === contratoId);
+  // 0079 — por conta do Plano de Contas: o reembolso não muda a conta da despesa (nem vira receita).
+  const nomes = new Map((await db.select({ code: schema.chartAccounts.code, name: schema.chartAccounts.name }).from(schema.chartAccounts).where(eq(schema.chartAccounts.tenantId, ctx.tenant.id))).map((c) => [c.code, c.name]));
+  const porConta = reembolsosPorConta(linhas, nomes);
   const qs = new URLSearchParams(Object.entries({ contrato: contratoId ?? "", de: sp.de ?? "", ate: sp.ate ?? "" }).filter(([, v]) => v)).toString();
   return (
     <>
@@ -121,6 +125,32 @@ export default async function ReembolsosPage({ searchParams }: { searchParams: P
           </tbody>
         </table>
       </div>
+      {porConta.length > 0 && (
+        <div className="mt-6 overflow-x-auto rounded-[12px] border border-[var(--color-line)] bg-white" data-testid="reembolsos-por-conta">
+          <h2 className="px-3 pt-3 text-[14px] font-semibold">Por conta do Plano de Contas</h2>
+          <p className="px-3 text-[11.5px] text-[var(--color-ink3)]">A despesa mantém a conta original; o reembolso não é receita operacional nem cria conta nova.</p>
+          <table className="mt-2 w-full text-[12px]">
+            <thead className="text-left text-[10.5px] uppercase text-[var(--color-ink3)]">
+              <tr>
+                <th className="px-3 py-1.5">Conta</th>
+                <th className="px-3 py-1.5 text-right">Solicitado</th>
+                <th className="px-3 py-1.5 text-right">Aprovado</th>
+                <th className="px-3 py-1.5 text-right">Recebido</th>
+              </tr>
+            </thead>
+            <tbody>
+              {porConta.map((c) => (
+                <tr key={c.conta} className="border-t border-[var(--color-line)]">
+                  <td className="px-3 py-1.5">{c.rotulo}</td>
+                  <td className="px-3 py-1.5 text-right font-[family-name:var(--font-mono)]">{brl(c.solicitado)}</td>
+                  <td className="px-3 py-1.5 text-right font-[family-name:var(--font-mono)]">{brl(c.aprovado)}</td>
+                  <td className="px-3 py-1.5 text-right font-[family-name:var(--font-mono)]">{brl(c.recebido)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </>
   );
 }

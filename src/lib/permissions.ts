@@ -98,6 +98,9 @@ export const SCREENS: Screen[] = [
   // HERDA_DE. Quem alcançava a tela por `despesas` continua alcançando.
   { id: "conferencia", label: "Conferência de lançamentos", modulo: "Despesas" },
   { id: "planocontas", label: "Plano de Contas", modulo: "Planejamento" },
+  // 0079 — mover lançamentos de uma conta para outra muda relatório já
+  // emitido: permissão PRÓPRIA (ação, não rota), nasce só com owner e admin.
+  { id: "planocontasreclass", label: "Plano de Contas — reclassificar lançamentos", modulo: "Planejamento" },
   // Growth Ambiental — Planejamento de projetos (0078). "plano" é a rota do
   // Plano de Trabalho (ver, criar, editar, excluir fases/atividades/entregas);
   // "modelos" é a biblioteca da empresa (Config: nasce só com owner/admin).
@@ -223,7 +226,7 @@ export const OPERADOR_SEMPRE_ALCANCA: ReadonlySet<string> = new Set(["backup"]);
  * de Acessos (BM-3: "quem recebe a permissão nova por padrão: só owner e
  * admin").
  */
-export const TELAS_SENSIVEIS = new Set(["clientesdados", "funcionariosdados", "funcionariosaso", "versaotrava", "versaoaprova", "notaemitir", "notacancelar", "backup", "contratosaprovar"]);
+export const TELAS_SENSIVEIS = new Set(["clientesdados", "funcionariosdados", "funcionariosaso", "versaotrava", "versaoaprova", "notaemitir", "notacancelar", "backup", "contratosaprovar", "planocontasreclass"]);
 
 /**
  * Papéis com TETO DE LEITURA (Prompt AL, Parte 3 · decisão BAL-2 = opção 1):

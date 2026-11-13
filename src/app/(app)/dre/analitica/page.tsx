@@ -8,7 +8,10 @@ import { calendarYearWindows } from "@/lib/planning";
 import { NO_COMP } from "@/lib/calc/dre-cascata";
 import { versionAnaliticaByMonth } from "@/lib/dre-inputs";
 import { CENARIOS, ROTULO_CENARIO, eixoDeMeses, janelaDoProjeto, ordenarMeses, resolverCenario, resolverPeriodo, textoDaCobertura, type Cenario } from "@/lib/dre";
-import { entradaVazia, linhasDaDreAnalitica, somarPeriodo, type EntradaAnalitica } from "@/lib/dre-analitica";
+import { entradaVazia, linhasDaDreAnalitica, paraInputs, somarPeriodo, type EntradaAnalitica } from "@/lib/dre-analitica";
+import { waterfall } from "@/lib/calc/dre-cascata";
+import { categoriaDaConta } from "@/lib/categoria-do-plano";
+import { classeDaConta, classePadrao, dreGerencial, type ClasseGerencial } from "@/lib/planocontas-regras";
 import { PageHeader } from "@/components/app/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { DreControls } from "@/components/app/dre-controls";
@@ -86,6 +89,21 @@ export default async function DreAnaliticaPage({
     contas.map((c) => ({ code: c.code, name: c.name, groupCode: c.groupCode, groupName: c.groupName })),
   );
   const categoriaDoPlano = await chaveLigada(ctx.tenant.id, "despesa_categoria_do_plano");
+  // 0079 — DRE gerencial: os MESMOS lançamentos, reagrupados pela classe
+  // gerencial da conta (Receita bruta → Resultado líquido). O Orçamento lança
+  // por grupo: a chave de grupo usa a classe comum das contas do grupo.
+  const mapaGerencial = new Map<string, { name: string; classe: ClasseGerencial }>();
+  for (const c of contas) mapaGerencial.set(c.code, { name: c.name, classe: classeDaConta(c, categoriaDaConta(c)) });
+  for (const code of new Set(contas.map((c) => c.groupCode))) {
+    if (mapaGerencial.has(code)) continue;
+    const doGrupo = contas.filter((c) => c.groupCode === code);
+    const classes = new Set(doGrupo.map((c) => classeDaConta(c, categoriaDaConta(c))));
+    mapaGerencial.set(code, { name: `${doGrupo[0].groupName} (planejado no grupo)`, classe: classes.size === 1 ? [...classes][0] : classePadrao(categoriaDaConta(doGrupo[0])) });
+  }
+  const gerencial = dreGerencial({ receitaSemConta: entrada.receitaVendas + entrada.receitaPermuta, encargos: entrada.encargos, lancamentos: entrada.lancamentos }, mapaGerencial);
+  const resultadoCascata = waterfall([paraInputs(entrada)]).rows.at(-1)!.value;
+  const confere = Math.abs(resultadoCascata - gerencial.resultadoDaCascata) < 0.01;
+  const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
   const dreHref = `/dre?${new URLSearchParams({ proj: projParam, periodo, ...(customDe ? { de: customDe } : {}), ...(customAte ? { ate: customAte } : {}) }).toString()}`;
 
   return (
@@ -145,6 +163,31 @@ export default async function DreAnaliticaPage({
             no mesmo cenário e período. Cada despesa entra pela{" "}
             {categoriaDoPlano ? "categoria da conta no Plano de Contas" : "categoria escolhida no lançamento"} e abre no grupo e na
             conta do Plano de Contas. Despesa sem conta aparece em &ldquo;Sem conta do plano&rdquo;.
+          </p>
+        </CardContent>
+      </Card>
+      <Card className="mt-6" id="dre-gerencial">
+        <CardContent className="p-5">
+          <h2 className="mb-1 text-[15px] font-semibold">Estrutura gerencial — Receita bruta → Resultado líquido</h2>
+          <p className="mb-3 text-[12px] text-[var(--color-ink3)]">
+            Os mesmos lançamentos, agrupados pela <strong>classe gerencial</strong> de cada conta do Plano de Contas. Custos e despesas aparecem com sinal negativo. Investimentos,
+            empréstimos e distribuição ficam fora do resultado e voltam na conferência com o Resultado Final da cascata.
+          </p>
+          <table className="w-full text-[13px]" data-testid="tabela-gerencial">
+            <tbody>
+              {gerencial.linhas.map((l) => (
+                <tr key={l.id} className={l.tipo === "conta" ? "text-[12px] text-[var(--color-ink2)]" : l.tipo === "item" ? "border-t border-[var(--color-line)]" : "border-t border-[var(--color-line)] bg-[var(--color-surface2)] font-semibold"}>
+                  <td className="py-1" style={{ paddingLeft: l.tipo === "conta" ? 24 : 8 }}>
+                    {l.rotulo}
+                  </td>
+                  <td className="py-1 pr-2 text-right font-[family-name:var(--font-mono)]">{fmt(l.valor)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p className={`mt-2 text-[12px] ${confere ? "text-[var(--color-ink3)]" : "text-[var(--color-danger)]"}`} data-confere={confere}>
+            {confere ? `Conferido: bate com o Resultado Final da cascata (${fmt(resultadoCascata)}).` : `Divergência com a cascata (${fmt(resultadoCascata)}): avise o suporte.`}
+            {gerencial.semClasse.length > 0 && ` Contas fora do plano: ${gerencial.semClasse.join(", ")} (entram pela categoria).`}
           </p>
         </CardContent>
       </Card>

@@ -46,7 +46,7 @@ function filledWorkbook(): Buffer {
     SHEETS.permuta,
   );
 
-  // Despesas: coloca 125000 no Jan/Ano1 do 1º subitem (Serviços técnicos → 1.1)
+  // Despesas: coloca 125000 no Jan/Ano1 do 1º subitem do plano padrão
   const despAoa = XLSX.utils.sheet_to_json(tmpl.Sheets[SHEETS.despesas], { header: 1 }) as unknown[][];
   despAoa[1][2] = 125000;
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(despAoa), SHEETS.despesas);
@@ -99,8 +99,8 @@ describe("growth-template", () => {
   it("round-trip: despesa da matriz vira lançamento com conta e competência", () => {
     const p = parseWorkbook(filledWorkbook());
     expect(p.despesas).toHaveLength(1);
-    // 1º subitem = "Serviços técnicos (...)" → código 1.1 ; Jan/Ano1 com base 2025
-    expect(p.despesas[0]).toMatchObject({ contaCef: "1.1", competencia: "01/2025", valor: 125000 });
+    // 1º subitem do plano padrão (o código vem do plano, nunca fixo no teste); Jan/Ano1 com base 2025
+    expect(p.despesas[0]).toMatchObject({ contaCef: PLANO_CONTAS.obra[0].sub[0].id, competencia: "01/2025", valor: 125000 });
   });
 });
 

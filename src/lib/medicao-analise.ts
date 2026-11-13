@@ -3,6 +3,7 @@
  * SOMENTE LEITURA: analisa e aponta; nunca lança, altera ou exclui medição,
  * e nunca afirma percentual que o engenheiro não declarou (6.1, 6.3).
  */
+import { grupoDaChave } from "@/lib/planocontas-regras";
 import { compararComMedicao, type LiberacaoParaAnalise } from "@/lib/liberacao-analise";
 import { monthKeyIndex } from "@/lib/planning";
 import { LIMITE_RETENCAO_PCT } from "@/lib/medicao-cef";
@@ -62,8 +63,10 @@ export function avancoForaDoPrevisto(contas: readonly ContaOrcada[], medicoes: r
   for (const m of medicoes) medido.set(`${m.grupoCode}|${m.competencia}`, (medido.get(`${m.grupoCode}|${m.competencia}`) ?? 0) + m.valor);
   const out: AvancoForaDoPrevisto[] = [];
   const r2 = (n: number) => Math.round(n * 100) / 100;
+  // 0079 — a chave do Orçamento já é o código do grupo medido ("2.3"); o prefixo só vale para chave antiga.
+  const gruposMedidos = new Set(medicoes.map((m) => m.grupoCode));
   for (const c of contas) {
-    const grupo = c.rowKey.split(".")[0];
+    const grupo = grupoDaChave(c.rowKey, gruposMedidos);
     for (const mes of decorridas) {
       const previsto = r2((c.total * (Number(c.pct[mes]) || 0)) / 100);
       const med = r2(medido.get(`${grupo}|${mes}`) ?? 0);

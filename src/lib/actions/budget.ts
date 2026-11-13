@@ -9,6 +9,7 @@ import { db, schema } from "@/lib/db";
 import { getTenantContext } from "@/lib/context";
 import { can } from "@/lib/permissions";
 import { logAudit } from "@/lib/audit";
+import { grupoDaConta } from "@/lib/planocontas-regras";
 import {
   getUnits,
   getReembolsos,
@@ -574,9 +575,13 @@ async function _replicateFromAtual(targetVersionId: string) {
 
   // Despesa por grupo CEF × mês (com a categoria DRE já lançada).
   const despMap = new Map<string, BudgetCell>();
+  // 0079 — o grupo da conta vem do cadastro (código "2.3.01" é do grupo "2.3"), não do prefixo.
+  const contaParaGrupo = new Map(
+    (await db.select({ code: schema.chartAccounts.code, groupCode: schema.chartAccounts.groupCode }).from(schema.chartAccounts).where(eq(schema.chartAccounts.tenantId, ctx.tenant.id))).map((c) => [c.code, c.groupCode]),
+  );
   for (const d of despesas) {
     if (!d.contaCef || !d.competencia) continue;
-    const grp = d.contaCef.split(".")[0];
+    const grp = grupoDaConta(contaParaGrupo, d.contaCef);
     const key = `${grp}|${d.competencia}`;
     const cur = despMap.get(key);
     const val = Number(d.valor);

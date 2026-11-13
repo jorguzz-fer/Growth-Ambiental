@@ -94,6 +94,14 @@ export const CHAVES = [
     previa: { href: "/chaves#previa-categoria", rotulo: "Prévia — despesas que mudam de categoria, por conta" },
   },
   {
+    id: "orcamento_categoria_do_plano",
+    titulo: "Orçamento usa a categoria da DRE do Plano de Contas",
+    efeito:
+      "Linha NOVA de Orçamento/Previsão (um grupo do Plano de Contas) passa a nascer com a categoria da DRE que todas as contas ativas do grupo têm, em vez do padrão por tipo (custo direto = Custo Variável; o resto = Despesa Fixa). Linhas já gravadas mantêm a categoria delas. Empresa nova já nasce com a chave ligada.",
+    origem: "Plano de Contas para consultorias ambientais (§9)",
+    previa: { href: "/planocontas#previa-orcamento", rotulo: "Plano de Contas — grupos cuja categoria de orçamento muda" },
+  },
+  {
     id: "incc_por_empresa",
     titulo: "INCC da empresa: uma série para todas as obras",
     efeito:

@@ -629,8 +629,46 @@ export const chartAccounts = pgTable(
      * boa prática (`categoriaPadraoDaConta`): conta sem categoria não existe.
      */
     dreCategory: dreCategoryEnum("dre_category"),
+    /** 0079 — descrição de uso (orienta quem lança e a Cris). */
+    descricao: text("descricao"),
+    /** 0079 — ordem dentro do grupo (reorganizar sem trocar código). */
+    ordem: integer("ordem").notNull().default(0),
+    /** 0079 — classe gerencial (linha da DRE gerencial). Nula = derivada da categoria. */
+    classeGerencial: text("classe_gerencial"),
+    /** 0079 — custo direto/indireto PADRÃO ("direto" | "indireto"); o lançamento pode tratar diferente. */
+    tipoCusto: text("tipo_custo"),
+    /** 0079 — papel técnico usado por regra do sistema (ex.: "juros_mora"). Um por empresa. */
+    papel: text("papel"),
+    /** 0079 — controle de concorrência otimista. */
+    versao: integer("versao").notNull().default(1),
+    updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
   },
   (c) => [unique("chart_account_tenant_code_uq").on(c.tenantId, c.code)],
+);
+
+/**
+ * 0079 — Grupos e subgrupos do Plano de Contas (nós SINTÉTICOS: não recebem
+ * lançamento). A conta aponta o grupo pelo código (`chart_account.group_code`,
+ * a chave que o Orçamento usa); `parent_id` monta a hierarquia (até 3 níveis).
+ */
+export const chartGroups = pgTable(
+  "chart_group",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    code: text("code").notNull(),
+    name: text("name").notNull(),
+    descricao: text("descricao"),
+    parentId: uuid("parent_id").references((): AnyPgColumn => chartGroups.id, { onDelete: "restrict" }),
+    kind: accountKindEnum("kind").notNull().default("complementar"),
+    ordem: integer("ordem").notNull().default(0),
+    ativo: boolean("ativo").notNull().default(true),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+  },
+  (t) => [unique("chart_group_tenant_code_uq").on(t.tenantId, t.code), index("chart_group_tenant_idx").on(t.tenantId)],
 );
 
 /** Lançamento de despesa por versão (competência + dupla classificação). §8.1 */
@@ -658,6 +696,8 @@ export const despesas = pgTable("despesa", {
   /** Contratos (0077): custo apropriado a um contrato. Nula = só do projeto, como sempre. */
   contratoId: uuid("contrato_id").references((): AnyPgColumn => contratos.id, { onDelete: "set null" }),
   categoriaDre: dreCategoryEnum("categoria_dre"),
+  /** 0079 — tratamento específico do lançamento ("direto" | "indireto"); nula = padrão da conta. */
+  tipoCusto: text("tipo_custo"),
   competencia: text("competencia"),
   vencimento: text("vencimento"),
   dataCaixa: text("data_caixa"),

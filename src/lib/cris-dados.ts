@@ -14,6 +14,8 @@ import { receitaValida, urlDaReceita } from "@/lib/relatorio-custom";
 import { detalheDoContrato, listarContratos } from "@/lib/contratos-queries";
 import { hojeMDY, venceEm } from "@/lib/contrato-regras";
 import { atrasado, consolidar, desvioEmDias, progressoDaFase, ROTULO_STATUS_ENTREGA, ROTULO_STATUS_ITEM } from "@/lib/plano-regras";
+import { categoriaDaConta } from "@/lib/categoria-do-plano";
+import { classeDaConta, normalizar as normalizarTexto, ROTULO_CLASSE, ROTULO_TIPO_CUSTO, semelhanca, sugerirContas } from "@/lib/planocontas-regras";
 
 export { FERRAMENTAS_DE_DADOS, NOMES_DAS_FERRAMENTAS_DE_DADOS } from "@/lib/cris-dados-ferramentas";
 
@@ -408,6 +410,68 @@ export async function executarFerramentaDeDados(ctx: TenantContext, nome: string
         return base;
       });
       return JSON.stringify({ fonte: "Plano de Trabalho dos projetos (progresso físico pelo andamento informado; separado do financeiro)", hoje, projetos, ...aviso });
+    }
+
+    case "plano_de_contas": {
+      if (!pode(ctx, "planocontas")) return semPermissao("Plano de Contas");
+      const assunto = texto(o, "assunto") || "estrutura";
+      const alvo = texto(o, "texto");
+      const natureza = texto(o, "natureza") === "receita" ? "receita" : "despesa";
+      const [contas, grupos] = await Promise.all([
+        db.select().from(schema.chartAccounts).where(eq(schema.chartAccounts.tenantId, tenantId)),
+        db.select().from(schema.chartGroups).where(eq(schema.chartGroups.tenantId, tenantId)),
+      ]);
+      const ficha = (c: (typeof contas)[number]) => {
+        const cat = categoriaDaConta(c);
+        return { codigo: c.code, nome: c.name, grupo: `${c.groupCode} ${c.groupName}`, natureza: c.natureza, ativa: c.ativo, categoriaDre: cat, classeGerencial: ROTULO_CLASSE[classeDaConta(c, cat)], custoPadrao: c.tipoCusto === "direto" || c.tipoCusto === "indireto" ? ROTULO_TIPO_CUSTO[c.tipoCusto] : "não se aplica", descricao: c.descricao };
+      };
+      if (assunto === "sugerir") {
+        const cands = sugerirContas(alvo, contas.map((c) => ({ ...c, ativo: c.ativo, natureza: c.natureza })), natureza, 5);
+        return JSON.stringify({
+          fonte: "Plano de Contas da empresa (só contas ativas)",
+          candidatas: cands.map((c) => ({ ...ficha(c), aderencia: c.semelhanca })),
+          regra: "Proponha UMA conta desta lista no formulário; a pessoa confirma. Sem candidata boa, diga isso e sugira criar conta no Plano de Contas — nunca invente código. Projeto, contrato e fase vão nos campos próprios, não na conta.",
+        });
+      }
+      if (assunto === "explicar") {
+        const c = contas.find((x) => normalizarTexto(x.code) === normalizarTexto(alvo)) ?? contas.find((x) => normalizarTexto(x.name) === normalizarTexto(alvo));
+        if (!c) return JSON.stringify({ erro: `Conta "${alvo}" não existe no plano desta empresa.` });
+        return JSON.stringify({ conta: ficha(c), papelTecnico: c.papel });
+      }
+      if (assunto === "duplicidades") {
+        const ativas = contas.filter((c) => c.ativo);
+        const pares: { a: string; b: string; aderencia: number }[] = [];
+        for (let i = 0; i < ativas.length && pares.length < MAX_GRUPOS; i++)
+          for (let j = i + 1; j < ativas.length && pares.length < MAX_GRUPOS; j++) {
+            const sim = semelhanca(ativas[i].name, ativas[j].name);
+            if (ativas[i].natureza === ativas[j].natureza && sim >= 0.8) pares.push({ a: `${ativas[i].code} ${ativas[i].name}`, b: `${ativas[j].code} ${ativas[j].name}`, aderencia: Math.round(sim * 100) / 100 });
+          }
+        return JSON.stringify({ fonte: "Plano de Contas (contas ativas)", possiveisDuplicidades: pares, regra: "É sugestão: unir contas ou reclassificar lançamentos é decisão da pessoa, na tela, com prévia." });
+      }
+      if (assunto === "sem_classificacao") {
+        if (!pode(ctx, "despesas")) return semPermissao("Despesas");
+        const codigos = new Set(contas.map((c) => c.code));
+        const linhas = await db
+          .select({ conta: schema.despesas.contaCef, valor: schema.despesas.valor, projectId: schema.versions.projectId })
+          .from(schema.despesas)
+          .innerJoin(schema.versions, eq(schema.despesas.versionId, schema.versions.id))
+          .where(and(eq(schema.despesas.tenantId, tenantId), eq(schema.versions.kind, "atual"), eq(schema.despesas.cancelado, false), inArray(schema.versions.projectId, ctx.projects.map((p) => p.id))));
+        const fora = linhas.filter((l) => !l.conta || !codigos.has(l.conta));
+        return JSON.stringify({
+          fonte: "Despesas da versão Atual nos projetos que a pessoa vê",
+          ...agrupar(fora.map((l) => ({ chave: { conta: l.conta ?? "sem conta" }, valor: Number(l.valor) }))),
+          quantidade: fora.length,
+          regra: "Para corrigir: editar a despesa ou usar Plano de Contas → Reclassificar lançamentos (com prévia).",
+        });
+      }
+      const filtro = normalizarTexto(alvo);
+      const escolhidas = contas.filter((c) => !filtro || normalizarTexto(`${c.code} ${c.name} ${c.groupName}`).includes(filtro)).slice(0, 80);
+      return JSON.stringify({
+        fonte: "Plano de Contas da empresa",
+        grupos: grupos.filter((g) => !g.parentId).map((g) => ({ codigo: g.code, nome: g.name, subgrupos: grupos.filter((x) => x.parentId === g.id).map((x) => `${x.code} ${x.name}`) })),
+        contas: escolhidas.map((c) => `${c.code} ${c.name} [${categoriaDaConta(c)}${c.ativo ? "" : ", inativa"}]`),
+        ...(contas.length > escolhidas.length ? { outras: contas.length - escolhidas.length } : {}),
+      });
     }
 
     case "montar_relatorio": {

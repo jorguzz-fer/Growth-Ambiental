@@ -1,72 +1,88 @@
 import { describe, it, expect } from "vitest";
-import { PLANO_CONTAS } from "./constants";
-import { PLANO_CONTAS_AMBIENTAL, PLANO_CONTAS_PADRAO, linhasDoPlano } from "./plano-ambiental";
-import { categoriaPadraoDaConta } from "@/lib/categoria-do-plano";
+import { PLANO_AMBIENTAL, PLANO_CONTAS_PADRAO, gruposDoPlano, linhasDoPlano } from "./plano-ambiental";
+import { categoriaDaConta } from "@/lib/categoria-do-plano";
+import { categoriaDoGrupo, classesPermitidas, contasSemelhantes, PAPEIS, recusaDeCodigo } from "@/lib/planocontas-regras";
+import { recusaDeCategoriaDaConta } from "@/lib/categoria-do-plano";
 
-const linhas = linhasDoPlano(PLANO_CONTAS_AMBIENTAL, "t1");
-const padrao = (code: string) => {
-  const l = linhas.find((x) => x.code === code);
-  if (!l) throw new Error(`conta ${code} não está no plano`);
-  return categoriaPadraoDaConta(l);
-};
+const contas = linhasDoPlano("t1");
+const grupos = gruposDoPlano("t1");
 
-describe("Plano de Contas padrão — consultoria ambiental", () => {
-  it("é o plano que conta nova recebe", () => {
-    expect(PLANO_CONTAS_PADRAO).toBe(PLANO_CONTAS_AMBIENTAL);
+describe("Plano de Contas padrão — consultorias ambientais (§4, §5, §15)", () => {
+  it("grupo → subgrupo → conta, com os 6 grupos da estrutura", () => {
+    expect(PLANO_AMBIENTAL.map((g) => g.nome)).toEqual([
+      "Receitas operacionais",
+      "Custos diretos dos projetos",
+      "Despesas administrativas e indiretas",
+      "Resultado financeiro",
+      "Tributos e obrigações",
+      "Outras contas e classificações",
+    ]);
+    for (const g of grupos.filter((x) => x.parentCode)) expect(grupos.some((p) => p.code === g.parentCode && !p.parentCode), g.code).toBe(true);
+    for (const c of contas) expect(grupos.some((g) => g.code === c.groupCode && g.parentCode), c.code).toBe(true);
+    expect(contas.length).toBeGreaterThan(120);
   });
 
-  it("códigos únicos e no padrão do grupo (grupo.n)", () => {
-    const codes = linhas.map((l) => l.code);
-    expect(new Set(codes).size).toBe(codes.length);
-    for (const l of linhas) expect(l.code.startsWith(`${l.groupCode}.`), l.code).toBe(true);
-    const grupos = [...PLANO_CONTAS_AMBIENTAL.obra, ...PLANO_CONTAS_AMBIENTAL.complementar].map((g) => g.id);
-    expect(new Set(grupos).size).toBe(grupos.length);
+  it("códigos válidos e únicos entre grupos E contas (o Orçamento usa o código do grupo)", () => {
+    const codigos = [...grupos.map((g) => g.code), ...contas.map((c) => c.code)];
+    expect(new Set(codigos).size).toBe(codigos.length);
+    for (const c of codigos) expect(recusaDeCodigo(c), c).toBeNull();
   });
 
-  it("custo direto dos projetos é custo variável, nunca despesa", () => {
-    for (const l of linhas.filter((x) => x.kind === "cef")) {
-      expect(l.natureza, l.code).toBe("despesa");
-      expect(categoriaPadraoDaConta(l), l.code).toBe("Custo Variável");
+  it("cada conta traz natureza, categoria, classe e tipo de custo explícitos e coerentes", () => {
+    for (const c of contas) {
+      expect(recusaDeCategoriaDaConta(c.natureza, c.dreCategory), c.code).toBeNull();
+      expect(classesPermitidas(c.natureza), c.code).toContain(c.classeGerencial);
+      // nada pelo prefixo: a categoria efetiva é a gravada
+      expect(categoriaDaConta(c), c.code).toBe(c.dreCategory);
     }
   });
 
-  it("o grupo R é de receita, e só ele", () => {
-    for (const l of linhas) {
-      const receita = l.groupCode === "R";
-      expect(l.natureza, l.code).toBe(receita ? "receita" : "despesa");
-      expect(categoriaPadraoDaConta(l) === "Receita", l.code).toBe(receita);
+  it("subgrupo homogêneo em natureza e categoria (uma linha de Orçamento = uma categoria)", () => {
+    for (const g of grupos.filter((x) => x.parentCode)) {
+      const doGrupo = contas.filter((c) => c.groupCode === g.code);
+      expect(new Set(doGrupo.map((c) => c.natureza)).size, g.code).toBe(1);
+      expect(categoriaDoGrupo(doGrupo.map((c) => ({ ativo: true, categoria: c.dreCategory }))), g.code).not.toBeNull();
     }
   });
 
-  it("de-para da DRE dos grupos de estrutura", () => {
-    expect(padrao("IMP.1")).toBe("Despesa Variável"); // ISS acompanha a receita
-    expect(padrao("IMP.4")).toBe("Despesa Variável");
-    expect(padrao("C.2")).toBe("Despesa Variável");
-    expect(padrao("M.2")).toBe("Despesa Variável");
-    expect(padrao("RH.1")).toBe("Custo Fixo");
-    expect(padrao("RH.4")).toBe("Custo Variável"); // EPI de campo
-    expect(padrao("TI.3")).toBe("Despesa Fixa");
-    expect(padrao("A.1")).toBe("Despesa Fixa");
-    expect(padrao("J.1")).toBe("Despesa Fixa");
-    expect(padrao("F.1")).toBe("Despesa Fixa");
-    for (const c of ["F.2", "F.4", "F.6", "F.7"]) expect(padrao(c), c).toBe("Despesas Financeiras");
+  it("estrutura da DRE: deduções, custos dos serviços, tributos sobre faturamento × resultado", () => {
+    const de = (nome: string) => contas.find((c) => c.name === nome)!;
+    expect(de("ISS")).toMatchObject({ classeGerencial: "deducao", dreCategory: "Despesa Variável" });
+    expect(de("IRPJ")).toMatchObject({ classeGerencial: "tributo_lucro" });
+    expect(de("Hospedagens")).toMatchObject({ classeGerencial: "custo_servico", dreCategory: "Custo Variável", tipoCusto: "direto", kind: "cef" });
+    expect(de("Aluguel")).toMatchObject({ classeGerencial: "despesa_operacional", dreCategory: "Despesa Fixa", tipoCusto: "indireto" });
+    expect(de("Coordenação técnica compartilhada")).toMatchObject({ classeGerencial: "custo_servico", tipoCusto: "indireto" });
+    expect(de("Rendimentos de aplicações")).toMatchObject({ natureza: "receita", classeGerencial: "resultado_financeiro" });
+    expect(de("Distribuição de lucros")).toMatchObject({ dreCategory: "Retiradas", classeGerencial: "fora_do_resultado" });
+    // custo direto dos projetos (bloco "cef") é sempre custo dos serviços
+    for (const c of contas.filter((x) => x.kind === "cef")) expect(c.classeGerencial, c.code).toBe("custo_servico");
   });
 
-  it("grupo F igual ao do plano de construção (F.6–F.9 carregam regras contábeis)", () => {
-    const f = (p: typeof PLANO_CONTAS) => p.complementar.find((g) => g.id === "F")!.sub.map((s) => s.id);
-    expect(f(PLANO_CONTAS_AMBIENTAL)).toEqual(f(PLANO_CONTAS));
+  it("papéis técnicos do acerto presentes, um de cada", () => {
+    for (const p of PAPEIS) expect(contas.filter((c) => c.papel === p), p).toHaveLength(1);
+    expect(contas.find((c) => c.papel === "juros_mora")!.dreCategory).toBe("Despesas Financeiras");
   });
 
-  it("linhas trazem tenant, grupo, tipo e natureza", () => {
-    expect(linhas.find((l) => l.code === "1.2")).toEqual({
-      tenantId: "t1",
-      code: "1.2",
-      name: "Análises laboratoriais (água, solo, ar, efluentes)",
-      groupCode: "1",
-      groupName: "Serviços técnicos de terceiros",
-      kind: "cef",
-      natureza: "despesa",
-    });
-    expect(linhas.find((l) => l.code === "R.1")).toMatchObject({ kind: "complementar", natureza: "receita" });
+  it("sem conta por especialidade, projeto ou contrato; sem nomes duplicados", () => {
+    expect(contas.some((c) => /monitoramento arqueol|projeto x|ct-\d/i.test(c.name))).toBe(false);
+    const nomes = contas.map((c) => c.name.toLowerCase());
+    expect(new Set(nomes).size).toBe(nomes.length);
+    // duplicidades evitadas pelo desenho (EPI só em 2.4; diária de campo × de deslocamento descritas)
+    expect(contas.filter((c) => /proteção individual/i.test(c.name))).toHaveLength(1);
+    expect(contas.find((c) => c.name === "Diárias de campo")!.descricao).toMatch(/deslocamento/);
+  });
+
+  it("sem dado real: nenhum nome de cliente, CNPJ ou e-mail", () => {
+    const texto = JSON.stringify(PLANO_AMBIENTAL);
+    expect(texto).not.toMatch(/\d{2}\.\d{3}\.\d{3}\/\d{4}|@/);
+  });
+
+  it("formato antigo (modelo de planilha) = subgrupos, custo direto separado", () => {
+    expect(PLANO_CONTAS_PADRAO.obra.map((g) => g.id)).toEqual(["2.1", "2.2", "2.3", "2.4", "2.5", "2.6", "2.7"]);
+    expect(PLANO_CONTAS_PADRAO.complementar.find((g) => g.id === "1.1")!.natureza).toBe("receita");
+  });
+
+  it("detector de duplicidade reconhece a conta existente", () => {
+    expect(contasSemelhantes("Hospedagem em viagem", contas.map((c) => ({ code: c.code, name: c.name })))[0].code).toBe(contas.find((c) => c.name === "Hospedagens")!.code);
   });
 });

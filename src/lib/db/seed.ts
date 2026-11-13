@@ -21,7 +21,7 @@ import { eq } from "drizzle-orm";
 import { db, schema } from "./index";
 import { DEFAULT_INCC } from "@/lib/calc/constants";
 import { hashPassword } from "@/lib/password";
-import { PLANO_CONTAS_PADRAO, linhasDoPlano } from "@/lib/calc/plano-ambiental";
+import { instalarPlanoPadrao } from "@/lib/planocontas-padrao";
 import { garantirModalidades } from "@/lib/contrato-modalidades";
 import { garantirBiblioteca } from "@/lib/plano-biblioteca";
 
@@ -97,11 +97,10 @@ async function seedDemoData(tenantId: string) {
   );
 
   console.log("Plano de contas (consultoria ambiental) e modalidades...");
-  const chartRows = linhasDoPlano(PLANO_CONTAS_PADRAO, tenantId);
-  await db.insert(schema.chartAccounts).values(chartRows);
+  const plano = await instalarPlanoPadrao(tenantId, db, undefined, "seed");
   await garantirModalidades(tenantId);
   await garantirBiblioteca(tenantId);
-  console.log(`  ${chartRows.length} contas.`);
+  console.log(`  ${plano.grupos} grupos e ${plano.contas} contas.`);
 
   console.log("Índice de reajuste (série padrão)...");
   await db.insert(schema.inccRates).values(

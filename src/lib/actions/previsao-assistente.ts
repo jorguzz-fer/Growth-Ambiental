@@ -6,7 +6,8 @@ import { db, schema } from "@/lib/db";
 import { getTenantContext } from "@/lib/context";
 import { can } from "@/lib/permissions";
 import { logAudit } from "@/lib/audit";
-import { getAtualVersion, getBudgetPlanning, getDespesas, getMonthlyRevenue } from "@/lib/queries";
+import { getAtualVersion, getBudgetPlanning, getChartAccounts, getDespesas, getMonthlyRevenue } from "@/lib/queries";
+import { grupoDaConta } from "@/lib/planocontas-regras";
 import { hojeISO } from "@/lib/despesa-status";
 import { contasParaGravar, proporDoOrcamento, proporDoRealizado, recusaDaProposta, type OrigemDaReprojecao, type PropostaDeReprojecao } from "@/lib/previsao-reprojecao";
 import { duplicateForecast, saveBudgetPlanning } from "@/lib/actions/planning";
@@ -57,9 +58,11 @@ async function montarProposta(tenantId: string, v: typeof schema.versions.$infer
   if (!atual) return { ok: false, error: "O projeto não tem versão Atual." };
   // Despesas reais por grupo do Plano de Contas (chave da grade) e competência.
   const realizado: Record<string, Record<string, number>> = {};
+  // 0079 — grupo pelo cadastro da conta, não pelo prefixo do código.
+  const contaParaGrupo = new Map((await getChartAccounts(tenantId)).map((c) => [c.code, c.groupCode]));
   for (const d of await getDespesas(atual.id)) {
     if (d.cancelado || !d.contaCef || !d.competencia) continue;
-    const grupo = d.contaCef.split(".")[0];
+    const grupo = grupoDaConta(contaParaGrupo, d.contaCef);
     (realizado[grupo] ??= {})[d.competencia] = (realizado[grupo]?.[d.competencia] ?? 0) + Number(d.valor);
   }
   // Prompt F2: a receita da Atual (a mesma da DRE, por competência) substitui os meses passados.

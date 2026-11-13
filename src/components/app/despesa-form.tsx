@@ -97,6 +97,8 @@ export interface EditDespesa {
   projectNome: string;
   fornecedorId: string | null;
   contaCef: string | null;
+  /** 0079 — tratamento direto/indireto do lançamento (null = padrão da conta). */
+  tipoCusto?: string | null;
   categoriaDre: string | null;
   bancoId: string | null;
   numDoc: string | null;
@@ -204,6 +206,7 @@ export function DespesaForm({
   const [projeto, setProjeto] = useState(edit?.projectId ?? projetoId);
   const [fornecedorId, setFornecedorId] = useState(edit?.fornecedorId ?? prefill?.fornecedorId ?? "");
   const [contaCef, setContaCef] = useState(edit?.contaCef ?? "");
+  const [tipoCusto, setTipoCusto] = useState(edit?.tipoCusto ?? "");
   // Item 1.3 — o default era `categorias[0]`, e a primeira categoria da lista é
   // "Receita": toda despesa nova nascia classificada como receita, inflando
   // receita e resultado na DRE ao mesmo tempo. Agora abre vazio ("Selecione…")
@@ -672,6 +675,7 @@ export function DespesaForm({
         fornecedorId: string | null;
         bancoId: string | null;
         contaCef: string | null;
+        tipoCusto: string | null;
         categoriaDre: string;
         numDoc?: string;
         competencia: string | null;
@@ -683,6 +687,7 @@ export function DespesaForm({
         fornecedorId: fornecedorId || null,
         bancoId: bancoId || null,
         contaCef: contaCef || null,
+        tipoCusto: tipoCusto || null,
         categoriaDre,
         competencia: competencia || null,
         vencimento: vencimento || null,
@@ -728,6 +733,7 @@ export function DespesaForm({
     fd.set("projectId", projeto);
     fd.set("fornecedorId", fornecedorId);
     fd.set("contaCef", contaCef);
+    fd.set("tipoCusto", tipoCusto);
     fd.set("categoriaDre", categoriaDre);
     fd.set("bancoId", bancoId);
     // `numDoc` não é enviado: o PED é reservado no servidor, na transação de
@@ -1252,6 +1258,15 @@ export function DespesaForm({
               ))}
             </Select>
           </CampoIA>
+          {/* 0079 — o padrão direto/indireto vem da conta; o lançamento pode tratar diferente. */}
+          <label className="block text-[12px] text-[var(--color-ink2)]">
+            <span className="mb-1 block">Custo direto ou indireto</span>
+            <Select value={tipoCusto} onChange={(e) => setTipoCusto(e.target.value)} aria-label="Custo direto ou indireto">
+              <option value="">Padrão da conta</option>
+              <option value="direto">Direto deste projeto</option>
+              <option value="indireto">Indireto (compartilhado)</option>
+            </Select>
+          </label>
           {/* Só categorias de natureza devedora: uma despesa não pode ser
               classificada em conta de receita (item 1.3 / RG-01). */}
           <CampoIA label="Categoria DRE" alerta={alertas.categoriaDre ?? (erroCategoria ? { nivel: "faltando", motivo: erroCategoria } : undefined)}>

@@ -570,3 +570,28 @@ export function hojeMDY(d = new Date()): string {
 
 /** Código do aditivo: "<código do contrato>-AD01". */
 export const codigoDoAditivo = (codigoContrato: string, numero: number) => `${codigoContrato}-AD${String(numero).padStart(2, "0")}`;
+
+
+/**
+ * 0079 — Reembolsos agrupados pela conta ORIGINAL da despesa (Plano de
+ * Contas). Solicitado conta o que saiu do rascunho; aprovado, o que foi
+ * aprovado em diante; recebido, o recebido. Rejeitado não soma aprovado.
+ */
+export function reembolsosPorConta(
+  linhas: readonly { conta: string | null; status: string; solicitado: number; aprovado: number | null; recebido: number }[],
+  nomes: ReadonlyMap<string, string>,
+): { conta: string; rotulo: string; solicitado: number; aprovado: number; recebido: number }[] {
+  const r2 = (n: number) => Math.round(n * 100) / 100;
+  const m = new Map<string, { solicitado: number; aprovado: number; recebido: number }>();
+  for (const l of linhas) {
+    const k = l.conta ?? "";
+    const a = m.get(k) ?? { solicitado: 0, aprovado: 0, recebido: 0 };
+    if (l.status !== "pendente") a.solicitado += l.solicitado;
+    if (["aprovado", "faturado", "recebido"].includes(l.status)) a.aprovado += l.aprovado ?? l.solicitado;
+    a.recebido += l.recebido;
+    m.set(k, a);
+  }
+  return [...m.entries()]
+    .map(([conta, a]) => ({ conta, rotulo: conta ? `${conta} — ${nomes.get(conta) ?? "fora do plano"}` : "Sem conta", solicitado: r2(a.solicitado), aprovado: r2(a.aprovado), recebido: r2(a.recebido) }))
+    .sort((a, b) => b.solicitado - a.solicitado || a.conta.localeCompare(b.conta, undefined, { numeric: true }));
+}

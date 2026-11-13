@@ -554,6 +554,13 @@
       "when": 1792600000000,
       "tag": "0078_planejamento_projetos",
       "breakpoints": true
+    },
+    {
+      "idx": 79,
+      "version": "7",
+      "when": 1792700000000,
+      "tag": "0079_plano_contas_ambiental",
+      "breakpoints": true
     }
   ]
 }

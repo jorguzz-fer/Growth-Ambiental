@@ -31,7 +31,8 @@ import { OUTRAS_RECEITAS_KEY, OUTRAS_RECEITAS_PID } from "./budget/config";
 import { chaveLigada } from "./chaves-tenant";
 import { SERIE_DA_EMPRESA } from "./incc-empresa";
 import type { FiltrosDaAuditoria } from "./auditoria-filtros";
-import { mapaDeCategorias, mapaParaDespesas } from "./categoria-do-plano";
+import { categoriaDaConta, mapaDeCategorias, mapaParaDespesas } from "./categoria-do-plano";
+import { categoriaDoGrupo } from "./planocontas-regras";
 import type { CategoriaDRE } from "./calc/constants";
 import { entraNosRelatorios } from "./situacao-versao";
 import { saldosReaisDasDespesas } from "./acerto-saldo";
@@ -1642,6 +1643,11 @@ export async function getBudgetPlanning(
     }
   }
   const grupos = [...grpMap.values()];
+  // 0079 — chave "orcamento_categoria_do_plano": linha nova do Orçamento usa a
+  // categoria comum das contas do grupo (desligada: o padrão por tipo, como hoje).
+  if (await chaveLigada(tenantId, "orcamento_categoria_do_plano"))
+    for (const g of grupos)
+      g.categoria = categoriaDoGrupo(accounts.filter((a) => a.groupCode === g.groupCode).map((a) => ({ ativo: a.ativo ?? true, categoria: categoriaDaConta(a) })));
 
   // Totais por conta (budget_account), pct por mês (budget_line) e a seleção
   // de linhas (budget_selecao, Prompt D BD-6) da versão.

@@ -288,22 +288,34 @@ A tela Consolidado saiu. O endereço /consolidado leva à **Projeção de Receit
 
 ## Plano de Contas (/planocontas) — módulo Planejamento
 
-**Para que serve:** manter os grupos e subitens que classificam orçamento e despesas. A classificação é dupla: grupo do plano + Categoria DRE.
+**Para que serve:** dizer a NATUREZA econômica de cada lançamento (salário, hospedagem, taxa de órgão ambiental, receita de monitoramento…). Projeto, contrato, fase, atividade e modalidade (arqueologia, fauna, flora…) são **dimensões do lançamento**, não contas: a mesma conta "Hospedagens" serve a qualquer projeto.
+
+**Estrutura:** Grupo → Subgrupo → Conta (até 3 níveis de grupos). Só a CONTA recebe lançamento; grupo não. O plano padrão para consultorias ambientais tem 6 grupos: 1 Receitas operacionais (inclui Deduções), 2 Custos diretos dos projetos (pessoal técnico, terceirizados, mobilização e logística, equipamentos e materiais, saúde e segurança, taxas técnicas, outros), 3 Despesas administrativas e indiretas (inclui despesas indiretas de projetos), 4 Resultado financeiro, 5 Tributos e obrigações (sobre faturamento, sobre o resultado, da empresa) e 6 Outras (não operacional, investimentos, empréstimos, retiradas). Empresa nova recebe esse plano; cada uma personaliza o seu.
+
+**Cada conta tem:** código, nome, descrição, grupo, natureza (receita/despesa), **categoria da DRE** (alimenta a DRE de sempre: Margem de Contribuição → EBITDA → Resultado Final), **classe gerencial** (alimenta a "Estrutura gerencial" da DRE Analítica: Receita bruta → Deduções → Receita líquida → Custos dos serviços → Resultado bruto → Despesas operacionais → Resultado operacional → Resultado financeiro → Tributos sobre o lucro → Resultado líquido) e **custo padrão direto ou indireto** — o lançamento pode tratar diferente (campo "Custo direto ou indireto" na despesa).
 
 **O que se faz:**
-- Custos diretos dos projetos (campo, laboratório, terceiros técnicos, órgãos ambientais) e "Receitas, impostos e estrutura" (receitas de serviços, impostos sobre o faturamento e a estrutura da empresa).
-- Criar grupo ou subitem (código, nome, natureza Despesa/Receita), renomear o grupo, editar, inativar ou excluir.
-- **Categoria da DRE de cada conta**: aparece ao lado de cada subitem, com "(padrão)" quando segue a boa prática do sistema. Em "Editar", escolha outra categoria ou "Padrão" para voltar. Conta de despesa não aceita "Receita"; conta de receita é sempre "Receita".
-- A lista das Categorias DRE fica ao lado e é **fixa**.
-- **Contas novas com a Cris**: diga, dite ou anexe a lista de contas ("crie Batimetria no grupo 1, código 1.7"). A Cris propõe até 10 contas por vez, só em grupos que já existem; a tela mostra a lista para conferir, com a categoria da DRE que cada uma vai ter, e quem cria é o botão "Criar as contas marcadas". Criar grupo, inativar, excluir e reordenar continuam pelos botões da tela.
+- Buscar por código/nome/descrição; filtrar por grupo, natureza, categoria DRE, classe e situação; expandir e recolher.
+- Criar grupo, subgrupo e conta (formulário simples; classe e custo em "Opções avançadas"); editar; reordenar (↑ ↓); mover conta ou grupo de lugar; duplicar subgrupo com as contas; inativar; excluir conta sem uso.
+- Ao criar, o sistema avisa se já existe conta parecida ("Hospedagem em viagem" ≈ "Hospedagens"); não impede.
+- "Onde a conta é usada": lançamentos, Orçamento, medições e, por botão, valores por projeto, contrato, fase e custo direto/indireto.
+- Exportar XLSX/CSV; Importar planilha (Código, Nome, Grupo, Natureza, Categoria DRE, Descrição) com prévia: novas, alteradas, duplicidades, erros e impacto na DRE — nada grava antes de confirmar.
+- "Plano padrão ambiental": empresa antiga acrescenta grupos e contas do padrão que faltam, com prévia; nada existente muda (código ocupado: grupo entra como "PA-…", conta não entra).
+- "Reclassificar lançamentos" (permissão própria, só owner/admin por padrão): move as despesas de uma conta para outra com prévia de quantidade, valor e versões; versões congeladas não mudam; fica na auditoria.
 
-**O que confunde:**
-- A Natureza define o bloco da linha em Orçamentos.
-- Só dá para **excluir** se nenhum Orçamento ou Previsão usa o código. Se usa, **Inative**: a conta some dos novos lançamentos e os valores ficam.
+**Regras que confundem:**
+- O CÓDIGO é a referência dos lançamentos e do Orçamento: conta usada não muda de código nem de natureza; renomeie só o nome. Grupo com Orçamento/Medição não muda de código.
+- Mudar categoria, classe, custo padrão ou grupo de conta USADA mostra o impacto (lançamentos, valor, versões congeladas) e só grava com "Confirmo a mudança".
+- Conta inativa some do lançamento novo; o histórico fica. Lançar em conta inativa, inexistente, de outra empresa ou num grupo é recusado.
+- Excluir só conta sem nenhum uso (nem despesa cancelada, nem Orçamento). Com uso, inative.
+- O Orçamento planeja por subgrupo (uma linha por grupo do plano). Com a chave "Orçamento usa a categoria da DRE do Plano de Contas", a linha nova nasce com a categoria das contas do grupo.
+- Tributos: ISS/PIS/COFINS/Simples são deduções na visão gerencial; IRPJ/CSLL, tributos sobre o lucro. Nenhuma conta gera apuração ou lançamento de imposto automático.
+- Reembolso de despesa ao cliente não é receita operacional: a despesa mantém a conta original (Contratos → Reembolsos, com resumo por conta).
+- Não há contas patrimoniais nem depreciação: o plano é gerencial de receitas e despesas.
 
-**Não faz:** não cria categoria DRE nova e não regrava despesas. Com a chave "Despesa herda a categoria" ligada, a categoria da conta passa a valer para as despesas dela nos relatórios e no lançamento.
+**Com a Cris:** "qual conta uso para…?" (ela consulta as contas DESTA empresa e propõe uma; quem confirma é você no formulário), "há contas duplicadas?", "explique a conta 2.3.03", "quais despesas estão sem conta?". Contas novas: diga ou anexe a lista; a Cris propõe até 10 em grupos existentes e você marca o que criar.
 
-**Quem acessa:** owner e admin, o membro com a chave desligada (sem excluir) e o contador (leitura).
+**Quem acessa:** owner e admin; o membro conforme a Gestão de Acessos; o contador só lê.
 
 ---
 

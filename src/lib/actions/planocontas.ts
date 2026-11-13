@@ -7,6 +7,7 @@ import { getTenantContext } from "@/lib/context";
 import { can } from "@/lib/permissions";
 import { logAudit } from "@/lib/audit";
 import { recusaDeCategoriaDaConta } from "@/lib/categoria-do-plano";
+import { usado, usoDosCodigos } from "@/lib/planocontas-servidor";
 import { MAX_CONTAS_PROPOSTAS, recusaDaContaProposta } from "@/lib/planocontas-cris";
 import type { CategoriaDRE } from "@/lib/calc/constants";
 
@@ -21,6 +22,9 @@ function normNatureza(v: unknown): Natureza {
 }
 
 async function codeExists(tenantId: string, code: string): Promise<boolean> {
+  // 0079 — código único entre contas E grupos (o Orçamento usa o código do grupo como chave).
+  const [g] = await db.select({ id: schema.chartGroups.id }).from(schema.chartGroups).where(and(eq(schema.chartGroups.tenantId, tenantId), eq(schema.chartGroups.code, code))).limit(1);
+  if (g) return true;
   const [row] = await db
     .select({ id: schema.chartAccounts.id })
     .from(schema.chartAccounts)
@@ -59,6 +63,10 @@ export async function addChartGroup(input: {
   if (await codeExists(ctx.tenant.id, code)) {
     throw new Error(`O código "${code}" já existe.`);
   }
+  if (await codeExists(ctx.tenant.id, groupCode)) {
+    throw new Error(`O código "${groupCode}" já existe.`);
+  }
+  await db.insert(schema.chartGroups).values({ tenantId: ctx.tenant.id, code: groupCode, name: groupName, kind }).onConflictDoNothing();
   await db.insert(schema.chartAccounts).values({
     tenantId: ctx.tenant.id,
     code,
@@ -141,6 +149,9 @@ export async function updateChartItem(
     if (await codeExists(ctx.tenant.id, patch.code.trim())) {
       throw new Error(`O código "${patch.code.trim()}" já existe.`);
     }
+    // 0079 — o código é a referência dos lançamentos e do Orçamento: código usado não muda.
+    if (usado((await usoDosCodigos(ctx.tenant.id, [current.code])).get(current.code)))
+      throw new Error(`A conta ${current.code} já tem lançamentos ou Orçamento: o código não muda. Renomeie só o nome.`);
     set.code = patch.code.trim();
   }
   if (patch.name && patch.name.trim()) set.name = patch.name.trim();
@@ -243,6 +254,11 @@ export async function deleteChartItem(id: string): Promise<Resultado> {
       error: `A conta ${item.code} tem ${refs} lançamento(s) de Orçamento/Previsão. Use "Inativar": ela some de novos lançamentos e os valores ficam.`,
     };
   }
+  // 0079 — despesa lançada (mesmo cancelada) também aponta o código.
+  const uso = (await usoDosCodigos(ctx.tenant.id, [item.code])).get(item.code)!;
+  if (uso.despesas > 0 || item.papel) {
+    return { ok: false, error: item.papel ? `A conta ${item.code} é usada por regra do sistema (${item.papel}). Inative-a.` : `A conta ${item.code} tem ${uso.despesas} lançamento(s) de despesa. Use "Inativar".` };
+  }
   await db
     .delete(schema.chartAccounts)
     .where(
@@ -277,6 +293,12 @@ export async function renameChartGroup(input: {
   if (input.groupName && input.groupName.trim()) set.groupName = input.groupName.trim();
   if (input.newGroupCode && input.newGroupCode.trim()) set.groupCode = input.newGroupCode.trim();
   if (Object.keys(set).length === 0) return;
+  if (set.groupCode && set.groupCode !== input.groupCode) {
+    // 0079 — o código do grupo é a chave do Orçamento e da Medição: com uso, não muda.
+    const uso = (await usoDosCodigos(ctx.tenant.id, [input.groupCode])).get(input.groupCode)!;
+    if (uso.orcamento + uso.medicoes > 0) throw new Error(`O grupo ${input.groupCode} tem Orçamento ou Medição: o código não muda. Renomeie só o nome.`);
+    if (await codeExists(ctx.tenant.id, set.groupCode)) throw new Error(`O código "${set.groupCode}" já existe.`);
+  }
   await db
     .update(schema.chartAccounts)
     .set(set)
@@ -287,6 +309,10 @@ export async function renameChartGroup(input: {
         eq(schema.chartAccounts.groupCode, input.groupCode),
       ),
     );
+  await db
+    .update(schema.chartGroups)
+    .set({ ...(set.groupName ? { name: set.groupName } : {}), ...(set.groupCode ? { code: set.groupCode } : {}), updatedAt: new Date() })
+    .where(and(eq(schema.chartGroups.tenantId, ctx.tenant.id), eq(schema.chartGroups.code, input.groupCode)));
   await logAudit({
     tenantId: ctx.tenant.id,
     userId: ctx.userId,
@@ -324,6 +350,15 @@ export async function deleteChartGroup(input: { kind: string; groupCode: string 
       error: `O grupo ${input.groupCode} tem ${refs} lançamento(s) de Orçamento/Previsão. Inative as contas em vez de excluir o grupo.`,
     };
   }
+  // 0079 — despesas e medições também apontam os códigos.
+  const usoDoGrupo = await usoDosCodigos(ctx.tenant.id, [input.groupCode, ...contas.map((c) => c.code)]);
+  const comUso = [...usoDoGrupo.values()].reduce((n, u) => n + u.despesas + u.medicoes, 0);
+  if (comUso > 0) return { ok: false, error: `O grupo ${input.groupCode} tem ${comUso} lançamento(s) ou medição(ões). Inative as contas em vez de excluir o grupo.` };
+  const [no] = await db.select({ id: schema.chartGroups.id }).from(schema.chartGroups).where(and(eq(schema.chartGroups.tenantId, ctx.tenant.id), eq(schema.chartGroups.code, input.groupCode))).limit(1);
+  if (no) {
+    const [filho] = await db.select({ id: schema.chartGroups.id }).from(schema.chartGroups).where(eq(schema.chartGroups.parentId, no.id)).limit(1);
+    if (filho) return { ok: false, error: `O grupo ${input.groupCode} tem subgrupos.` };
+  }
   await db
     .delete(schema.chartAccounts)
     .where(
@@ -333,6 +368,7 @@ export async function deleteChartGroup(input: { kind: string; groupCode: string 
         eq(schema.chartAccounts.groupCode, input.groupCode),
       ),
     );
+  await db.delete(schema.chartGroups).where(and(eq(schema.chartGroups.tenantId, ctx.tenant.id), eq(schema.chartGroups.code, input.groupCode)));
   await logAudit({
     tenantId: ctx.tenant.id,
     userId: ctx.userId,
@@ -360,8 +396,10 @@ export async function criarContasPropostas(
   if (!Array.isArray(lista) || lista.length === 0) return { ok: false, error: "Nenhuma conta marcada." };
   if (lista.length > MAX_CONTAS_PROPOSTAS) return { ok: false, error: `No máximo ${MAX_CONTAS_PROPOSTAS} contas de uma vez.` };
   const existentes = await db.select().from(schema.chartAccounts).where(eq(schema.chartAccounts.tenantId, ctx.tenant.id));
-  const grupos = [...new Map(existentes.map((a) => [a.groupCode, { code: a.groupCode, name: a.groupName, kind: normKind(a.kind) }])).values()];
-  const codigos = new Set(existentes.map((a) => a.code));
+  // 0079 — grupos do cadastro de grupos (inclusive os ainda sem conta) + os das contas (legado).
+  const nos = await db.select().from(schema.chartGroups).where(eq(schema.chartGroups.tenantId, ctx.tenant.id));
+  const grupos = [...new Map([...existentes.map((a) => [a.groupCode, { code: a.groupCode, name: a.groupName, kind: normKind(a.kind) }] as const), ...nos.map((g) => [g.code, { code: g.code, name: g.name, kind: normKind(g.kind) }] as const)]).values()];
+  const codigos = new Set([...existentes.map((a) => a.code), ...nos.map((g) => g.code)]);
   const criadas: string[] = [];
   const recusadas: { code: string; motivo: string }[] = [];
   for (const bruta of lista) {

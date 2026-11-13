@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeAll, afterAll } from "vitest";
+import { PLANO_CONTAS_PADRAO } from "@/lib/calc/plano-ambiental";
 import { eq } from "drizzle-orm";
 
 /**
@@ -33,7 +34,7 @@ describe.skipIf(!HAS_DB)("Importação de planilha na versão (BI-3)", async () 
         : [],
       reembolsos: [],
       permutas: [],
-      despesas: o.despesas ? [{ contaCef: "1.1", competencia: "09/2026", valor: 50 }] : [],
+      despesas: o.despesas ? [{ contaCef: PLANO_CONTAS_PADRAO.obra[0].sub[0].id, competencia: "09/2026", valor: 50 }] : [],
     });
   const importar = (versionId: string, buf: Buffer) => {
     const fd = new FormData();
