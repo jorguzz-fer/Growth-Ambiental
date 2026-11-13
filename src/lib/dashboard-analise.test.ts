@@ -21,7 +21,6 @@ describe("6.1 · divergência entre cartões — a causa que está no dado", () 
       "Entradas de caixa inclui caixa de outras versões",
       "Executado dividido por mais de um Orçamento",
       "Realizado acum. (Atual) ≠ Entradas de caixa",
-      "VGV só no planejamento",
       "Percentuais sem base",
     ]);
     expect(d[0].texto).toContain("R$ 300");

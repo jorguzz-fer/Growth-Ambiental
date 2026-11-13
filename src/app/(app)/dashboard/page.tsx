@@ -22,7 +22,6 @@ import {
 import { LembrarProjeto, RecuperarProjeto } from "@/components/app/projeto-da-aba";
 import {
   getMonthlyRevenue,
-  getUnits,
   getIndicadoresObra,
   getIndicadoresObraConsolidado,
   getStatusProjeto,
@@ -34,6 +33,8 @@ import { parseDate } from "@/lib/calc";
 import { brl0, brlk, monthInRange, dateInRange } from "@/lib/utils";
 import { estaVencida } from "@/lib/despesa-status";
 import { analisarDashboard } from "@/lib/dashboard-analise";
+import { listarContratos } from "@/lib/contratos-queries";
+import { valorContratadoDosProjetos } from "@/lib/valor-contratado";
 import { AssistenteDashboard } from "@/components/app/assistente-dashboard";
 import { PageHeader } from "@/components/app/page-header";
 import { ProjectPicker } from "@/components/app/project-picker";
@@ -65,13 +66,11 @@ async function versionSummary(
    * ATUAL da obra em toda coluna (4.5: unidade é fato da obra, não cenário) e
    * "A receber" do planejamento deixa de esconder o negativo (4.2).
    */
-  opts: { definicaoNova?: boolean; atualId?: string | null } = {},
+  opts: { definicaoNova?: boolean; atualId?: string | null; valorContratado?: number } = {},
 ): Promise<Summary> {
   const hasRange = !!(de || ate);
   const nova = !!opts.definicaoNova;
-  const idDoVgv = nova ? opts.atualId ?? null : version.id;
-  const [unitRows, revenueAll, cashRows] = await Promise.all([
-    idDoVgv ? getUnits(version.tenantId, idDoVgv) : Promise.resolve([]),
+  const [revenueAll, cashRows] = await Promise.all([
     getMonthlyRevenue(version.id, projectId),
     // Prompt AT §3: os gravados na versão e a parte dos movimentos sem obra
     // que o vínculo atribui a ela (a função lê com o tenant da versão).
@@ -98,8 +97,10 @@ async function versionSummary(
   }
   return {
     version,
-    vgv: unitRows.reduce((a, u) => a + Number(u.valor), 0),
-    vgvAusente: nova && !idDoVgv,
+    // Growth Ambiental: o campo interno `vgv` passa a levar o VALOR CONTRATADO
+    // (contratos de serviço do projeto, `valor-contratado.ts`). É fato do
+    // contrato, não cenário: o mesmo em toda coluna. O identificador fica.
+    vgv: opts.valorContratado ?? 0,
     realizado,
     receitaProj,
     aReceber: nova ? receitaProj - realizado : Math.max(0, receitaProj - realizado),
@@ -157,12 +158,16 @@ export default async function DashboardPage({
   const wanted = (sp.vs ?? "").split(",").filter(Boolean);
   const { selecionadas: selected, descartadas } = selecaoDoDashboard(versoes, wanted);
 
+  // Valor contratado (substitui o VGV): contratos de serviço dos projetos.
+  const contratosDaEmpresa = await listarContratos(ctx.tenant.id);
+  const contratadoDe = (ids: string[]) => valorContratadoDosProjetos(contratosDaEmpresa, new Set(ids));
+
   let summaries: Summary[];
   // Consolidado: em quantas obras cada coluna é feita (1.6 / cobertura).
   const obrasPorTipo: Record<string, number> = {};
   if (project) {
     const atualId = versoes.find((v) => v.kind === "atual")?.id ?? null;
-    summaries = await Promise.all(selected.map((v) => versionSummary(project.id, v, de, ate, { definicaoNova: dashNovo, atualId })));
+    summaries = await Promise.all(selected.map((v) => versionSummary(project.id, v, de, ate, { definicaoNova: dashNovo, atualId, valorContratado: contratadoDe([project.id]) })));
   } else {
     const versoesPorObra = await Promise.all(
       projetosDaTela.map(async (p) => ({ p, vs: await getVersionsDoProjeto(ctx.tenant.id, p.id) })),
@@ -175,7 +180,7 @@ export default async function DashboardPage({
             // A mais antiga do tipo, como nas demais telas.
             const v = vs.find((x) => x.kind === kind);
             const atualId = vs.find((x) => x.kind === "atual")?.id ?? null;
-            return v ? [versionSummary(p.id, v, de, ate, { definicaoNova: dashNovo, atualId })] : [];
+            return v ? [versionSummary(p.id, v, de, ate, { definicaoNova: dashNovo, atualId, valorContratado: contratadoDe([p.id]) })] : [];
           }),
         );
         return somarResumos(kind, resumos);
@@ -217,7 +222,7 @@ export default async function DashboardPage({
   // ── Versão "Atual — caixa real": dados reais ────────────────────────────
   // Budget/Forecast permanecem estritamente em suas seções. A versão Atual
   // reflete o caixa real do período: (a) fechamentos já realizados (entradas
-  // conciliadas), (b) recebíveis das unidades vendidas ainda não recebidos
+  // conciliadas), (b) recebíveis em aberto (Contas a Receber) ainda não recebidos
   // (entradas projetadas) e (c) despesas lançadas ainda não pagas (saídas
   // projetadas / contas a pagar).
   const hasRangeDash = !!(de || ate);
@@ -262,7 +267,7 @@ export default async function DashboardPage({
   }
 
   const kpis = [
-    { icon: "🏢", label: "VGV total", def: dashNovo ? DEFINICAO_NOVA_DO_KPI.vgv : DEFINICAO_DO_KPI.vgv, get: (s: Summary) => (s.vgvAusente ? "—" : brlk(s.vgv)) },
+    { icon: "📄", label: "Valor contratado", def: DEFINICAO_DO_KPI.vgv, get: (s: Summary) => brlk(s.vgv) },
     { icon: "↗", label: "Realizado acum.", def: DEFINICAO_DO_KPI.realizado, get: (s: Summary) => brlk(s.realizado) },
     {
       icon: "⏱",
