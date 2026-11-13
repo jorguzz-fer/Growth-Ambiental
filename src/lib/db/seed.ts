@@ -17,6 +17,7 @@ import {
 import { bla401, emptyUnit } from "@/lib/calc/__fixtures__";
 import { hashPassword } from "@/lib/password";
 import { PLANO_CONTAS_PADRAO, linhasDoPlano } from "@/lib/calc/plano-ambiental";
+import { garantirModalidades } from "@/lib/contrato-modalidades";
 import type { CalcUnit } from "@/lib/calc/types";
 
 /** Senha inicial dos usuários semeados — TROCAR no primeiro acesso. */
@@ -143,6 +144,7 @@ async function seedDemoData(tenantId: string) {
   console.log("Plano de contas (consultoria ambiental)...");
   const chartRows = linhasDoPlano(PLANO_CONTAS_PADRAO, tenantId);
   await db.insert(schema.chartAccounts).values(chartRows);
+  await garantirModalidades(tenantId);
   console.log(`  ${chartRows.length} subitens.`);
 
   console.log("Tabela INCC (48 meses)...");

@@ -10,4 +10,5 @@ import { TEXTO as conceitos_despesas_caixa } from "./conceitos-despesas-caixa";
 import { TEXTO as bi_planejamento_config } from "./bi-planejamento-config";
 import { TEXTO as receitas_obra_pessoas } from "./receitas-obra-pessoas";
 import { TEXTO as assistente } from "./assistente";
-export const BASE_DE_CONHECIMENTO = [conceitos_despesas_caixa, bi_planejamento_config, receitas_obra_pessoas, assistente].join("\n\n---\n\n");
+import { TEXTO as contratos } from "./contratos";
+export const BASE_DE_CONHECIMENTO = [conceitos_despesas_caixa, bi_planejamento_config, receitas_obra_pessoas, contratos, assistente].join("\n\n---\n\n");

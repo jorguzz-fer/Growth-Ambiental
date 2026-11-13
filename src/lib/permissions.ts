@@ -79,6 +79,14 @@ export const SCREENS: Screen[] = [
   { id: "notaemitir", label: "Emitir nota fiscal (NFS-e)", modulo: "Receitas" },
   { id: "notacancelar", label: "Cancelar nota fiscal (NFS-e)", modulo: "Receitas" },
   { id: "parametros", label: "Índices de Reajuste", modulo: "Receitas" },
+  // Growth Ambiental — Contratos e Aditivos (0077). "contratos" é a rota; as
+  // demais são chaves de ação, sem página própria (como "conciliacao").
+  // Aprovar é sensível: nasce só com owner e admin e se concede por membro.
+  { id: "contratos", label: "Contratos — cadastro, itens, projetos e cronograma", modulo: "Receitas" },
+  { id: "contratosaditivos", label: "Contratos — registrar aditivos", modulo: "Receitas" },
+  { id: "contratosmedicao", label: "Contratos — lançar medições", modulo: "Receitas" },
+  { id: "contratosaprovar", label: "Contratos — aprovar aditivos e medições", modulo: "Receitas" },
+  { id: "contratosfinanceiro", label: "Contratos — faturamento, recebimentos, custos, reembolsos e exportação", modulo: "Receitas" },
   { id: "despesas", label: "Lançamentos de Despesas", modulo: "Despesas" },
   { id: "contaspagar", label: "Contas a Pagar", modulo: "Despesas" },
   { id: "restituicoes", label: "Ressarcimentos (pago por terceiro)", modulo: "Despesas" },
@@ -210,7 +218,7 @@ export const OPERADOR_SEMPRE_ALCANCA: ReadonlySet<string> = new Set(["backup"]);
  * de Acessos (BM-3: "quem recebe a permissão nova por padrão: só owner e
  * admin").
  */
-export const TELAS_SENSIVEIS = new Set(["clientesdados", "funcionariosdados", "funcionariosaso", "versaotrava", "versaoaprova", "notaemitir", "notacancelar", "backup"]);
+export const TELAS_SENSIVEIS = new Set(["clientesdados", "funcionariosdados", "funcionariosaso", "versaotrava", "versaoaprova", "notaemitir", "notacancelar", "backup", "contratosaprovar"]);
 
 /**
  * Papéis com TETO DE LEITURA (Prompt AL, Parte 3 · decisão BAL-2 = opção 1):

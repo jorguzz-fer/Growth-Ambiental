@@ -20,6 +20,7 @@ export type ModuleIcon =
   | "receitas"
   | "despesas"
   | "caixa"
+  | "contratos"
   | "obra"
   | "pessoas"
   | "config";
@@ -94,6 +95,21 @@ export const NAV_MENU: NavModule[] = [
       { href: "/budget", label: "Orçamentos" },
       { href: "/forecast", label: "Previsão Atualizada" },
       { href: "/planocontas", label: "Plano de Contas" },
+    ],
+  },
+  {
+    // Growth Ambiental — Contratos e Aditivos. Tudo mora sob /contratos (uma
+    // chave de rota); as abas e telas internas conferem as chaves de ação.
+    id: "contratos",
+    label: "Contratos",
+    icon: "contratos",
+    items: [
+      { href: "/contratos", label: "Contratos", tambem: ["/contratos/novo"] },
+      { href: "/contratos/painel", label: "Painel de Contratos" },
+      { href: "/contratos/aditivos", label: "Aditivos" },
+      { href: "/contratos/medicoes", label: "Medições de Contrato" },
+      { href: "/contratos/reembolsos", label: "Despesas Reembolsáveis", exige: [{ tela: "contratosfinanceiro", acao: "ver" }] },
+      { href: "/contratos/modalidades", label: "Modalidades de Serviço", exige: [{ tela: "contratos", acao: "editar" }] },
     ],
   },
   {

@@ -652,6 +652,8 @@ export const despesas = pgTable("despesa", {
   }),
   /** subitem CEF/plano de contas (ex.: "1.1"). */
   contaCef: text("conta_cef"),
+  /** Contratos (0077): custo apropriado a um contrato. Nula = só do projeto, como sempre. */
+  contratoId: uuid("contrato_id").references((): AnyPgColumn => contratos.id, { onDelete: "set null" }),
   categoriaDre: dreCategoryEnum("categoria_dre"),
   competencia: text("competencia"),
   vencimento: text("vencimento"),
@@ -1329,6 +1331,10 @@ export const documents = pgTable("document", {
   folhaId: uuid("folha_id").references((): AnyPgColumn => folhasCompetencia.id, { onDelete: "set null" }),
   /** Prompt V, 5.2 (0064): laudo, relatório fotográfico, PLS ou ART/RRT de uma medição. */
   medicaoId: uuid("medicao_id").references((): AnyPgColumn => medicoes.id, { onDelete: "set null" }),
+  /** Contratos (0077): documento do contrato, do aditivo ou da medição de contrato. */
+  contratoId: uuid("contrato_id").references((): AnyPgColumn => contratos.id, { onDelete: "set null" }),
+  contratoAditivoId: uuid("contrato_aditivo_id").references((): AnyPgColumn => contratoAditivos.id, { onDelete: "set null" }),
+  contratoMedicaoId: uuid("contrato_medicao_id").references((): AnyPgColumn => contratoMedicoes.id, { onDelete: "set null" }),
   /** Prompt Z, 2.2-A.7: validade do documento (ASO, CNH), ISO YYYY-MM-DD. */
   validade: text("validade"),
   /** chave do objeto no bucket R2. */
@@ -1563,11 +1569,17 @@ export const contasReceber = pgTable("conta_receber", {
     onDelete: "set null",
   }),
   cancelado: boolean("cancelado").notNull().default(false),
+  /** Contratos (0077): fatura do contrato. Nula = conta avulsa, como sempre. */
+  contratoId: uuid("contrato_id").references((): AnyPgColumn => contratos.id, { onDelete: "set null" }),
+  /** Contratos (0077): a mesma fatura enviada duas vezes entra uma vez. */
+  idempotencyKey: text("idempotency_key"),
   createdBy: text("created_by"),
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
 }, (t) => [
   // Desempenho da DRE (27/10/2026, PR 2): a consulta por projectId lia a tabela inteira.
   index("conta_receber_project_idx").on(t.projectId),
+  index("conta_receber_contrato_idx").on(t.contratoId),
+  uniqueIndex("conta_receber_idem_uq").on(t.tenantId, t.idempotencyKey).where(sql`${t.idempotencyKey} is not null`),
 ]);
 
 /**
@@ -2368,3 +2380,309 @@ export const openfinancePossiveisDuplicados = pgTable(
   (t) => [uniqueIndex("openfinance_dup_conta_externo_uq").on(t.bankAccountId, t.externalId)],
 );
 
+
+// ──────────────────────── Contratos e aditivos (0077) ────────────────────────
+// Growth Ambiental — camada de GESTÃO CONTRATUAL sobre os registros financeiros
+// que já existem: o faturamento é `conta_receber` (com `contrato_id`), o custo
+// é `despesa` (com `contrato_id`), o documento é `document`. Nenhum motor
+// financeiro paralelo. Ver docs/MODULO_CONTRATOS_ADITIVOS.md.
+
+/** Modalidade de serviço, configurável por empresa (criar, renomear, desativar). */
+export const contratoModalidades = pgTable(
+  "contrato_modalidade",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    nome: text("nome").notNull(),
+    ativo: boolean("ativo").notNull().default(true),
+    ordem: integer("ordem").notNull().default(0),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  },
+  (t) => [unique("contrato_modalidade_tenant_nome_uq").on(t.tenantId, t.nome)],
+);
+
+/**
+ * Contrato. O valor ORIGINAL nunca é sobrescrito depois de ativo: o valor
+ * atualizado é DERIVADO (original + aditivos eficazes) em `contrato-regras.ts`.
+ * `versao` é o controle de concorrência otimista da edição do cadastro.
+ */
+export const contratos = pgTable(
+  "contrato",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    /** código interno (numeração atômica, entidade "contrato"). */
+    codigo: text("codigo").notNull(),
+    numeroCliente: text("numero_cliente"),
+    titulo: text("titulo").notNull(),
+    clienteId: uuid("cliente_id").references((): AnyPgColumn => clientes.id, { onDelete: "set null" }),
+    objeto: text("objeto"),
+    escopo: text("escopo"),
+    modalidadeId: uuid("modalidade_id").references(() => contratoModalidades.id, { onDelete: "set null" }),
+    /** contrato principal (guarda-chuva) quando este é derivado ou ordem de serviço. */
+    contratoPrincipalId: uuid("contrato_principal_id").references((): AnyPgColumn => contratos.id, { onDelete: "restrict" }),
+    /** "contrato" | "derivado" | "ordem_servico". */
+    tipo: text("tipo").notNull().default("contrato"),
+    /** derivado: "consome_limite" (gasta o saldo do principal) | "adicional" (valor juridicamente novo). */
+    vinculoValor: text("vinculo_valor"),
+    gestor: text("gestor"),
+    coordenadorTecnico: text("coordenador_tecnico"),
+    responsavelComercial: text("responsavel_comercial"),
+    responsavelFinanceiro: text("responsavel_financeiro"),
+    /** Datas "MM/DD/YYYY", como no restante do app. */
+    dataAssinatura: text("data_assinatura"),
+    dataInicio: text("data_inicio"),
+    dataTerminoPrevista: text("data_termino_prevista"),
+    dataEncerramento: text("data_encerramento"),
+    dataBaseReajuste: text("data_base_reajuste"),
+    valorOriginal: numeric("valor_original", { precision: 15, scale: 2 }).notNull().default("0"),
+    moeda: text("moeda").notNull().default("BRL"),
+    formaFaturamento: text("forma_faturamento"),
+    condicaoPagamento: text("condicao_pagamento"),
+    periodicidadeMedicao: text("periodicidade_medicao"),
+    prazoPagamentoDias: integer("prazo_pagamento_dias"),
+    /** um dos INDICES_DE_REAJUSTE (incc-regras.ts) ou nulo. */
+    indiceReajuste: text("indice_reajuste"),
+    /** retenção contratual (%), informativa: o faturamento segue bruto. */
+    retencaoPct: numeric("retencao_pct", { precision: 8, scale: 4 }),
+    regrasReembolso: text("regras_reembolso"),
+    /** ver STATUS_CONTRATO em contrato-regras.ts. */
+    status: text("status").notNull().default("rascunho"),
+    motivoStatus: text("motivo_status"),
+    versao: integer("versao").notNull().default(1),
+    createdBy: text("created_by"),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+  },
+  (t) => [
+    unique("contrato_tenant_codigo_uq").on(t.tenantId, t.codigo),
+    index("contrato_tenant_idx").on(t.tenantId),
+    index("contrato_principal_idx").on(t.contratoPrincipalId),
+    index("contrato_cliente_idx").on(t.clienteId),
+  ],
+);
+
+/** Projetos do contrato (N:N). `valorAlocado` é opcional: a parte do contrato prevista para o projeto. */
+export const contratoProjetos = pgTable(
+  "contrato_projeto",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    contratoId: uuid("contrato_id")
+      .notNull()
+      .references(() => contratos.id, { onDelete: "cascade" }),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    valorAlocado: numeric("valor_alocado", { precision: 15, scale: 2 }),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  },
+  (t) => [unique("contrato_projeto_uq").on(t.contratoId, t.projectId), index("contrato_projeto_project_idx").on(t.projectId)],
+);
+
+/**
+ * Item contratual. Item incluído por aditivo nasce com `origemAditivoId` e só
+ * vale quando o aditivo é eficaz. Cancelamento é lógico.
+ */
+export const contratoItens = pgTable(
+  "contrato_item",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    contratoId: uuid("contrato_id")
+      .notNull()
+      .references(() => contratos.id, { onDelete: "cascade" }),
+    codigo: text("codigo").notNull(),
+    descricao: text("descricao").notNull(),
+    unidade: text("unidade"),
+    quantidade: numeric("quantidade", { precision: 15, scale: 4 }).notNull().default("1"),
+    valorUnitario: numeric("valor_unitario", { precision: 15, scale: 2 }).notNull().default("0"),
+    valorTotal: numeric("valor_total", { precision: 15, scale: 2 }).notNull().default("0"),
+    projectId: uuid("project_id").references(() => projects.id, { onDelete: "set null" }),
+    etapa: text("etapa"),
+    inicioPrevisto: text("inicio_previsto"),
+    conclusaoPrevista: text("conclusao_prevista"),
+    /** "quantidade" | "percentual" | "entrega" | "marco" | "periodico". */
+    criterioMedicao: text("criterio_medicao").notNull().default("percentual"),
+    condicaoFaturamento: text("condicao_faturamento"),
+    responsavel: text("responsavel"),
+    status: text("status").notNull().default("ativo"),
+    ordem: integer("ordem").notNull().default(0),
+    origemAditivoId: uuid("origem_aditivo_id"),
+    cancelado: boolean("cancelado").notNull().default(false),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  },
+  (t) => [unique("contrato_item_codigo_uq").on(t.contratoId, t.codigo), index("contrato_item_contrato_idx").on(t.contratoId)],
+);
+
+/**
+ * Aditivo. Os valores do contrato nunca são reescritos: o aditivo guarda a
+ * VARIAÇÃO e o efeito é calculado. Aprovado/assinado não se edita nem se
+ * apaga: corrige-se por cancelamento motivado ou por novo aditivo.
+ */
+export const contratoAditivos = pgTable(
+  "contrato_aditivo",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    contratoId: uuid("contrato_id")
+      .notNull()
+      .references(() => contratos.id, { onDelete: "cascade" }),
+    numero: integer("numero").notNull(),
+    codigo: text("codigo").notNull(),
+    /** TIPOS_ADITIVO (combinável). */
+    tipos: jsonb("tipos").$type<string[]>().notNull().default(sql`'[]'::jsonb`),
+    descricao: text("descricao"),
+    justificativa: text("justificativa"),
+    /** acréscimo (+) ou redução (−) do valor global; itens têm a própria variação. */
+    valorDelta: numeric("valor_delta", { precision: 15, scale: 2 }).notNull().default("0"),
+    novoTermino: text("novo_termino"),
+    dataSolicitacao: text("data_solicitacao"),
+    dataAprovacao: text("data_aprovacao"),
+    dataAssinatura: text("data_assinatura"),
+    inicioVigencia: text("inicio_vigencia"),
+    responsavel: text("responsavel"),
+    status: text("status").notNull().default("rascunho"),
+    motivoStatus: text("motivo_status"),
+    aprovadoPor: text("aprovado_por"),
+    createdBy: text("created_by"),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+  },
+  (t) => [unique("contrato_aditivo_numero_uq").on(t.contratoId, t.numero), index("contrato_aditivo_contrato_idx").on(t.contratoId)],
+);
+
+/** Variação de um item existente trazida por um aditivo (quantidade e valor). */
+export const contratoAditivoItens = pgTable(
+  "contrato_aditivo_item",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    aditivoId: uuid("aditivo_id")
+      .notNull()
+      .references(() => contratoAditivos.id, { onDelete: "cascade" }),
+    itemId: uuid("item_id")
+      .notNull()
+      .references(() => contratoItens.id, { onDelete: "cascade" }),
+    deltaQuantidade: numeric("delta_quantidade", { precision: 15, scale: 4 }).notNull().default("0"),
+    deltaValor: numeric("delta_valor", { precision: 15, scale: 2 }).notNull().default("0"),
+  },
+  (t) => [unique("contrato_aditivo_item_uq").on(t.aditivoId, t.itemId)],
+);
+
+/** Marco do cronograma físico-financeiro. Medido e faturado vêm das medições e faturas ligadas. */
+export const contratoMarcos = pgTable(
+  "contrato_marco",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    contratoId: uuid("contrato_id")
+      .notNull()
+      .references(() => contratos.id, { onDelete: "cascade" }),
+    itemId: uuid("item_id").references(() => contratoItens.id, { onDelete: "set null" }),
+    etapa: text("etapa").notNull(),
+    descricao: text("descricao"),
+    dataPlanejada: text("data_planejada"),
+    dataRealizada: text("data_realizada"),
+    valorPrevisto: numeric("valor_previsto", { precision: 15, scale: 2 }).notNull().default("0"),
+    responsavel: text("responsavel"),
+    status: text("status").notNull().default("previsto"),
+    ordem: integer("ordem").notNull().default(0),
+    cancelado: boolean("cancelado").notNull().default(false),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  },
+  (t) => [index("contrato_marco_contrato_idx").on(t.contratoId)],
+);
+
+/**
+ * Medição de contrato. NÃO é faturamento, recebimento nem receita: só a
+ * aprovação conta para o saldo. A aprovação trava o contrato (FOR UPDATE) e
+ * confere o limite do item e do contrato. Idempotente por `idempotencyKey`.
+ */
+export const contratoMedicoes = pgTable(
+  "contrato_medicao",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    contratoId: uuid("contrato_id")
+      .notNull()
+      .references(() => contratos.id, { onDelete: "cascade" }),
+    itemId: uuid("item_id").references(() => contratoItens.id, { onDelete: "restrict" }),
+    projectId: uuid("project_id").references(() => projects.id, { onDelete: "set null" }),
+    marcoId: uuid("marco_id").references(() => contratoMarcos.id, { onDelete: "set null" }),
+    etapa: text("etapa"),
+    /** período de referência "MM/YYYY". */
+    competencia: text("competencia").notNull(),
+    quantidade: numeric("quantidade", { precision: 15, scale: 4 }),
+    percentual: numeric("percentual", { precision: 8, scale: 4 }),
+    valor: numeric("valor", { precision: 15, scale: 2 }).notNull().default("0"),
+    responsavel: text("responsavel"),
+    dataMedicao: text("data_medicao"),
+    status: text("status").notNull().default("rascunho"),
+    motivoStatus: text("motivo_status"),
+    obs: text("obs"),
+    aprovadoPor: text("aprovado_por"),
+    aprovadoEm: timestamp("aprovado_em", { mode: "date" }),
+    idempotencyKey: text("idempotency_key"),
+    createdBy: text("created_by"),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("contrato_medicao_contrato_idx").on(t.contratoId),
+    uniqueIndex("contrato_medicao_idem_uq").on(t.tenantId, t.idempotencyKey).where(sql`${t.idempotencyKey} is not null`),
+  ],
+);
+
+/**
+ * Despesa reembolsável pelo contratante. A despesa é a de sempre (valor,
+ * fornecedor, categoria, comprovante ficam nela); aqui só o vínculo com o
+ * contrato e o andamento do reembolso. Uma despesa ativa em um reembolso só.
+ * NÃO confundir com `restituicao` (a empresa devolvendo a terceiro).
+ */
+export const contratoReembolsos = pgTable(
+  "contrato_reembolso",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    contratoId: uuid("contrato_id")
+      .notNull()
+      .references(() => contratos.id, { onDelete: "cascade" }),
+    despesaId: uuid("despesa_id")
+      .notNull()
+      .references(() => despesas.id, { onDelete: "restrict" }),
+    valorSolicitado: numeric("valor_solicitado", { precision: 15, scale: 2 }).notNull().default("0"),
+    valorAprovado: numeric("valor_aprovado", { precision: 15, scale: 2 }),
+    /** STATUS_REEMBOLSO em contrato-regras.ts. */
+    status: text("status").notNull().default("pendente"),
+    condicao: text("condicao"),
+    obs: text("obs"),
+    /** conta a receber (do mesmo contrato) que cobrou o reembolso. */
+    contaReceberId: uuid("conta_receber_id").references(() => contasReceber.id, { onDelete: "set null" }),
+    cancelado: boolean("cancelado").notNull().default(false),
+    motivoCancelamento: text("motivo_cancelamento"),
+    createdBy: text("created_by"),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("contrato_reembolso_contrato_idx").on(t.contratoId),
+    uniqueIndex("contrato_reembolso_despesa_ativa_uq").on(t.despesaId).where(sql`${t.cancelado} = false`),
+  ],
+);

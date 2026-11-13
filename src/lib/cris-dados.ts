@@ -11,6 +11,8 @@ import { hojeISO } from "@/lib/despesa-status";
 import { parcelasDeVenda, SECOES_FORA_DA_CONCILIACAO } from "@/lib/recebimento-parcela";
 import { totalDoContrato } from "@/lib/calc/receita-rateio";
 import { receitaValida, urlDaReceita } from "@/lib/relatorio-custom";
+import { detalheDoContrato, listarContratos } from "@/lib/contratos-queries";
+import { hojeMDY, venceEm } from "@/lib/contrato-regras";
 
 export { FERRAMENTAS_DE_DADOS, NOMES_DAS_FERRAMENTAS_DE_DADOS } from "@/lib/cris-dados-ferramentas";
 
@@ -291,6 +293,61 @@ export async function executarFerramentaDeDados(ctx: TenantContext, nome: string
         return JSON.stringify({ fonte: "Diárias registradas nas equipes (valor = número de diárias; sem nome nem salário)", periodo, pessoasNasEquipes: membros.length, ...agrupar(linhas), ...aviso });
       }
       return JSON.stringify({ erro: "assunto deve ser medicao, estoque ou equipes" });
+    }
+
+    case "contratos_e_saldos": {
+      if (!pode(ctx, "contratos")) return semPermissao("Contratos");
+      const fin = pode(ctx, "contratosfinanceiro");
+      const pedidos = lista(o, "contratos").map(norm);
+      const assunto = texto(o, "assunto") || "resumo";
+      const somente = texto(o, "somente") || "vigentes";
+      const hoje = hojeMDY();
+      const todos = await listarContratos(tenantId, hoje);
+      // Cliente pessoa física não vai ao modelo (só CNPJ aparece pelo nome).
+      const docs = new Map((await db.select({ id: schema.clientes.id, doc: schema.clientes.cpfCnpj }).from(schema.clientes).where(eq(schema.clientes.tenantId, tenantId))).map((c) => [c.id, (c.doc ?? "").replace(/\D/g, "")]));
+      const nomeDoCliente = (l: (typeof todos)[number]) => (!l.clienteId ? null : docs.get(l.clienteId)?.length === 14 ? l.cliente : "cliente pessoa física");
+      const escolhidos = todos
+        .filter((l) => !pedidos.length || pedidos.some((p) => norm(l.codigo) === p || norm(l.titulo).includes(p)))
+        .filter((l) => somente === "todos" || (somente === "vencendo_60_dias" ? (l.status === "ativo" || l.status === "suspenso") && venceEm(l.termino, hoje, 60) : !["encerrado", "cancelado"].includes(l.status)))
+        .slice(0, MAX_GRUPOS);
+      const base = escolhidos.map((l) => ({
+        codigo: l.codigo,
+        titulo: l.titulo,
+        situacao: l.status,
+        tipo: l.tipo,
+        principal: l.principal,
+        cliente: nomeDoCliente(l),
+        modalidade: l.modalidade,
+        valorOriginal: l.saldo.original,
+        valorAtualizado: l.saldo.atualizado,
+        aditivosSemEfeito: l.saldo.aditivosPendentes,
+        valorEmAditivosSemEfeito: l.saldo.pendente,
+        medidoAprovado: l.saldo.medidoAprovado,
+        medidoEmAprovacao: l.saldo.medidoEmAprovacao,
+        saldoAMedir: l.saldo.saldoAMedir,
+        percentualMedido: l.saldo.pctMedido,
+        inicio: l.dataInicio,
+        terminoAtualizado: l.termino,
+        ...(fin ? { faturado: l.saldo.faturado, recebido: l.saldo.recebido, medidoNaoFaturado: l.saldo.medidoNaoFaturado, faturadoNaoRecebido: l.saldo.faturadoNaoRecebido } : {}),
+      }));
+      const extra: Record<string, unknown> = {};
+      if (assunto === "aditivos" || assunto === "medicoes" || (assunto === "financeiro" && fin)) {
+        const detalhes = await Promise.all(escolhidos.slice(0, 10).map((l) => detalheDoContrato(tenantId, l.id, hoje)));
+        extra.detalhes = detalhes.filter(Boolean).map((d) => ({
+          codigo: d!.contrato.codigo,
+          ...(assunto === "aditivos" ? { aditivos: d!.aditivos.map((a) => ({ codigo: a.codigo, situacao: a.status, tipos: a.tipos, variacao: Number(a.valorDelta), novoTermino: a.novoTermino, assinatura: a.dataAssinatura, vigencia: a.inicioVigencia, justificativa: a.justificativa })) } : {}),
+          ...(assunto === "medicoes" ? { itens: d!.itens.map((i) => ({ codigo: i.codigo, descricao: i.descricao, limite: i.limite, medido: i.medido, saldo: i.saldo })), medicoes: d!.medicoes.slice(0, MAX_GRUPOS).map((m) => ({ periodo: m.competencia, valor: Number(m.valor), situacao: m.status })) } : {}),
+          ...(assunto === "financeiro" ? { custoApropriado: d!.resultado.custoRealizado, margemSobreMedido: d!.resultado.margemSobreMedido, faturas: d!.faturas.filter((f) => !f.cancelado).map((f) => ({ valor: f.valor, vencimento: f.vencimento, recebido: f.recebido })), reembolsos: d!.reembolsos.filter((r) => !r.cancelado).map((r) => ({ situacao: r.status, solicitado: Number(r.valorSolicitado), aprovado: r.valorAprovado == null ? null : Number(r.valorAprovado) })) } : {}),
+        }));
+      }
+      return JSON.stringify({
+        fonte: "Contratos e Aditivos (valor atualizado = original + aditivos assinados e vigentes; medição só conta aprovada; faturado = contas a receber do contrato)",
+        ...(fin ? {} : { observacao: "A pessoa não tem acesso financeiro de contratos: faturado, recebido e custos não foram lidos." }),
+        ...(assunto === "financeiro" && !fin ? { erro: "Sem acesso financeiro de contratos. Diga isso; não estime." } : {}),
+        contratos: base,
+        ...extra,
+        ...(todos.length > escolhidos.length && !pedidos.length ? { outros: todos.length - escolhidos.length } : {}),
+      });
     }
 
     case "montar_relatorio": {
