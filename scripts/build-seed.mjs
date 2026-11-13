@@ -20,6 +20,8 @@ const alvos = [
   ["src/lib/db/seed-demo/index.ts", ".migrate/seed.mjs"],
   // Conversão do Plano de Contas de empresa existente (prévia/aplicar/desfazer).
   ["src/lib/planocontas-conversao-cli.ts", ".migrate/converter-plano.mjs"],
+  // Conferência independente da demonstração (só leitura; ver scripts/conferir-demo.ts).
+  ["scripts/conferir-demo.ts", ".migrate/conferir-demo.mjs"],
 ];
 for (const [entrada, saida] of alvos) await build({
   entryPoints: [entrada],
