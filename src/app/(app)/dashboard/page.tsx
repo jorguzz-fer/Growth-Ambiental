@@ -34,6 +34,8 @@ import { estaVencida } from "@/lib/despesa-status";
 import { analisarDashboard } from "@/lib/dashboard-analise";
 import { listarContratos } from "@/lib/contratos-queries";
 import { valorContratadoDosProjetos } from "@/lib/valor-contratado";
+import { indicadoresExecutivos } from "@/lib/indicadores-executivos";
+import { IndicadoresExecutivosPainel } from "@/components/app/indicadores-executivos";
 import { AssistenteDashboard } from "@/components/app/assistente-dashboard";
 import { PageHeader } from "@/components/app/page-header";
 import { ProjectPicker } from "@/components/app/project-picker";
@@ -114,7 +116,7 @@ const TIPOS_CONSOLIDADOS = ["budget", "forecast", "atual"] as const;
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ vs?: string; de?: string; ate?: string; proj?: string; project?: string }>;
+  searchParams: Promise<{ vs?: string; de?: string; ate?: string; proj?: string; project?: string; cli?: string; ctr?: string }>;
 }) {
   const ctx = await getTenantContext();
   if (!ctx) return null;
@@ -159,6 +161,11 @@ export default async function DashboardPage({
   // Valor contratado (substitui o VGV): contratos de serviço dos projetos.
   const contratosDaEmpresa = await listarContratos(ctx.tenant.id);
   const contratadoDe = (ids: string[]) => valorContratadoDosProjetos(contratosDaEmpresa, new Set(ids));
+  // Implementação integrada — painel executivo de contratos e operação (só quem vê contratos).
+  const filtroCli = contratosDaEmpresa.some((c) => c.clienteId === sp.cli) ? sp.cli! : null;
+  const filtroCtr = contratosDaEmpresa.some((c) => c.id === sp.ctr) ? sp.ctr! : null;
+  const executivo = can(ctx.perms, "contratos", "ver") ? await indicadoresExecutivos(ctx.tenant.id, projetosDaTela, { clienteId: filtroCli, contratoId: filtroCtr }) : null;
+  const clientesDosContratos = [...new Map(contratosDaEmpresa.filter((c) => c.clienteId && c.cliente).map((c) => [c.clienteId!, { id: c.clienteId!, nome: c.cliente! }])).values()];
 
   let summaries: Summary[];
   // Consolidado: em quantas obras cada coluna é feita (1.6 / cobertura).
@@ -466,6 +473,15 @@ export default async function DashboardPage({
       <p className="mt-2 text-[11.5px] text-[var(--color-ink3)]" data-recorte-painel="kpis">
         <strong className="text-[var(--color-ink2)]">Os quatro de cima</strong> seguem o seletor de versão e o de período.
       </p>
+      {executivo && (
+        <IndicadoresExecutivosPainel
+          i={executivo}
+          clientes={clientesDosContratos}
+          contratos={contratosDaEmpresa.filter((c) => c.status !== "cancelado").map((c) => ({ id: c.id, rotulo: `${c.codigo} · ${c.titulo}` }))}
+          filtro={{ cli: filtroCli ?? "", ctr: filtroCtr ?? "" }}
+          preservar={Object.fromEntries(Object.entries({ proj: sp.proj ?? "", vs: sp.vs ?? "", de: sp.de ?? "", ate: sp.ate ?? "" }).filter(([, v]) => v))}
+        />
+      )}
       </>
       )}
 

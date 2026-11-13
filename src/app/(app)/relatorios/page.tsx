@@ -11,7 +11,11 @@ import {
   descricaoDaReceita,
   montarTabela,
   receitaValida,
+  tabelaGerencial,
 } from "@/lib/relatorio-custom";
+import { DIMENSOES, METRICAS, METRICAS_DE_HORAS, METRICAS_DE_POSICAO, ROTULO_DIMENSAO, ROTULO_METRICA } from "@/lib/relatorio-gerencial";
+import { fatosGerenciais } from "@/lib/relatorio-gerencial-dados";
+import { projetosDoEscopo, rotuloDoEscopo } from "@/lib/projeto-selecao";
 import { colunasDoRelatorio } from "@/lib/relatorio-custom-dados";
 import { PageHeader } from "@/components/app/page-header";
 import { Card, CardContent } from "@/components/ui/card";
@@ -40,13 +44,23 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: P
   if (!can(ctx.perms, "relatorios", "ver")) return <AccessDenied />;
   const sp = await searchParams;
   const receita = receitaValida(sp, ctx.projects.map((p) => p.id));
-  const fontesPermitidas = FONTES.filter((f) => can(ctx.perms, f === "fluxo" ? "fluxocaixa" : "dre", "ver"));
+  // Cada fonte exige a tela de origem; a gerencial, Contratos (e Equipes para as métricas de horas).
+  const fontesPermitidas = FONTES.filter((f) => can(ctx.perms, f === "fluxo" ? "fluxocaixa" : f === "gerencial" ? "contratos" : "dre", "ver"));
   const podeFonte = fontesPermitidas.includes(receita.fonte);
   const temPedido = !!sp.fonte;
+  const metricasPermitidas = METRICAS.filter((m) => !METRICAS_DE_HORAS.includes(m) || can(ctx.perms, "equipes", "ver"));
+  const gerencial = receita.fonte === "gerencial";
 
-  const dados = podeFonte && temPedido ? await colunasDoRelatorio(ctx.tenant.id, ctx.projects, receita) : null;
-  const tabela = dados ? montarTabela(receita.fonte, dados.colunas, dados.contas, receita.av) : null;
-  const descricao = dados ? descricaoDaReceita(receita, dados.escopo) : "";
+  const dados = podeFonte && temPedido && !gerencial ? await colunasDoRelatorio(ctx.tenant.id, ctx.projects, receita) : null;
+  const escopoGerencial = (() => {
+    const unica = ctx.projects.find((p) => p.id === receita.proj);
+    if (unica) return { projetos: [unica], rotulo: unica.name };
+    if (receita.proj === "ativos" || receita.proj === "finalizados") return { projetos: projetosDoEscopo(ctx.projects, receita.proj).projetos, rotulo: rotuloDoEscopo(receita.proj) };
+    return { projetos: [...ctx.projects], rotulo: "Empresa toda" };
+  })();
+  const fatos = podeFonte && temPedido && gerencial ? await fatosGerenciais(ctx.tenant.id, escopoGerencial.projetos, { incluirHoras: can(ctx.perms, "equipes", "ver") }) : null;
+  const tabela = dados ? montarTabela(receita.fonte, dados.colunas, dados.contas, receita.av) : fatos ? tabelaGerencial(fatos, receita, metricasPermitidas) : null;
+  const descricao = dados ? descricaoDaReceita(receita, dados.escopo) : fatos ? descricaoDaReceita(receita, escopoGerencial.rotulo) : "";
   const titulo = receita.titulo || (dados ? `${ROTULO_FONTE[receita.fonte]} ${ROTULO_COLUNAS[receita.colunas]}` : "Relatórios Customizados");
 
   return (
@@ -123,6 +137,31 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: P
                   <input type="checkbox" name="av" value="1" defaultChecked={receita.av} />
                   Análise vertical
                 </label>
+                {fontesPermitidas.includes("gerencial") && (
+                  <div className="w-full rounded-[8px] border border-dashed border-[var(--color-line)] p-2" data-campos-gerencial>
+                    <span className={ROTULO}>Fonte gerencial (tabela dinâmica): dimensão nas linhas e métricas nas colunas</span>
+                    <div className="flex flex-wrap items-end gap-3">
+                      <label>
+                        <span className={ROTULO}>Linhas</span>
+                        <select name="dim" defaultValue={receita.dim ?? "contrato"} className={CAMPO}>
+                          {DIMENSOES.map((d) => (
+                            <option key={d} value={d}>
+                              {ROTULO_DIMENSAO[d]}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <fieldset className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                        {metricasPermitidas.map((m) => (
+                          <label key={m} className="flex items-center gap-1 text-[12.5px]">
+                            <input type="checkbox" name="metricas" value={m} defaultChecked={(receita.metricas ?? []).includes(m)} />
+                            {ROTULO_METRICA[m]}
+                          </label>
+                        ))}
+                      </fieldset>
+                    </div>
+                  </div>
+                )}
                 <input type="hidden" name="titulo" value={receita.titulo} />
                 <Button type="submit" size="sm">
                   Montar
@@ -154,7 +193,9 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: P
               <CardContent className="p-5">
                 <RelatorioTabela tabela={tabela} arquivo={titulo} />
                 <p className="mt-3 text-[11.5px] text-[var(--color-ink3)]">
-                  Os números são os da {receita.fonte === "fluxo" ? "tela Fluxo de Caixa (previsto pelo vencimento)" : "DRE"}, com as mesmas regras e chaves.
+                  {gerencial
+                    ? `Cada número vem de um registro real (medição aprovada, fatura, despesa apropriada, reembolso, apontamento de horas), uma vez só: a linha Total é a soma das linhas. Receita reconhecida pela regra atual (fatura pelo vencimento, até hoje). ${METRICAS_DE_POSICAO.map((m) => ROTULO_METRICA[m]).join(", ")} são a posição atual e não seguem o período.`
+                    : `Os números são os da ${receita.fonte === "fluxo" ? "tela Fluxo de Caixa (previsto pelo vencimento)" : "DRE"}, com as mesmas regras e chaves.`}
                 </p>
               </CardContent>
             </Card>

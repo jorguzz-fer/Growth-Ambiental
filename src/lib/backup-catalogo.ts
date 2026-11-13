@@ -124,6 +124,8 @@ export const TABELAS_DO_PACOTE: readonly TabelaDoPacote[] = [
   { tabela: "equipe_projeto", chave: "equipesProjeto", familia: "Pessoas", recorte: { tipo: "cadastro" } },
   { tabela: "equipe_dia", chave: "equipeDias", familia: "Pessoas", recorte: { tipo: "data", colunas: ["data"] } },
   { tabela: "diaria", chave: "diarias", familia: "Pessoas", recorte: { tipo: "pai", coluna: "equipeDiaId", pai: "equipe_dia" } },
+  // 0082 — apontamento de horas (planejado e realizado), pela competência.
+  { tabela: "apontamento_hora", chave: "apontamentosHora", familia: "Pessoas", recorte: { tipo: "competencia", coluna: "competencia" } },
   { tabela: "folha_competencia", chave: "folhasCompetencia", familia: "Pessoas", recorte: { tipo: "competencia", coluna: "competencia" } },
   { tabela: "aso_acesso", chave: "asoAcessos", familia: "Pessoas", recorte: { tipo: "instante", coluna: "acessadoEm" } },
   // Planejamento de projetos (0078): modelos da empresa e plano de cada projeto vêm inteiros (cadastro).

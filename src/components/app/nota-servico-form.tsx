@@ -19,6 +19,9 @@ export interface ValoresDoFormulario {
   id?: string;
   projectId: string;
   contaReceberId: string;
+  /** 0082 */
+  contratoId: string;
+  contratoMedicaoId: string;
   competencia: string;
   discriminacao: string;
   itemListaServico: string;
@@ -53,11 +56,16 @@ export function NotaServicoForm({
   inicial,
   projetos,
   contasReceber,
+  contratos,
+  medicoes,
   emitente,
 }: {
   inicial: ValoresDoFormulario;
   projetos: { id: string; name: string }[];
   contasReceber: { id: string; projectId: string; rotulo: string }[];
+  /** 0082 — contratos por projeto e medições aprovadas por contrato (opcional). */
+  contratos?: { id: string; projectId: string; rotulo: string }[];
+  medicoes?: { id: string; contratoId: string; rotulo: string }[];
   emitente: { razaoSocial: string; cnpj: string; itemListaServico: string; municipio: string };
 }) {
   const router = useRouter();
@@ -138,6 +146,32 @@ export function NotaServicoForm({
                 ))}
               </Select>
               <p className="mt-1 text-[11px] text-[var(--color-ink3)]">Só referência: a nota não cria nem altera a conta a receber.</p>
+            </div>
+            <div>
+              <Label>Contrato (opcional)</Label>
+              <Select name="contratoId" value={v.contratoId} onChange={(e) => (set("contratoId", e.target.value), set("contratoMedicaoId", ""))} disabled={!v.projectId}>
+                <option value="">Nenhum</option>
+                {(contratos ?? [])
+                  .filter((c) => c.projectId === v.projectId)
+                  .map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.rotulo}
+                    </option>
+                  ))}
+              </Select>
+            </div>
+            <div>
+              <Label>Medição aprovada (opcional)</Label>
+              <Select name="contratoMedicaoId" value={v.contratoMedicaoId} onChange={(e) => set("contratoMedicaoId", e.target.value)} disabled={!v.contratoId}>
+                <option value="">Nenhuma</option>
+                {(medicoes ?? [])
+                  .filter((m) => m.contratoId === v.contratoId)
+                  .map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.rotulo}
+                    </option>
+                  ))}
+              </Select>
             </div>
           </div>
           <div>

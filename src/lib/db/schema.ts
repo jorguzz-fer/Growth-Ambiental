@@ -2118,6 +2118,8 @@ export const equipesProjeto = pgTable("equipe_projeto", {
   funcionarioId: uuid("funcionario_id").references(() => funcionarios.id, { onDelete: "restrict" }),
   funcaoId: uuid("funcao_id").references(() => funcoesEquipe.id, { onDelete: "set null" }),
   valorDiaria: numeric("valor_diaria", { precision: 15, scale: 2 }),
+  /** 0082 — base opcional do custo gerencial das horas apontadas (não gera despesa). */
+  custoHora: numeric("custo_hora", { precision: 15, scale: 2 }),
   entrada: text("entrada"),
   saida: text("saida"),
   situacao: text("situacao").notNull().default("ativa"),
@@ -2251,6 +2253,10 @@ export const notasServico = pgTable(
     itemListaServico: text("item_lista_servico"),
     codigoTributarioMunicipio: text("codigo_tributario_municipio"),
     codigoMunicipioPrestacao: text("codigo_municipio_prestacao"),
+    /** 0082 — vínculos opcionais (a nota não cria recebível; ver nota-servico.ts). */
+    clienteId: uuid("cliente_id").references((): AnyPgColumn => clientes.id, { onDelete: "set null" }),
+    contratoId: uuid("contrato_id").references((): AnyPgColumn => contratos.id, { onDelete: "set null" }),
+    contratoMedicaoId: uuid("contrato_medicao_id").references((): AnyPgColumn => contratoMedicoes.id, { onDelete: "set null" }),
     valorServicos: numeric("valor_servicos", { precision: 15, scale: 2 }).notNull().default("0"),
     valorDeducoes: numeric("valor_deducoes", { precision: 15, scale: 2 }).notNull().default("0"),
     descontoIncondicionado: numeric("desconto_incondicionado", { precision: 15, scale: 2 }).notNull().default("0"),
@@ -2961,4 +2967,45 @@ export const projetoPlanoImportacoes = pgTable(
     createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
   },
   (t) => [unique("projeto_plano_importacao_chave_uq").on(t.tenantId, t.chave)],
+);
+
+/**
+ * 0082 — Apontamento de horas (planejadas ou realizadas) de um profissional
+ * num projeto (com contrato, fase e atividade opcionais) ou em atividade
+ * interna. Gerencial: NÃO gera despesa nem lançamento financeiro — a
+ * remuneração continua em Folha/Despesas. `custoHora` é o retrato da base
+ * usada para o custo gerencial (nulo = sem base válida).
+ */
+export const apontamentosHora = pgTable(
+  "apontamento_hora",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    /** "planejado" | "realizado" */
+    tipo: text("tipo").notNull().default("realizado"),
+    funcionarioId: uuid("funcionario_id").references(() => funcionarios.id, { onDelete: "restrict" }),
+    stakeholderId: uuid("stakeholder_id").references((): AnyPgColumn => stakeholders.id, { onDelete: "restrict" }),
+    projectId: uuid("project_id").references(() => projects.id, { onDelete: "cascade" }),
+    atividadeInterna: text("atividade_interna"),
+    contratoId: uuid("contrato_id").references((): AnyPgColumn => contratos.id, { onDelete: "set null" }),
+    projetoFaseId: uuid("projeto_fase_id").references((): AnyPgColumn => projetoFases.id, { onDelete: "set null" }),
+    projetoAtividadeId: uuid("projeto_atividade_id").references((): AnyPgColumn => projetoAtividades.id, { onDelete: "set null" }),
+    /** MM/DD/YYYY */
+    data: text("data").notNull(),
+    /** MM/YYYY */
+    competencia: text("competencia").notNull(),
+    horas: numeric("horas", { precision: 8, scale: 2 }).notNull(),
+    custoHora: numeric("custo_hora", { precision: 15, scale: 2 }),
+    descricao: text("descricao"),
+    idempotencyKey: text("idempotency_key"),
+    createdBy: text("created_by"),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("apontamento_hora_tenant_comp_idx").on(t.tenantId, t.competencia),
+    index("apontamento_hora_project_idx").on(t.projectId),
+    uniqueIndex("apontamento_hora_idem_uq").on(t.tenantId, t.idempotencyKey).where(sql`${t.idempotencyKey} is not null`),
+  ],
 );

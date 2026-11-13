@@ -1,5 +1,6 @@
 "use client";
 
+import { sugerirRateioPorHoras } from "@/lib/actions/horas";
 import { useCrisFormulario } from "@/components/app/cris-contexto";
 import { marcarDespesas } from "@/lib/acerto-cris";
 import { useMemo, useRef, useState, useTransition } from "react";
@@ -690,6 +691,28 @@ function RateioObras({
         <h3 className="mb-2 mt-5 text-[13px] font-semibold text-[var(--color-ink)]">
           Distribuição entre projetos
         </h3>
+        {/* Implementação integrada: base por horas realizadas apontadas na competência. Só sugere os percentuais. */}
+        <div className="mb-2 flex flex-wrap items-center gap-2 text-[12px] text-[var(--color-ink3)]">
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={pending || !/^\d{2}\/\d{4}$/.test(f.competencia)}
+            onClick={() =>
+              start(async () => {
+                const r = await sugerirRateioPorHoras({ competencia: f.competencia });
+                if (!r.ok) return setErro(r.error);
+                if (!r.linhas.length) return setErro("Nenhuma hora realizada apontada em projetos nesta competência.");
+                setErro(null);
+                setLinhas(r.linhas.map((l) => ({ projectId: l.projectId, percentual: String(l.percentual) })));
+                setF((x) => ({ ...x, baseRateio: `Horas — ${r.base}: ${r.linhas.map((l) => `${l.nome} ${l.horas} h`).join("; ")}` }));
+              })
+            }
+          >
+            Usar a base de horas apontadas
+          </Button>
+          <span>preenche os percentuais pelas horas realizadas da competência (Apontamento de Horas); confira antes de gravar.</span>
+        </div>
         <div className="space-y-2">
           {linhas.map((l, i) => (
             <div key={i} className="flex flex-wrap items-end gap-2">

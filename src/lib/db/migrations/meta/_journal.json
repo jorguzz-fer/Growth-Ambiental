@@ -575,6 +575,13 @@
       "when": 1792900000000,
       "tag": "0081_medicao_vinculos",
       "breakpoints": true
+    },
+    {
+      "idx": 82,
+      "version": "7",
+      "when": 1793000000000,
+      "tag": "0082_horas_e_vinculos_nfse",
+      "breakpoints": true
     }
   ]
 }

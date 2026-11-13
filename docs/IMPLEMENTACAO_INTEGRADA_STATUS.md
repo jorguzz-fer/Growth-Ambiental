@@ -42,5 +42,13 @@ Legenda: **F** = implementada e funcional · **P** = parcial · **I** = lógica 
   - Projeção ao término (Orçamento original × revisado × realizado × previsão), na Previsão e no contrato.
   - Testes: 2 arquivos puros + `actions/nucleo-financeiro.test.ts` (Postgres). Suíte completa verde após ajustar os testes de menu e permissão para a tela nova.
   - Pendências contábeis documentadas: política de reconhecimento de receita; reembolso como receita ou recuperação de custo; orçamento por contrato.
-- [ ] Etapa 2 — integração operacional
+- [x] Etapa 2 — integração operacional (detalhes em `INTEGRACAO_OPERACIONAL_GROWTH_AMBIENTAL.md`)
+  - Apontamento de horas (migração 0082, `/equipes/horas`): planejado × realizado, custo gerencial pela alocação, sem gerar despesa.
+  - Rateio por horas no Acerto e Rateio (sugere os percentuais; memória gravada).
+  - NFS-e ligada a cliente, contrato e medição aprovada; trava contra duas notas vivas na mesma conta a receber.
+  - Dashboard: painel "Contratos e operação" com filtro de cliente e contrato e projetos com desvio.
+  - Relatórios Customizados: fonte "Gerencial (tabela dinâmica)" com 8 dimensões e 15 métricas, reconciliável.
+  - `/projeto/documentos`: busca transversal com a permissão de cada origem.
+  - Testes: 3 arquivos puros + `actions/integracao-operacional.test.ts` (Postgres); catálogo do backup inclui `apontamento_hora`.
+  - Pendências: centro de custo e rateio para contrato; NFS-e multiempresa e emissão real (credenciais/homologação); modelos salvos de relatório; cadastro de equipamento como ativo.
 - [ ] Etapa 3 — Cris, onboarding e homologação

@@ -65,6 +65,8 @@ const TELAS_NOVAS: Record<string, string> = {
   "/cartoes": "cartoes", // Prompt U, seção 1
   "/funcionarios": "funcionarios", // Prompt Z, Parte 2
   "/equipes": "equipes", // Prompt Z, Parte 3
+  "/equipes/horas": "equipes", // Implementação integrada: apontamento de horas
+  "/projeto/documentos": "projeto", // Implementação integrada: busca de documentos
   "/conferencia": "conferencia", // Prompt AN, Parte 5 (era /diagnostico/categorias-invertidas)
   "/notasfiscais": "notasfiscais", // Prompt AG: NFS-e emitida, última seção de Receitas
   "/dre/analitica": "dre", // Prompt AC3: mora sob /dre, mesma permissão
@@ -249,7 +251,7 @@ describe("isItemActive — prefixo na fronteira de segmento", () => {
     const pares = todos.flatMap((x) => todos.filter((y) => y !== x && isItemActive(x.href, y.href)).map((y) => `${x.href}>${y.href}`));
     // Contratos: as telas do módulo moram sob /contratos (o mais específico vence).
     const doModulo = ["painel", "aditivos", "medicoes", "reembolsos", "modalidades"].map((t) => `/contratos/${t}>/contratos`);
-    expect(pares).toEqual(["/dre/analitica>/dre", "/dre/contratos>/dre", "/fluxocaixa/analitico>/fluxocaixa", ...doModulo]);
+    expect(pares.sort()).toEqual(["/dre/analitica>/dre", "/dre/contratos>/dre", "/fluxocaixa/analitico>/fluxocaixa", "/equipes/horas>/equipes", "/projeto/documentos>/projeto", ...doModulo].sort());
   });
 
   it("/perfil e rota nula não ativam nada", () => {

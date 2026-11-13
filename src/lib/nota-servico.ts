@@ -234,6 +234,9 @@ export function numeroBR(x: unknown): number {
 export interface RascunhoDaNota {
   projectId: string;
   contaReceberId: string | null;
+  /** 0082 — contrato e medição de contrato faturados (opcionais). */
+  contratoId: string | null;
+  contratoMedicaoId: string | null;
   competencia: string | null;
   discriminacao: string;
   itemListaServico: string | null;
@@ -299,6 +302,8 @@ export function lerRascunhoDaNota(get: (campo: string) => unknown): { ok: true; 
     rascunho: {
       projectId,
       contaReceberId: txt("contaReceberId", 64),
+      contratoId: txt("contratoId", 64),
+      contratoMedicaoId: txt("contratoMedicaoId", 64),
       competencia,
       discriminacao: txt("discriminacao", 2000) ?? "",
       itemListaServico: txt("itemListaServico", 10),

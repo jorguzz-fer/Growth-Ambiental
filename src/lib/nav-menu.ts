@@ -159,6 +159,7 @@ export const NAV_MENU: NavModule[] = [
       // Growth Ambiental: o cadastro de Projetos saiu de Planejamento e abre
       // o módulo Projetos. Rota e permissão ("projeto") continuam as mesmas.
       { href: "/projeto", label: "Cadastro de Projetos" },
+      { href: "/projeto/documentos", label: "Documentos" },
       // Planejamento (0078): fases, atividades, entregas e cronograma do projeto.
       { href: "/plano", label: "Plano de Trabalho" },
       { href: "/estoque", label: "Materiais e Equipamentos" },
@@ -173,6 +174,7 @@ export const NAV_MENU: NavModule[] = [
     items: [
       { href: "/funcionarios", label: "Funcionários" },
       { href: "/equipes", label: "Equipes e Presença de Campo" },
+      { href: "/equipes/horas", label: "Apontamento de Horas" },
     ],
   },
   {
