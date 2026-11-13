@@ -24,28 +24,44 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       { source: "/rolling", destination: "/forecast", permanent: true },
-      // Prompt AL (BAL-3): telas removidas viram redirecionamento com aviso de
-      // uma linha na tela de destino (src/lib/telas-removidas.ts; o teste de
-      // lá confere que esta lista bate). 307, não 308: o navegador não grava.
-      { source: "/contabilidade", destination: "/usuarios?de=contabilidade", permanent: false },
-      { source: "/contabilidade/:path*", destination: "/usuarios?de=contabilidade", permanent: false },
-      { source: "/diagnostico/planos-recebiveis", destination: "/unidades?de=planos-recebiveis", permanent: false },
-      { source: "/diagnostico/planos-recebiveis/:path*", destination: "/unidades?de=planos-recebiveis", permanent: false },
       // Prompt AN, Parte 5: a Conferência mudou de endereço para ter id próprio
       // em SCREENS. Filtros na URL antiga seguem junto (query preservada).
       { source: "/diagnostico/categorias-invertidas", destination: "/conferencia", permanent: false },
       // Prompt AP: os downloads da planilha mudaram de endereço (?v= segue junto);
-      // a tela em si vira aviso em Projetos. Os específicos vêm antes do genérico.
+      // os específicos vêm antes do genérico de /versao.
       { source: "/versao/export", destination: "/projeto/planilha/exportar", permanent: false },
       { source: "/versao/template", destination: "/projeto/planilha/modelo", permanent: false },
+      // Telas removidas (src/lib/telas-removidas.ts; o teste de lá confere que
+      // esta lista bate): redirecionamento com aviso de uma linha no destino.
+      // 307, não 308: o navegador não grava. Growth Ambiental: unidades,
+      // simulador, permuta, INCC, medição por grupo de obra (CEF), liberações
+      // de obra e projeção por unidade.
+      { source: "/contabilidade", destination: "/usuarios?de=contabilidade", permanent: false },
+      { source: "/contabilidade/:path*", destination: "/usuarios?de=contabilidade", permanent: false },
       { source: "/versao", destination: "/projeto?de=versao", permanent: false },
       { source: "/versao/:path*", destination: "/projeto?de=versao", permanent: false },
-      // Prompt AB2: Consolidado e Balanço do Dia saem (aviso em ?saiu=, porque
-      // as telas de destino usam ?de= como data inicial).
-      { source: "/consolidado", destination: "/projecao?saiu=consolidado", permanent: false },
-      { source: "/consolidado/:path*", destination: "/projecao?saiu=consolidado", permanent: false },
+      { source: "/diagnostico/planos-recebiveis", destination: "/contasreceber?saiu=planos-recebiveis", permanent: false },
+      { source: "/diagnostico/planos-recebiveis/:path*", destination: "/contasreceber?saiu=planos-recebiveis", permanent: false },
+      { source: "/consolidado", destination: "/contratos/painel?saiu=consolidado", permanent: false },
+      { source: "/consolidado/:path*", destination: "/contratos/painel?saiu=consolidado", permanent: false },
       { source: "/balancodia", destination: "/caixa?saiu=balancodia", permanent: false },
       { source: "/balancodia/:path*", destination: "/caixa?saiu=balancodia", permanent: false },
+      { source: "/unidades", destination: "/contasreceber?saiu=unidades", permanent: false },
+      { source: "/unidades/:path*", destination: "/contasreceber?saiu=unidades", permanent: false },
+      { source: "/simulador", destination: "/contratos?saiu=simulador", permanent: false },
+      { source: "/simulador/:path*", destination: "/contratos?saiu=simulador", permanent: false },
+      { source: "/permuta", destination: "/contasreceber?saiu=permuta", permanent: false },
+      { source: "/permuta/:path*", destination: "/contasreceber?saiu=permuta", permanent: false },
+      { source: "/parametros", destination: "/contratos?saiu=parametros", permanent: false },
+      { source: "/parametros/:path*", destination: "/contratos?saiu=parametros", permanent: false },
+      { source: "/medicao", destination: "/contratos/medicoes?saiu=medicao", permanent: false },
+      { source: "/medicao/:path*", destination: "/contratos/medicoes?saiu=medicao", permanent: false },
+      { source: "/medicaolanc", destination: "/contratos/medicoes?saiu=medicaolanc", permanent: false },
+      { source: "/medicaolanc/:path*", destination: "/contratos/medicoes?saiu=medicaolanc", permanent: false },
+      { source: "/reembolso", destination: "/contratos/reembolsos?saiu=reembolso", permanent: false },
+      { source: "/reembolso/:path*", destination: "/contratos/reembolsos?saiu=reembolso", permanent: false },
+      { source: "/projecao", destination: "/contratos/painel?saiu=projecao", permanent: false },
+      { source: "/projecao/:path*", destination: "/contratos/painel?saiu=projecao", permanent: false },
     ];
   },
   experimental: {

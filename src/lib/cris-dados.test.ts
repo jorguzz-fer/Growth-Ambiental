@@ -90,15 +90,23 @@ describe.skipIf(!HAS_DB)("catálogo de leitura (Etapa 7)", async () => {
     expect(r.grupos).toBeUndefined();
   });
 
-  it("dado pessoal fica fora: recebíveis sem nome de comprador", async () => {
-    const [u] = await db.insert(schema.units).values({ tenantId: tenant.id, versionId: obras["Residencial Alfa"].atual, code: "A-101", status: "Vendido", valor: "300000", paymentPlan: { usarAS: true, AS: { val: 10000, venc: "09/10/2026", n: 1 } } as never }).returning();
-    await db.insert(schema.clientes).values({ tenantId: tenant.id, unitCode: "A-101", nomeCompleto: "Maria Compradora da Silva" } as never);
-    const txt = await executarFerramentaDeDados(ctx, "recebiveis_e_inadimplencia", { obras: [], de: "", ate: "", agrupar: "unidade", somente: "todas" });
+  it("recebíveis vêm das contas a receber; empresa contratante aparece, pessoa física não", async () => {
+    const proj = obras["Residencial Alfa"];
+    const [pj] = await db.insert(schema.clientes).values({ tenantId: tenant.id, nomeCompleto: "Empresa Contratante Exemplo Ltda", cpfCnpj: "11.222.333/0001-81" } as never).returning();
+    const [pf] = await db.insert(schema.clientes).values({ tenantId: tenant.id, nomeCompleto: "Maria Pessoa Física", cpfCnpj: "000.000.002-72" } as never).returning();
+    await db.insert(schema.contasReceber).values([
+      { tenantId: tenant.id, projectId: proj.project.id, clienteId: pj.id, descricao: "Fatura 01", tipo: "Fatura", valor: "1000", vencimento: "01/10/2020", status: "A receber" },
+      { tenantId: tenant.id, projectId: proj.project.id, clienteId: pf.id, descricao: "Fatura 02", tipo: "Fatura", valor: "500", vencimento: "12/10/2099", status: "A receber" },
+    ] as never);
+    const r = JSON.parse(await executarFerramentaDeDados(ctx, "recebiveis_e_inadimplencia", { obras: [], de: "", ate: "", agrupar: "cliente", somente: "todas" }));
+    const txt = JSON.stringify(r);
+    expect(txt).toMatch(/Empresa Contratante Exemplo/);
     expect(txt).not.toMatch(/Maria/);
-    expect(txt).toMatch(/A-101/);
-    const un = JSON.parse(await executarFerramentaDeDados(ctx, "unidades_e_vendas", { obras: [], agrupar: "obra_situacao" }));
-    expect(un.grupos[0]).toMatchObject({ obra: "Residencial Alfa", situacao: "Vendido", qtd: 1, valor: 300000 });
-    expect(u.id).toBeTruthy();
+    expect(txt).toMatch(/pessoa física \(nome omitido\)/);
+    expect(r.vencidas).toMatchObject({ quantidade: 1, valor: 1000 });
+    expect(txt).not.toMatch(/unidade|parcelasDeVenda/i);
+    // a ferramenta de unidades saiu do catálogo
+    expect(await executarFerramentaDeDados(ctx, "unidades_e_vendas", { obras: [], agrupar: "obra" })).toMatch(/desconhecida/);
   });
 
   it("montar_relatorio: a receita de Relatórios Customizados, com a obra que a pessoa vê", async () => {

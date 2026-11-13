@@ -48,11 +48,11 @@ export const FERRAMENTAS_DE_DADOS: Anthropic.Tool[] = [
   {
     name: "recebiveis_e_inadimplencia",
     description:
-      "Parcelas de venda das unidades vendidas (versão Atual) e contas a receber lançadas: a receber, recebido pela conciliação e vencido, por obra, por unidade ou por mês. Vencida = venceu e não tem recebimento conciliado no Caixa (parcela paga mas não conciliada aparece como vencida: diga isso).",
+      "Contas a receber (faturas dos contratos e recebíveis lançados) da empresa: em aberto, vencido e a vencer, por projeto, por cliente contratante ou por mês de vencimento. Vencida = venceu e não foi recebida. Recebido é o que entrou; medição aprovada ainda não faturada não aparece aqui (veja contratos_e_saldos).",
     input_schema: {
       type: "object",
       additionalProperties: false,
-      properties: { ...OBRAS, ...PERIODO, agrupar: { type: "string", enum: ["obra", "unidade", "mes"] }, somente: { type: "string", enum: ["todas", "vencidas", "a_vencer"] } },
+      properties: { ...OBRAS, ...PERIODO, agrupar: { type: "string", enum: ["obra", "cliente", "mes"] }, somente: { type: "string", enum: ["todas", "vencidas", "a_vencer"] } },
       required: ["obras", "de", "ate", "agrupar", "somente"],
     },
   },
@@ -72,17 +72,12 @@ export const FERRAMENTAS_DE_DADOS: Anthropic.Tool[] = [
     },
   },
   {
-    name: "unidades_e_vendas",
-    description: "Unidades da versão Atual por obra e situação (vendida, disponível...): quantidade, valor de tabela (VGV) e, nas vendidas, o total dos contratos.",
-    input_schema: { type: "object", additionalProperties: false, properties: { ...OBRAS, agrupar: { type: "string", enum: ["obra", "situacao", "obra_situacao"] } }, required: ["obras", "agrupar"] },
-  },
-  {
     name: "medicao_estoque_equipes",
-    description: "Medição (valor medido por obra, grupo ou mês), estoque (itens, saldo e valor por obra) ou equipes (pessoas e diárias por obra e função; nunca nome nem salário).",
+    description: "Medições de serviço dos contratos (valor medido por projeto, por contrato ou por mês, com a situação: rascunho, enviada, aprovada…), materiais e equipamentos de campo (movimentos e valor por projeto) ou equipes e presença de campo (pessoas e diárias por projeto e função; nunca nome nem salário).",
     input_schema: {
       type: "object",
       additionalProperties: false,
-      properties: { ...OBRAS, ...PERIODO, assunto: { type: "string", enum: ["medicao", "estoque", "equipes"] }, agrupar: { type: "string", enum: ["obra", "grupo", "mes", "funcao"] } },
+      properties: { ...OBRAS, ...PERIODO, assunto: { type: "string", enum: ["medicao", "estoque", "equipes"] }, agrupar: { type: "string", enum: ["obra", "contrato", "situacao", "mes", "funcao"] } },
       required: ["obras", "de", "ate", "assunto", "agrupar"],
     },
   },

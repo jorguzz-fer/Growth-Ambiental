@@ -8,11 +8,13 @@ import { ExportarPdf } from "@/components/app/pdf";
 import { painelDeContratos } from "@/lib/contratos-queries";
 import { dateBR } from "@/lib/utils";
 import { Kpi, Secao, brl } from "@/components/app/contratos/visual";
+import { AvisoTelaRemovida } from "@/components/app/aviso-tela-removida";
 
 export const dynamic = "force-dynamic";
 
 /** Painel contratual: carteira, pendências, vencimentos e rentabilidade (gerencial) por contrato e cliente. */
-export default async function PainelDeContratosPage() {
+export default async function PainelDeContratosPage({ searchParams }: { searchParams: Promise<{ saiu?: string }> }) {
+  const sp = await searchParams;
   const ctx = await getTenantContext();
   if (!ctx) return null;
   if (!can(ctx.perms, "contratos", "ver")) return <AccessDenied />;
@@ -22,6 +24,7 @@ export default async function PainelDeContratosPage() {
   return (
     <>
       <PageHeader eyebrow="Contratos" title="Painel de Contratos" subtitle="Carteira contratual sem dupla contagem: ordens e derivados que consomem o limite já estão no principal." actions={<ExportarPdf arquivo="Painel_de_Contratos" />} />
+      <AvisoTelaRemovida de={sp.saiu} />
       <CrisDaTela
         titulo="Painel de Contratos"
         dados={{ ativos: p.ativos, contratado: p.contratado, disponivelParaMedicao: p.disponivelParaMedicao, medicoesPendentes: p.medicoesPendentes, aditivosPendentes: p.aditivosPendentes, vencendo: p.vencendo.map((v) => v.codigo), ...(fin ? { faturado: p.faturado, aReceber: p.aReceber, porCliente: p.porCliente.slice(0, 15) } : {}) }}

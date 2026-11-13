@@ -21,9 +21,7 @@ vi.mock("server-only", () => ({}));
 describe.skipIf(!HAS_DB)("Exclusões — integridade (Prompt I, §12 e §24)", async () => {
   const { db, schema } = await import("@/lib/db");
   const { defaultPermissions } = await import("@/lib/permissions");
-  const { emptyPlan } = await import("@/lib/calc");
   const { addDespesa, deleteDespesa, pagarDespesa } = await import("./despesas");
-  const { deleteUnit } = await import("./units");
   const { deleteChartItem, deleteChartGroup } = await import("./planocontas");
   const { cancelarRestituicao, getContaCorrenteTerceiros } = await import("./restituicoes");
   let tenantId = "";
@@ -36,9 +34,6 @@ describe.skipIf(!HAS_DB)("Exclusões — integridade (Prompt I, §12 e §24)", a
   };
   const base = () => ({ projectId, categoriaDre: "Custo Variável", valor: "100", competencia: "09/2026", vencimento: "09/30/2026" });
   const despesaExiste = async (id: string) => (await db.select().from(schema.despesas).where(eq(schema.despesas.id, id))).length === 1;
-  const unidade = async (code: string, extra: Partial<typeof schema.units.$inferInsert> = {}) =>
-    (await db.insert(schema.units).values({ tenantId, versionId, code, valor: "1000", paymentPlan: emptyPlan(), ...extra }).returning())[0];
-  const unidadeExiste = async (id: string) => (await db.select().from(schema.units).where(eq(schema.units.id, id))).length === 1;
 
   beforeAll(async () => {
     const [t] = await db.insert(schema.tenants).values({ name: "excl-I3" }).returning();
@@ -80,40 +75,6 @@ describe.skipIf(!HAS_DB)("Exclusões — integridade (Prompt I, §12 e §24)", a
     expect(r.ok).toBe(false);
     expect((r as { error: string }).error).toMatch(/documento\(s\) fiscal/);
     expect(await despesaExiste(id)).toBe(true);
-  });
-
-  it("§12 unidade: exige o código; recusa com cliente de contrato ativo; apaga quando livre, com auditoria completa", async () => {
-    const u = await unidade("U-1");
-    expect((await deleteUnit(u.id, "U-2")).ok).toBe(false);
-    expect(await unidadeExiste(u.id)).toBe(true);
-    await db.insert(schema.clientes).values({ tenantId, nomeCompleto: "Ana Compradora", unitCode: "U-1", statusContrato: "Ativo" });
-    const r = await deleteUnit(u.id, "U-1");
-    expect(r.ok).toBe(false);
-    expect((r as { error: string }).error).toMatch(/Ana Compradora/);
-    await db.update(schema.clientes).set({ statusContrato: "Distratado" }).where(eq(schema.clientes.tenantId, tenantId));
-    expect((await deleteUnit(u.id, " u-1 ")).ok).toBe(true);
-    expect(await unidadeExiste(u.id)).toBe(false);
-    const [l] = await db
-      .select()
-      .from(schema.auditLog)
-      .where(and(eq(schema.auditLog.tenantId, tenantId), eq(schema.auditLog.action, "unit.delete")));
-    expect(l.meta).toMatchObject({ code: "U-1", valor: "1000.00", projectId });
-  });
-
-  it("§12 unidade: vendida, com conta a receber ou documento, recusa; versão congelada recusa", async () => {
-    const v = await unidade("U-2", { status: "Vendido", mesVenda: "09/10/2026" });
-    expect((await deleteUnit(v.id, "U-2")).ok).toBe(false);
-    const c = await unidade("U-3");
-    await db.insert(schema.contasReceber).values({ tenantId, projectId, unitCode: "U-3", valor: "10", status: "A receber" });
-    expect((await deleteUnit(c.id, "U-3") as { error: string }).error).toMatch(/conta\(s\) a receber/);
-    const d = await unidade("U-4");
-    await db.insert(schema.documents).values({ tenantId, unitCode: "U-4", storageKey: "k/u4", filename: "contrato.pdf" });
-    expect((await deleteUnit(d.id, "U-4") as { error: string }).error).toMatch(/documento/);
-    const l = await unidade("U-5");
-    await db.update(schema.versions).set({ locked: true }).where(eq(schema.versions.id, versionId));
-    expect((await deleteUnit(l.id, "U-5") as { error: string }).error).toMatch(/congelada/);
-    await db.update(schema.versions).set({ locked: false }).where(eq(schema.versions.id, versionId));
-    expect((await deleteUnit(l.id, "U-5")).ok).toBe(true);
   });
 
   it("§12 plano de contas: conta usada no Orçamento não é apagada; sem uso, é", async () => {

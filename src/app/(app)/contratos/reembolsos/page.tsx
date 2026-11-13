@@ -10,11 +10,12 @@ import { ROTULO_STATUS_REEMBOLSO, type StatusReembolso } from "@/lib/contrato-re
 import { dateBR } from "@/lib/utils";
 import { Kpi, brl } from "@/components/app/contratos/visual";
 import { reembolsosPorConta } from "@/lib/contrato-regras";
+import { AvisoTelaRemovida } from "@/components/app/aviso-tela-removida";
 
 export const dynamic = "force-dynamic";
 
 /** Relatório de despesas reembolsáveis por contrato e período, com exportação em PDF (impressão) e XLSX. */
-export default async function ReembolsosPage({ searchParams }: { searchParams: Promise<{ contrato?: string; de?: string; ate?: string }> }) {
+export default async function ReembolsosPage({ searchParams }: { searchParams: Promise<{ contrato?: string; de?: string; ate?: string; saiu?: string }> }) {
   const ctx = await getTenantContext();
   if (!ctx) return null;
   if (!can(ctx.perms, "contratos", "ver") || !can(ctx.perms, "contratosfinanceiro", "ver")) return <AccessDenied />;
@@ -48,6 +49,7 @@ export default async function ReembolsosPage({ searchParams }: { searchParams: P
           </>
         }
       />
+      <AvisoTelaRemovida de={sp.saiu} />
       <form className="mb-4 flex flex-wrap items-end gap-2 print:hidden" method="get">
         <label className="text-[12px]">
           Contrato

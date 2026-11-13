@@ -12,7 +12,6 @@ const TELAS_DE_RELATORIO = [
   "src/app/(app)/fluxocaixa/page.tsx",
   "src/app/(app)/fluxocaixa/analitico/page.tsx",
   "src/app/(app)/resumo/page.tsx",
-  "src/app/(app)/projecao/page.tsx",
   "src/app/(app)/relatorios/page.tsx",
   "src/app/(app)/caixa/page.tsx",
 ];
@@ -24,14 +23,7 @@ describe("Prompt IAR — a Cris nas telas de relatório", () => {
     expect(src).toMatch(/sugestoes=\{\[/);
   });
 
-  it("Resumo e Projeção registram nos dois modos (obra e consolidado; detalhado e comparação)", () => {
+  it("Resumo registra nos dois modos (projeto e consolidado); a Projeção de Receitas por unidade saiu", () => {
     expect(readFileSync("src/app/(app)/resumo/page.tsx", "utf8").match(/<CrisDaTela/g)).toHaveLength(2);
-    expect(readFileSync("src/app/(app)/projecao/page.tsx", "utf8").match(/<CrisDaTela/g)).toHaveLength(2);
-  });
-
-  it("a Projeção não manda dado de cliente (só a obra e os totais por mês)", () => {
-    const src = readFileSync("src/app/(app)/projecao/page.tsx", "utf8");
-    const bloco = src.slice(src.indexOf('titulo="Projeção de Receitas"'), src.indexOf("sugestoes=", src.indexOf('titulo="Projeção de Receitas"')));
-    expect(bloco).not.toMatch(/cliente|comprador|cpf/i);
   });
 });

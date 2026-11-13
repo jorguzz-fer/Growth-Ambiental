@@ -7,10 +7,12 @@ import { buttonVariants } from "@/components/ui/button";
 import { CrisDaTela } from "@/components/app/cris-contexto";
 import { listarContratos } from "@/lib/contratos-queries";
 import { ContratosLista } from "@/components/app/contratos/contratos-lista";
+import { AvisoTelaRemovida } from "@/components/app/aviso-tela-removida";
 
 export const dynamic = "force-dynamic";
 
-export default async function ContratosPage() {
+export default async function ContratosPage({ searchParams }: { searchParams: Promise<{ saiu?: string }> }) {
+  const sp = await searchParams;
   const ctx = await getTenantContext();
   if (!ctx) return null;
   if (!can(ctx.perms, "contratos", "ver")) return <AccessDenied />;
@@ -30,6 +32,7 @@ export default async function ContratosPage() {
           ) : undefined
         }
       />
+      <AvisoTelaRemovida de={sp.saiu} />
       <CrisDaTela
         titulo="Contratos — listagem"
         dados={{ contratos: linhas.slice(0, 40).map((l) => ({ codigo: l.codigo, titulo: l.titulo, cliente: l.cliente, status: l.status, valorAtualizado: l.saldo.atualizado, medido: l.saldo.medidoAprovado, saldoAMedir: l.saldo.saldoAMedir, termino: l.termino })) }}

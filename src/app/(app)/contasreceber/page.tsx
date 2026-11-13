@@ -24,13 +24,14 @@ import { AccessDenied } from "@/components/app/access-denied";
 import { ContasReceberManager } from "@/components/app/contas-receber-manager";
 import { ReceitaSearch, type ReceitaBuscavel } from "@/components/app/receita-search";
 import { ProjectPicker } from "@/components/app/project-picker";
+import { AvisoTelaRemovida } from "@/components/app/aviso-tela-removida";
 
 export const dynamic = "force-dynamic";
 
 export default async function ContasReceberPage({
   searchParams,
 }: {
-  searchParams: Promise<{ proj?: string; pf_valor?: string; pf_venc?: string; pf_desc?: string; pf_cash?: string }>;
+  searchParams: Promise<{ saiu?: string; proj?: string; pf_valor?: string; pf_venc?: string; pf_desc?: string; pf_cash?: string }>;
 }) {
   const ctx = await getTenantContext();
   if (!ctx) return null;
@@ -157,8 +158,9 @@ export default async function ContasReceberPage({
             allOption
           />
         }
-        subtitle="Recebíveis das vendas (Unidades) e contas a receber lançadas manualmente — vinculadas a um projeto."
+        subtitle="Recebíveis dos contratos de serviço (faturas) e contas a receber lançadas — vinculados a um projeto."
       />
+      <AvisoTelaRemovida de={sp.saiu} />
       {/* Abaixo de 1180px o painel desce para baixo do conteúdo (Prompt E, 6.2). */}
       <div className="flex flex-col gap-6 min-[1180px]:flex-row min-[1180px]:items-start">
       <div className="min-w-0 flex-1">

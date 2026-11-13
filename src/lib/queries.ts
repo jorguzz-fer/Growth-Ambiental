@@ -3558,6 +3558,8 @@ export interface ContaReceberRow {
   unitCode: string | null;
   clienteId: string | null;
   clienteNome: string | null;
+  /** CPF ou CNPJ do cliente (para distinguir empresa contratante de pessoa física). */
+  clienteDocumento: string | null;
   descricao: string | null;
   tipo: string;
   valor: number;
@@ -3577,6 +3579,7 @@ export async function getContasReceber(tenantId: string, projectId?: string): Pr
       c: schema.contasReceber,
       projectName: schema.projects.name,
       clienteNome: schema.clientes.nomeCompleto,
+      clienteDocumento: schema.clientes.cpfCnpj,
     })
     .from(schema.contasReceber)
     .innerJoin(schema.projects, eq(schema.contasReceber.projectId, schema.projects.id))
@@ -3597,6 +3600,7 @@ export async function getContasReceber(tenantId: string, projectId?: string): Pr
     unitCode: r.c.unitCode,
     clienteId: r.c.clienteId,
     clienteNome: r.clienteNome,
+    clienteDocumento: r.clienteDocumento,
     descricao: r.c.descricao,
     tipo: r.c.tipo,
     valor: Number(r.c.valor),
