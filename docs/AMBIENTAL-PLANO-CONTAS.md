@@ -1,5 +1,7 @@
 # Growth Ambiental · Plano de Contas padrão (proposta para revisão)
 
+> **Histórico.** Esta proposta foi substituída pelo plano em `docs/PLANO_CONTAS_AMBIENTAL.md` (grupo → subgrupo → conta, versão `ambiental-2026.11`). Empresas criadas com esta versão mantêm as contas; a tela oferece a adoção do novo padrão, com prévia.
+
 Plano que toda conta nova recebe (`src/lib/calc/plano-ambiental.ts`), voltado a
 **consultoria ambiental**. Substitui o plano CEF de construção no
 provisionamento e no seed. Cada conta tem uma categoria da DRE **padrão** que o

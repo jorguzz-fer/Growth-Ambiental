@@ -163,7 +163,7 @@ contratos e contas a pagar/receber.
 No terminal do container (ou localmente, `npm run db:seed`):
 
 ```bash
-SEED_ADMIN_EMAIL=demo@suaempresa.com.br SEED_DEMO_EM_PRODUCAO=sim node seed.mjs
+SEED_ADMIN_EMAIL=demo@exemplo.com.br SEED_DEMO_EM_PRODUCAO=sim node seed.mjs
 ```
 
 - `SEED_ADMIN_EMAIL` é o login da demonstração e precisa ser um e-mail **sem

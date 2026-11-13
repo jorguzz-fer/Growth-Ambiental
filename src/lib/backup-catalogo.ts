@@ -56,6 +56,8 @@ export const TABELAS_DO_PACOTE: readonly TabelaDoPacote[] = [
   { tabela: "tenant", chave: "tenants", familia: "Estrutura", recorte: { tipo: "cadastro" } },
   { tabela: "project", chave: "projects", familia: "Estrutura", recorte: { tipo: "cadastro" } },
   { tabela: "version", chave: "versions", familia: "Estrutura", recorte: { tipo: "cadastro" } },
+  // 0079 — grupos e subgrupos do Plano de Contas (nós sintéticos da hierarquia).
+  { tabela: "chart_group", chave: "chartGroups", familia: "Estrutura", recorte: { tipo: "cadastro" } },
   { tabela: "chart_account", chave: "chartAccounts", familia: "Estrutura", recorte: { tipo: "cadastro" } },
   { tabela: "budget_line", chave: "budgetLines", familia: "Estrutura", recorte: { tipo: "cadastro" } },
   { tabela: "budget_account", chave: "budgetAccounts", familia: "Estrutura", recorte: { tipo: "cadastro" } },

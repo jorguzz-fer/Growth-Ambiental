@@ -39,6 +39,7 @@ import {
   type ExtratoExtraido,
 } from "@/lib/ai/extrato-extract";
 import { comUsoDeIa } from "@/lib/ai/uso";
+import { validarContaDoLancamento } from "@/lib/planocontas-servidor";
 import { categoriaParaGravar } from "@/lib/categoria-do-plano-servidor";
 
 /** Formatos aceitos na leitura por IA do extrato (PDF/imagens). */
@@ -1322,6 +1323,9 @@ export async function criarLancamentoDoExtrato(input: {
       // ── SAÍDA → nova despesa, já PAGA na data do movimento ────────────────
       const versao = await getAtualVersion(ctx.tenant.id, input.projectId);
       if (!versao) return { ok: false, error: "Versão atual do projeto não encontrada." };
+      // 0079 — conta do plano da empresa, ativa e analítica.
+      const recusaDaConta = await validarContaDoLancamento(ctx.tenant.id, input.contaCef);
+      if (recusaDaConta) return { ok: false, error: recusaDaConta };
       // Prompt DP — com a chave ligada, a categoria é a da conta.
       const pelaConta = await categoriaParaGravar(ctx.tenant.id, input.contaCef, input.categoriaDre);
       if (!pelaConta.ok) return { ok: false, error: pelaConta.error };

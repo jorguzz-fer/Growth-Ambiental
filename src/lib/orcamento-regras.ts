@@ -23,6 +23,12 @@ export interface GrupoDoPlano {
   kind: "cef" | "complementar";
   natureza: "receita" | "despesa";
   ativo: boolean;
+  /**
+   * 0079 — com a chave "orcamento_categoria_do_plano": a categoria da DRE que
+   * TODAS as contas ativas do grupo têm (null = não são homogêneas ou chave
+   * desligada). Vale para linha nova; a categoria gravada na linha manda.
+   */
+  categoria?: string | null;
 }
 
 export interface ContaGravada {
@@ -101,7 +107,7 @@ export function linhasDoBloco(args: {
     rows.push({
       rowKey: g.groupCode,
       label: g.groupName,
-      dreCategory: nat === "receita" ? "Receita" : dreOf.get(g.groupCode) ?? defaultDreCategory(g.kind),
+      dreCategory: nat === "receita" ? "Receita" : dreOf.get(g.groupCode) ?? g.categoria ?? defaultDreCategory(g.kind),
       total: totalOf.get(g.groupCode) ?? 0,
       pct: pctDe(nat, g.groupCode),
       ativo: true,

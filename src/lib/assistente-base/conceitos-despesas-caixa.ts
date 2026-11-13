@@ -31,7 +31,8 @@ Cada despesa tem três datas, e confundi-las é o erro mais caro do sistema:
 
 ### Categoria DRE e plano de contas
 - Toda despesa tem duas classificações:
-  - **Conta CEF / Plano de Contas**: o grupo de custo da obra. Os grupos e subitens são editáveis em Planejamento → Plano de Contas.
+  - **Conta do Plano de Contas**: a natureza do gasto (ex.: Hospedagens, Combustíveis). Só conta ATIVA do plano da empresa; projeto, contrato e fase vão nos campos próprios. Grupos e contas se editam em Planejamento → Plano de Contas.
+  - **Custo direto ou indireto**: vazio = o padrão da conta; marque quando este lançamento for tratado diferente (ex.: combustível da administração).
   - **Categoria DRE**: a lista é fixa: Receita, Custo Variável, Custo Fixo, Despesa Variável, Despesa Fixa, Retiradas, Investimento, Empréstimos e Despesas Financeiras.
 - **Cada conta do Plano de Contas tem uma categoria da DRE.** O sistema traz um padrão de boa prática (gasto de obra é Custo Variável; comissão e marketing, Despesa Variável; escritório, TI e contabilidade, Despesa Fixa; tarifa, juro e multa, Despesas Financeiras). A categoria de cada conta se troca em Planejamento → Plano de Contas.
 - Com a chave "Despesa herda a categoria da DRE do Plano de Contas" ligada, a categoria da despesa vem da conta e aparece travada no lançamento, e os relatórios contam as despesas já lançadas pela categoria da conta. Desligada, a pessoa escolhe a categoria em cada despesa, como antes.
@@ -41,7 +42,7 @@ Cada despesa tem três datas, e confundi-las é o erro mais caro do sistema:
 ### Chaves de mudança
 - São regras novas que mudam números de relatório ou acessos. **Todas nascem desligadas**; desligadas, o sistema funciona exatamente como antes.
 - São ligadas **por empresa**, pela plataforma (Growth Tools), depois de conferida a prévia. A empresa pede a mudança; não há tela de chaves para o cliente.
-- Chaves existentes: padrão novo do membro; Contas a Pagar só com a Atual; saída do ressarcimento segue a despesa; Rascunho fora dos relatórios; definição nova da DRE, do Fluxo de Caixa, do Dashboard e do Resumo Executivo; e despesa herda a categoria do Plano de Contas.
+- Chaves existentes: padrão novo do membro; Contas a Pagar só com a Atual; saída do ressarcimento segue a despesa; Rascunho fora dos relatórios; definição nova da DRE, do Fluxo de Caixa, do Dashboard e do Resumo Executivo; despesa herda a categoria do Plano de Contas; e Orçamento usa a categoria do Plano de Contas.
 - Algumas telas mostram, só para quem administra chaves, um bloco **"Prévia da chave"**.
 
 ### Papéis e Gestão de Acessos

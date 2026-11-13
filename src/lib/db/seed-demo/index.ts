@@ -27,7 +27,8 @@ import { randomBytes } from "node:crypto";
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { hashPassword } from "@/lib/password";
-import { PLANO_CONTAS_PADRAO, linhasDoPlano } from "@/lib/calc/plano-ambiental";
+import { linhasDoPlano } from "@/lib/calc/plano-ambiental";
+import { instalarPlanoPadrao } from "@/lib/planocontas-padrao";
 import { garantirModalidades } from "@/lib/contrato-modalidades";
 import { garantirBiblioteca } from "@/lib/plano-biblioteca";
 import { arvoreDoModelo } from "@/lib/plano-regras";
@@ -114,15 +115,22 @@ function fd(campos: Record<string, string | number | null | undefined>): FormDat
   return f;
 }
 
-/** Categoria da DRE pela conta do plano ambiental. */
+/**
+ * Categoria da DRE e grupo (subgrupo, a chave do Orçamento) pela conta do
+ * plano padrão — o mesmo que a empresa recebe. Conta fora do plano é erro do
+ * seed, não palpite pelo prefixo.
+ */
+const CONTAS_DO_PLANO = new Map(linhasDoPlano("seed").map((c) => [c.code, c]));
+function contaDoPlano(conta: string) {
+  const c = CONTAS_DO_PLANO.get(conta);
+  if (!c) throw new FalhaDoSeed(`Conta ${conta} não existe no plano padrão.`);
+  return c;
+}
 function categoriaDaConta(conta: string): string {
-  const g = conta.split(".")[0];
-  if (["1", "2", "3", "4", "5"].includes(g)) return "Custo Variável";
-  if (g === "RH") return "Custo Fixo";
-  if (["IMP", "C", "M"].includes(g)) return "Despesa Variável";
-  if (conta === "F.4" || conta === "F.6") return "Despesas Financeiras";
-  if (conta === "TI.5") return "Investimento";
-  return "Despesa Fixa";
+  return contaDoPlano(conta).dreCategory;
+}
+function grupoDaContaDoPlano(conta: string): string {
+  return contaDoPlano(conta).groupCode;
 }
 
 // ─────────────────────────────── estado da execução ───────────────────────────────
@@ -209,7 +217,7 @@ async function criarEmpresa(email: string): Promise<{ tenantId: string; senha: s
     if (u) await db.insert(schema.memberships).values({ userId: u.id, tenantId: tenant.id, role: p.role });
   }
 
-  await db.insert(schema.chartAccounts).values(linhasDoPlano(PLANO_CONTAS_PADRAO, tenant.id));
+  await instalarPlanoPadrao(tenant.id, db, undefined, "seed");
   await garantirModalidades(tenant.id);
   await garantirBiblioteca(tenant.id);
   return { tenantId: tenant.id, senha };
@@ -320,7 +328,7 @@ async function despesasDoProjeto(c: Ctx, p: ProjetoDemo, projectId: string) {
         valor: varia(custo.valor, custo.variacao ?? 0),
         mes,
         vencimento: venc,
-        forma: custo.conta.startsWith("2.1") ? "PIX" : "Boleto",
+        forma: custo.conta === "2.3.06" ? "PIX" : "Boleto",
         deixarEmAberto: emAberto,
       });
     }
@@ -330,18 +338,18 @@ async function despesasDoProjeto(c: Ctx, p: ProjetoDemo, projectId: string) {
 async function despesasDaSede(c: Ctx) {
   for (let mes = 0; mes <= MES_CORRENTE; mes++) {
     for (const [contaCef, forn, desc, valor, v] of FIXAS_DA_SEDE) {
-      const dia = contaCef === "A.1" ? 5 : contaCef === "RH.6" ? 8 : 10 + Math.floor(rnd() * 12);
-      await lancarDespesa(c, { projectId: c.sedeId, conta: contaCef, fornecedor: forn, descricao: desc, valor: varia(valor, v), mes, vencimento: dataDoMes(mes, dia), forma: contaCef === "A.1" ? "Boleto" : "PIX" });
+      const dia = contaCef === "3.1.01" ? 5 : contaCef === "3.2.03" ? 8 : 10 + Math.floor(rnd() * 12);
+      await lancarDespesa(c, { projectId: c.sedeId, conta: contaCef, fornecedor: forn, descricao: desc, valor: varia(valor, v), mes, vencimento: dataDoMes(mes, dia), forma: contaCef === "3.1.01" ? "Boleto" : "PIX" });
     }
     // Folha (salários + FGTS) dos funcionários admitidos até o mês.
     const folha = FUNCIONARIOS.filter((f) => f.admissao <= mes).reduce((a, f) => a + f.salario, 0) * 1.08;
-    await lancarDespesa(c, { projectId: c.sedeId, conta: "RH.1", fornecedor: "folha", descricao: `Folha de pagamento e FGTS — ${comp(mes)}`, valor: folha, mes, vencimento: dataDoMes(mes + 1, 5), forma: "Transferência bancária", banco: c.bancoSecundario });
-    await lancarDespesa(c, { projectId: c.sedeId, conta: "F.2", descricao: "Tarifas bancárias", valor: varia(189, 0.1), mes, vencimento: dataDoMes(mes, 28), forma: "Transferência bancária" });
-    if (mes % 3 === 1) await lancarDespesa(c, { projectId: c.sedeId, conta: "RH.3", fornecedor: "sst", descricao: "Exames ocupacionais e PCMSO", valor: varia(690, 0.2), mes, vencimento: dataDoMes(mes, 15) });
-    if (mes === 3) await lancarDespesa(c, { projectId: c.sedeId, conta: "J.2", fornecedor: "conselho", descricao: "Anuidades CREA/CRBio da equipe técnica", valor: 4380, mes, vencimento: dataDoMes(mes, 30) });
-    if (mes === 4 || mes === 10) await lancarDespesa(c, { projectId: c.sedeId, conta: "RH.8", descricao: "Curso de capacitação técnica (licenciamento e GIS)", valor: varia(2600, 0.2), mes, vencimento: dataDoMes(mes, 20), forma: "PIX" });
-    if (mes === 7) await lancarDespesa(c, { projectId: c.sedeId, conta: "C.2", fornecedor: "grafica", descricao: "Documentação e garantias para licitação (PMSB)", valor: 1840, mes, vencimento: dataDoMes(mes, 12) });
-    if (mes === 6) await lancarDespesa(c, { projectId: c.sedeId, conta: "TI.5", descricao: "Notebooks para a equipe de geoprocessamento (2 un.)", valor: 15980, mes, vencimento: dataDoMes(mes, 25), forma: "Transferência bancária" });
+    await lancarDespesa(c, { projectId: c.sedeId, conta: "3.2.01", fornecedor: "folha", descricao: `Folha de pagamento e FGTS — ${comp(mes)}`, valor: folha, mes, vencimento: dataDoMes(mes + 1, 5), forma: "Transferência bancária", banco: c.bancoSecundario });
+    await lancarDespesa(c, { projectId: c.sedeId, conta: "4.2.01", descricao: "Tarifas bancárias", valor: varia(189, 0.1), mes, vencimento: dataDoMes(mes, 28), forma: "Transferência bancária" });
+    if (mes % 3 === 1) await lancarDespesa(c, { projectId: c.sedeId, conta: "3.2.07", fornecedor: "sst", descricao: "Exames ocupacionais e PCMSO", valor: varia(690, 0.2), mes, vencimento: dataDoMes(mes, 15) });
+    if (mes === 3) await lancarDespesa(c, { projectId: c.sedeId, conta: "3.7.01", fornecedor: "conselho", descricao: "Anuidades CREA/CRBio da equipe técnica", valor: 4380, mes, vencimento: dataDoMes(mes, 30) });
+    if (mes === 4 || mes === 10) await lancarDespesa(c, { projectId: c.sedeId, conta: "3.2.05", descricao: "Curso de capacitação técnica (licenciamento e GIS)", valor: varia(2600, 0.2), mes, vencimento: dataDoMes(mes, 20), forma: "PIX" });
+    if (mes === 7) await lancarDespesa(c, { projectId: c.sedeId, conta: "3.5.06", fornecedor: "grafica", descricao: "Documentação e garantias para licitação (PMSB)", valor: 1840, mes, vencimento: dataDoMes(mes, 12) });
+    if (mes === 6) await lancarDespesa(c, { projectId: c.sedeId, conta: "6.3.03", descricao: "Notebooks para a equipe de geoprocessamento (2 un.)", valor: 15980, mes, vencimento: dataDoMes(mes, 25), forma: "Transferência bancária" });
   }
 }
 
@@ -350,7 +358,7 @@ async function impostos(c: Ctx) {
   for (let mes = 0; mes < MES_CORRENTE; mes++) {
     const fat = c.faturadoNoMes.get(mes) ?? 0;
     if (fat <= 0) continue;
-    await lancarDespesa(c, { projectId: c.sedeId, conta: "IMP.3", fornecedor: "governo", descricao: `DAS — Simples Nacional (competência ${comp(mes)})`, valor: fat * 0.098, mes, vencimento: dataDoMes(mes + 1, 20), forma: "Boleto" });
+    await lancarDespesa(c, { projectId: c.sedeId, conta: "5.1.04", fornecedor: "governo", descricao: `DAS — Simples Nacional (competência ${comp(mes)})`, valor: fat * 0.098, mes, vencimento: dataDoMes(mes + 1, 20), forma: "Boleto" });
   }
 }
 
@@ -364,8 +372,8 @@ async function cartaoCorporativo(c: Ctx) {
       await addDespesa(
         fd({
           projectId: mina,
-          contaCef: "2.7",
-          categoriaDre: categoriaDaConta("2.7"),
+          contaCef: "2.3.02",
+          categoriaDre: categoriaDaConta("2.3.02"),
           valor: varia(2380, 0.15),
           competencia: comp(mes),
           cartaoId: c.cartaoId,
@@ -647,7 +655,7 @@ async function orcamentos(c: Ctx) {
       const total = p.duracao + (comExtras ? (p.aditivo?.mesesExtras ?? 0) : 0);
       for (const custo of p.custos) {
         const ms = custo.meses === "todos" ? Array.from({ length: total }, (_, i) => i) : custo.meses;
-        const g = custo.conta.split(".")[0];
+        const g = grupoDaContaDoPlano(custo.conta);
         const linha = porGrupo.get(g) ?? { dre: categoriaDaConta(custo.conta), mes: new Map<number, number>() };
         for (const rel of ms) linha.mes.set(p.inicio + rel, (linha.mes.get(p.inicio + rel) ?? 0) + custo.valor * fator);
         porGrupo.set(g, linha);
@@ -668,15 +676,15 @@ async function orcamentos(c: Ctx) {
   const linhasDaSede = (fator: number) => {
     const porGrupo = new Map<string, { dre: string; mes: Map<number, number> }>();
     const soma = (contaCef: string, mes: number, valor: number) => {
-      const g = contaCef.split(".")[0];
+      const g = grupoDaContaDoPlano(contaCef);
       const l = porGrupo.get(g) ?? { dre: categoriaDaConta(contaCef), mes: new Map<number, number>() };
       l.mes.set(mes, (l.mes.get(mes) ?? 0) + valor * fator);
       porGrupo.set(g, l);
     };
     for (let mes = 0; mes < 24; mes++) {
       for (const [contaCef, , , valor] of FIXAS_DA_SEDE) soma(contaCef, mes, valor);
-      soma("RH.1", mes, FUNCIONARIOS.filter((f) => f.admissao <= mes).reduce((a, f) => a + f.salario, 0) * 1.08);
-      soma("IMP.3", mes, 290000 * 0.098);
+      soma("3.2.01", mes, FUNCIONARIOS.filter((f) => f.admissao <= mes).reduce((a, f) => a + f.salario, 0) * 1.08);
+      soma("5.1.04", mes, 290000 * 0.098);
     }
     return [...porGrupo.entries()].map(([g, l]) => emPercentuais(g, l.dre, l.mes));
   };
@@ -755,7 +763,7 @@ async function estoque(c: Ctx) {
       const ehEpi = cat === "EPI";
       const despesaId = await lancarDespesa(c, {
         projectId: ehEpi ? c.sedeId : c.projetos.agua,
-        conta: ehEpi ? "RH.4" : "2.5",
+        conta: ehEpi ? "2.4.07" : "2.4.05",
         fornecedor: "insumos",
         descricao: `Reposição de estoque — ${cat === "EPI" ? "EPIs de campo" : `materiais de ${cat.toLowerCase()}`}`,
         valor: total,

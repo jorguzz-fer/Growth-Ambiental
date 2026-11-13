@@ -9,6 +9,7 @@ import {
 import { can } from "@/lib/permissions";
 import { emptyPlan } from "@/lib/calc/plan";
 import { buildExportBuffer, type ExportData } from "@/lib/xlsx/growth-template";
+import { planilhaDaEmpresa } from "@/lib/planocontas-servidor";
 
 export const dynamic = "force-dynamic";
 
@@ -31,12 +32,13 @@ export async function GET(req: Request) {
   if (!alvo) return new Response("Versão não encontrada", { status: 404 });
   const { version, project } = alvo;
 
-  const [unitRows, reembRows, permRows, despRows, incc] = await Promise.all([
+  const [unitRows, reembRows, permRows, despRows, incc, plano] = await Promise.all([
     getUnits(ctx.tenant.id, version.id),
     getReembolsos(ctx.tenant.id, version.id),
     getPermutas(ctx.tenant.id, version.id),
     getDespesas(version.id),
     getInccRows(ctx.tenant.id, project.id),
+    planilhaDaEmpresa(ctx.tenant.id),
   ]);
 
   const data: ExportData = {
@@ -74,7 +76,8 @@ export async function GET(req: Request) {
       obs: p.obs ?? "",
     })),
     despesas: despRows
-      .filter((d) => d.contaCef && d.competencia)
+      // Cancelada não vai para a planilha: reimportada, voltaria ativa.
+      .filter((d) => d.contaCef && d.competencia && !d.cancelado)
       .map((d) => ({
         contaCef: d.contaCef as string,
         competencia: d.competencia as string,
@@ -82,7 +85,7 @@ export async function GET(req: Request) {
       })),
   };
 
-  const buffer = buildExportBuffer(data);
+  const buffer = buildExportBuffer(data, plano);
   const slug = version.label.replace(/[^\w]+/g, "_").replace(/^_+|_+$/g, "");
   const filename = `Growth_Tools_Dados_${slug || "versao"}.xlsx`;
 

@@ -1,5 +1,6 @@
 "use server";
 
+import { grupoDaChave } from "@/lib/planocontas-regras";
 import { and, eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { getTenantContext } from "@/lib/context";
@@ -57,7 +58,7 @@ export async function lerLaudoDaMedicao(medicaoId: string, documentId: string): 
     if (budget) {
       for (const l of await getBudgetLines(budget.id, { respeitarSituacao: true })) {
         if (l.kind !== "despesa") continue;
-        const g = (l.rowKey ?? "").split(".")[0];
+        const g = grupoDaChave(l.rowKey, new Set(chart.map((c) => c.groupCode)), new Map(chart.map((c) => [c.code, c.groupCode])));
         orcadoPorGrupo[g] = (orcadoPorGrupo[g] ?? 0) + Number(l.valor);
       }
     }

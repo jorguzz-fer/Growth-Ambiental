@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { DEFAULT_INCC } from "@/lib/calc/constants";
-import { PLANO_CONTAS_PADRAO, linhasDoPlano } from "@/lib/calc/plano-ambiental";
+import { instalarPlanoPadrao } from "@/lib/planocontas-padrao";
 import { garantirModalidades } from "@/lib/contrato-modalidades";
 import { garantirBiblioteca } from "@/lib/plano-biblioteca";
 import { hashPassword } from "@/lib/password";
@@ -127,8 +127,9 @@ export async function provisionTenant(
       );
 
       // Plano de contas padrão (consultoria ambiental).
-      const chartRows = linhasDoPlano(PLANO_CONTAS_PADRAO, tenant.id);
-      await tx.insert(schema.chartAccounts).values(chartRows);
+      // Grupos → subgrupos → contas, com categoria, classe gerencial e custo
+      // direto/indireto explícitos; liga as chaves do plano (empresa nova).
+      await instalarPlanoPadrao(tenant.id, tx);
 
       // Modalidades de serviço iniciais do módulo de Contratos (configuráveis).
       await garantirModalidades(tenant.id, tx);

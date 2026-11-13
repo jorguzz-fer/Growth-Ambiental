@@ -2,6 +2,7 @@ import { getTenantContext, getVersionContext } from "@/lib/context";
 import { getInccRows } from "@/lib/queries";
 import { can } from "@/lib/permissions";
 import { buildTemplateBuffer } from "@/lib/xlsx/growth-template";
+import { planilhaDaEmpresa } from "@/lib/planocontas-servidor";
 
 export const dynamic = "force-dynamic";
 
@@ -22,8 +23,8 @@ export async function GET(req: Request) {
   if (!alvo) return new Response("Versão não encontrada", { status: 404 });
   const { version, project } = alvo;
 
-  const incc = await getInccRows(ctx.tenant.id, project.id);
-  const buffer = buildTemplateBuffer(incc);
+  const [incc, plano] = await Promise.all([getInccRows(ctx.tenant.id, project.id), planilhaDaEmpresa(ctx.tenant.id)]);
+  const buffer = buildTemplateBuffer(incc, plano);
   const slug = version.label.replace(/[^\w]+/g, "_").replace(/^_+|_+$/g, "");
   const filename = `Growth_Tools_Modelo_${slug || "versao"}.xlsx`;
 

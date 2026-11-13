@@ -112,6 +112,21 @@ export const FERRAMENTAS_DE_DADOS: Anthropic.Tool[] = [
     },
   },
   {
+    name: "plano_de_contas",
+    description:
+      "Plano de Contas da empresa (só as contas DELA). assunto: 'sugerir' = contas candidatas para classificar um lançamento pela descrição (só contas ativas; a pessoa confirma no formulário); 'explicar' = finalidade, categoria da DRE, classe gerencial e custo padrão de uma conta; 'estrutura' = grupos e contas (filtro por texto); 'duplicidades' = pares de contas com nomes muito parecidos; 'sem_classificacao' = despesas da versão Atual sem conta ou com conta fora do plano. Projeto, contrato, fase e modalidade NÃO são contas.",
+    input_schema: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        assunto: { type: "string", enum: ["sugerir", "explicar", "estrutura", "duplicidades", "sem_classificacao"] },
+        texto: { type: "string", description: "Descrição do lançamento (sugerir), código da conta (explicar) ou filtro (estrutura); vazio nos demais." },
+        natureza: { type: "string", enum: ["despesa", "receita"] },
+      },
+      required: ["assunto", "texto", "natureza"],
+    },
+  },
+  {
     name: "montar_relatorio",
     description:
       "Monta um relatório exportável em Relatórios Customizados (CSV e PDF) com a DRE, a DRE por categoria e grupo, ou o Fluxo de Caixa previsto; por cenário, mês a mês ou por obra. Devolve o link para a pessoa abrir; escreva-o como link markdown.",

@@ -29,6 +29,8 @@ export interface DespesaDTO {
   fornecedorId: string | null;
   bancoId: string | null;
   contaCef: string | null;
+  /** 0079 — tratamento direto/indireto do lançamento (null = padrão da conta). */
+  tipoCusto?: string | null;
   categoriaDre: string | null;
   competencia: string | null;
   vencimento: string | null;

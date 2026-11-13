@@ -1,6 +1,6 @@
 "use server";
 
-import { and, eq, inArray, ne, sql } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, ne, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db, schema } from "@/lib/db";
 import { getTenantContext } from "@/lib/context";
@@ -16,7 +16,8 @@ import {
   validarRateio,
   type LinhaRateio,
 } from "@/lib/calc/acerto";
-import { CONTAS_CONTROLADORIA } from "@/lib/calc/constants";
+import { contaDoPapel } from "@/lib/planocontas-regras";
+import { validarContaDoLancamento } from "@/lib/planocontas-servidor";
 import type { CategoriaDRE } from "@/lib/calc/constants";
 import { categoriaValidaParaDespesa, ERRO_CATEGORIA_CREDORA } from "@/lib/calc/natureza-dre";
 import { getAtualVersion } from "@/lib/queries";
@@ -307,10 +308,12 @@ export async function concluirAcerto(input: AcertoInput): Promise<AcertoResult> 
             tenantId: ctx.tenant.id,
             numDoc: numDif,
             fornecedorId: input.favorecidoId || null,
-            contaCef:
-              diferenca.tipo === "JUROS"
-                ? CONTAS_CONTROLADORIA.jurosMora
-                : CONTAS_CONTROLADORIA.descontosObtidos,
+            // 0079 — a conta vem do PAPEL técnico no plano da empresa (o código é
+            // dela); empresa antiga sem papel gravado cai no código histórico F.6/F.7.
+            contaCef: contaDoPapel(
+              await tx.select({ code: schema.chartAccounts.code, papel: schema.chartAccounts.papel }).from(schema.chartAccounts).where(and(eq(schema.chartAccounts.tenantId, ctx.tenant.id), isNotNull(schema.chartAccounts.papel))),
+              diferenca.tipo === "JUROS" ? "juros_mora" : "descontos_obtidos",
+            ),
             // Sempre "Despesas Financeiras": mesmo o desconto obtido entra como
             // valor NEGATIVO nesta categoria, para não abrir uma categoria de
             // receita num lançamento de despesa (RG-01).
@@ -547,6 +550,9 @@ export async function ratearEntreObras(
   if (input.categoriaDre && !categoriaValidaParaDespesa(input.categoriaDre)) {
     return { ok: false, error: ERRO_CATEGORIA_CREDORA };
   }
+  // 0079 — a conta do rateio precisa ser do plano da empresa, ativa e analítica.
+  const recusaDaConta = await validarContaDoLancamento(ctx.tenant.id, input.contaCef);
+  if (recusaDaConta) return { ok: false, error: recusaDaConta };
   const valorTotal = Math.abs(input.valorTotal);
   const rateio = calcularRateio(valorTotal, input.linhas);
   // CA-27 — rateio que não fecha é BLOQUEADO: ele determina o custo por centro

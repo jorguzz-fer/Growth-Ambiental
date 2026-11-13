@@ -30,6 +30,8 @@ import {
 } from "@/lib/calc/documento-fiscal";
 import { CATEGORIAS_DRE, type CategoriaDRE } from "@/lib/calc/constants";
 import { getChartAccounts, getStakeholders, getAtualVersion } from "@/lib/queries";
+import { validarContaDoLancamento } from "@/lib/planocontas-servidor";
+import { ehTipoCusto } from "@/lib/planocontas-regras";
 import { categoriaParaGravar } from "@/lib/categoria-do-plano-servidor";
 import { faturasDasParcelas, valoresDasParcelas, type FaturaDoCiclo } from "@/lib/calc/cartao-ciclo";
 import { gravarVinculos } from "@/lib/conciliacao-db";
@@ -209,6 +211,9 @@ async function lancarDespesa(
   // Action é chamável diretamente.
   // Prompt DP — com a chave ligada, a categoria é a da conta no Plano de
   // Contas, qualquer que seja a enviada.
+  // 0079 — a conta precisa ser do plano DESTA empresa, ativa e analítica.
+  const recusaDaConta = await validarContaDoLancamento(ctx.tenant.id, formData.get("contaCef") as string);
+  if (recusaDaConta) throw new Recusa(recusaDaConta);
   const pelaConta = await categoriaParaGravar(ctx.tenant.id, formData.get("contaCef") as string, formData.get("categoriaDre") as string);
   if (!pelaConta.ok) throw new Recusa(pelaConta.error);
   const categoriaFinal = pelaConta.categoria;
@@ -299,6 +304,8 @@ async function lancarDespesa(
     // Compra no cartão não tem conta da empresa: o caixa sai no pagamento da fatura.
     bancoId: cartao ? null : s("bancoId"),
     contaCef: s("contaCef"),
+    // 0079 — tratamento específico direto/indireto; vazio = padrão da conta.
+    tipoCusto: ehTipoCusto(s("tipoCusto")) ? s("tipoCusto") : null,
     categoriaDre: (categoriaFinal as CategoriaDRE) || null,
     competencia: s("competencia"),
     vencimento: cartao ? faturasDoCartao[0].vencimento : pagoPorSocioId ? socioDataPagamento : s("vencimento"),
@@ -663,6 +670,8 @@ export interface DespesaPatch {
   status?: string | null;
   obs?: string | null;
   formaPagamento?: string | null;
+  /** 0079 — "direto" | "indireto" | null (padrão da conta). */
+  tipoCusto?: string | null;
 }
 
 /**
@@ -686,7 +695,13 @@ export async function updateDespesa(id: string, patch: DespesaPatch): Promise<Re
   const set: Partial<typeof schema.despesas.$inferInsert> = {};
   if (patch.fornecedorId !== undefined) set.fornecedorId = patch.fornecedorId || null;
   if (patch.bancoId !== undefined) set.bancoId = patch.bancoId || null;
-  if (patch.contaCef !== undefined) set.contaCef = patch.contaCef || null;
+  if (patch.tipoCusto !== undefined) set.tipoCusto = ehTipoCusto(patch.tipoCusto) ? patch.tipoCusto : null;
+  if (patch.contaCef !== undefined) {
+    // 0079 — trocar para conta inativa, de outra empresa ou grupo é recusado; manter a atual, não.
+    const recusa = await validarContaDoLancamento(ctx.tenant.id, patch.contaCef, existing.contaCef);
+    if (recusa) return { ok: false, error: recusa };
+    set.contaCef = patch.contaCef || null;
+  }
   if (patch.categoriaDre !== undefined || patch.contaCef !== undefined) {
     // Prompt DP — com a chave ligada, a categoria segue a conta (a nova, se
     // mudou; senão a gravada), qualquer que seja a enviada.
@@ -1103,10 +1118,12 @@ export async function extractDespesaFromDoc(
   }
 
   try {
-    const [todosOsCadastros, contas] = await Promise.all([
+    const [todosOsCadastros, todasAsContas] = await Promise.all([
       getStakeholders(ctx.tenant.id),
       getChartAccounts(ctx.tenant.id),
     ]);
+    // 0079 — a leitura por IA só propõe conta ATIVA do plano da empresa (como o seletor).
+    const contas = todasAsContas.filter((c) => c.ativo ?? true);
     // Prompt W, 4.2 — a proposta de lançamento novo só casa com cadastro
     // ATIVO: o seletor do formulário não oferece inativo.
     const fornecedores = todosOsCadastros.filter((f) => f.ativo);

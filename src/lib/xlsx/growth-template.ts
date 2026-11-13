@@ -3,6 +3,7 @@ import { PLANO_CONTAS_PADRAO as PLANO_CONTAS } from "@/lib/calc/plano-ambiental"
 import { emptyPlan } from "@/lib/calc/plan";
 import { calcUnitTotal } from "@/lib/calc/projection";
 import type { InccRow, PaymentPlan, UnitStatus } from "@/lib/calc/types";
+import { normalizar } from "@/lib/planocontas-regras";
 
 /**
  * Formato padrão Growth Tools (planilha modelo .xlsx) — 5 abas:
@@ -49,12 +50,35 @@ const REEMB_HEADERS = ["Data (DD/MM/AAAA)", "Origem", "Valor R$", "Porcentagem %
 const PERM_HEADERS = ["ID", "Unidade", "Cliente", "Data Recebimento", "Tipo", "Descricao", "Valor Estimado R$", "Status", "Data Venda", "Valor Venda R$", "Tipo Permuta", "Observacoes"];
 const PARAM_HEADERS = ["MES", "INCC MENSAL (%)", "INCC ACUMULADO (%)", "Observacao"];
 const DESP_MONTH_COLS = Array.from({ length: 48 }, (_, i) => `${MESES[i % 12]}/Ano${Math.floor(i / 12) + 1}`);
-const DESP_HEADERS = ["Grupo", "Subitem", ...DESP_MONTH_COLS];
+/** "Codigo" (0079) é a chave da importação; planilha antiga, sem ela, casa pelo nome. */
+const DESP_HEADERS = ["Grupo", "Subitem", "Codigo", ...DESP_MONTH_COLS];
+const DESP_PRIMEIRO_MES = 3;
+
+/**
+ * 0079 — as linhas da aba Despesas_CEF vêm do Plano de Contas DA EMPRESA
+ * (contas ativas de despesa, por grupo). Sem plano informado, vale o plano
+ * padrão (testes e empresa sem cadastro).
+ */
+export interface GrupoDaPlanilha {
+  grupo: string;
+  contas: { code: string; nome: string }[];
+}
+
+/** O plano padrão no formato da planilha (só contas de despesa). */
+export function planilhaDoPlanoPadrao(): GrupoDaPlanilha[] {
+  return [...PLANO_CONTAS.obra, ...PLANO_CONTAS.complementar]
+    .filter((g) => g.natureza !== "receita")
+    .map((g) => ({ grupo: g.nome, contas: g.sub.map((s) => ({ code: s.id, nome: s.nome })) }));
+}
+
+function linhasDeDespesa(plano: GrupoDaPlanilha[]): (string | number)[][] {
+  return plano.flatMap((g) => g.contas.map((c) => [g.grupo, c.nome, c.code, ...Array(48).fill("")]));
+}
 
 // ──────────────────────────── geração do modelo ────────────────────────────
 
 /** Gera o workbook modelo (buffer .xlsx) com a estrutura de referência. */
-export function buildTemplateBuffer(incc: InccRow[]): Buffer {
+export function buildTemplateBuffer(incc: InccRow[], plano: GrupoDaPlanilha[] = planilhaDoPlanoPadrao()): Buffer {
   const wb = XLSX.utils.book_new();
 
   // Parametros (48 meses de INCC)
@@ -75,11 +99,8 @@ export function buildTemplateBuffer(incc: InccRow[]): Buffer {
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([REEMB_HEADERS]), SHEETS.reembolso);
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([PERM_HEADERS]), SHEETS.permuta);
 
-  // Despesas_CEF (subitens do plano de contas padrão × 48 meses em branco)
-  const despRows: (string | number)[][] = [DESP_HEADERS];
-  for (const g of [...PLANO_CONTAS.obra, ...PLANO_CONTAS.complementar]) {
-    for (const s of g.sub) despRows.push([g.nome, s.nome, ...Array(48).fill("")]);
-  }
+  // Despesas_CEF (contas do plano da empresa × 48 meses em branco)
+  const despRows: (string | number)[][] = [DESP_HEADERS, ...linhasDeDespesa(plano)];
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(despRows), SHEETS.despesas);
 
   return XLSX.write(wb, { type: "buffer", bookType: "xlsx" }) as Buffer;
@@ -139,7 +160,7 @@ function unitToRow(u: ExportUnit): (string | number)[] {
  * Gera o workbook no MESMO formato do modelo, porém PREENCHIDO com os dados de
  * uma versão (unidades, reembolsos, permutas, despesas, INCC). Reimportável.
  */
-export function buildExportBuffer(data: ExportData): Buffer {
+export function buildExportBuffer(data: ExportData, plano: GrupoDaPlanilha[] = planilhaDoPlanoPadrao()): Buffer {
   const wb = XLSX.utils.book_new();
   const baseYear = data.incc[0]
     ? parseInt(data.incc[0].m.split("/")[1], 10)
@@ -182,26 +203,25 @@ export function buildExportBuffer(data: ExportData): Buffer {
     SHEETS.permuta,
   );
 
-  // Despesas_CEF (matriz subitem × 48 meses preenchida)
-  const despRows: (string | number)[][] = [DESP_HEADERS];
-  const codeToRow = new Map<string, (string | number)[]>();
-  for (const g of [...PLANO_CONTAS.obra, ...PLANO_CONTAS.complementar]) {
-    for (const s of g.sub) {
-      const row: (string | number)[] = [g.nome, s.nome, ...Array(48).fill("")];
-      despRows.push(row);
-      codeToRow.set(s.id, row);
-    }
-  }
+  // Despesas_CEF (matriz conta × 48 meses preenchida). A despesa numa conta
+  // que saiu do plano (inativa, excluída) ganha linha própria: exportar não
+  // pode perder lançamento.
+  const despRows: (string | number)[][] = [DESP_HEADERS, ...linhasDeDespesa(plano)];
+  const codeToRow = new Map<string, (string | number)[]>(despRows.slice(1).map((r) => [String(r[2]), r]));
   for (const d of data.despesas) {
-    const row = codeToRow.get(d.contaCef);
-    if (!row) continue;
+    let row = codeToRow.get(d.contaCef);
+    if (!row) {
+      row = ["Fora do plano ativo", d.contaCef, d.contaCef, ...Array(48).fill("")];
+      despRows.push(row);
+      codeToRow.set(d.contaCef, row);
+    }
     const parts = d.competencia.split("/");
     if (parts.length !== 2) continue;
     const mm = Number(parts[0]);
     const yyyy = Number(parts[1]);
     const col = (yyyy - baseYear) * 12 + (mm - 1);
     if (col < 0 || col >= 48) continue;
-    const idx = 2 + col;
+    const idx = DESP_PRIMEIRO_MES + col;
     row[idx] = (Number(row[idx]) || 0) + d.valor;
   }
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(despRows), SHEETS.despesas);
@@ -232,7 +252,16 @@ export interface ParsedPermuta {
 export interface ParsedDespesa {
   contaCef: string; competencia: string; vencimento: string; valor: number;
 }
+/** Linha da matriz de despesas com valor, mas sem conta reconhecida. */
+export interface DespesaSemConta {
+  grupo: string;
+  subitem: string;
+  codigo: string;
+  celulas: number;
+}
 export interface ParsedWorkbook {
+  /** Linhas com valor que não casaram com conta do plano: a importação recusa. */
+  despesasSemConta: DespesaSemConta[];
   incc: { mes: string; monthly: number; accumulated: number }[];
   units: ParsedUnit[];
   reembolsos: ParsedReembolso[];
@@ -264,7 +293,7 @@ function sheetRows(wb: XLSX.WorkBook, name: string): Record<string, unknown>[] {
   return XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: "" });
 }
 
-export function parseWorkbook(buffer: Buffer | ArrayBuffer): ParsedWorkbook {
+export function parseWorkbook(buffer: Buffer | ArrayBuffer, plano: GrupoDaPlanilha[] = planilhaDoPlanoPadrao()): ParsedWorkbook {
   const wb = XLSX.read(buffer, { type: "buffer" });
 
   // Parametros / INCC
@@ -327,13 +356,20 @@ export function parseWorkbook(buffer: Buffer | ArrayBuffer): ParsedWorkbook {
       valorVenda: num(r["Valor Venda R$"]), tipoPermuta: str(r["Tipo Permuta"]), obs: str(r["Observacoes"]),
     }));
 
-  // Despesas (matriz subitem × mês → um lançamento por célula preenchida)
-  const nameToCode = subitemNameToCode();
+  // Despesas (matriz conta × mês → um lançamento por célula preenchida)
+  const acha = localizadorDeConta(plano);
   const despesas: ParsedDespesa[] = [];
+  const despesasSemConta: DespesaSemConta[] = [];
   for (const r of sheetRows(wb, SHEETS.despesas)) {
+    const grupo = str(r["Grupo"]);
     const subitem = str(r["Subitem"]);
-    const code = nameToCode.get(subitem);
-    if (!code) continue;
+    const codigo = str(r["Codigo"]);
+    const code = acha(codigo, grupo, subitem);
+    if (!code) {
+      const celulas = DESP_MONTH_COLS.filter((col) => num(r[col]) !== 0).length;
+      if (celulas) despesasSemConta.push({ grupo, subitem, codigo, celulas });
+      continue;
+    }
     DESP_MONTH_COLS.forEach((col, i) => {
       const valor = num(r[col]);
       if (valor === 0) return;
@@ -344,13 +380,28 @@ export function parseWorkbook(buffer: Buffer | ArrayBuffer): ParsedWorkbook {
     });
   }
 
-  return { incc, units, reembolsos, permutas, despesas };
+  return { incc, units, reembolsos, permutas, despesas, despesasSemConta };
 }
 
-/** Mapa nome-do-subitem → código do plano de contas padrão (custos diretos + estrutura). */
-function subitemNameToCode(): Map<string, string> {
-  const m = new Map<string, string>();
-  for (const g of PLANO_CONTAS.obra) for (const s of g.sub) m.set(s.nome, s.id);
-  for (const g of PLANO_CONTAS.complementar) for (const s of g.sub) m.set(s.nome, s.id);
-  return m;
+/**
+ * Conta de uma linha da matriz: pelo código (coluna "Codigo"), senão pelo par
+ * grupo + nome, senão pelo nome — só quando ele é único no plano. Nome
+ * repetido em grupos diferentes, sem código, não casa (não adivinha).
+ */
+function localizadorDeConta(plano: GrupoDaPlanilha[]) {
+  const porCodigo = new Set<string>();
+  const porPar = new Map<string, string>();
+  const porNome = new Map<string, string | null>();
+  for (const g of plano) {
+    for (const c of g.contas) {
+      porCodigo.add(c.code);
+      porPar.set(`${normalizar(g.grupo)}|${normalizar(c.nome)}`, c.code);
+      const n = normalizar(c.nome);
+      porNome.set(n, porNome.has(n) ? null : c.code);
+    }
+  }
+  return (codigo: string, grupo: string, nome: string): string | null => {
+    if (codigo) return porCodigo.has(codigo) ? codigo : null;
+    return porPar.get(`${normalizar(grupo)}|${normalizar(nome)}`) ?? porNome.get(normalizar(nome)) ?? null;
+  };
 }

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import * as XLSX from "xlsx";
-import { buildTemplateBuffer, parseWorkbook, SHEETS } from "./growth-template";
+import { buildTemplateBuffer, parseWorkbook, planilhaDoPlanoPadrao, SHEETS, type GrupoDaPlanilha } from "./growth-template";
 import type { InccRow } from "@/lib/calc/types";
 import { PLANO_CONTAS_PADRAO as PLANO_CONTAS } from "@/lib/calc/plano-ambiental";
 
@@ -46,9 +46,9 @@ function filledWorkbook(): Buffer {
     SHEETS.permuta,
   );
 
-  // Despesas: coloca 125000 no Jan/Ano1 do 1º subitem (Serviços técnicos → 1.1)
+  // Despesas: coloca 125000 no Jan/Ano1 do 1º subitem do plano padrão
   const despAoa = XLSX.utils.sheet_to_json(tmpl.Sheets[SHEETS.despesas], { header: 1 }) as unknown[][];
-  despAoa[1][2] = 125000;
+  despAoa[1][3] = 125000; // 1ª coluna de mês (depois de Grupo, Subitem, Codigo)
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(despAoa), SHEETS.despesas);
 
   return XLSX.write(wb, { type: "buffer", bookType: "xlsx" }) as Buffer;
@@ -67,9 +67,10 @@ describe("growth-template", () => {
     // (o pacote de Controladoria acrescentou as contas F.6 a F.9 ao grupo
     // Financeiro/Contábil, para RG-03, RG-04 e RG-07) e um número cravado aqui
     // quebraria a cada conta nova sem apontar defeito algum.
-    const esperado =
-      PLANO_CONTAS.obra.reduce((a, g) => a + g.sub.length, 0) +
-      PLANO_CONTAS.complementar.reduce((a, g) => a + g.sub.length, 0);
+    // 0079: só contas de despesa — conta de receita não é lançada como despesa.
+    const esperado = [...PLANO_CONTAS.obra, ...PLANO_CONTAS.complementar]
+      .filter((g) => g.natureza !== "receita")
+      .reduce((a, g) => a + g.sub.length, 0);
     const wb = XLSX.read(buildTemplateBuffer(incc), { type: "buffer" });
     const rows = XLSX.utils.sheet_to_json(wb.Sheets[SHEETS.despesas], { header: 1 });
     expect(rows.length).toBe(1 + esperado); // cabeçalho + subitens
@@ -99,8 +100,8 @@ describe("growth-template", () => {
   it("round-trip: despesa da matriz vira lançamento com conta e competência", () => {
     const p = parseWorkbook(filledWorkbook());
     expect(p.despesas).toHaveLength(1);
-    // 1º subitem = "Serviços técnicos (...)" → código 1.1 ; Jan/Ano1 com base 2025
-    expect(p.despesas[0]).toMatchObject({ contaCef: "1.1", competencia: "01/2025", valor: 125000 });
+    // 1º subitem do plano padrão (o código vem do plano, nunca fixo no teste); Jan/Ano1 com base 2025
+    expect(p.despesas[0]).toMatchObject({ contaCef: PLANO_CONTAS.obra[0].sub[0].id, competencia: "01/2025", valor: 125000 });
   });
 });
 
@@ -159,5 +160,91 @@ describe("buildExportBuffer (round-trip export → import)", () => {
     expect(d).toBeTruthy();
     expect(d!.valor).toBe(12345);
     expect(d!.competencia).toBe("03/2026");
+  });
+});
+
+// ─────────────── 0079: plano DA EMPRESA na planilha de lançamentos ───────────────
+
+const planoDaEmpresa: GrupoDaPlanilha[] = [
+  { grupo: "9.1 Campo", contas: [{ code: "9.1.01", nome: "Hospedagens" }, { code: "9.1.02", nome: "Diárias" }] },
+  { grupo: "9.2 Escritório", contas: [{ code: "9.2.01", nome: "Aluguel" }, { code: "9.2.02", nome: "Diárias" }] },
+];
+
+function comValores(plano: GrupoDaPlanilha[], preencher: (aoa: unknown[][]) => void): Buffer {
+  const tmpl = XLSX.read(buildTemplateBuffer(incc, plano), { type: "buffer" });
+  const aoa = XLSX.utils.sheet_to_json(tmpl.Sheets[SHEETS.despesas], { header: 1 }) as unknown[][];
+  preencher(aoa);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, tmpl.Sheets[SHEETS.parametros], SHEETS.parametros);
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), SHEETS.despesas);
+  return XLSX.write(wb, { type: "buffer", bookType: "xlsx" }) as Buffer;
+}
+
+describe("planilha de lançamentos com o plano da empresa (0079)", () => {
+  it("o modelo lista as contas do plano informado, com o código", () => {
+    const wb = XLSX.read(buildTemplateBuffer(incc, planoDaEmpresa), { type: "buffer" });
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets[SHEETS.despesas], { header: 1 }) as unknown[][];
+    expect(rows[0].slice(0, 3)).toEqual(["Grupo", "Subitem", "Codigo"]);
+    expect(rows.slice(1).map((r) => r[2])).toEqual(["9.1.01", "9.1.02", "9.2.01", "9.2.02"]);
+  });
+
+  it("o plano padrão na planilha não traz conta de receita", () => {
+    const codigos = planilhaDoPlanoPadrao().flatMap((g) => g.contas.map((c) => c.code));
+    const receitas = PLANO_CONTAS.complementar.filter((g) => g.natureza === "receita").flatMap((g) => g.sub.map((s) => s.id));
+    expect(receitas.length).toBeGreaterThan(0);
+    for (const r of receitas) expect(codigos).not.toContain(r);
+  });
+
+  it("casa pelo código: nome repetido em grupos diferentes vai para a conta certa", () => {
+    const buf = comValores(planoDaEmpresa, (aoa) => {
+      aoa[4][3] = 700; // 9.2.02 Diárias (escritório)
+    });
+    const p = parseWorkbook(buf, planoDaEmpresa);
+    expect(p.despesas).toEqual([expect.objectContaining({ contaCef: "9.2.02", valor: 700 })]);
+    expect(p.despesasSemConta).toEqual([]);
+  });
+
+  it("planilha antiga (sem código) casa por grupo + nome; nome ambíguo sem grupo não casa", () => {
+    const wb = XLSX.utils.book_new();
+    const meses = ["Jan/Ano1"];
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([
+      ["Grupo", "Subitem", ...meses],
+      ["9.1 Campo", "hospedagens", 100],   // nome único, caixa diferente
+      ["9.2 Escritório", "Diárias", 200],  // par grupo + nome
+      ["Outro", "Diárias", 300],           // ambíguo: não adivinha
+    ]), SHEETS.despesas);
+    const p = parseWorkbook(XLSX.write(wb, { type: "buffer", bookType: "xlsx" }) as Buffer, planoDaEmpresa);
+    expect(p.despesas.map((d) => [d.contaCef, d.valor])).toEqual([["9.1.01", 100], ["9.2.02", 200]]);
+    expect(p.despesasSemConta).toEqual([{ grupo: "Outro", subitem: "Diárias", codigo: "", celulas: 1 }]);
+  });
+
+  it("código fora do plano (ou conta inativa) é apontado, nunca descartado em silêncio", () => {
+    const buf = comValores(planoDaEmpresa, (aoa) => {
+      aoa[1][2] = "X.99";
+      aoa[1][3] = 50;
+    });
+    const p = parseWorkbook(buf, planoDaEmpresa);
+    expect(p.despesas).toEqual([]);
+    expect(p.despesasSemConta).toEqual([{ grupo: "9.1 Campo", subitem: "Hospedagens", codigo: "X.99", celulas: 1 }]);
+  });
+
+  it("exportação não perde despesa de conta que saiu do plano ativo", () => {
+    const data: ExportData = {
+      incc: [{ m: "01/2026", mo: 0, ac: 0 }],
+      units: [], reembolsos: [], permutas: [],
+      despesas: [
+        { contaCef: "9.1.01", competencia: "01/2026", valor: 10 },
+        { contaCef: "ANTIGA.1", competencia: "02/2026", valor: 20 },
+      ],
+    };
+    const wb = XLSX.read(buildExportBuffer(data, planoDaEmpresa), { type: "buffer" });
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets[SHEETS.despesas], { header: 1 }) as unknown[][];
+    const antiga = rows.find((r) => r[2] === "ANTIGA.1")!;
+    expect(antiga[0]).toBe("Fora do plano ativo");
+    expect(antiga[4]).toBe(20);
+    // reimportar aponta a linha (a conta não está no plano ativo): nada some calado
+    const p = parseWorkbook(buildExportBuffer(data, planoDaEmpresa), planoDaEmpresa);
+    expect(p.despesas).toEqual([expect.objectContaining({ contaCef: "9.1.01", valor: 10 })]);
+    expect(p.despesasSemConta.map((d) => d.codigo)).toEqual(["ANTIGA.1"]);
   });
 });
