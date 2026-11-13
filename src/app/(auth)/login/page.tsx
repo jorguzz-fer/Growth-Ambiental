@@ -81,7 +81,7 @@ export default function LoginPage() {
           Growth Tools
         </div>
         <div className="mt-0.5 font-[family-name:var(--font-mono)] text-[9px] uppercase tracking-[0.2em] text-white/30">
-          Construction App
+          Ambiental App
         </div>
       </div>
 

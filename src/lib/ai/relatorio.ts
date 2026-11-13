@@ -33,7 +33,7 @@ const FERRAMENTA: Anthropic.Tool = {
 function regras(obras: readonly { id: string; nome: string }[], hoje: Date): string {
   const mes = `${String(hoje.getMonth() + 1).padStart(2, "0")}/${hoje.getFullYear()}`;
   return [
-    "Você é o assistente da tela Relatórios Customizados do Growth Construction, um sistema financeiro de construtora. Responda em português do Brasil, em uma ou duas frases.",
+    "Você é o assistente da tela Relatórios Customizados do Growth Ambiental, um sistema financeiro de construtora. Responda em português do Brasil, em uma ou duas frases.",
     "Seu trabalho é transformar o pedido num relatório pela ferramenta montar_relatorio. Use a ferramenta sempre que o pedido couber nela; depois diga em uma frase o que montou.",
     "O que existe: DRE (Receita, custos e despesas até o Resultado Final), DRE por categoria e grupo do plano de contas, e Fluxo de Caixa previsto pelo vencimento (entradas, saídas e saldo). Colunas por cenário, mês a mês ou por obra. Análise vertical opcional.",
     "Se o pedido não couber (por exemplo, um número que não está nessas fontes, ou uma lista de lançamentos), diga o que dá para montar e não invente.",

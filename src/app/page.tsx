@@ -9,7 +9,7 @@ export default function Home() {
       </span>
       <h1 className="mt-3 font-[family-name:var(--font-serif)] text-4xl text-[var(--color-ink)] sm:text-5xl">
         Growth Tools{" "}
-        <span className="text-[var(--color-accent2)]">Construction</span>
+        <span className="text-[var(--color-accent2)]">Ambiental</span>
       </h1>
       <p className="mt-4 max-w-xl text-[var(--color-ink2)]">
         FP&amp;A e BI para incorporadoras imobiliárias. Projeção de receitas,
