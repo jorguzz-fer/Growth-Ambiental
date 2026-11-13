@@ -76,7 +76,7 @@ npm run dev                     # http://localhost:3000
 | `npm run test:all` | `typecheck` + `lint` + `test:db` — é o portão de qualidade |
 | `npm run db:generate` | Gera migrações Drizzle |
 | `npm run db:migrate` | Aplica migrações |
-| `npm run db:seed` | Cria uma empresa de **demonstração fictícia** (exige `SEED_ADMIN_EMAIL`; recusa produção) |
+| `npm run db:seed` | Cria a empresa de **demonstração fictícia** completa (exige `SEED_ADMIN_EMAIL`; recusa produção sem `SEED_DEMO_EM_PRODUCAO=sim`) |
 | `npm run db:studio` | Drizzle Studio (explorar o banco) |
 
 #### Por que `test:all` e não `test`
@@ -150,16 +150,28 @@ do `drizzle-kit` em runtime) antes de subir o servidor. É idempotente: a cada
 deploy aplica só o que falta.
 
 **Seed de demonstração (opcional):** o banco funciona vazio — empresas reais
-nascem pelo console da plataforma (`/plataforma`). Para avaliar o app com uma
-empresa **fictícia**, rode no terminal do container (ou localmente
-`npm run db:seed`):
+nascem pelo console da plataforma (`/plataforma`). Para apresentar o app, o
+seed cria a **Veredas Consultoria Ambiental**, uma consultoria **fictícia**
+com ~12 meses de histórico e ~12 de projeção, relativos à data em que roda:
+6 projetos com contrato, itens, marcos, medições, aditivo, faturas e
+recebimentos conciliados; ~350 despesas pagas (projetos, sede, folha, DAS,
+cartão corporativo); orçamento e previsão; plano de trabalho; estoque; equipe
+e fornecedores. Os fluxos passam pelas **ações reais do app** (ver
+`src/lib/db/seed-demo/`), então os números batem entre DRE, fluxo de caixa,
+contratos e contas a pagar/receber.
+
+No terminal do container (ou localmente, `npm run db:seed`):
 
 ```bash
-SEED_ADMIN_EMAIL=voce@exemplo.com SEED_DEMO_EM_PRODUCAO=sim node seed.mjs
+SEED_ADMIN_EMAIL=demo@suaempresa.com.br SEED_DEMO_EM_PRODUCAO=sim node seed.mjs
 ```
 
-Sem `SEED_ADMIN_PASSWORD`, a senha é gerada, mostrada uma vez e a troca é
-obrigatória no primeiro acesso. Nenhum usuário, e-mail ou senha fica no código.
+- `SEED_ADMIN_EMAIL` é o login da demonstração e precisa ser um e-mail **sem
+  vínculo com outra empresa** (o app abre a primeira empresa do usuário).
+- Sem `SEED_ADMIN_PASSWORD`, a senha é gerada, mostrada uma vez e a troca é
+  obrigatória no primeiro acesso. Nenhum usuário, e-mail ou senha fica no código.
+- Rodar de novo não duplica nada; `SEED_DEMO_RECRIAR=sim` apaga a empresa de
+  demonstração e recria do zero (com as datas atualizadas para o mês corrente).
 
 Variáveis obrigatórias em produção:
 
