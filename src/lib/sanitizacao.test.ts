@@ -26,8 +26,12 @@ const CNPJ_SINTETICOS = new Set([
   "00000001000136", "00000003000206", "00000004000170", // gerados para este repositório (raiz 00.000.00x)
   "11222333000181", "12345678000195", // exemplos públicos de documentação de validação
 ]);
-/** Domínio de e-mail aceito: de exemplo, reservado ou local de teste. */
-const DOMINIO_DE_EXEMPLO = /^(exemplo\.com(\.br)?|example\.(com|org)|x\.com(\.br)?|empresa\.com|[a-z0-9-]+\.local|teste?\.(com|local))$/i;
+/**
+ * Domínio de e-mail aceito: de exemplo, reservado ou local de teste. Os
+ * domínios de topo `.exemplo` (inexistente) e `.example`/`.invalid`
+ * (reservados, RFC 2606) não alcançam ninguém — o seed de demonstração usa.
+ */
+const DOMINIO_DE_EXEMPLO = /^(exemplo\.com(\.br)?|example\.(com|org)|x\.com(\.br)?|empresa\.com|[a-z0-9-]+\.(local|exemplo|example|invalid)|teste?\.(com|local))$/i;
 const PROVEDOR_PESSOAL = /@(gmail|googlemail|hotmail|outlook|live|yahoo|icloud|uol|bol|terra|ig)\.[a-z.]+/i;
 /**
  * Celular: com DDI 55 (formatado ou não), ou com DDD entre parênteses ou
