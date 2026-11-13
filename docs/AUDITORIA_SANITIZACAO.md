@@ -77,7 +77,23 @@ varredura do histórico com `git log -p`, e o teste automatizado
 - `docs/MODULO_CONTRATOS_ADITIVOS.md`: o nome do cliente atual saiu do texto ("o primeiro cliente").
 
 #### 4.1 Revisão contextual dos documentos
-_(preenchido ao fim da revisão — ver abaixo)_
+Quatro revisões independentes, cada uma lendo o contexto de cada ocorrência
+(nunca troca por nome): **~306 arquivos revisados, ~51 alterados, nenhum
+removido além do diagnóstico de produção**.
+
+| Lote | Revisados / alterados | O que saiu |
+|---|---|---|
+| `docs/v2/PROMPTS.md` (1 MB) | 1 / 1 (53 trocas) | valores reais de mockups e de produção; contagens de produção; números de pedido reais; nomes de sócios em contas, de funcionárias, de terceiros e de fornecedores; dígitos de CPF mascarado; endereço, CEP e coordenadas de obra |
+| Mockup HTML, SPEC, revisões, BDI, emissor, agente | ~15 / 7 | no mockup: pessoas, fornecedores, sócios, documentos (RG, CTPS, PIS), contas, endereço e renda de comprador; valores monetários arredondados e reescalados por um fator único (somas, saldos e percentuais continuam coerentes; HTML e JS íntegros); SPEC: número de unidades e custo do empreendimento, preço cobrado do piloto; BDI: planilha real trocada por exemplo sintético recalculado pelas mesmas fórmulas; nome de outro cliente e contagem de produção no doc do agente |
+| V2-PROMPT A–K + decisões/bloqueios | 112 / 22 | resultado do diagnóstico de numeração de produção; nomes de funcionários; contagens e somas de produção por empresa; VGV real; valor de divergência de produção; código IBGE da sede; links para o diagnóstico removido |
+| V2-PROMPT L–Z, V3, SQL e demais | 178 / 21 | dados reais de numeração; nomes de funcionários e de sócios em rótulos de contas; lançamento real de produção; simulação real de venda; soma real dos percentuais do empreendimento; contagens de produção |
+
+**Mantidos de propósito (decisão registrada):**
+- Números da **base local de desenvolvimento** (lançamentos de teste criados e apagados pelos próprios testes, conferências no navegador) — não são produção.
+- Achados de produção cujo resultado é **"nenhum/zero"** — não expõem dado e justificam decisões técnicas.
+- Durações e datas de início/fim de duas obras com rótulo genérico ("OBRA nn") usadas para ilustrar a contagem de competências — sem valor, nome ou local.
+- Preço de licença e custo de IA do **próprio produto** citados em reunião — dado comercial do fornecedor do software, não do cliente.
+- Preço de tabela da fixture de cálculo (`calc/__fixtures__.ts`): base dos **testes de paridade** do simulador e da projeção (financiamento, SAC/PRICE, totais). Trocá-lo exigiria refazer asserções de cálculo financeiro; sem o nome do empreendimento e o código da unidade (removidos), o número isolado não identifica ninguém.
 
 ## 5. Dados de demonstração e de teste preservados (justificados)
 
@@ -110,8 +126,19 @@ _(preenchido ao fim da revisão — ver abaixo)_
 ### Varredura automatizada permanente — `src/lib/sanitizacao.test.ts`
 Varre **todo arquivo versionado** a cada `vitest run` e falha se aparecer: arquivo compactado; documento/script de diagnóstico de produção; e-mail de provedor pessoal ou de domínio que não seja de exemplo; celular brasileiro que não seja visivelmente fictício; CPF/CNPJ **válido** fora da lista fechada de sintéticos. Não lista nomes reais (isso os devolveria ao código); nomes são cobertos pela revisão manual registrada aqui.
 
-### Testes de regressão
-_(preenchido ao fim — ver abaixo)_
+### Testes de regressão (após a sanitização)
+| Verificação | Antes | Depois |
+|---|---|---|
+| `npm run typecheck` | ✓ | ✓ |
+| `npm run lint` | ✓ | ✓ |
+| `npm run test:db` (unitários + integração com banco isolado) | 286 arquivos · 2.329 testes · 0 pulados | **288 arquivos · 2.337 testes · 0 pulados** (+ `sanitizacao.test.ts`, + `superadmin.test.ts`) |
+| `next build` | ✓ | ✓ |
+
+Cobertos pela suíte: autenticação e permissões (incl. 400 combinações por papel), isolamento multi-tenant, contratos, DRE, fluxo, contas a pagar/receber, conciliação, cartões, NFS-e, Cris (ferramentas e privacidade), backup. Nenhuma asserção de cálculo financeiro foi alterada: as trocas nos testes mudaram só identificadores (nomes, documentos, contas, município), mantendo as relações que cada teste verifica.
+
+**Inicialização sem dados reais** (banco novo e isolado): só as migrações → 0 empresas, 0 usuários, 0 projetos, 0 contratos, 0 lançamentos. Seed sem `SEED_ADMIN_EMAIL` → recusado; com `NODE_ENV=production` → recusado; em modo demonstração → só a empresa fictícia, com troca de senha obrigatória. O provisionamento de empresa nova segue coberto pelos testes de integração.
+
+**Referências quebradas:** nenhuma — links para os três arquivos removidos foram trocados por texto; nenhum código importa o ZIP ou os arquivos removidos (`next build` e `tsc` confirmam).
 
 ## 8. Riscos remanescentes
 
