@@ -9,7 +9,7 @@ import { DateField } from "@/components/ui/date-field";
 import { useCrisFormulario } from "@/components/app/cris-contexto";
 import { salvarContrato, salvarItem, type DadosDoContrato } from "@/lib/actions/contratos";
 import { formularioDoContrato, itensDaProposta, type ItemProposto } from "@/lib/contrato-cris";
-import { INDICES_DE_REAJUSTE } from "@/lib/incc-regras";
+import { INDICES_DE_REAJUSTE, indicesOferecidosNoContrato } from "@/lib/incc-regras";
 import { CRITERIOS_MEDICAO, ROTULO_CRITERIO, ROTULO_TIPO_CONTRATO, ROTULO_VINCULO, TIPOS_CONTRATO, VINCULOS_VALOR, lerNumero, totalDoItem } from "@/lib/contrato-regras";
 import { brl, Mensagem } from "./comum";
 
@@ -266,7 +266,7 @@ export function ContratoForm({ opcoes, inicial, podeEditarValor = true, projetoI
           <Label>Índice de reajuste</Label>
           <Select value={f.indiceReajuste ?? ""} onChange={(e) => set("indiceReajuste", e.target.value)}>
             <option value="">— sem reajuste —</option>
-            {INDICES_DE_REAJUSTE.map((i) => (
+            {indicesOferecidosNoContrato(f.indiceReajuste).map((i) => (
               <option key={i} value={i}>
                 {i}
               </option>

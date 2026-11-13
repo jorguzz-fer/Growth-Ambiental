@@ -34,8 +34,13 @@ export interface Screen {
 
 /** Todas as telas governadas (rota → tela). `perfil` é pessoal e não entra aqui. */
 export const SCREENS: Screen[] = [
+  // Growth Ambiental: saíram com os módulos de construção e incorporação as
+  // telas "unidades", "simulador", "permuta", "parametros" (INCC), "medicao" e
+  // "medicaolanc" (medição por grupo de obra / Relatório CEF), "reembolso"
+  // (Liberações de Obra) e "projecao" (Projeção de Receitas por unidade) —
+  // ver telas-removidas.ts. Permissão já gravada com essas chaves fica sem
+  // efeito (não há tela nem ação que a consulte).
   { id: "dashboard", label: "Dashboard", modulo: "Reports" },
-  { id: "projecao", label: "Projeção de Receitas", modulo: "Reports" },
   // Prompt AB2: o Consolidado saiu (redireciona para a Projeção de Receitas).
   { id: "caixa", label: "Controle de Caixa", modulo: "Conciliação de Caixa" },
   // Prompt L, Parte 9: a rota /fechamento saiu; "criar" aqui é fechar o dia no cartão do Caixa.
@@ -44,12 +49,10 @@ export const SCREENS: Screen[] = [
   { id: "balancodia", label: "Dias fechados (no Caixa)", modulo: "Reports" },
   { id: "dre", label: "DRE", modulo: "Reports" },
   { id: "fluxocaixa", label: "Fluxo de Caixa", modulo: "Reports" },
-  { id: "medicao", label: "Medição de Projeto — Relatório CEF", modulo: "Reports" },
   { id: "resumo", label: "Resumo Executivo", modulo: "Reports" },
   // Prompt RC: tela nova. Dentro dela, cada relatório também exige ver a DRE
   // ou o Fluxo — a tela não abre número que a pessoa não vê nas telas de origem.
   { id: "relatorios", label: "Relatórios Customizados", modulo: "Reports" },
-  { id: "unidades", label: "Unidades / Dados de Venda", modulo: "Receitas" },
   { id: "budget", label: "Orçamentos", modulo: "Planejamento" },
   { id: "forecast", label: "Previsão Atualizada", modulo: "Planejamento" },
   // Prompt AP, BAP-2: a trava de versão saiu de /versao e mora nas telas de
@@ -60,25 +63,17 @@ export const SCREENS: Screen[] = [
   // PRÓPRIA — desaprovar tira número de relatório, não pode valer o `editar`
   // da tela. Nasce só com owner e admin (TELAS_SENSIVEIS).
   { id: "versaoaprova", label: "Aprovar e desaprovar versão", modulo: "Planejamento" },
-  { id: "clientes", label: "Clientes (Compradores)", modulo: "Receitas" },
+  { id: "clientes", label: "Clientes (Contratantes)", modulo: "Receitas" },
   // Permissão de CAMPO, não de rota (Prompt M, 5.4 · BM-3): renda, FGTS, score,
   // restrições, estado civil e inteligência de mercado do comprador. Nasce só
   // com owner e admin — ver TELAS_SENSIVEIS.
   { id: "clientesdados", label: "Clientes — dados financeiros e de perfil", modulo: "Receitas" },
   { id: "contasreceber", label: "Contas a Receber", modulo: "Receitas" },
-  { id: "medicaolanc", label: "Medição de Projeto — Lançar medição", modulo: "Despesas" },
-  { id: "simulador", label: "Simulador", modulo: "Receitas" },
-  // O `id` continua "reembolso" DE PROPÓSITO: ele é a chave gravada em
-  // `membership.permissions` e o primeiro segmento da rota. Trocar o id
-  // órfãozaria toda permissão já salva — o rótulo é o que mudou de nome.
-  { id: "reembolso", label: "Liberações de Obra", modulo: "Receitas" },
-  { id: "permuta", label: "Inventário de Permuta", modulo: "Receitas" },
   // Prompt AG (6.1/6.2): a lista e o rascunho das notas EMITIDAS (NFS-e);
   // emitir e cancelar são permissões próprias, com efeito externo.
   { id: "notasfiscais", label: "Notas Fiscais (emitidas)", modulo: "Receitas" },
   { id: "notaemitir", label: "Emitir nota fiscal (NFS-e)", modulo: "Receitas" },
   { id: "notacancelar", label: "Cancelar nota fiscal (NFS-e)", modulo: "Receitas" },
-  { id: "parametros", label: "Índices de Reajuste", modulo: "Receitas" },
   // Growth Ambiental — Contratos e Aditivos (0077). "contratos" é a rota; as
   // demais são chaves de ação, sem página própria (como "conciliacao").
   // Aprovar é sensível: nasce só com owner e admin e se concede por membro.
@@ -162,7 +157,6 @@ const EDIT: ScreenPerm = { ver: true, criar: true, editar: true, excluir: false 
 export const CONTADOR_VE: ReadonlySet<string> = new Set([
   "dre",
   "fluxocaixa",
-  "medicao",
   "resumo",
   "planocontas",
   "despesas",
@@ -177,8 +171,8 @@ export const CONTADOR_VE: ReadonlySet<string> = new Set([
  * owner e admin. Critério POSITIVO — tela que não está aqui nasce negada para
  * o membro, inclusive toda tela nova de `SCREENS` (1.5).
  *
- * "Medição" entra com as duas rotas (relatório e lançamento): o Prompt V as
- * funde num item só, e hoje o membro já alcança as duas.
+ * Growth Ambiental: Medição de obra, Unidades e Permuta saíram com os módulos
+ * de construção; a medição de serviço é do contrato.
  */
 export const MEMBRO_TELAS = new Set([
   "despesas",
@@ -186,12 +180,8 @@ export const MEMBRO_TELAS = new Set([
   "fornecedores",
   "caixa",
   "contas",
-  "medicao",
-  "medicaolanc",
   "clientes",
-  "unidades",
   "contasreceber",
-  "permuta",
 ]);
 
 /**
@@ -270,8 +260,10 @@ export function defaultPermissions(role: Role, opts: OpcoesPermissao = {}): Perm
         out[s.id] = s.modulo === "Config" ? { ...NONE } : { ...EDIT };
       }
     } else if (role === "engenheiro") {
-      // engenheiro: acesso apenas ao Lançamento de Medição
-      out[s.id] = s.id === "medicaolanc" ? { ...FULL } : { ...NONE };
+      // Engenheiro / técnico de campo: lança a medição do SERVIÇO no contrato
+      // (antes: a medição por grupo de obra, que saiu). Vê os contratos para
+      // escolher o item; não aprova e não vê o financeiro do contrato.
+      out[s.id] = s.id === "contratosmedicao" ? { ...EDIT } : s.id === "contratos" ? { ...VIEW } : { ...NONE };
     } else {
       // contador: somente leitura de um subconjunto
       out[s.id] = CONTADOR_VE.has(s.id) ? { ...VIEW } : { ...NONE };

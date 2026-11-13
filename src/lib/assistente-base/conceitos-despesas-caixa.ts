@@ -1,14 +1,26 @@
 /** Base de conhecimento da Cris — Conceitos do produto, Despesas e Caixa. Descreve o sistema de HOJE. */
 export const TEXTO = `# Base de conhecimento C — Conceitos, Despesas e Caixa
 
+## O Growth Ambiental
+
+É o sistema de gestão (ERP) de **consultorias ambientais** e empresas que trabalham por projeto: arqueologia e patrimônio cultural, licenciamento, monitoramento, fauna, flora e serviços técnicos. O ciclo que ele acompanha:
+- **Projetos** (Projetos → Cadastro de Projetos), com **Plano de Trabalho** (fases, atividades, entregas e cronograma), **Equipes e Presença de Campo** e **Materiais e Equipamentos**.
+- **Contratos e Aditivos** com o cliente contratante, **medições de serviço**, **faturamento** (que vira conta a receber) e **despesas reembolsáveis** pelo cliente.
+- **Receitas**: Clientes, Contas a Receber e Notas Fiscais.
+- **Despesas**: lançamentos, Contas a Pagar, Ressarcimentos, Acertos e Rateios e Fornecedores.
+- **Caixa**: conciliação do extrato, contas correntes e cartões.
+- **Planejamento e resultados**: Orçamentos, Previsão Atualizada, Plano de Contas, DRE, Fluxo de Caixa, Dashboard, Resumo Executivo e Relatórios Customizados.
+
+O sistema nasceu de um ERP para construtoras. As telas exclusivas de construção e venda de imóveis (unidades, simulador de financiamento, permutas, INCC, medição de obra e Relatório CEF, liberações de obra e projeção de receitas por unidade) saíram; ver "Telas que saíram".
+
 ## Conceitos do produto
 
-### Projeto, obra e escritório
-- **Projeto** é a unidade de tudo. Há dois tipos: **obra/empreendimento** e **escritório/filial**, que aparece num grupo próprio, no fim dos seletores.
-- O projeto tem uma **situação cadastral** (Ativo ou Finalizado), definida em Projetos. Ela não é a fase da obra.
-- **Não há "projeto ativo" global.** Cada tela guarda a obra no próprio endereço e lembra a última escolhida na aba. Sem escolha, a tela pede uma; nunca abre "a primeira obra" sozinha.
-- Algumas telas oferecem **"Todos os projetos / filiais"**. Em Despesas, essa opção mostra a consulta consolidada, com a coluna Origem; ao lançar, a obra é escolhida no formulário.
-- Relatórios (Dashboard, DRE, Fluxo de Caixa, Resumo Executivo) aceitam os escopos **Todos**, **Ativos** e **Finalizados**. "Todos" inclui obras e escritórios. "Ativos" e "Finalizados" incluem só obras. Obra sem situação fica fora desses dois, com aviso.
+### Projeto e escritório
+- **Projeto** é a unidade de tudo. Há dois tipos: **projeto** (o trabalho para o cliente: um licenciamento, um monitoramento, um programa de arqueologia…) e **escritório/filial**, que aparece num grupo próprio, no fim dos seletores.
+- O projeto tem uma **situação cadastral** (Ativo ou Finalizado), definida em Projetos. Ela não é a fase do projeto (as fases ficam no Plano de Trabalho).
+- **Não há "projeto ativo" global.** Cada tela guarda o projeto no próprio endereço e lembra o último escolhido na aba. Sem escolha, a tela pede um; nunca abre "o primeiro projeto" sozinha.
+- Algumas telas oferecem **"Todos os projetos / filiais"**. Em Despesas, essa opção mostra a consulta consolidada, com a coluna Origem; ao lançar, o projeto é escolhido no formulário.
+- Relatórios (Dashboard, DRE, Fluxo de Caixa, Resumo Executivo) aceitam os escopos **Todos**, **Ativos** e **Finalizados**. "Todos" inclui projetos e escritórios. "Ativos" e "Finalizados" incluem só projetos. Projeto sem situação fica fora desses dois, com aviso.
 
 ### Versões e cenários
 Cada projeto tem versões (cenários):
@@ -34,7 +46,7 @@ Cada despesa tem três datas, e confundi-las é o erro mais caro do sistema:
   - **Conta do Plano de Contas**: a natureza do gasto (ex.: Hospedagens, Combustíveis). Só conta ATIVA do plano da empresa; projeto, contrato e fase vão nos campos próprios. Grupos e contas se editam em Planejamento → Plano de Contas.
   - **Custo direto ou indireto**: vazio = o padrão da conta; marque quando este lançamento for tratado diferente (ex.: combustível da administração).
   - **Categoria DRE**: a lista é fixa: Receita, Custo Variável, Custo Fixo, Despesa Variável, Despesa Fixa, Retiradas, Investimento, Empréstimos e Despesas Financeiras.
-- **Cada conta do Plano de Contas tem uma categoria da DRE.** O sistema traz um padrão de boa prática (gasto de obra é Custo Variável; comissão e marketing, Despesa Variável; escritório, TI e contabilidade, Despesa Fixa; tarifa, juro e multa, Despesas Financeiras). A categoria de cada conta se troca em Planejamento → Plano de Contas.
+- **Cada conta do Plano de Contas tem uma categoria da DRE.** O sistema traz um padrão de boa prática (custo direto do projeto é Custo Variável; comissão e marketing, Despesa Variável; escritório, TI e contabilidade, Despesa Fixa; tarifa, juro e multa, Despesas Financeiras). A categoria de cada conta se troca em Planejamento → Plano de Contas.
 - Com a chave "Despesa herda a categoria da DRE do Plano de Contas" ligada, a categoria da despesa vem da conta e aparece travada no lançamento, e os relatórios contam as despesas já lançadas pela categoria da conta. Desligada, a pessoa escolhe a categoria em cada despesa, como antes.
 - Uma despesa não aceita a categoria "Receita". Lançamento antigo com categoria inválida precisa ser trocado antes de salvar.
 - Se tiver dúvida sobre qual conta ou categoria usar, confirme com a sua contabilidade. O sistema só aplica a classificação escolhida.
@@ -47,9 +59,9 @@ Cada despesa tem três datas, e confundi-las é o erro mais caro do sistema:
 
 ### Papéis e Gestão de Acessos
 - **owner** (Proprietário) e **admin** (Administrador): acesso total, sempre.
-- **membro**: com a chave "padrão novo do membro" desligada, pode ver, criar e editar em todas as telas fora de Configurações, mas **não exclui nem cancela**. Se a chave for ligada, passa a alcançar só as telas de lançamento e receita: Despesas, Contas a Pagar, Fornecedores, Caixa, Contas Correntes, Medição, Clientes, Unidades, Contas a Receber e Permuta.
-- **contador**: somente leitura. Por padrão vê DRE, Fluxo de Caixa, Medição, Resumo, Plano de Contas, Despesas e Auditoria. Pode receber "ver" em outras telas, mas nunca criar, editar ou excluir.
-- **engenheiro**: só o lançamento de Medição.
+- **membro**: com a chave "padrão novo do membro" desligada, pode ver, criar e editar em todas as telas fora de Configurações, mas **não exclui nem cancela**. Se a chave for ligada, passa a alcançar só as telas de lançamento e receita: Despesas, Contas a Pagar, Fornecedores, Caixa, Contas Correntes, Clientes e Contas a Receber.
+- **contador**: somente leitura. Por padrão vê DRE, Fluxo de Caixa, Resumo, Plano de Contas, Despesas, Notas Fiscais e Auditoria. Pode receber "ver" em outras telas, mas nunca criar, editar ou excluir.
+- **engenheiro** (técnico de campo): lança a medição de serviço no contrato e vê os contratos, sem o financeiro e sem aprovar.
 - **Gestão de Acessos** (Configurações): owner e admin ajustam, membro a membro, a matriz Ver/Criar/Editar/Excluir de cada tela. Usuários, Gestão de Acessos e Chaves de mudança não podem ser concedidas a outros papéis.
 - Algumas permissões são **ações**, não telas: "Fechar o dia (no Caixa)"; "Conciliação — ajustar e desfazer" (criar = lançar ajuste; excluir = desfazer conciliação e reabrir dia); "Travar e destravar versão"; "Aprovar e desaprovar versão".
 
@@ -57,8 +69,8 @@ Cada despesa tem três datas, e confundi-las é o erro mais caro do sistema:
 - **Painel por tela**: várias telas (Caixa, Cartões, Ressarcimentos, Fornecedores, Contas Correntes e outras) têm um painel lateral recolhível, com análises calculadas sobre o que a página carregou, sem enviar nada a modelo de IA. É **somente leitura**. No Caixa, ele **propõe** pares extrato × despesa, e a conciliação só acontece quando a pessoa confirma.
 - **A Cris (chat no canto inferior direito, em qualquer tela)**:
   - **O que ela faz:** explica como o sistema funciona; analisa os números da tela em que a pessoa está; busca em outras telas as quatro métricas do catálogo (**receita**, **custo**, **desvio de custo** e **saldo** das contas da empresa), sempre com o acesso da pessoa; **analisa os dados de qualquer módulo** pelas ferramentas de leitura; e, nas telas de lançamento, **propõe** o preenchimento do formulário. Quem grava é o botão da tela, depois que a pessoa confere.
-  - **Análise de dados (ferramentas de leitura):** em qualquer tela, a Cris pode pedir ao servidor: custos e despesas da DRE por obra, categoria e mês (os mesmos números da DRE, versão Atual); despesas por fornecedor, conta ou situação; recebíveis e inadimplência por obra, unidade ou mês; caixa e conciliação; orçado × realizado; unidades e vendas; medição, estoque e equipes. O **servidor calcula e agrega** (no máximo 30 grupos por resposta, com o percentual de cada um); a Cris escolhe a ferramenta e os filtros e escreve o texto. Ela não escreve consulta ao banco e não recebe linhas em massa. Cada ferramenta confere se a pessoa pode ver aquele módulo e só usa as obras que ela vê. Ex.: "quais obras têm custo variável e qual o percentual de cada uma no total?". Para exportar, ela monta o relatório em **Relatórios Customizados**, que gera CSV e PDF, e entrega o link.
-  - **O que vai ao modelo de IA:** a pergunta e o histórico da conversa nesta aba (até 12 falas); o **resumo dos números da tela** que a pessoa está vendo, com o nome da obra e os valores; o **resultado das buscas e das ferramentas de dados**: totais agregados com nome da obra, categoria, mês, conta e valores, **nome de fornecedor** quando o agrupamento é por fornecedor (como na tela de Despesas), e **código da unidade**; e o **documento anexado, inteiro** (PDF ou imagem). As ferramentas de dados nunca mandam nome de comprador, nome ou salário de membro de equipe, CPF, CNPJ de pessoa física, renda, dados bancários nem saúde. Na conciliação do Caixa, os candidatos de cada movimento levam o que a tela de conciliação já mostra (fornecedor da despesa, descrição da conta a receber, comprador da parcela).
+  - **Análise de dados (ferramentas de leitura):** em qualquer tela, a Cris pode pedir ao servidor: custos e despesas da DRE por projeto, categoria e mês (os mesmos números da DRE, versão Atual); despesas por fornecedor, conta ou situação; contas a receber e inadimplência por projeto, cliente contratante ou mês; caixa e conciliação; orçado × realizado; contratos, aditivos e saldos; medições de serviço, materiais e equipamentos e equipes; plano de trabalho; e plano de contas. O **servidor calcula e agrega** (no máximo 30 grupos por resposta, com o percentual de cada um); a Cris escolhe a ferramenta e os filtros e escreve o texto. Ela não escreve consulta ao banco e não recebe linhas em massa. Cada ferramenta confere se a pessoa pode ver aquele módulo e só usa os projetos que ela vê. Ex.: "quais projetos têm custo variável e qual o percentual de cada um no total?". Para exportar, ela monta o relatório em **Relatórios Customizados**, que gera CSV e PDF, e entrega o link.
+  - **O que vai ao modelo de IA:** a pergunta e o histórico da conversa nesta aba (até 12 falas); o **resumo dos números da tela** que a pessoa está vendo, com o nome do projeto e os valores; o **resultado das buscas e das ferramentas de dados**: totais agregados com nome do projeto, categoria, mês, conta e valores, **nome de fornecedor** quando o agrupamento é por fornecedor (como na tela de Despesas), **nome do cliente contratante** quando é empresa (com CNPJ) e o agrupamento é por cliente, e código e título do contrato; e o **documento anexado, inteiro** (PDF ou imagem). As ferramentas de dados nunca mandam nome de cliente pessoa física, nome ou salário de membro de equipe, CPF, renda, dados bancários nem saúde. Na conciliação do Caixa, os candidatos de cada movimento levam o que a tela de conciliação já mostra (fornecedor da despesa, descrição da conta a receber e, em dados antigos de venda de unidades, o comprador da parcela).
   - **O que não vai:** o que a tela não mostra; o cadastro completo de clientes, funcionários ou fornecedores; o histórico de outras conversas; e, do resumo da tela, os campos com dado pessoal, que o sistema descarta antes de enviar (CPF, CNPJ, RG e documentos, e-mail, telefone, endereço e CEP, renda, salário, FGTS, score e restrições, nascimento, saúde, Pix, conta e agência bancária, senhas).
   - **A exceção é o anexo:** o documento vai inteiro ao modelo, com tudo o que estiver escrito nele, inclusive nome, CPF ou endereço de uma pessoa. A Cris não usa nome de cliente nem de funcionário para preencher o formulário, mas o modelo lê o documento. Só anexe o que precisa ser lido.
   - **A conversa não é gravada.** O sistema registra só o consumo (quantas perguntas e quantos tokens, por empresa e pessoa), nunca o conteúdo.
@@ -71,14 +83,14 @@ Cada despesa tem três datas, e confundi-las é o erro mais caro do sistema:
 
 ## Despesas / Lançamentos (/despesas) — módulo Despesas
 
-**Para que serve:** lançar e manter as despesas (cada uma é um "PED") de uma obra ou escritório. É a origem da despesa na DRE, em Contas a Pagar e no Fluxo de Caixa.
+**Para que serve:** lançar e manter as despesas (cada uma é um "PED") de um projeto ou escritório (hospedagem e alimentação da equipe técnica, combustível, análises laboratoriais, taxas de órgão ambiental, terceirizados…). É a origem da despesa na DRE, em Contas a Pagar e no Fluxo de Caixa.
 
 **O que se faz nela:**
-- Escolher a obra no seletor, ou "Todos os projetos / filiais" para consultar tudo.
+- Escolher o projeto no seletor, ou "Todos os projetos / filiais" para consultar tudo.
 - Abas:
   - **Lançamentos**: formulário e lista, com o último lançamento criado no topo (editar não muda a ordem).
   - **Pendente de NF**: lançamentos sem documento fiscal.
-  - **Parcelas**: só com uma obra escolhida; paga parcela por parcela.
+  - **Parcelas**: só com um projeto escolhido; paga parcela por parcela.
   - **Repositório**: documentos, com ou sem vínculo.
 - Subir documentos e usar **"Preencher formulário"** (IA), que lê junto vários arquivos da mesma compra.
 - **Recorrente**: repete por 2 a 60 meses, avançando competência e vencimento. Cada réplica tem PED próprio e nasce "A pagar".
@@ -97,7 +109,7 @@ Cada despesa tem três datas, e confundi-las é o erro mais caro do sistema:
 - **Travas**: com pagamento, parcela paga, acerto, ressarcimento ou conciliação, valor, status, competência, vencimento e forma não mudam. O caminho é cancelar e relançar, ou desfazer a conciliação. Em despesa parcelada, o total não se altera. Em compra no cartão, só a competência muda.
 - **Documento duplicado** (mesmo documento e mesmo fornecedor): o sistema avisa e pede confirmação.
 
-**O que NÃO faz:** não paga fatura de cartão (isso é feito em Cartões), não ressarce terceiro (em Ressarcimentos), não paga várias despesas num único pagamento (em Acerto Contábil ou na conciliação do Caixa) e não lança em Orçamento nem Previsão (em Orçamentos e Previsão Atualizada). Sem versão Atual na obra, a tela avisa e não lança.
+**O que NÃO faz:** não paga fatura de cartão (isso é feito em Cartões), não ressarce terceiro (em Ressarcimentos), não paga várias despesas num único pagamento (em Acertos e Rateios ou na conciliação do Caixa) e não lança em Orçamento nem Previsão (em Orçamentos e Previsão Atualizada). Sem versão Atual no projeto, a tela avisa e não lança.
 
 **Quem acessa por padrão:**
 - owner e admin: tudo;
@@ -124,7 +136,7 @@ Cada despesa tem três datas, e confundi-las é o erro mais caro do sistema:
 - Ordem padrão: vencidas, depois a vencer e, por fim, as pagas, pela data de pagamento.
 - Com a chave "Contas a Pagar só com a versão Atual" desligada, entram também despesas gravadas em Orçamento, Previsão ou cópias. Se ela for ligada, só a Atual conta (aqui, no Dashboard e na conciliação).
 
-**O que NÃO faz:** não lança nem paga. Pagamento é feito em Despesas (Pagar ou aba Parcelas), Cartões, Acerto Contábil ou na conciliação do Caixa.
+**O que NÃO faz:** não lança nem paga. Pagamento é feito em Despesas (Pagar ou aba Parcelas), Cartões, Acertos e Rateios ou na conciliação do Caixa.
 
 **Quem acessa por padrão:** owner e admin; membro (o link Editar depende de poder editar Despesas). O contador não acessa por padrão.
 
@@ -144,8 +156,8 @@ Cada despesa tem três datas, e confundi-las é o erro mais caro do sistema:
 - A despesa entra **uma vez** na DRE, pela competência. **Não há saída de caixa no lançamento**, só no ressarcimento, e a data dele não muda a competência.
 - No lançamento, "Será reembolsada pela empresa" cria a obrigação (Pendente). Sem essa marca, a obrigação nasce quitada e sem caixa, porque o terceiro arcou com o valor.
 - Status: Pendente, Parcialmente restituído, Restituído, Cancelado.
-- **Obra da saída**: com a chave "Saída do ressarcimento segue a despesa" desligada, cai na obra aberta na tela. Se ela for ligada, o ressarcimento avulso cai na obra da despesa, e o lote continua na obra da tela.
-- **Não confundir** com "Liberações de Obra" (rota /reembolso, módulo Receitas).
+- **Projeto da saída**: com a chave "Saída do ressarcimento segue a despesa" desligada, cai no projeto aberto na tela. Se ela for ligada, o ressarcimento avulso cai no projeto da despesa, e o lote continua no projeto da tela.
+- **Não confundir** com as **Despesas Reembolsáveis** (Contratos), que são o que o cliente contratante devolve à empresa.
 
 - **Com a Cris**: com a janela "Registrar ressarcimento" aberta, a Cris preenche valor, data, conta e comprovante a partir do que a pessoa diz ou dita. Quem registra é o botão **Confirmar**.
 
@@ -165,7 +177,7 @@ Cada despesa tem três datas, e confundi-las é o erro mais caro do sistema:
 - Ver **Usado no ciclo** e **Disponível**.
 - **Próxima fatura**: o total previsto, que é o que Contas a Pagar mostra. Com taxa cadastrada, aparece uma estimativa de juros que não entra em Contas a Pagar.
 - **Faturas**:
-  - **Pagar**: só fatura fechada; informa valor, data, conta e obra do lançamento. Pagamento parcial é aceito.
+  - **Pagar**: só fatura fechada; informa valor, data, conta e projeto do lançamento. Pagamento parcial é aceito.
   - **Juros cobrados**: vira uma despesa "Despesas Financeiras".
 - **Extrato do cartão**: subir XLSX ou CSV, ou o **PDF (ou foto) da fatura**, para conferir o que não foi lançado, o que não apareceu no extrato e as divergências. O PDF é lido por IA e aparece numa **prévia**: só com "Registrar" o extrato é guardado, e nenhuma despesa é lançada. Também se registra **estorno**.
 - **Lançar o que faltou**: cada item "No extrato, sem lançamento" tem "Lançar em Despesas →", que abre a despesa já preenchida com valor, cartão, data e descrição. A pessoa confere e salva lá.
@@ -182,14 +194,16 @@ Cada despesa tem três datas, e confundi-las é o erro mais caro do sistema:
 - membro, com a chave do membro desligada;
 - contador: não acessa.
 
-## Acerto Contábil (/acerto) — módulo Despesas
+## Acertos e Rateios (/acerto) — módulo Despesas
 
-**Para que serve:** registrar **um pagamento único que quita várias despesas**, inclusive de obras diferentes, com **uma só saída de caixa**.
+No título da tela aparece "Acerto Contábil".
+
+**Para que serve:** registrar **um pagamento único que quita várias despesas**, inclusive de projetos diferentes, com **uma só saída de caixa**.
 
 **O que se faz nela:**
-- Aba **Vincular despesas**: informar data, conta, valor transferido, forma e favorecido; marcar os PEDs em aberto de qualquer obra, com o valor a abater de cada um (pode ser parcial); concluir.
-- **Diferença** entre o transferido e o vinculado: o sistema a lança como despesa financeira (pago a mais) ou receita financeira (pago a menos), na competência do pagamento, sem ratear no custo das obras. Sobre a classificação contábil, confirme com a sua contabilidade.
-- Aba **Rateio entre obras**: o pagamento a um prestador de várias obras gera **um PED por obra** e uma só saída de caixa, com a base do rateio gravada.
+- Aba **Vincular despesas**: informar data, conta, valor transferido, forma e favorecido; marcar os PEDs em aberto de qualquer projeto, com o valor a abater de cada um (pode ser parcial); concluir.
+- **Diferença** entre o transferido e o vinculado: o sistema a lança como despesa financeira (pago a mais) ou receita financeira (pago a menos), na competência do pagamento, sem ratear no custo dos projetos. Sobre a classificação contábil, confirme com a sua contabilidade.
+- Aba **Rateio entre projetos**: o pagamento a um prestador que atendeu vários projetos (um laboratório, uma pousada, um técnico autônomo) gera **um PED por projeto** e uma só saída de caixa, com a base do rateio gravada.
 - Aba **Acertos do período**: histórico, com **estorno**.
 - **Com a Cris** (aba Vincular despesas): ela preenche o cabeçalho do pagamento e **marca** as despesas pelos números dos PEDs (aceita o final do número) ou, em lote, todas as de um fornecedor. Número que não acha ou que bate com mais de um é avisado, e nada é marcado por ele. Quem grava é o botão **Concluir acerto**, depois da conferência.
 
@@ -197,7 +211,7 @@ Cada despesa tem três datas, e confundi-las é o erro mais caro do sistema:
 
 ## Fornecedores e Parceiros (/fornecedores) — módulo Despesas
 
-**Para que serve:** o cadastro único da empresa (não é por obra) de fornecedores, prestadores, sócios, bancos e demais pessoas.
+**Para que serve:** o cadastro único da empresa (não é por projeto) de fornecedores, prestadores, laboratórios, sócios, bancos e demais pessoas.
 
 **O que se faz nela:**
 - Cadastrar PF ou PJ (com leitura opcional do cartão CNPJ ou contrato por IA), com endereço e dados para ressarcimento (banco e PIX).
@@ -221,14 +235,14 @@ Cada despesa tem três datas, e confundi-las é o erro mais caro do sistema:
 **Para que serve:** o "Controle de Caixa". Mostra o dinheiro real, **concilia o extrato bancário** com os lançamentos e registra ajustes e o fechamento do dia.
 
 **O que se faz nela:**
-- Escolher a obra. A tabela de movimentos é da obra, mas os saldos, a cadeia de dias e o fechamento são da **empresa inteira**.
+- Escolher o projeto. A tabela de movimentos é do projeto, mas os saldos, a cadeia de dias e o fechamento são da **empresa inteira**.
 - **Entradas, saídas e saldo do dia**.
 - **Os dois saldos**, por conta e no total:
   - **Em conta**: o do extrato, ou seja, o fato do banco;
   - **Conciliado**: o que os lançamentos sustentam.
   - Num dia todo conciliado, os dois coincidem.
 - **Cadeia de saldo**: 2 dias realizados, hoje e 7 dias à frente. O botão **Fechar o dia** grava saldo inicial, entradas, saídas, saldo final e divergência. Fechar não trava lançamentos, e reabrir exige um motivo.
-- **O que vence nos próximos dias**: de hoje em diante, o cartão de cada dia mostra "Vence a receber", "Vence a pagar" e o "Saldo projetado". A pagar é o saldo em aberto das contas a pagar da versão Atual; a receber é o que falta receber das contas lançadas e as parcelas dos planos de venda. O que venceu e segue em aberto aparece num aviso à parte, sem entrar em nenhum dia. Título sem data de vencimento não entra.
+- **O que vence nos próximos dias**: de hoje em diante, o cartão de cada dia mostra "Vence a receber", "Vence a pagar" e o "Saldo projetado". A pagar é o saldo em aberto das contas a pagar da versão Atual; a receber é o que falta receber das contas a receber (inclusive as faturas dos contratos) e, em dados antigos, as parcelas dos planos de venda de unidades. O que venceu e segue em aberto aparece num aviso à parte, sem entrar em nenhum dia. Título sem data de vencimento não entra.
 - **Dias fechados**: a seção recolhível abaixo da cadeia lista o histórico dos fechamentos (ver "Dias fechados (no Caixa)").
 - **Importar extrato**:
   - escolha a conta e, opcionalmente, o saldo final (que atualiza a conta);
@@ -245,19 +259,19 @@ Cada despesa tem três datas, e confundi-las é o erro mais caro do sistema:
 - Comparar 2 ou 3 versões (entradas, saídas e saldo líquido).
 
 **Com a chave "Caixa: conciliação por conta" ligada** (o Caixa vira "Conciliação de Caixa"):
-- Não há seletor de obra nem de versão, nem comparação de versões: a tela mostra a versão Atual de todas as obras.
+- Não há seletor de projeto nem de versão, nem comparação de versões: a tela mostra a versão Atual de todos os projetos.
 - Os **cartões de crédito** aparecem no bloco de saldos, depois das contas: fatura aberta, conciliado, pendentes e o último extrato.
 - **Cada conta ou cartão é clicável** e filtra a tela; "Todas as contas" volta ao consolidado. Cada linha mostra quantos movimentos faltam conciliar.
-- O extrato importado nasce **só com a conta**: a obra de cada movimento é a do item com que ele foi conciliado (despesa, conta a receber, parcela de venda ou pagamento de fatura). Movimento sem vínculo é da empresa e não entra no realizado de nenhuma obra.
+- O extrato importado nasce **só com a conta**: o projeto de cada movimento é o do item com que ele foi conciliado (despesa, conta a receber, parcela de venda antiga ou pagamento de fatura). Movimento sem vínculo é da empresa e não entra no realizado de nenhum projeto.
 - No topo do bloco de saldos, os **três caminhos**: **Subir extrato** (o diálogo de importação), **Conciliar com a Cris** e **Open Finance** (conectado, conectar ou indisponível, com o motivo). Ao lado, o contador "N movimentos a conciliar em M contas · mais antigo há X dias".
 - **Cartão escolhido**: a aba Conciliação mostra as linhas do extrato da fatura, cada uma com a compra lançada no cartão sugerida; "Lançar despesa a partir desta linha" abre Despesas preenchida e, ao salvar, a linha fica conciliada. Cada fatura mostra total do extrato, conciliado e diferença. Crédito ou estorno segue o fluxo de estorno de Cartões.
 - **Pagamento da fatura**: a saída da conta corrente concilia com o pagamento da fatura (sugestão própria), sem saída nova.
 
-**Entrada do comprador (parcela de venda):** as entradas pendentes sugerem também as **parcelas de venda** em aberto (valor, data e o primeiro nome do comprador na descrição). "Conciliar com a parcela" grava o recebimento; parcial é permitido; não cria conta a receber e não muda a receita da DRE. Criar conta a receber a partir de uma entrada que parece parcela exige confirmar que não é a parcela, para a receita não contar duas vezes. Com a chave "Parcela do comprador: situação, atrasados e previsto do Fluxo" ligada, Contas a Receber mostra a situação de cada parcela (a vencer, recebida, parcial, vencida), a faixa do Caixa conta as vencidas não recebidas nos atrasados e o Fluxo tira do previsto a parte recebida.
+**Parcela de venda (dados antigos de unidades):** em empresas que tinham o módulo de unidades, que saiu, as entradas pendentes sugerem também as **parcelas de venda** ainda em aberto (valor, data e o primeiro nome do comprador na descrição). "Conciliar com a parcela" grava o recebimento; parcial é permitido; não cria conta a receber e não muda a receita da DRE. Criar conta a receber a partir de uma entrada que parece parcela exige confirmar que não é a parcela, para a receita não contar duas vezes. Com a chave "Parcela do comprador: situação, atrasados e previsto do Fluxo" ligada, Contas a Receber mostra a situação de cada parcela (a vencer, recebida, parcial, vencida), a faixa do Caixa conta as vencidas não recebidas nos atrasados e o Fluxo tira do previsto a parte recebida.
 
 **Conciliar com a Cris (só nesta tela):**
 - Anexe o extrato na conversa (PDF, imagem, XLSX ou CSV). A Cris lê com o **mesmo leitor da importação**, no servidor, e oferece abrir o diálogo de importação já preenchido; ela pergunta a conta quando não reconhece. Quem importa é o botão do diálogo. PDF ou imagem vai inteiro ao modelo de IA, com os nomes de quem pagou e recebeu; planilha não vai.
-- Para os pendentes, em rodadas de até 20 (do mais antigo para o mais novo), a Cris consulta os **candidatos que o servidor calcula** (despesas, contas a receber, parcelas de venda, pagamentos de fatura) e propõe os pares; com mais de um candidato, faz uma pergunta de cada vez. A proposta vem como lista com o botão **"Confirmar N conciliações"**; cada vínculo é gravado por si, com auditoria, e o resultado diz qual não foi.
+- Para os pendentes, em rodadas de até 20 (do mais antigo para o mais novo), a Cris consulta os **candidatos que o servidor calcula** (despesas, contas a receber, parcelas de venda antigas, pagamentos de fatura) e propõe os pares; com mais de um candidato, faz uma pergunta de cada vez. A proposta vem como lista com o botão **"Confirmar N conciliações"**; cada vínculo é gravado por si, com auditoria, e o resultado diz qual não foi.
 - Ela não procura candidatos por conta própria, não concilia sozinha e não amplia a conciliação automática. Proposta com um item que não é candidato daquele movimento é recusada no servidor.
 - Sem par, ela diz o que falta lançar e o caminho (Despesas ou Contas a Receber, já preenchidos com os dados do extrato; ao salvar, o movimento fica conciliado, sem segunda saída).
 - Permissões: importar exige Caixa/criar; conciliar, Caixa/editar; lançar despesa, Despesas/criar. Sem Caixa/editar, a Cris não tem as ferramentas de conciliação e explica por quê.
@@ -314,8 +328,8 @@ Cada despesa tem três datas, e confundi-las é o erro mais caro do sistema:
 
 ## Diferenças entre telas parecidas
 
-- **Despesas × Contas a Pagar**: em Despesas se **lança, edita, paga e cancela**, por obra, com uma linha por PED. Contas a Pagar é **só consulta**, da empresa inteira, por **vencimento**, com uma linha por parcela, fatura ou saldo a ressarcir. A despesa parcelada aparece em várias linhas ali e em uma só em Despesas.
-- **Ressarcimentos × Acerto Contábil**: Ressarcimentos devolve o dinheiro a **um terceiro que pagou pela empresa**. No Acerto Contábil, a **própria empresa** paga várias despesas a fornecedores numa transferência só, e a diferença vira encargo ou desconto financeiro.
+- **Despesas × Contas a Pagar**: em Despesas se **lança, edita, paga e cancela**, por projeto, com uma linha por PED. Contas a Pagar é **só consulta**, da empresa inteira, por **vencimento**, com uma linha por parcela, fatura ou saldo a ressarcir. A despesa parcelada aparece em várias linhas ali e em uma só em Despesas.
+- **Ressarcimentos × Acertos e Rateios**: Ressarcimentos devolve o dinheiro a **um terceiro que pagou pela empresa**. No Acerto, a **própria empresa** paga várias despesas a fornecedores numa transferência só, e a diferença vira encargo ou desconto financeiro.
 - **Caixa × Contas Correntes**: Contas Correntes é o **cadastro** das contas e do saldo; Caixa é o **dia a dia** (extrato, conciliação, ajustes, fechar o dia) e guarda o **histórico** dos dias fechados.
 - **Cartões × Despesas**: a compra é lançada em **Despesas** (forma "Cartão de crédito") e entra na DRE pela competência. **Cartões** cuida da **fatura**: acompanhar, pagar (a saída de caixa), juros, estorno e conferência do extrato do cartão.
 
@@ -330,9 +344,9 @@ Cada despesa tem três datas, e confundi-las é o erro mais caro do sistema:
    - Na aba Conciliação, vincule as saídas às despesas sugeridas; para o que não tem despesa, use "Nova despesa a partir do extrato".
    - Confira se "Em conta" e "Conciliado" batem e feche o dia.
 3. **Pagar várias despesas de uma vez:**
-   - Se foi uma transferência única: Acerto Contábil → Vincular despesas, informando o valor transferido.
+   - Se foi uma transferência única: Acertos e Rateios → Vincular despesas, informando o valor transferido.
    - Se o extrato já mostra a saída: em Caixa → Conciliação, vincule várias despesas ao mesmo movimento.
-4. **Pagar uma parcela:** em Despesas, escolha a obra e use a aba Parcelas → Pagar, informando data, conta e encargos.
+4. **Pagar uma parcela:** em Despesas, escolha o projeto e use a aba Parcelas → Pagar, informando data, conta e encargos.
 5. **Compra no cartão e pagamento da fatura:**
    - Em Despesas, use a forma "Cartão de crédito" e informe cartão, data da compra e parcelas.
    - Depois de a fatura fechar, vá em Cartões → Faturas → Pagar.
@@ -341,6 +355,6 @@ Cada despesa tem três datas, e confundi-las é o erro mais caro do sistema:
    - O valor e as datas estão travados.
    - Se o erro está na conciliação, desfaça-a no Caixa (exige a permissão de desfazer).
    - Se não, cancele a despesa e lance de novo. Cancelar exige a permissão de excluir.
-8. **Custo de mão de obra de várias obras num só pagamento:** Acerto Contábil → Rateio entre obras.
+8. **Custo de um prestador que atendeu vários projetos num só pagamento:** Acertos e Rateios → Rateio entre projetos.
 9. **Diferença pequena e inexplicada no caixa:** procure primeiro o lançamento que falta. Só depois use Caixa → Ajustes, com motivo.
 `;

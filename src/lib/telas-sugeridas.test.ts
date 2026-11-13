@@ -27,11 +27,11 @@ describe("Prompt AI2 · telas sugeridas por papel", () => {
   it("desmarcar nega; marcar a mais dá ver (contador) ou ver, criar e editar (membro)", () => {
     const sug = new Set(telasSugeridas("contador").filter((t) => t.sugerida).map((t) => t.id));
     sug.delete("dre");
-    sug.add("unidades");
+    sug.add("clientes");
     const ef = effectivePermissions("contador", overridesDivergentes("contador", matrizDaEscolha("contador", sug)));
     expect(ef.dre.ver).toBe(false);
-    expect(ef.unidades).toEqual({ ver: true, criar: false, editar: false, excluir: false });
-    const m = matrizDaEscolha("engenheiro", new Set(["medicaolanc", "estoque"]));
+    expect(ef.clientes).toEqual({ ver: true, criar: false, editar: false, excluir: false });
+    const m = matrizDaEscolha("engenheiro", new Set(["contratosmedicao", "estoque"]));
     expect(m.estoque).toEqual({ ver: true, criar: true, editar: true, excluir: false });
   });
 

@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { deleteConta, inventarioDaConta, setContaAtiva, updateConta } from "@/lib/actions/contas";
-import { rotuloDaAtualizacao } from "@/lib/contas-regras";
+import { rotuloDaAtualizacao, rotuloTipoDeConta } from "@/lib/contas-regras";
 import { brl0 } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/input";
@@ -101,7 +101,7 @@ function Row({ conta, canEditar, canExcluir }: { conta: ContaData; canEditar: bo
         {conta.op ? ` · op ${conta.op}` : ""} · {conta.cc || "—"}
       </TD>
       <TD>
-        <Badge tone={conta.tipo === "Imobiliária" ? "info" : conta.tipo === "Terceiros" ? "warning" : "neutral"}>{conta.tipo}</Badge>
+        <Badge tone={conta.tipo === "Imobiliária" ? "info" : conta.tipo === "Terceiros" ? "warning" : "neutral"}>{rotuloTipoDeConta(conta.tipo)}</Badge>
       </TD>
       <TD>
         {conta.conexao ? (

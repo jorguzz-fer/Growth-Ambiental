@@ -263,7 +263,7 @@ export function RestituicaoLote({
                 <thead>
                   <tr className="border-b border-[var(--color-accent2)]/12 text-left font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-wide text-[var(--color-ink3)]">
                     <th className="px-2 py-2">PED</th>
-                    <th className="px-2 py-2">Obra</th>
+                    <th className="px-2 py-2">Projeto</th>
                     <th className="px-2 py-2">Competência</th>
                     <th className="px-2 py-2 text-right">A abater</th>
                     <th className="px-2 py-2 text-right">Sobra no PED</th>

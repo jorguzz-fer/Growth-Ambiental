@@ -6,7 +6,10 @@
  *  - a planilha só grava numa categoria VAZIA. Antes, ela apagava tudo da
  *    categoria e regravava — e apagar despesa leva junto parcelas, pagamentos
  *    e terceiros. Agora, se já houver registro, recusa e nada é apagado.
- *  - o INCC (do projeto) segue atualizando mês a mês, em qualquer versão.
+ *  - o INCC (do projeto) segue atualizando mês a mês, em qualquer versão,
+ *    quando a planilha (no formato antigo) traz as colunas dele.
+ *  - Growth Ambiental: unidades, liberações e permutas são recusadas antes
+ *    (version-io.ts); aqui ficam por compatibilidade.
  */
 
 export const CATEGORIAS_DA_PLANILHA = ["units", "despesas", "permutas", "reembolsos"] as const;
@@ -16,7 +19,7 @@ export const ROTULO_CATEGORIA: Record<CategoriaDaPlanilha, string> = {
   units: "unidades",
   despesas: "despesas",
   permutas: "permutas",
-  reembolsos: "liberações de obra",
+  reembolsos: "liberações de financiamento (dados antigos)",
 };
 
 export type Contagem = Record<CategoriaDaPlanilha, number>;

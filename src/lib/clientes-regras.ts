@@ -112,60 +112,6 @@ export function recusaDeInteresse(
   return `Interesse vai de ${INTERESSE_MIN} a ${INTERESSE_MAX}.`;
 }
 
-// ─────────────────────── Unidade por obra (6.6) ───────────────────────
-
-export interface UnidadeDaObra {
-  projectId: string;
-  code: string;
-}
-
-/** Unidades por obra para o seletor da unidade comprada. */
-export interface OpcoesDeUnidade {
-  obras: { id: string; name: string }[];
-  unidades: UnidadeDaObra[];
-  obraInicial: string;
-}
-
-/**
- * Monta as opções do seletor: as obras que têm unidade (e as obras que não
- * são escritório), na ordem recebida, e a obra em que ele abre.
- */
-export function montarOpcoesDeUnidade(
-  projetos: readonly { id: string; name: string; kind: string }[],
-  unidades: UnidadeDaObra[],
-  unitCode: string | null | undefined,
-  preferida?: string | null,
-): OpcoesDeUnidade {
-  const comUnidade = new Set(unidades.map((u) => u.projectId));
-  const obras = projetos
-    .filter((p) => comUnidade.has(p.id) || p.kind !== "office")
-    .map((p) => ({ id: p.id, name: p.name }));
-  return { obras, unidades, obraInicial: obraInicialDoCliente(obras, unidades, unitCode, preferida) };
-}
-
-/** Obras em que existe uma unidade com este código. */
-export function obrasDaUnidade(unidades: readonly UnidadeDaObra[], code: string | null | undefined): string[] {
-  if (!code) return [];
-  return [...new Set(unidades.filter((u) => u.code === code).map((u) => u.projectId))];
-}
-
-/**
- * Obra que o seletor abre: a da unidade vinculada (se estiver em uma só, ou a
- * preferida entre as que a têm); senão a preferida (a obra da aba); senão a
- * primeira da lista.
- */
-export function obraInicialDoCliente(
-  obras: readonly { id: string }[],
-  unidades: readonly UnidadeDaObra[],
-  unitCode: string | null | undefined,
-  preferida?: string | null,
-): string {
-  const daUnidade = obrasDaUnidade(unidades, unitCode).filter((id) => obras.some((o) => o.id === id));
-  if (daUnidade.length) return preferida && daUnidade.includes(preferida) ? preferida : daUnidade[0];
-  if (preferida && obras.some((o) => o.id === preferida)) return preferida;
-  return obras[0]?.id ?? "";
-}
-
 // ─────────────────────────── Listagem (6.8) ───────────────────────────
 
 export const CLIENTES_POR_PAGINA = 50;

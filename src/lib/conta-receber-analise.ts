@@ -97,13 +97,19 @@ export interface ContaSemVinculo {
   faltaCliente: boolean;
 }
 
-/** 8.3 · contas sem unidade ou sem cliente vinculado ("Outras Receitas" não precisa de unidade). */
+/**
+ * 8.3 · contas sem cliente vinculado e, nos tipos antigos de venda (Sinal,
+ * Parcela mensal), sem unidade. Growth Ambiental: fatura de serviço,
+ * reembolso, adiantamento e outras receitas não têm unidade.
+ */
+const TIPOS_COM_UNIDADE = new Set(["Sinal", "Parcela mensal"]);
+
 export function semUnidadeOuCliente(contas: readonly ContaParaAnalise[]): ContaSemVinculo[] {
   return contas
     .map((c) => ({
       id: c.id,
       rotulo: rotulo(c),
-      faltaUnidade: !c.unitCode && c.tipo !== "Outras Receitas" && c.tipo !== "Outros",
+      faltaUnidade: !c.unitCode && TIPOS_COM_UNIDADE.has(c.tipo),
       faltaCliente: !c.clienteId,
     }))
     .filter((x) => x.faltaUnidade || x.faltaCliente);

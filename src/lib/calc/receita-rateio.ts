@@ -60,7 +60,7 @@ export function receitaPorRateio(
       continue;
     }
     if (!janela || janela.length === 0) {
-      pendencias.push({ unidade: u.code, motivo: "a obra não tem início e fim cadastrados", valor: total });
+      pendencias.push({ unidade: u.code, motivo: "o projeto não tem início e fim cadastrados", valor: total });
       continue;
     }
     const partes = partesIguais(total, janela.length);

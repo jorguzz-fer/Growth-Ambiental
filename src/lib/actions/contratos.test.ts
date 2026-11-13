@@ -207,6 +207,9 @@ describe.skipIf(!HAS_DB)("Contratos e Aditivos — integração", async () => {
     const f1b = ok(await A.faturarContrato({ contratoId: c.id, projectId: p1, valor: 300000, vencimento: "03/10/2027", idempotencyKey: chave }));
     expect(f1b.id).toBe(f1.id);
     expect(f1b.aviso).toMatch(/já tinha sido registrada/);
+    // Growth Ambiental: a fatura do contrato entra em Contas a Receber como "Fatura de serviço".
+    const [contaDaFatura] = await db.select({ tipo: schema.contasReceber.tipo }).from(schema.contasReceber).where(eq(schema.contasReceber.id, f1.id));
+    expect(contaDaFatura.tipo).toBe("Fatura de serviço");
     expect(await A.faturarContrato({ contratoId: c.id, projectId: pB, valor: 1, vencimento: "03/10/2027" })).toMatchObject({ ok: false });
     const depois = await getMonthlyRevenue(versaoP1, p1);
     expect((depois["03/2027"] ?? 0) - (antes["03/2027"] ?? 0)).toBe(300000);

@@ -76,8 +76,8 @@ export function FaturaAcoes({ faturaId, saldo, contaPadrao, temJuros, contas, pr
               </div>
             )}
             <div>
-              <Label>Obra do lançamento</Label>
-              <Select value={obra} onChange={(e) => setObra(e.target.value)} aria-label="Obra do lançamento">
+              <Label>Projeto do lançamento</Label>
+              <Select value={obra} onChange={(e) => setObra(e.target.value)} aria-label="Projeto do lançamento">
                 {projetos.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.nome}

@@ -5,9 +5,6 @@ import {
   interesseNaFaixa,
   lerFiltrosClientes,
   linkDaListagem,
-  montarOpcoesDeUnidade,
-  obraInicialDoCliente,
-  obrasDaUnidade,
   recusaDeInteresse,
   recusaDeStatusContrato,
   statusContratoCanonico,
@@ -63,39 +60,6 @@ describe("interesse (6.7)", () => {
     expect(recusaDeInteresse(7, 7)).toBeNull(); // salvar sem mexer não é barrado
     expect(recusaDeInteresse(8, 7)).toMatch(/1 a 5/);
     expect(recusaDeInteresse(4, 7)).toBeNull(); // corrigir é aceito
-  });
-});
-
-describe("unidade por obra (6.6)", () => {
-  const obras = [
-    { id: "o1", name: "OBRA 1", kind: "proj" },
-    { id: "o2", name: "OBRA 2", kind: "proj" },
-    { id: "esc", name: "ESCRITÓRIO", kind: "office" },
-  ];
-  const unidades = [
-    { projectId: "o1", code: "101" },
-    { projectId: "o2", code: "101" },
-    { projectId: "o2", code: "202" },
-  ];
-  it("obrasDaUnidade: todas as obras com o código", () => {
-    expect(obrasDaUnidade(unidades, "101")).toEqual(["o1", "o2"]);
-    expect(obrasDaUnidade(unidades, "999")).toEqual([]);
-    expect(obrasDaUnidade(unidades, null)).toEqual([]);
-  });
-  it("abre na obra da unidade vinculada; entre várias, a preferida; senão a preferida ou a primeira", () => {
-    expect(obraInicialDoCliente(obras, unidades, "202")).toBe("o2");
-    expect(obraInicialDoCliente(obras, unidades, "202", "o1")).toBe("o2");
-    expect(obraInicialDoCliente(obras, unidades, "101", "o2")).toBe("o2");
-    expect(obraInicialDoCliente(obras, unidades, "101")).toBe("o1");
-    expect(obraInicialDoCliente(obras, unidades, "999", "o2")).toBe("o2");
-    expect(obraInicialDoCliente(obras, unidades, null, "outra-empresa")).toBe("o1");
-  });
-  it("montarOpcoesDeUnidade: escritório sem unidade fica fora da lista de obras", () => {
-    const r = montarOpcoesDeUnidade(obras, unidades, "202");
-    expect(r.obras.map((o) => o.id)).toEqual(["o1", "o2"]);
-    expect(r.obraInicial).toBe("o2");
-    const comUnidadeNoEscritorio = montarOpcoesDeUnidade(obras, [...unidades, { projectId: "esc", code: "S1" }], null);
-    expect(comUnidadeNoEscritorio.obras.map((o) => o.id)).toEqual(["o1", "o2", "esc"]);
   });
 });
 

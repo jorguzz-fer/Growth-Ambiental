@@ -83,8 +83,6 @@ export const NAV_MENU: NavModule[] = [
       { href: "/resumo", label: "Resumo Executivo" },
       // Prompt RC: tela própria, com chat próprio (decisão de 18/10).
       { href: "/relatorios", label: "Relatórios Customizados" },
-      // Prompt REN (Fase 3): a Projeção de Receitas é relatório — saiu de Receitas.
-      { href: "/projecao", label: "Projeção de Receitas" },
     ],
   },
   {
@@ -107,7 +105,10 @@ export const NAV_MENU: NavModule[] = [
       { href: "/contratos", label: "Contratos", tambem: ["/contratos/novo"] },
       { href: "/contratos/painel", label: "Painel de Contratos" },
       { href: "/contratos/aditivos", label: "Aditivos" },
-      { href: "/contratos/medicoes", label: "Medições de Contrato" },
+      // Growth Ambiental: a medição é do SERVIÇO, no contrato (item, aditivo,
+      // período, aprovação e documentos). A medição por grupo de obra e o
+      // Relatório CEF saíram (telas-removidas.ts).
+      { href: "/contratos/medicoes", label: "Medições" },
       { href: "/contratos/reembolsos", label: "Despesas Reembolsáveis", exige: [{ tela: "contratosfinanceiro", acao: "ver" }] },
       { href: "/contratos/modalidades", label: "Modalidades de Serviço", exige: [{ tela: "contratos", acao: "editar" }] },
     ],
@@ -118,11 +119,7 @@ export const NAV_MENU: NavModule[] = [
     icon: "receitas",
     items: [
       { href: "/clientes", label: "Clientes" },
-      { href: "/unidades", label: "Unidades" },
-      { href: "/simulador", label: "Simulador" },
       { href: "/contasreceber", label: "Contas a Receber" },
-      { href: "/reembolso", label: "Liberações de Obra" },
-      { href: "/permuta", label: "Permuta" },
       // Prompt AG: NFS-e de serviço EMITIDA (última seção de Receitas, como na revisão de 17/10).
       { href: "/notasfiscais", label: "Notas Fiscais" },
     ],
@@ -136,7 +133,7 @@ export const NAV_MENU: NavModule[] = [
       { href: "/contaspagar", label: "Contas a Pagar" },
       { href: "/restituicoes", label: "Ressarcimentos" },
       // Pagamento único quitando várias despesas — governado por Despesas.
-      { href: "/acerto", label: "Acerto Contábil", perm: "despesas", exige: [{ tela: "despesas", acao: "editar" }, { tela: "caixa", acao: "ver" }] },
+      { href: "/acerto", label: "Acertos e Rateios", perm: "despesas", exige: [{ tela: "despesas", acao: "editar" }, { tela: "caixa", acao: "ver" }] },
       { href: "/fornecedores", label: "Fornecedores e Parceiros" },
     ],
   },
@@ -163,12 +160,7 @@ export const NAV_MENU: NavModule[] = [
       { href: "/projeto", label: "Cadastro de Projetos" },
       // Planejamento (0078): fases, atividades, entregas e cronograma do projeto.
       { href: "/plano", label: "Plano de Trabalho" },
-      // Prompt V, 0.2: UM item. /medicao (relatório) e /medicaolanc (lançar e
-      // lançadas) continuam como rotas e abas da mesma tela; quem só tem a
-      // permissão de lançamento é levado à aba dele pela própria página.
-      { href: "/medicao", label: "Medição de Projeto", permAlt: "medicaolanc", hrefAlt: "/medicaolanc", tambem: ["/medicaolanc"] },
-      { href: "/estoque", label: "Estoque" },
-      { href: "/parametros", label: "Índices de Reajuste" },
+      { href: "/estoque", label: "Materiais e Equipamentos" },
     ],
   },
   {
@@ -179,7 +171,7 @@ export const NAV_MENU: NavModule[] = [
     icon: "pessoas",
     items: [
       { href: "/funcionarios", label: "Funcionários" },
-      { href: "/equipes", label: "Equipes de Projetos" },
+      { href: "/equipes", label: "Equipes e Presença de Campo" },
     ],
   },
   {
@@ -267,7 +259,7 @@ const ROLE_LABEL: Record<string, string> = {
   admin: "Administrador",
   membro: "Membro",
   contador: "Contador",
-  engenheiro: "Engenheiro",
+  engenheiro: "Engenheiro / técnico de campo",
 };
 
 /** Rótulo do papel para o cabeçalho; papel desconhecido aparece como veio. */

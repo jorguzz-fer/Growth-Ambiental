@@ -68,9 +68,8 @@ export function VersoesDoProjeto({
           <CardContent className="p-5">
             <h3 className="mb-1 text-sm font-semibold text-[var(--color-ink)]">Planilha da versão Atual</h3>
             <p className="mb-3 text-[12.5px] leading-relaxed text-[var(--color-ink2)]">
-              Unidades, liberações, permutas e despesas <strong>só entram na Atual, e só onde ela ainda não tem
-              nenhum registro daquele tipo</strong> — a importação nunca apaga nem substitui o que já foi lançado.
-              O INCC do projeto é atualizado mês a mês.
+              As despesas da planilha (contas do plano × meses) <strong>só entram na Atual, e só se ela ainda não tiver
+              despesa lançada</strong> — a importação nunca apaga nem substitui o que já foi lançado.
             </p>
             <div className="mb-3 flex flex-wrap gap-2">
               <a href={`/projeto/planilha/modelo?v=${atual.id}`} className={buttonVariants({ variant: "outline", size: "sm" })}>

@@ -7,7 +7,7 @@ export const TEXTO = `## Contratos (/contratos) — módulo Contratos
 - **Contratos**: lista com busca e filtros (cliente, projeto, tipo, gestor, situação e período). Mostra valor atualizado, medido e saldo contratual.
 - **Página do contrato**, com abas: Visão geral, Escopo e itens (com o cronograma físico-financeiro), Projetos, Aditivos, Medições, Faturamento e recebimentos (com despesas reembolsáveis), Custos e resultados, Documentos e Histórico.
 - **Painel de Contratos**: ativos, valor contratado, disponível para medição, medições e aditivos pendentes, vencimentos em 60 dias, margem por contrato e rentabilidade por cliente.
-- **Aditivos** e **Medições de Contrato**: listas de todos os contratos.
+- **Aditivos** e **Medições** (medições de serviço): listas de todos os contratos.
 - **Despesas Reembolsáveis**: relatório por contrato e período, com exportação em PDF e XLSX.
 - **Modalidades de Serviço**: a empresa cria, renomeia, desativa e reativa as modalidades.
 

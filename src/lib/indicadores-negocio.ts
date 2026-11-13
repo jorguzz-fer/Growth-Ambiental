@@ -1,6 +1,12 @@
 /**
  * Prompt AE2 (Fase 3 · revisão V5): indicadores de negócio selecionáveis no
- * Resumo Executivo ("custo/m², VGV vendido"). Módulo PURO.
+ * Resumo Executivo. Módulo PURO.
+ *
+ * Growth Ambiental: os indicadores de SERVIÇO (contratado, medido, faturado,
+ * recebido, a receber, margem sobre o contratado) vêm dos contratos do
+ * projeto (`valor-contratado.ts`). Os de VGV, unidades e m² são de
+ * incorporação (`legado`): só são oferecidos quando algum projeto em tela
+ * tem unidades ou área construída gravadas.
  *
  * Cada indicador tem definição escrita e, quando não dá para calcular, o
  * motivo (ex.: obra sem área construída no cadastro). A área construída é o
@@ -8,8 +14,19 @@
  * das unidades é o m² de cada unidade.
  */
 
+/** Números de serviço do projeto (contratos), pela regra de `valor-contratado.ts`. */
+export interface ServicosDaObra {
+  contratado: number;
+  medido: number;
+  faturado: number;
+  recebido: number;
+  aReceber: number;
+}
+export const SERVICOS_VAZIOS: ServicosDaObra = { contratado: 0, medido: 0, faturado: 0, recebido: 0, aReceber: 0 };
+
 export interface DadosDaObra {
   obra: string;
+  servicos: ServicosDaObra;
   /** Soma do valor das unidades da versão Atual. */
   vgv: number;
   vgvVendido: number;
@@ -40,23 +57,35 @@ export interface DefinicaoDeIndicador {
   definicao: string;
   /** Precisa ver o custo (tela de Despesas). */
   exigeCusto?: boolean;
+  /** Indicador de incorporação (VGV, unidades, m²): só com dados antigos. */
+  legado?: boolean;
 }
 
 export const INDICADORES_DE_NEGOCIO: readonly DefinicaoDeIndicador[] = [
-  { id: "vgv", nome: "VGV", formato: "brl", definicao: "Soma do valor de todas as unidades (versão Atual)." },
-  { id: "vgv_vendido", nome: "VGV vendido", formato: "brl", definicao: "Soma do valor das unidades com status Vendido." },
-  { id: "pct_vendido", nome: "% do VGV vendido", formato: "pct", definicao: "VGV vendido ÷ VGV." },
-  { id: "unidades_vendidas", nome: "Unidades vendidas", formato: "contagem", definicao: "Unidades vendidas de quantas existem." },
-  { id: "preco_m2_vendido", nome: "Preço médio vendido por m²", formato: "brlm2", definicao: "Valor das vendidas com m² ÷ m² delas." },
-  { id: "vgv_m2", nome: "VGV por m²", formato: "brlm2", definicao: "Valor das unidades com m² ÷ m² delas." },
+  { id: "valor_contratado", nome: "Valor contratado", formato: "brl", definicao: "Valor atualizado (original + aditivos eficazes) dos contratos de serviço do projeto, sem rascunho e cancelado." },
+  { id: "pct_medido", nome: "% medido", formato: "pct", definicao: "Medições aprovadas ÷ valor contratado." },
+  { id: "faturado", nome: "Faturado", formato: "brl", definicao: "Faturas dos contratos (Contas a Receber), sem canceladas." },
+  { id: "recebido", nome: "Recebido", formato: "brl", definicao: "Recebimentos das faturas dos contratos." },
+  { id: "a_receber", nome: "Faturado a receber", formato: "brl", definicao: "Faturado menos o recebido." },
   { id: "custo_realizado", nome: "Custo realizado", formato: "brl", definicao: "Custo Variável + Custo Fixo da DRE na versão Atual, até o mês corrente.", exigeCusto: true },
-  { id: "custo_m2", nome: "Custo realizado por m²", formato: "brlm2", definicao: "Custo realizado ÷ área construída do cadastro do projeto.", exigeCusto: true },
-  { id: "custo_orcado_m2", nome: "Custo orçado por m²", formato: "brlm2", definicao: "Custo do Orçamento no horizonte todo ÷ área construída do cadastro.", exigeCusto: true },
   { id: "desvio_custo", nome: "Desvio de custo", formato: "pct", definicao: "(Custo realizado − custo do Orçamento) ÷ custo do Orçamento, nas mesmas competências (até o mês corrente).", exigeCusto: true },
-  { id: "margem_orcada", nome: "Margem orçada sobre o VGV", formato: "pct", definicao: "(VGV − custo do Orçamento no horizonte todo) ÷ VGV.", exigeCusto: true },
+  { id: "margem_contratada", nome: "Margem orçada sobre o contratado", formato: "pct", definicao: "(Valor contratado − custo do Orçamento no horizonte todo) ÷ valor contratado.", exigeCusto: true },
+  // Dados antigos de incorporação (só oferecidos quando existem).
+  { id: "vgv", nome: "VGV (dados antigos)", formato: "brl", definicao: "Soma do valor de todas as unidades (versão Atual).", legado: true },
+  { id: "vgv_vendido", nome: "VGV vendido (dados antigos)", formato: "brl", definicao: "Soma do valor das unidades com status Vendido.", legado: true },
+  { id: "pct_vendido", nome: "% do VGV vendido (dados antigos)", formato: "pct", definicao: "VGV vendido ÷ VGV.", legado: true },
+  { id: "unidades_vendidas", nome: "Unidades vendidas (dados antigos)", formato: "contagem", definicao: "Unidades vendidas de quantas existem.", legado: true },
+  { id: "preco_m2_vendido", nome: "Preço médio vendido por m² (dados antigos)", formato: "brlm2", definicao: "Valor das vendidas com m² ÷ m² delas.", legado: true },
+  { id: "vgv_m2", nome: "VGV por m² (dados antigos)", formato: "brlm2", definicao: "Valor das unidades com m² ÷ m² delas.", legado: true },
+  { id: "custo_m2", nome: "Custo realizado por m² (dados antigos)", formato: "brlm2", definicao: "Custo realizado ÷ área construída do cadastro do projeto.", exigeCusto: true, legado: true },
+  { id: "custo_orcado_m2", nome: "Custo orçado por m² (dados antigos)", formato: "brlm2", definicao: "Custo do Orçamento no horizonte todo ÷ área construída do cadastro.", exigeCusto: true, legado: true },
+  { id: "margem_orcada", nome: "Margem orçada sobre o VGV (dados antigos)", formato: "pct", definicao: "(VGV − custo do Orçamento no horizonte todo) ÷ VGV.", exigeCusto: true, legado: true },
 ] as const;
 
-export const PADRAO_DE_INDICADORES = ["vgv", "vgv_vendido", "pct_vendido", "custo_m2"] as const;
+export const PADRAO_DE_INDICADORES = ["valor_contratado", "pct_medido", "a_receber", "desvio_custo"] as const;
+
+/** Algum projeto em tela tem dado de incorporação (unidade ou área construída)? */
+export const temDadosAntigos = (obras: readonly DadosDaObra[]) => obras.some((o) => o.unidades > 0 || (o.metragem != null && o.metragem > 0));
 
 export interface ValorDeIndicador {
   valor: number | null;
@@ -71,6 +100,23 @@ const div = (a: number, b: number | null | undefined) => (b && b > 0 ? a / b : n
 /** Calcula um indicador para uma obra (ou para a soma, com `somarObras`). */
 export function valorDoIndicador(id: string, d: DadosDaObra): ValorDeIndicador {
   switch (id) {
+    case "valor_contratado":
+      return { valor: d.servicos.contratado };
+    case "pct_medido": {
+      const v = div(d.servicos.medido, d.servicos.contratado);
+      return v == null ? { valor: null, motivo: "sem contrato" } : { valor: v * 100 };
+    }
+    case "faturado":
+      return { valor: d.servicos.faturado };
+    case "recebido":
+      return { valor: d.servicos.recebido };
+    case "a_receber":
+      return { valor: d.servicos.aReceber };
+    case "margem_contratada": {
+      if (d.custoOrcadoTotal == null) return { valor: null, motivo: "sem Orçamento" };
+      const v = div(d.servicos.contratado - d.custoOrcadoTotal, d.servicos.contratado);
+      return v == null ? { valor: null, motivo: "sem contrato" } : { valor: v * 100 };
+    }
     case "vgv":
       return { valor: d.vgv };
     case "vgv_vendido":
@@ -125,8 +171,10 @@ export function somarObras(obras: readonly DadosDaObra[]): DadosDaObra {
   const soma = (f: (d: DadosDaObra) => number) => obras.reduce((a, d) => a + f(d), 0);
   const nulo = (f: (d: DadosDaObra) => number | null) => (obras.some((d) => f(d) != null) ? soma((d) => f(d) ?? 0) : null);
   const comArea = obras.filter((d) => d.metragem != null && d.metragem > 0);
+  const somaS = (k: keyof ServicosDaObra) => Math.round(obras.reduce((a, d) => a + d.servicos[k], 0) * 100) / 100;
   return {
     obra: "Total",
+    servicos: { contratado: somaS("contratado"), medido: somaS("medido"), faturado: somaS("faturado"), recebido: somaS("recebido"), aReceber: somaS("aReceber") },
     vgv: soma((d) => d.vgv),
     vgvVendido: soma((d) => d.vgvVendido),
     unidades: soma((d) => d.unidades),
@@ -161,7 +209,8 @@ export function indicadoresEscolhidos(param: string | string[] | undefined, verC
  * custo por m² do Total divide só o custo das obras com área construída.
  */
 export function painelDeIndicadores(obras: readonly DadosDaObra[], verCusto: boolean) {
-  const disponiveis = INDICADORES_DE_NEGOCIO.filter((i) => verCusto || !i.exigeCusto).map((i) => i.id);
+  const legado = temDadosAntigos(obras);
+  const disponiveis = INDICADORES_DE_NEGOCIO.filter((i) => (verCusto || !i.exigeCusto) && (legado || !i.legado)).map((i) => i.id);
   const comTotal = obras.length > 1;
   const colunas = [...obras.map((o) => o.obra), ...(comTotal ? ["Total"] : [])];
   const total = somarObras(obras);

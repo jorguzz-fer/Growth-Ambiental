@@ -24,10 +24,8 @@ import { naturezaPorMunicipio } from "@/lib/calc/nfse";
 import {
   avisoDeCoordenada,
   avisoDeDuracao,
-  avisoDeFunding,
   avisoDeMunicipio,
   duracaoDerivada,
-  entradaFinanceira,
   recusaDasDatas,
   valorGlobal,
 } from "@/lib/projeto-regras";
@@ -83,7 +81,7 @@ const Resultado = ({ msg }: { msg: Msg }) =>
 function ClienteSelect({ clientes, tenantName, value, onChange, disabled }: { clientes: ClienteOpt[]; tenantName: string; value: string; onChange: (v: string) => void; disabled?: boolean }) {
   return (
     <Select value={value} onChange={(e) => onChange(e.target.value)} disabled={disabled} aria-label="Cliente">
-      <option value="">Empreendimento próprio — {tenantName}</option>
+      <option value="">Projeto próprio (sem cliente) — {tenantName}</option>
       {clientes.map((c) => (
         <option key={c.id} value={c.id}>
           {c.nome}
@@ -145,19 +143,19 @@ export function ProjectManager({
         </Link>
       ) : (
         <div className="flex flex-wrap items-center gap-2">
-          <Input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar obra por nome ou cliente…" aria-label="Buscar projeto" className="max-w-xs" />
+          <Input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar projeto por nome ou cliente…" aria-label="Buscar projeto" className="max-w-xs" />
           {perms.criar && (
             <>
               <Button size="sm" variant={novo === "proj" ? "default" : "outline"} onClick={() => setNovo(novo === "proj" ? null : "proj")}>
                 <Plus size={14} aria-hidden /> Novo projeto
               </Button>
               <Button size="sm" variant={novo === "office" ? "default" : "outline"} onClick={() => setNovo(novo === "office" ? null : "office")}>
-                <Plus size={14} aria-hidden /> Nova unidade / escritório
+                <Plus size={14} aria-hidden /> Nova sede / filial
               </Button>
             </>
           )}
           <span className="ml-auto text-[12px] text-[var(--color-ink3)]">
-            {empreendimentos.length} obra(s) · {escritorios.length} unidade(s)
+            {empreendimentos.length} projeto(s) · {escritorios.length} sede(s)/filial(is)
           </span>
         </div>
       )}
@@ -166,29 +164,29 @@ export function ProjectManager({
       {novo === "office" && !umSo && perms.criar && <NewOfficeForm onFechar={() => setNovo(null)} />}
 
       {(!umSo || empreendimentos.length > 0) && (
-        <section className="space-y-3" aria-label="Projetos — empreendimentos imobiliários">
+        <section className="space-y-3" aria-label="Projetos">
           {!umSo && (
-            <h2 className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-wide text-[var(--color-ink3)]">Projetos — empreendimentos imobiliários</h2>
+            <h2 className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-wide text-[var(--color-ink3)]">Projetos</h2>
           )}
           {empreendimentos.map((p) => (
             <ProjectCard key={p.id} project={p} detalhado={umSo} docs={docsByProject[p.id] ?? []} registrosDePonto={umSo ? registrosDePonto : 0} orcadoRealizado={umSo ? orcadoRealizado : undefined} {...comum} />
           ))}
-          {!umSo && empreendimentos.length === 0 && <p className="text-[12px] text-[var(--color-ink4)]">{q ? "Nenhuma obra com esse nome ou cliente." : "Nenhum projeto cadastrado ainda."}</p>}
+          {!umSo && empreendimentos.length === 0 && <p className="text-[12px] text-[var(--color-ink4)]">{q ? "Nenhum projeto com esse nome ou cliente." : "Nenhum projeto cadastrado ainda."}</p>}
         </section>
       )}
 
       {(!umSo || escritorios.length > 0) && (
-        <section className="space-y-3" aria-label="Unidades / Escritórios — centros de custo">
+        <section className="space-y-3" aria-label="Sedes e filiais — centros de custo">
           {!umSo && (
             <>
-              <h2 className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-wide text-[var(--color-ink3)]">Unidades / Escritórios — centros de custo</h2>
-              <p className="text-[12px] text-[var(--color-ink3)]">Matriz e filiais: contas corporativas não vinculadas a um empreendimento específico (despesas administrativas, overhead).</p>
+              <h2 className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-wide text-[var(--color-ink3)]">Sedes e filiais — centros de custo</h2>
+              <p className="text-[12px] text-[var(--color-ink3)]">Matriz e filiais: centros de custo da estrutura, não vinculados a um projeto (despesas administrativas e gastos compartilhados).</p>
             </>
           )}
           {escritorios.map((p) => (
             <OfficeCard key={p.id} project={p} detalhado={umSo} canDelete={canDelete} canEdit={perms.editar} />
           ))}
-          {!umSo && escritorios.length === 0 && <p className="text-[12px] text-[var(--color-ink4)]">{q ? "Nenhuma unidade com esse nome." : "Nenhuma unidade/escritório cadastrado ainda."}</p>}
+          {!umSo && escritorios.length === 0 && <p className="text-[12px] text-[var(--color-ink4)]">{q ? "Nenhuma sede ou filial com esse nome." : "Nenhuma sede ou filial cadastrada ainda."}</p>}
         </section>
       )}
     </div>
@@ -238,8 +236,8 @@ function NewProjectForm({ clientes, tenantName, onFechar }: { clientes: ClienteO
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
           <div className="sm:col-span-2">
-            <Label>Nome da obra</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Monitoramento — Área Norte" disabled={pending} aria-label="Nome da obra" />
+            <Label>Nome do projeto</Label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Monitoramento — Área Norte" disabled={pending} aria-label="Nome do projeto" />
           </div>
           <div>
             <Label>Data de início</Label>
@@ -425,12 +423,12 @@ function ZonaDeExclusao({ projectId, nome }: { projectId: string; nome: string }
 /* ─── incidência fiscal (mantido) ────────────────────────────────────── */
 
 /**
- * Mostra onde o ISS desta obra vai incidir. A natureza da operação da NFS-e
- * sai da comparação entre o município da obra e o da sede.
+ * Mostra onde o ISS do serviço vai incidir. A natureza da operação da NFS-e
+ * sai da comparação entre o município de execução do projeto e o da sede.
  */
 function ObraIncidencia({ codigoObra, codigoSede }: { codigoObra: string; codigoSede?: string | null }) {
   const informado = codigoObra.trim();
-  if (!informado) return <span className="text-[var(--color-ink3)]">Sem município da obra: a nota sairá tributada no município da empresa.</span>;
+  if (!informado) return <span className="text-[var(--color-ink3)]">Sem município de execução: a nota sairá tributada no município da empresa.</span>;
   if (!codigoMunicipioValido(informado)) {
     return (
       <span className="flex flex-wrap items-center gap-2">
@@ -451,7 +449,7 @@ function ObraIncidencia({ codigoObra, codigoSede }: { codigoObra: string; codigo
   return (
     <span className="flex flex-wrap items-center gap-2">
       <Badge tone={fora ? "info" : "success"}>{fora ? "tributação fora do município" : "tributação no município"}</Badge>
-      <span className="text-[var(--color-ink3)]">{fora ? "A obra fica em outro município: o ISS é devido lá, e a nota vai com natureza 2." : "Obra no mesmo município da sede: ISS devido no município da empresa."}</span>
+      <span className="text-[var(--color-ink3)]">{fora ? "O projeto é executado em outro município: quando o serviço tem ISS devido no local da execução, a nota vai com natureza 2." : "Projeto no mesmo município da sede: ISS devido no município da empresa."}</span>
     </span>
   );
 }
@@ -570,7 +568,6 @@ function ProjectCard({
   const avisoDuracao = avisoDeDuracao(project.durationMonths, f.startDate, f.endDate);
   const recusaDatas = (f.startDate !== inicial.startDate || f.endDate !== inicial.endDate) ? recusaDasDatas(f.startDate, f.endDate) : null;
   const global = valorGlobal(f);
-  const avisoFunding = avisoDeFunding(f);
   const avisoMunicipio = avisoDeMunicipio(f.municipioObra, f.ufObra, f.codigoMunicipioObra);
   const mexeuCoordenada = f.latitude !== inicial.latitude || f.longitude !== inicial.longitude;
   const avisoPonto = mexeuCoordenada ? avisoDeCoordenada(registrosDePonto) : null;
@@ -625,7 +622,7 @@ function ProjectCard({
   return (
     <Card className={detalhado ? "" : "scroll-mt-20"}>
       <CardContent className="space-y-3 p-4">
-        {/* Cabeçalho compacto (seção 8): nome, situação, cliente, valor global, duração, datas, [...] */}
+        {/* Cabeçalho compacto (seção 8): nome, situação, cliente, receita prevista, duração, datas, [...] */}
         <header className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] bg-[var(--color-surface2)] text-[var(--color-accent2)]"><Building2 size={16} aria-hidden /></span>
           <h3 className="text-[15px] font-semibold text-[var(--color-ink)]">
@@ -634,7 +631,7 @@ function ProjectCard({
           <BadgeSituacao situacao={project.situacao} />
           <span className="text-[12px] text-[var(--color-ink2)]">
             {cliente}
-            {global > 0 ? <> · valor global <strong className="font-[family-name:var(--font-mono)] text-[var(--color-ink)]">{brl(global)}</strong></> : <> · <span className="text-[var(--color-ink4)]">sem valor global</span></>}
+            {global > 0 ? <> · receita prevista <strong className="font-[family-name:var(--font-mono)] text-[var(--color-ink)]">{brl(global)}</strong></> : <> · <span className="text-[var(--color-ink4)]">sem receita prevista</span></>}
             {" · "}
             {janela != null ? `Duração: ${janela} competência(s)` : "Duração: sem datas"}
             {project.startDate && <> · Início: {dateBR(project.startDate)}</>}
@@ -653,8 +650,8 @@ function ProjectCard({
         <Bloco tom="neutro" titulo="Dados do projeto">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-6">
             <div className="sm:col-span-4">
-              <Label>Nome da obra</Label>
-              <Input value={f.name} onChange={(e) => set("name")(e.target.value)} disabled={off} aria-label="Nome da obra" />
+              <Label>Nome do projeto</Label>
+              <Input value={f.name} onChange={(e) => set("name")(e.target.value)} disabled={off} aria-label="Nome do projeto" />
             </div>
             <div className="sm:col-span-2">
               <Label>Duração (competências)</Label>
@@ -693,7 +690,7 @@ function ProjectCard({
         {/* Visão do projeto: LOCALIZAÇÃO à esquerda, ORÇADO x REALIZADO à direita (seções 17–19) */}
         {detalhado && (
           <div className={`grid grid-cols-1 gap-3 ${orcadoRealizado ? "xl:grid-cols-2" : ""}`}>
-            <Bloco tom="localizacao" titulo="Localização do projeto" subtitulo="Endereço e informações geográficas do empreendimento">
+            <Bloco tom="localizacao" titulo="Localização do projeto" subtitulo="Local de prestação do serviço (área de estudo, campo ou intervenção)">
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 <div className="col-span-2 sm:col-span-3">
                   <Label>Endereço</Label>
@@ -724,16 +721,12 @@ function ProjectCard({
                   <Input value={f.longitude} onChange={(e) => set("longitude")(e.target.value)} disabled={off} placeholder="-46.6333" aria-label="Longitude" />
                 </div>
                 <div>
-                  <Label>Código da obra (CNO/CEI)</Label>
-                  <Input value={f.codigoObra} onChange={(e) => set("codigoObra")(e.target.value)} maxLength={15} disabled={off} aria-label="Código da obra" />
-                </div>
-                <div>
                   <Label>ART / RRT</Label>
                   <Input value={f.art} onChange={(e) => set("art")(e.target.value)} maxLength={15} disabled={off} aria-label="ART / RRT" />
                 </div>
               </div>
               <p className="mt-2 text-[11.5px] text-[var(--color-ink3)]">
-                <strong>Efeito fiscal:</strong> na construção civil o ISS é devido no município da obra (LC 116/2003, art. 3º, III). A NFS-e usa o <strong>código IBGE</strong>, não o nome. Coordenadas alimentam o raio do ponto da obra ({project.pontoRaioMetros} m).
+                <strong>Efeito fiscal:</strong> para alguns serviços, o ISS é devido no município onde o serviço é executado (LC 116/2003, art. 3º). A NFS-e usa o <strong>código IBGE</strong>, não o nome. Coordenadas delimitam o raio da presença de campo do projeto ({project.pontoRaioMetros} m).
               </p>
               <Aviso texto={avisoMunicipio} />
               <Aviso texto={avisoPonto} tom="info" />
@@ -747,59 +740,31 @@ function ProjectCard({
 
         {/* RECEITAS (10) antes de CUSTOS (11); ESTRUTURA FINANCEIRA (12) */}
         <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
-          <Bloco tom="receita" titulo="Receitas do projeto" subtitulo="Valores de venda e geração de receita">
+          <Bloco tom="receita" titulo="Receita prevista" subtitulo="Base da linha “Receitas do Projeto” no Orçamento. O valor contratado, medido e faturado vem dos contratos.">
             <div className="grid grid-cols-2 gap-3">
-              {campoMoney("valorConstrucao", "Valor da construção")}
-              {campoMoney("valorTerreno", "Valor do terreno")}
+              {campoMoney("valorConstrucao", "Receita prevista do projeto")}
+              {Number(f.valorTerreno || 0) > 0 && (
+                <p className="col-span-2 text-[11.5px] text-[var(--color-ink3)]" data-legado-terreno>
+                  Este projeto tem um valor de terreno de {brl(Number(f.valorTerreno))} herdado do cadastro anterior (incorporação); ele continua no total do Orçamento enquanto não for zerado.
+                </p>
+              )}
             </div>
           </Bloco>
-          <Bloco tom="custo" titulo="Custos do projeto" subtitulo="Investimentos necessários para a realização do empreendimento">
+          <Bloco tom="custo" titulo="Custo previsto" subtitulo="Estimativa de custo para a execução do projeto (o realizado vem das despesas).">
             <div className="grid grid-cols-2 gap-3">
-              {campoMoney("custoConstrucao", "Custo da construção")}
-              {campoMoney("custoTerreno", "Custo do terreno")}
-              {/* Prompt AE2 (BAE2-1): a área construída é a base do custo por m² do Resumo. */}
-              <div>
-                <Label>Área construída (m²)</Label>
-                <Input
-                  inputMode="decimal"
-                  value={f.metragem}
-                  onChange={(e) => set("metragem")(e.target.value)}
-                  disabled={off}
-                  placeholder="não informada"
-                  aria-label="Área construída (m²)"
-                />
-              </div>
+              {campoMoney("custoConstrucao", "Custo previsto do projeto")}
             </div>
           </Bloco>
         </div>
-        <Bloco tom="estrutura" titulo="Estrutura financeira" subtitulo="Fontes de recursos e informações do terreno">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
-            {campoMoney("financiamentoConstrucao", "Financiamento da construção")}
-            {campoMoney("financiamentoTerreno", "Financiamento do terreno")}
-            {campoMoney("recursosProprios", "Recursos próprios")}
-            <div className="col-span-2 sm:col-span-3 xl:col-span-2">
-              <Label>Proprietário do terreno</Label>
-              <Input value={f.proprietarioTerreno} onChange={(e) => set("proprietarioTerreno")(e.target.value)} disabled={off} aria-label="Proprietário do terreno" />
-            </div>
-            <div className="col-span-2 sm:col-span-3 xl:col-span-1">
-              <Label>Forma de pagamento do terreno</Label>
-              <Input value={f.formaPagamentoTerreno} onChange={(e) => set("formaPagamentoTerreno")(e.target.value)} disabled={off} aria-label="Forma de pagamento do terreno" />
-            </div>
-          </div>
-          <label className="mt-2.5 flex cursor-pointer items-center gap-2 text-[12.5px] text-[var(--color-ink)]">
-            <input type="checkbox" checked={f.terrenoForaCaixa} onChange={(e) => set("terrenoForaCaixa")(e.target.checked)} disabled={off} className="h-4 w-4 accent-[var(--color-accent2)]" />
-            Terreno pago direto ao proprietário — <strong>não passa pelo caixa da construtora</strong>
-          </label>
-          <div className="mt-2.5 flex flex-wrap gap-x-5 gap-y-1 border-t border-[#bfdbfe] pt-2.5 text-[12.5px]">
-            <span className="text-[var(--color-ink3)]">
-              Valor global da operação: <strong className="font-[family-name:var(--font-mono)] text-[var(--color-accent)]">{global > 0 ? brl(global) : "—"}</strong>
-            </span>
-            <span className="text-[var(--color-ink3)]">
-              Entrada financeira da construtora: <strong className="font-[family-name:var(--font-mono)] text-[var(--color-ink)]">{global > 0 ? brl(entradaFinanceira(f)) : "—"}</strong>
-            </span>
-          </div>
-          <Aviso texto={avisoFunding} />
-        </Bloco>
+        {/* Growth Ambiental: a estrutura de financiamento da incorporação (terreno,
+            financiamento da construção, proprietário do terreno, área construída)
+            saiu do cadastro. Os valores já gravados continuam no banco e nos
+            cálculos de sempre — nada é apagado. */}
+        <div className="flex flex-wrap gap-x-5 gap-y-1 text-[12.5px]">
+          <span className="text-[var(--color-ink3)]">
+            Receita prevista: <strong className="font-[family-name:var(--font-mono)] text-[var(--color-accent)]">{global > 0 ? brl(global) : "—"}</strong>
+          </span>
+        </div>
 
         <ProjetoDocs projectId={project.id} docs={docs} canEdit={canEdit} r2={r2} />
 
@@ -822,7 +787,7 @@ function ProjectCard({
   );
 }
 
-/* ─── unidade / escritório ───────────────────────────────────────────── */
+/* ─── sede / filial (centro de custo) ────────────────────────────────── */
 
 function OfficeCard({ project, detalhado, canEdit, canDelete }: { project: Project; detalhado: boolean; canEdit: boolean; canDelete: boolean }) {
   const [name, setName] = useState(project.name);
@@ -848,7 +813,7 @@ function OfficeCard({ project, detalhado, canEdit, canDelete }: { project: Proje
         </header>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
           <div className="flex-1">
-            <Label>Nome da unidade / escritório</Label>
+            <Label>Nome da sede / filial</Label>
             <Input value={name} onChange={(e) => setName(e.target.value)} disabled={!canEdit || pending} aria-label="Nome da unidade" />
           </div>
           <div className="sm:w-44">

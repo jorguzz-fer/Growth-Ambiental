@@ -21,8 +21,6 @@ describe.skipIf(!HAS_DB)("Despesas — integridade (Prompt I, §11 e §19)", asy
   const { db, schema } = await import("@/lib/db");
   const { defaultPermissions } = await import("@/lib/permissions");
   const { addDespesa, updateDespesa, deleteDespesa, cancelarDespesa, pagarDespesa } = await import("./despesas");
-  const { importUnits } = await import("./units");
-  const { addMedicao, updateMedicao, deleteMedicao } = await import("./medicao");
   let tenantId = "";
   let projectId = "";
   let versionId = "";
@@ -148,7 +146,7 @@ describe.skipIf(!HAS_DB)("Despesas — integridade (Prompt I, §11 e §19)", asy
     expect(d).toBeDefined();
   });
 
-  it("11.7 — versão congelada bloqueia editar, cancelar, pagar, excluir e importar unidades", async () => {
+  it("11.7 — versão congelada bloqueia editar, cancelar, pagar e excluir", async () => {
     const r0 = await addDespesa(fd({ ...base(), valor: "20" }));
     const id = (r0 as { id: string }).id;
     await lock(true);
@@ -161,7 +159,6 @@ describe.skipIf(!HAS_DB)("Despesas — integridade (Prompt I, §11 e §19)", asy
       expect(r.ok).toBe(false);
       expect((r as { error: string }).error).toMatch(/congelada/);
     }
-    expect(await importUnits([{ code: "U-1" }], projectId)).toEqual({ ok: false, error: expect.stringMatching(/congelada/) });
     await lock(false);
     const [d] = await db.select().from(schema.despesas).where(eq(schema.despesas.id, id));
     expect(d.cancelado).toBe(false);
@@ -176,21 +173,4 @@ describe.skipIf(!HAS_DB)("Despesas — integridade (Prompt I, §11 e §19)", asy
     ctxRef.current = salvo;
   });
 
-  it("§19 — medição: editar e excluir respeitam lock e a versão da própria medição", async () => {
-    await addMedicao(fd({ projectId, competencia: "09/2026", grupo: "01|Serviços preliminares", valor: "500" }));
-    const [m] = await db.select().from(schema.medicoes).where(eq(schema.medicoes.tenantId, tenantId));
-    expect((await updateMedicao(m.id, { valor: "-1" })).ok).toBe(false);
-    expect((await updateMedicao(m.id, { valor: "600" })).ok).toBe(true);
-    await lock(true);
-    expect((await updateMedicao(m.id, { valor: "700" })).ok).toBe(false);
-    expect((await deleteMedicao(m.id, true)).ok).toBe(false);
-    await lock(false);
-    expect(await deleteMedicao("00000000-0000-0000-0000-000000000000", true)).toEqual({ ok: false, error: "Medição não encontrada." });
-    expect((await deleteMedicao(m.id, true)).ok).toBe(true);
-    const [l] = await db
-      .select()
-      .from(schema.auditLog)
-      .where(and(eq(schema.auditLog.tenantId, tenantId), eq(schema.auditLog.action, "medicao.delete")));
-    expect(l.meta).toMatchObject({ competencia: "09/2026", valor: "600.00" });
-  });
 });

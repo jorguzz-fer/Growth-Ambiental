@@ -24,21 +24,24 @@ export const TELAS_REMOVIDAS = {
   },
   // Prompt AN, Parte 6: a carência saiu (detectava a operação normal); a data
   // impossível virou aviso no cadastro do plano de pagamento da unidade.
+  // Growth Ambiental: a conferência era dos planos de pagamento de unidades
+  // imobiliárias, que saíram. Os vencimentos ficam em Contas a Receber.
   "planos-recebiveis": {
     rotaAntiga: "/diagnostico/planos-recebiveis",
-    destino: "/unidades",
-    aviso:
-      "A Conferência de planos saiu. O dia de vencimento que não existe em algum mês (o 31 em fevereiro) agora é avisado no plano de pagamento da unidade, ao preencher o 1º vencimento.",
-  },
-  // Prompt AB2 (Fase 3, BAB-1): o Consolidado saiu. A receita da obra por
-  // fonte está na Projeção de Receitas (comparando versões); pergunta livre,
-  // na Cris. A Projeção usa `?de=` para data, então o aviso vai em `?saiu=`.
-  consolidado: {
-    rotaAntiga: "/consolidado",
-    destino: "/projecao",
+    destino: "/contasreceber",
     parametro: "saiu",
     aviso:
-      "A tela Consolidado saiu. A receita da obra por fonte está aqui: escolha duas ou três versões para ver os totais por fonte. Para outra pergunta, abra a Cris.",
+      "A Conferência de planos de venda saiu (era das unidades imobiliárias). Os recebíveis e os vencimentos ficam aqui, em Contas a Receber.",
+  },
+  // Prompt AB2 (Fase 3, BAB-1): o Consolidado saiu. Growth Ambiental: a
+  // Projeção de Receitas (por unidade) também saiu; o destino é o Painel de
+  // Contratos. Aviso em `?saiu=` (as telas usam `?de=` como data).
+  consolidado: {
+    rotaAntiga: "/consolidado",
+    destino: "/contratos/painel",
+    parametro: "saiu",
+    aviso:
+      "A tela Consolidado saiu. A receita por contrato (contratado, medido, faturado e a receber) está aqui, no Painel de Contratos; a comparação entre versões fica na DRE. Para outra pergunta, abra a Cris.",
   },
   // Prompt AB2: o Balanço do Dia saiu; o histórico dos dias fechados mora no
   // Caixa (Prompt L2). O Caixa também usa `?de=` para data.
@@ -48,6 +51,59 @@ export const TELAS_REMOVIDAS = {
     parametro: "saiu",
     aviso:
       "A tela Balanço do Dia saiu. Os dias fechados ficam aqui no Caixa, em “Dias fechados”, com o mesmo filtro, impressão e exportação.",
+  },
+  // ── Growth Ambiental: módulos exclusivos de construção e incorporação ──
+  // As telas saem; os dados gravados ficam (nada é apagado) e os relatórios
+  // históricos continuam lendo o que já existe. Ver
+  // docs/ADEQUACAO_FUNCIONAL_GROWTH_AMBIENTAL.md.
+  unidades: {
+    rotaAntiga: "/unidades",
+    destino: "/contasreceber",
+    parametro: "saiu",
+    aviso:
+      "O cadastro de unidades imobiliárias saiu: a receita vem dos contratos de serviço (Contratos → medições e faturamento) e é acompanhada aqui, em Contas a Receber.",
+  },
+  simulador: {
+    rotaAntiga: "/simulador",
+    destino: "/contratos",
+    parametro: "saiu",
+    aviso: "O simulador de financiamento imobiliário (SAC/PRICE) saiu. Condições de pagamento e reajuste ficam no cadastro de cada contrato.",
+  },
+  permuta: {
+    rotaAntiga: "/permuta",
+    destino: "/contasreceber",
+    parametro: "saiu",
+    aviso: "O módulo de permutas imobiliárias saiu. As receitas e os recebíveis ficam aqui, em Contas a Receber; os registros antigos continuam no histórico dos relatórios.",
+  },
+  parametros: {
+    rotaAntiga: "/parametros",
+    destino: "/contratos",
+    parametro: "saiu",
+    aviso: "A tabela de INCC saiu. O reajuste é do contrato: índice (IPCA, IGP-M, INPC) e data-base ficam no cadastro de cada contrato.",
+  },
+  medicao: {
+    rotaAntiga: "/medicao",
+    destino: "/contratos/medicoes",
+    parametro: "saiu",
+    aviso: "A Medição por grupo de obra e o Relatório CEF saíram. As medições de serviço são por contrato, item, aditivo e período, com aprovação e documentos — aqui.",
+  },
+  medicaolanc: {
+    rotaAntiga: "/medicaolanc",
+    destino: "/contratos/medicoes",
+    parametro: "saiu",
+    aviso: "O lançamento de medição por grupo de obra saiu. Lance a medição do serviço aqui, no contrato: item, período, quantidade ou percentual e valor.",
+  },
+  reembolso: {
+    rotaAntiga: "/reembolso",
+    destino: "/contratos/reembolsos",
+    parametro: "saiu",
+    aviso: "As Liberações de Obra (financiamento imobiliário) saíram. Despesas reembolsáveis pelo cliente ficam aqui, por contrato e projeto, com documentos e prestação de contas.",
+  },
+  projecao: {
+    rotaAntiga: "/projecao",
+    destino: "/contratos/painel",
+    parametro: "saiu",
+    aviso: "A Projeção de Receitas por unidade imobiliária saiu. A receita dos serviços — contratado, medido, faturado, recebido e a receber — está aqui, no Painel de Contratos; a comparação entre versões fica na DRE.",
   },
 } as const;
 

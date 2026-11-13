@@ -19,7 +19,7 @@ export const CENARIOS_RC = ["atual", "forecast", "budget"] as const;
 export type CenarioRC = (typeof CENARIOS_RC)[number];
 
 export const ROTULO_FONTE: Record<Fonte, string> = { dre: "DRE", dreanalitica: "DRE por categoria e grupo", fluxo: "Fluxo de Caixa (previsto)" };
-export const ROTULO_COLUNAS: Record<Colunas, string> = { cenario: "por cenário", mes: "mês a mês", obra: "por obra" };
+export const ROTULO_COLUNAS: Record<Colunas, string> = { cenario: "por cenário", mes: "mês a mês", obra: "por projeto" };
 export const ROTULO_CENARIO_RC: Record<CenarioRC, string> = { atual: "Atual", forecast: "Previsão Atualizada", budget: "Orçamento" };
 /** Teto de colunas de valor (meses ou obras): além disso, a tela avisa e corta. */
 export const MAX_COLUNAS = 24;

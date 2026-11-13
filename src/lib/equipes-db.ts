@@ -3,7 +3,7 @@ import { db, schema } from "@/lib/db";
 import { FUNCOES_PADRAO } from "@/lib/equipe-regras";
 
 /**
- * BZ-3 — lista fechada de funções por tenant. As cinco funções padrão são
+ * BZ-3 — lista fechada de funções por tenant. As funções padrão (de campo) são
  * criadas na PRIMEIRA leitura do tenant (sem migração de dado); depois a
  * lista é editável na tela. Página e action usam esta mesma função.
  */

@@ -6,19 +6,20 @@ const M = [
   { id: "m1", nome: "Cimento CP-II", sku: "CIM", unidade: "sc" },
   { id: "m2", nome: "Areia", sku: null, unidade: "m³" },
 ];
-const O = [{ id: "p1", rotulo: "OBRA A" }];
+const O = [{ id: "p1", rotulo: "PROJETO A" }];
 const D = [{ id: "d1", rotulo: "EXM-1 · Concreteira · R$ 1.000" }];
 
-describe("Prompt Y2 · Estoque com a Cris", () => {
-  it("o formulário oferece materiais, obras, despesas e os dois tipos", () => {
+describe("Prompt Y2 · Materiais e Equipamentos com a Cris", () => {
+  it("o formulário oferece materiais, projetos, despesas e os dois tipos", () => {
     const f = formularioDoMovimento(M, O, D);
     expect(f.campos.find((c) => c.nome === "tipo")?.opcoes).toEqual(["entrada", "baixa"]);
+    expect(f.campos.find((c) => c.nome === "obra")?.rotulo).toBe("Projeto (destino da baixa; opcional na entrada)");
     expect(f.campos.find((c) => c.nome === "material")?.opcoes).toEqual(["Cimento CP-II (CIM) · sc", "Areia · m³"]);
   });
 
-  it("baixa para obra vira saída com motivo, obra e quantidade", () => {
-    const r = movimentoDaProposta({ tipo: "baixa", material: "Cimento CP-II (CIM) · sc", quantidade: "10", motivo: "Consumo na obra", obra: "OBRA A" }, M, O, D, "entrada");
-    expect(r).toEqual({ mov: { tipo: "saida", itemId: "m1", quantidade: "10", origem: "Consumo na obra", projectId: "p1" }, avisos: [] });
+  it("baixa para o projeto vira saída com motivo, projeto e quantidade", () => {
+    const r = movimentoDaProposta({ tipo: "baixa", material: "Cimento CP-II (CIM) · sc", quantidade: "10", motivo: "Uso no projeto", obra: "PROJETO A" }, M, O, D, "entrada");
+    expect(r).toEqual({ mov: { tipo: "saida", itemId: "m1", quantidade: "10", origem: "Uso no projeto", projectId: "p1" }, avisos: [] });
   });
 
   it("entrada aponta a despesa; motivo de baixa numa entrada é avisado", () => {

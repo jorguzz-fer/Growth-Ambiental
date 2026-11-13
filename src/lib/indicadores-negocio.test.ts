@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { INDICADORES_DE_NEGOCIO, indicadoresEscolhidos, painelDeIndicadores, somarObras, valorDoIndicador, type DadosDaObra } from "./indicadores-negocio";
+import { INDICADORES_DE_NEGOCIO, SERVICOS_VAZIOS, indicadoresEscolhidos, painelDeIndicadores, somarObras, valorDoIndicador, type DadosDaObra } from "./indicadores-negocio";
 
 const obra = (o: Partial<DadosDaObra>): DadosDaObra => ({
-  obra: "A", vgv: 0, vgvVendido: 0, unidades: 0, vendidas: 0, m2Unidades: 0, m2Vendidas: 0, vgvComM2: 0, vgvVendidoComM2: 0,
+  obra: "A", servicos: SERVICOS_VAZIOS, vgv: 0, vgvVendido: 0, unidades: 0, vendidas: 0, m2Unidades: 0, m2Vendidas: 0, vgvComM2: 0, vgvVendidoComM2: 0,
   metragem: null, custoRealizado: null, custoOrcadoAteHoje: null, custoOrcadoTotal: null, ...o,
 });
 
@@ -44,7 +44,22 @@ describe("Prompt AE2 — indicadores de negócio", () => {
     expect(p.disponiveis).not.toContain("custo_m2");
     expect(p.colunas).toEqual(["A"]);
     expect(indicadoresEscolhidos("custo_m2,vgv", false)).toEqual(["vgv"]);
-    expect(indicadoresEscolhidos(undefined, true)).toEqual(["vgv", "vgv_vendido", "pct_vendido", "custo_m2"]);
+    expect(indicadoresEscolhidos(undefined, true)).toEqual(["valor_contratado", "pct_medido", "a_receber", "desvio_custo"]);
+    expect(indicadoresEscolhidos(undefined, false)).toEqual(["valor_contratado", "pct_medido", "a_receber"]);
     expect(indicadoresEscolhidos("margem_orcada,vgv,lixo", true)).toEqual(["vgv", "margem_orcada"]);
+  });
+
+  it("Growth Ambiental: indicadores de serviço; os de VGV e m² só aparecem com dados antigos", () => {
+    const amb = obra({ obra: "P", servicos: { contratado: 1000, medido: 250, faturado: 200, recebido: 150, aReceber: 50 }, custoOrcadoTotal: 700, custoRealizado: 100, custoOrcadoAteHoje: 80 });
+    expect(valorDoIndicador("valor_contratado", amb).valor).toBe(1000);
+    expect(valorDoIndicador("pct_medido", amb).valor).toBeCloseTo(25, 6);
+    expect(valorDoIndicador("a_receber", amb).valor).toBe(50);
+    expect(valorDoIndicador("margem_contratada", amb).valor).toBeCloseTo(30, 6);
+    expect(valorDoIndicador("pct_medido", obra({})).motivo).toBe("sem contrato");
+    const p = painelDeIndicadores([amb], true);
+    for (const id of ["vgv", "vgv_vendido", "custo_m2", "margem_orcada"]) expect(p.disponiveis, id).not.toContain(id);
+    expect(p.disponiveis).toContain("margem_contratada");
+    expect(painelDeIndicadores([amb, a], true).disponiveis).toContain("vgv"); // A tem unidades antigas
+    expect(somarObras([amb, amb]).servicos.contratado).toBe(2000);
   });
 });

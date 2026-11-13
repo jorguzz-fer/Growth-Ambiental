@@ -293,7 +293,7 @@ export async function definirSituacaoDaConta(id: string, ativo: boolean): Promis
   await db.update(schema.chartAccounts).set({ ativo, versao: c.versao + 1, updatedAt: new Date() }).where(eq(schema.chartAccounts.id, c.id));
   await logAudit({ tenantId: ctx.tenant.id, userId: ctx.userId, action: ativo ? "chart.item.activate" : "chart.item.deactivate", entity: "chart_account", entityId: c.id, meta: { code: c.code } });
   revalidar();
-  return { ok: true, id: c.id, aviso: !ativo && c.papel ? `A conta ${c.code} é usada pelo acerto de contas (${c.papel}); o acerto continua lançando nela.` : undefined };
+  return { ok: true, id: c.id, aviso: !ativo && c.papel ? `A conta ${c.code} é usada em Acertos e Rateios (${c.papel}); o acerto continua lançando nela.` : undefined };
 }
 
 /** Exclusão física só de conta sem nenhum uso e sem papel técnico; com uso, inative. */

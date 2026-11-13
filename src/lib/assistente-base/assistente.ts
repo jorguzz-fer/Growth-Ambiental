@@ -8,7 +8,7 @@ export const TEXTO = `# A Cris e os tipos de ajuda
 **O que faz:**
 - Explica como o sistema funciona: onde fica cada coisa, o que cada campo significa e a diferença entre telas parecidas.
 - Analisa os números que a tela mostra: compara colunas, acha o maior desvio, explica uma variação, simula um cenário ("e se a receita cair 10%?"). Simulação é hipotética e não grava nada.
-- Busca números de outras telas — receita, custo, desvio de custo e saldo das contas —, com o acesso de quem pergunta.
+- Busca números de outras telas — receita, custo, desvio de custo e saldo das contas — e analisa os dados de qualquer módulo (projetos, contratos, medições, contas a receber, despesas, plano de trabalho, equipes, materiais e equipamentos), com o acesso de quem pergunta.
 - Nas telas de lançamento, preenche o formulário a partir do que você escreve, dita (botão do microfone) ou anexa (PDF ou foto). Ela mostra a proposta, você clica em "Preencher a tela", confere e salva pelo botão da própria tela.
 
 **O que não faz:**
@@ -29,5 +29,5 @@ export const TEXTO = `# A Cris e os tipos de ajuda
 
 - **Painel da tela** (à direita, em várias telas): perguntas prontas sobre a tela em que você está, com os números já mostrados nela.
 - **Cris** (botão no canto inferior direito): conversa livre — explica, analisa, simula e preenche.
-- **Leitura de documento por IA** (despesa, fornecedor, extrato, projeto, nota de estoque, folha de ponto, laudo de medição; venda e permuta por texto): só o documento ou o texto vão ao modelo. A leitura **propõe** o preenchimento, e a pessoa confere e confirma.
+- **Leitura de documento por IA** (despesa, fornecedor, extrato, projeto, nota de materiais e equipamentos, folha de ponto; contrato e proposta técnica pela Cris): só o documento ou o texto vão ao modelo. A leitura **propõe** o preenchimento, e a pessoa confere e confirma.
 `;

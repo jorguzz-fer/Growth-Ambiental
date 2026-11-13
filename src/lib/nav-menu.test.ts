@@ -86,7 +86,7 @@ const TELAS_NOVAS: Record<string, string> = {
  * de Medição de Obra). O item /medicao aparece para quem tem `medicao` OU
  * `medicaolanc` — o engenheiro continua vendo o módulo Projetos (antigo Obra).
  */
-const FUNDIDAS_NO_ITEM: Record<string, string> = { "/medicao": "medicaolanc" };
+const FUNDIDAS_NO_ITEM: Record<string, string> = {};
 /** Prompt AL: /contabilidade saiu do sistema (virou redirecionamento para /usuarios). */
 const SAIRAM = new Set([
   "/medicaolanc",
@@ -97,6 +97,14 @@ const SAIRAM = new Set([
   // Prompt AB2: Consolidado e Balanço do Dia saíram (redirecionamento com aviso).
   "/consolidado",
   "/balancodia",
+  // Growth Ambiental: módulos de construção e incorporação (telas-removidas.ts).
+  "/unidades",
+  "/simulador",
+  "/reembolso",
+  "/permuta",
+  "/parametros",
+  "/medicao",
+  "/projecao",
 ]);
 const ESPERADO = Object.fromEntries(Object.entries({ ...MENU_ANTIGO, ...TELAS_NOVAS }).filter(([href]) => !SAIRAM.has(href)));
 
@@ -110,15 +118,19 @@ describe("NAV_MENU — nenhuma tela se perde", () => {
     expect(Object.keys(MENU_ANTIGO)).toHaveLength(38);
   });
 
-  it("Prompt V: um item só de medição, que também destaca /medicaolanc e aparece para o engenheiro", () => {
-    const item = todos.find((i) => i.href === "/medicao")!;
-    expect(todos.filter((i) => /medicao/.test(i.href))).toHaveLength(1);
-    expect(item.permAlt).toBe("medicaolanc");
-    expect(isItemActive("/medicaolanc", item.href, item.tambem)).toBe(true);
-    expect(isItemActive("/medicaolanc?aba=lancadas".split("?")[0], item.href, item.tambem)).toBe(true);
-    // o engenheiro não tem `medicao.ver` (a guarda central negaria /medicao): o item dele aponta para /medicaolanc
-    expect(visibleMenu(defaultPermissions("engenheiro")).flatMap((m) => m.items.map((i) => i.href))).toEqual(["/medicaolanc"]);
-    expect(visibleMenu(defaultPermissions("admin")).flatMap((m) => m.items.filter((i) => /medicao/.test(i.href)).map((i) => i.href))).toEqual(["/medicao"]);
+  it("Growth Ambiental: a medição é do contrato — um item só, que aparece para o engenheiro (sem o financeiro)", () => {
+    expect(todos.filter((i) => /medic/.test(i.href)).map((i) => i.href)).toEqual(["/contratos/medicoes"]);
+    expect(todos.find((i) => i.href === "/contratos/medicoes")!.label).toBe("Medições");
+    const eng = visibleMenu(defaultPermissions("engenheiro")).flatMap((m) => m.items.map((i) => i.href));
+    expect(eng).toContain("/contratos/medicoes");
+    expect(eng).not.toContain("/contratos/reembolsos"); // exige o financeiro do contrato
+    expect(defaultPermissions("engenheiro").contratosfinanceiro?.ver ?? false).toBe(false);
+  });
+
+  it("Growth Ambiental: nenhum item aponta para módulo de construção ou incorporação", () => {
+    for (const r of ["/unidades", "/simulador", "/permuta", "/parametros", "/medicao", "/medicaolanc", "/reembolso", "/projecao"])
+      expect(todos.some((i) => i.href === r || i.href.startsWith(`${r}/`)), r).toBe(false);
+    for (const i of todos) expect(i.label, i.href).not.toMatch(/\bobras?\b|unidade|permuta|INCC|libera(ç|c)(õ|o)es de obra|simulador/i);
   });
 
   it("cada tela mantém a mesma chave de permissão", () => {
@@ -185,14 +197,14 @@ describe("visibleMenu — não amplia nem reduz acesso", () => {
 
   it("matriz personalizada: o mesmo conjunto de antes", () => {
     const perms = defaultPermissions("contador");
-    perms.unidades = { ver: true, criar: false, editar: false, excluir: false };
+    perms.clientes = { ver: true, criar: false, editar: false, excluir: false };
     perms.dre = { ver: false, criar: false, editar: false, excluir: false };
     expect(visiveisNovo(perms)).toEqual(visiveisAntigo(perms));
   });
 
   it("módulo sem item visível some inteiro", () => {
     const mods = visibleMenu(defaultPermissions("engenheiro")).map((m) => m.id);
-    expect(mods).toEqual(["obra"]);
+    expect(mods).toEqual(["contratos"]);
   });
 
   it("sem permissão nenhuma, menu vazio", () => {
@@ -204,10 +216,8 @@ describe("isItemActive — prefixo na fronteira de segmento", () => {
   it("sub-rotas mantêm o pai destacado", () => {
     expect(isItemActive("/clientes/novo", "/clientes")).toBe(true);
     expect(isItemActive("/clientes/abc-123", "/clientes")).toBe(true);
-    expect(isItemActive("/unidades/nova", "/unidades")).toBe(true);
-    expect(isItemActive("/unidades/42", "/unidades")).toBe(true);
-    expect(isItemActive("/permuta/novo", "/permuta")).toBe(true);
-    expect(isItemActive("/reembolso/novo", "/reembolso")).toBe(true);
+    expect(isItemActive("/contratos/novo", "/contratos")).toBe(true);
+    expect(isItemActive("/notasfiscais/nova", "/notasfiscais")).toBe(true);
   });
 
   it("/contas × /contaspagar × /contasreceber não se destacam mutuamente", () => {
@@ -218,9 +228,8 @@ describe("isItemActive — prefixo na fronteira de segmento", () => {
     expect(isItemActive("/contas", "/contas")).toBe(true);
   });
 
-  it("/medicao × /medicaolanc não se destacam mutuamente", () => {
-    expect(isItemActive("/medicaolanc", "/medicao")).toBe(false);
-    expect(isItemActive("/medicao", "/medicaolanc")).toBe(false);
+  it("prefixo só na fronteira de segmento (/contratos × /contratosx)", () => {
+    expect(isItemActive("/contratosx", "/contratos")).toBe(false);
   });
 
   it("a Conferência destaca só a si", () => {
@@ -248,7 +257,7 @@ describe("isItemActive — prefixo na fronteira de segmento", () => {
 
   it("módulo ativo acompanha a tela", () => {
     expect(activeModuleId("/projeto")).toBe("obra"); // Growth Ambiental: módulo Projetos
-    expect(activeModuleId("/unidades/nova")).toBe("receitas");
+    expect(activeModuleId("/clientes/novo")).toBe("receitas");
     expect(activeModuleId("/diagnosticoia")).toBe("config"); // Prompt AM2: virou Diagnóstico de IA, em Configurações
     expect(activeModuleId("/conferencia")).toBe("config");
   });
@@ -266,8 +275,8 @@ describe("Prompt REN (Fase 3) — mudanças de menu e rótulos", () => {
   const moduloDe = (href: string) => NAV_MENU.find((m) => m.items.some((i) => i.href === href))?.id;
   const rotuloDe = (href: string) => todos.find((i) => i.href === href)?.label;
 
-  it("Projeção de Receitas mora em Business Intelligence; Cartões, no Caixa", () => {
-    expect(moduloDe("/projecao")).toBe("bi");
+  it("Cartões moram no Caixa (a Projeção de Receitas por unidade saiu)", () => {
+    expect(moduloDe("/projecao")).toBeUndefined();
     expect(moduloDe("/cartoes")).toBe("caixa");
   });
 
@@ -277,12 +286,15 @@ describe("Prompt REN (Fase 3) — mudanças de menu e rótulos", () => {
 
   it("nada em inglês nem 'Obra' genérico nos rótulos renomeados", () => {
     expect(rotuloDe("/fornecedores")).toBe("Fornecedores e Parceiros");
-    expect(rotuloDe("/medicao")).toBe("Medição de Projeto");
+    expect(rotuloDe("/contratos/medicoes")).toBe("Medições");
+    expect(rotuloDe("/estoque")).toBe("Materiais e Equipamentos");
+    expect(rotuloDe("/equipes")).toBe("Equipes e Presença de Campo");
+    expect(rotuloDe("/acerto")).toBe("Acertos e Rateios");
   });
 
   it("mover de módulo não muda a chave de permissão", () => {
     expect(permOf(todos.find((i) => i.href === "/cartoes")!)).toBe("cartoes");
-    expect(permOf(todos.find((i) => i.href === "/projecao")!)).toBe("projecao");
+    expect(permOf(todos.find((i) => i.href === "/contratos/medicoes")!)).toBe("contratos");
   });
 });
 

@@ -89,9 +89,9 @@ import { avisoDaSelecao, homogeneidade } from "./conferencia-regras";
 
 describe("Prompt AN · Parte 3 — lote híbrido", () => {
   const l = (id: string, fornecedorId: string | null, contaCef: string | null) => ({ id, fornecedorId, contaCef });
-  it("mesmo fornecedor é homogêneo; mesma conta CEF também", () => {
+  it("mesmo fornecedor é homogêneo; mesma conta do plano também", () => {
     expect(homogeneidade([l("a", "F1", "1.1"), l("b", "F1", "2.2")])).toMatchObject({ homogenea: true, criterio: "fornecedor" });
-    expect(homogeneidade([l("a", "F1", "1.1"), l("b", "F2", "1.1")])).toMatchObject({ homogenea: true, criterio: "conta CEF" });
+    expect(homogeneidade([l("a", "F1", "1.1"), l("b", "F2", "1.1")])).toMatchObject({ homogenea: true, criterio: "conta do plano" });
   });
   it("11 — fornecedores e contas diferentes: não homogêneo, e o aviso diz quantos fornecedores", () => {
     const h = homogeneidade([l("a", "F1", "1.1"), l("b", "F2", "2.2"), l("c", "F3", "3.3")]);

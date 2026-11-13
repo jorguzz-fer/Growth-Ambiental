@@ -69,7 +69,7 @@ describe.skipIf(!HAS_DB)("Trava de conciliação (Prompt S, PR S-3)", async () =
     expect(d.competencia).toBe("09/2026");
   });
 
-  it("2 — descrição, fornecedor, conta CEF e categoria seguem editáveis", async () => {
+  it("2 — descrição, fornecedor, conta do plano e categoria seguem editáveis", async () => {
     const r = await updateDespesa(despesaId, { obs: "corrigida", contaCef: "1.1", categoriaDre: "Custo Variável" });
     expect(r).toEqual({ ok: true });
     const d = await linha();

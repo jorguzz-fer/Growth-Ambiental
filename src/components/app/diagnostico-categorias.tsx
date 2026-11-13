@@ -41,7 +41,7 @@ export function DiagnosticoCategorias({
   const router = useRouter();
   const [sel, setSel] = useState<Set<string>>(new Set());
   // AN, Parte 3 — destino por linha. O lote só preenche o destino das linhas
-  // marcadas quando a seleção é de um fornecedor ou de uma conta CEF.
+  // marcadas quando a seleção é de um fornecedor ou de uma conta do plano.
   const [destinos, setDestinos] = useState<Map<string, string>>(new Map());
   const [categoriaLote, setCategoriaLote] = useState("");
   const [preview, setPreview] = useState(false);
@@ -216,7 +216,7 @@ export function DiagnosticoCategorias({
             <p className="text-[12.5px] text-[var(--color-ink3)]">
               Escolha a nova categoria <strong className="text-[var(--color-ink2)]">linha a linha</strong>, na coluna
               “Nova categoria”. O lote abaixo só vale para lançamentos marcados de um mesmo
-              fornecedor ou de uma mesma conta CEF.
+              fornecedor ou de uma mesma conta do plano.
             </p>
             <div className="flex flex-wrap items-end gap-3">
               <div className="min-w-[240px]">

@@ -10,18 +10,23 @@ describe("Prompt AL · Parte 1 — a tela Acesso Contabilidade sai", () => {
     for (const r of redirecionamentosDeTelasRemovidas()) {
       expect(cfg).toContain(`{ source: "${r.source}", destination: "${r.destination}", permanent: false }`);
     }
-    expect(redirecionamentosDeTelasRemovidas().map((r) => r.source)).toEqual([
-      "/contabilidade",
-      "/contabilidade/:path*",
-      "/versao",
-      "/versao/:path*",
-      "/diagnostico/planos-recebiveis",
-      "/diagnostico/planos-recebiveis/:path*",
-      "/consolidado",
-      "/consolidado/:path*",
-      "/balancodia",
-      "/balancodia/:path*",
-    ]);
+    expect(redirecionamentosDeTelasRemovidas().map((r) => r.source)).toEqual(
+      [
+        "/contabilidade",
+        "/versao",
+        "/diagnostico/planos-recebiveis",
+        "/consolidado",
+        "/balancodia",
+        "/unidades",
+        "/simulador",
+        "/permuta",
+        "/parametros",
+        "/medicao",
+        "/medicaolanc",
+        "/reembolso",
+        "/projecao",
+      ].flatMap((r) => [r, `${r}/:path*`]),
+    );
     expect(avisoDeTelaRemovida("contabilidade")).toMatch(/Acesso Contabilidade saiu/);
     expect(avisoDeTelaRemovida(["contabilidade"])).toBe(TELAS_REMOVIDAS.contabilidade.aviso);
     expect(avisoDeTelaRemovida(undefined)).toBeNull();
@@ -73,9 +78,9 @@ describe("Prompt AL · Parte 1 — a tela Acesso Contabilidade sai", () => {
 });
 
 describe("Prompt AN · Partes 5 e 6 — Conferência com id próprio; a de planos sai", () => {
-  it("16a — /diagnostico/planos-recebiveis não existe mais, redireciona para Unidades com o aviso, e nenhum menu aponta para ela", () => {
+  it("16a — /diagnostico/planos-recebiveis não existe mais, redireciona para Contas a Receber com o aviso (as unidades saíram), e nenhum menu aponta para ela", () => {
     expect(existsSync("src/app/(app)/diagnostico/planos-recebiveis/page.tsx")).toBe(false);
-    expect(avisoDeTelaRemovida("planos-recebiveis")).toMatch(/Conferência de planos saiu.*plano de pagamento da unidade/);
+    expect(avisoDeTelaRemovida("planos-recebiveis")).toMatch(/Conferência de planos de venda saiu.*Contas a Receber/);
     expect(NAV_MENU.flatMap((m) => m.items).some((i) => i.href.startsWith("/diagnostico/"))).toBe(false);
   });
 
@@ -165,9 +170,9 @@ describe("Prompt AB2 — Consolidado e Balanço do Dia saem", () => {
     expect(existsSync("src/app/(app)/consolidado/page.tsx")).toBe(false);
     expect(existsSync("src/app/(app)/balancodia/page.tsx")).toBe(false);
     const cfg = readFileSync("next.config.ts", "utf8");
-    expect(cfg).toContain('{ source: "/consolidado", destination: "/projecao?saiu=consolidado", permanent: false }');
+    expect(cfg).toContain('{ source: "/consolidado", destination: "/contratos/painel?saiu=consolidado", permanent: false }');
     expect(cfg).toContain('{ source: "/balancodia", destination: "/caixa?saiu=balancodia", permanent: false }');
-    expect(avisoDeTelaRemovida("consolidado")).toMatch(/Consolidado saiu.*por fonte/);
+    expect(avisoDeTelaRemovida("consolidado")).toMatch(/Consolidado saiu.*Painel de Contratos/);
     expect(avisoDeTelaRemovida("balancodia")).toMatch(/Balanço do Dia saiu.*Dias fechados/);
   });
 
@@ -194,8 +199,57 @@ describe("Prompt AB2 — Consolidado e Balanço do Dia saem", () => {
   });
 
   it("nenhuma menção restante às rotas em href, redirect ou revalidatePath", () => {
-    for (const f of ["src/lib/nav-menu.ts", "src/lib/actions/receitas.ts", "src/lib/actions/incc.ts", "src/lib/actions/fechamento.ts"]) {
+    for (const f of ["src/lib/nav-menu.ts", "src/lib/actions/fechamento.ts"]) {
       expect(readFileSync(f, "utf8"), f).not.toMatch(/["'`]\/(consolidado|balancodia)["'`/?]/);
     }
+  });
+});
+
+describe("Growth Ambiental — módulos de construção e incorporação saem", () => {
+  const SAIRAM = {
+    unidades: { rota: "/unidades", destino: "/contasreceber" },
+    simulador: { rota: "/simulador", destino: "/contratos" },
+    permuta: { rota: "/permuta", destino: "/contasreceber" },
+    parametros: { rota: "/parametros", destino: "/contratos" },
+    medicao: { rota: "/medicao", destino: "/contratos/medicoes" },
+    medicaolanc: { rota: "/medicaolanc", destino: "/contratos/medicoes" },
+    reembolso: { rota: "/reembolso", destino: "/contratos/reembolsos" },
+    projecao: { rota: "/projecao", destino: "/contratos/painel" },
+  } as const;
+
+  it("1–6 — as páginas não existem mais; a rota (e as sub-rotas) redireciona para a tela que assumiu, com o aviso", () => {
+    const cfg = readFileSync("next.config.ts", "utf8");
+    for (const [id, t] of Object.entries(SAIRAM)) {
+      expect(existsSync(`src/app/(app)${t.rota}/page.tsx`), id).toBe(false);
+      expect(cfg, id).toContain(`{ source: "${t.rota}", destination: "${t.destino}?saiu=${id}", permanent: false }`);
+      expect(cfg, id).toContain(`{ source: "${t.rota}/:path*", destination: "${t.destino}?saiu=${id}", permanent: false }`);
+      expect(avisoDeTelaRemovida(id), id).toBeTruthy();
+      // a tela de destino mostra o aviso
+      const destino = readFileSync(`src/app/(app)${t.destino}/page.tsx`, "utf8");
+      expect(destino, t.destino).toContain("<AvisoTelaRemovida de={sp.saiu} />");
+    }
+    expect(existsSync("src/app/api/agent/unidades/route.ts")).toBe(false);
+  });
+
+  it("as chaves saem de SCREENS (não aparecem em Gestão de Acessos) e nenhuma rota fica sem id", () => {
+    for (const [id, t] of Object.entries(SAIRAM)) {
+      expect(SCREEN_IDS, id).not.toContain(id);
+      expect(screenIdOfPath(t.rota), id).toBeNull();
+    }
+  });
+
+  it("override gravado para essas chaves é inerte", () => {
+    const comOrfas: PermMatrix = Object.fromEntries(Object.keys(SAIRAM).map((id) => [id, { ver: true, criar: true, editar: true, excluir: true }]));
+    for (const role of ["owner", "admin", "membro", "contador", "engenheiro"] as const) expect(effectivePermissions(role, comOrfas)).toEqual(effectivePermissions(role, null));
+  });
+
+  it("nenhum item de menu aponta para elas", () => {
+    const hrefs = NAV_MENU.flatMap((m) => m.items).map((i) => i.href);
+    for (const t of Object.values(SAIRAM)) expect(hrefs.some((h) => h === t.rota || h.startsWith(`${t.rota}/`)), t.rota).toBe(false);
+  });
+
+  it("as ações de servidor exclusivas desses módulos saíram (nada as chama por acesso direto)", () => {
+    for (const f of ["units", "unidades-assistente", "receitas", "permuta-assistente", "incc", "medicao", "medicao-docs", "medicao-assistente"])
+      expect(existsSync(`src/lib/actions/${f}.ts`), f).toBe(false);
   });
 });

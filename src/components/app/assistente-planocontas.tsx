@@ -64,7 +64,7 @@ export function AssistentePlanoContas({ usuario, analise }: { usuario: string; a
   const nunca = semUso.filter((s) => s.nunca).length;
   const escopo = (
     <p className="mb-2 text-[11px] leading-snug text-[var(--color-ink3)]">
-      Período: lançamentos de <strong>{periodo.de}</strong> a <strong>{periodo.ate}</strong> (competência; sem ela, o mês da criação). Obras: {projetos.length ? projetos.join(", ") : "nenhuma"}.
+      Período: lançamentos de <strong>{periodo.de}</strong> a <strong>{periodo.ate}</strong> (competência; sem ela, o mês da criação). Projetos: {projetos.length ? projetos.join(", ") : "nenhum"}.
     </p>
   );
   const semPermissao = <p className="text-[12px] text-[var(--color-warning)]">Sem permissão de ver Despesas: a contagem de lançamentos não é exibida, nem agregada.</p>;
@@ -97,7 +97,7 @@ export function AssistentePlanoContas({ usuario, analise }: { usuario: string; a
           ) : (
             <>
               <p className={cn(li, "mb-1")}>
-                {semUso.length - nunca} com lançamento só fora do período · {nunca} nunca receberam (conta criada e esquecida, ou etapa da obra que ainda não começou — a lista não distingue; você sim).
+                {semUso.length - nunca} com lançamento só fora do período · {nunca} nunca receberam (conta criada e esquecida, ou etapa do projeto que ainda não começou — a lista não distingue; você sim).
               </p>
               <ul className="max-h-56 space-y-0.5 overflow-auto">
                 {semUso.map((s) => (
@@ -121,7 +121,7 @@ export function AssistentePlanoContas({ usuario, analise }: { usuario: string; a
             <ul className="max-h-64 space-y-1.5 overflow-auto">
               {divergentes.map((d) => (
                 <li key={d.code} className={li}>
-                  <span className={mono}>{d.code}</span> {d.name} <span className="text-[var(--color-ink3)]">· {d.grupo} · {d.kind === "cef" ? "obra" : "complementar"}, {d.natureza}</span>
+                  <span className={mono}>{d.code}</span> {d.name} <span className="text-[var(--color-ink3)]">· {d.grupo} · {d.kind === "cef" ? "custo direto dos serviços" : "complementar"}, {d.natureza}</span>
                   <div className="pl-3">
                     {d.categorias.map((x) => (
                       <div key={x.categoria}>
@@ -132,7 +132,7 @@ export function AssistentePlanoContas({ usuario, analise }: { usuario: string; a
                   </div>
                 </li>
               ))}
-              <li className="text-[var(--color-ink3)]">Leitura: custo de obra costuma entrar como Custo; grupo complementar, como Despesa. O painel mostra a divergência; não diz que está errado nem sugere categoria.</li>
+              <li className="text-[var(--color-ink3)]">Leitura: custo direto dos serviços costuma entrar como Custo; grupo complementar, como Despesa. O painel mostra a divergência; não diz que está errado nem sugere categoria.</li>
             </ul>
           )}
         </AcaoDoPainel>
@@ -161,7 +161,7 @@ export function AssistentePlanoContas({ usuario, analise }: { usuario: string; a
                 <span className={mono}>{o.code}</span> {o.name}
                 <div className="pl-3 text-[var(--color-ink3)]">
                   <div>Seletor de conta: {o.seletores.length ? o.seletores.join(", ") : "nenhum (inativa)"}</div>
-                  <div>Orçamentos / Previsão: {!comOrcamento ? "sem permissão de ver" : o.orcamentoEm.length ? o.orcamentoEm.join(", ") : "sem linha nas obras do período"}</div>
+                  <div>Orçamentos / Previsão: {!comOrcamento ? "sem permissão de ver" : o.orcamentoEm.length ? o.orcamentoEm.join(", ") : "sem linha nos projetos do período"}</div>
                   <div>
                     DRE: {!comLancamentos ? "sem permissão de ver Despesas" : o.dre.length ? o.dre.map((d) => `${d.categoria} (${d.n})`).join(", ") : "nenhum lançamento no período — por isso o gasto não está na DRE"}
                   </div>

@@ -137,7 +137,7 @@ export function montarLeiaMe(r: ResumoDoPacote): string {
   L.push("");
   L.push("DUAS DATAS DIFERENTES");
   L.push(`- Movimento (despesas, caixa, recebimentos…): de ${dia(r.corte.inicio)} a ${dia(r.corte.fim)}.`);
-  L.push(`- Cadastro (obras, unidades, clientes, fornecedores, contas…): inteiro, como estava em ${quando(r.capturadoEm)}.`);
+  L.push(`- Cadastro (projetos, unidades, clientes, fornecedores, contas…): inteiro, como estava em ${quando(r.capturadoEm)}.`);
   L.push("  Cadastro não tem competência: vem inteiro para que todo lançamento encontre o registro a que aponta.");
   L.push("");
   L.push("O QUE TEM AQUI");
@@ -193,7 +193,7 @@ export function montarLeiaMe(r: ResumoDoPacote): string {
   L.push("A guarda deste arquivo é responsabilidade de quem o baixou: mantenha em local protegido,");
   L.push("não compartilhe por canais abertos e apague as cópias que não forem mais necessárias.");
   L.push("Ficaram FORA os dados sensíveis listados acima (renda, FGTS, score, restrições, estado civil e");
-  L.push("inteligência de mercado do comprador; endereço, salário e banco do funcionário; ASO).");
+  L.push("inteligência de mercado do cliente; endereço, salário e banco do funcionário; ASO).");
   L.push("");
   L.push("RESTAURAÇÃO");
   L.push("Este pacote não restaura nada sozinho. O formato permite reconstruir os dados, mas a");

@@ -18,7 +18,7 @@ vi.mock("server-only", () => ({}));
 vi.mock("@/lib/auth", () => ({ auth: async () => null, unstable_update: async () => null }));
 vi.mock("next/headers", () => ({ cookies: async () => ({ get: () => undefined }) }));
 
-describe.skipIf(!HAS_DB)("AK Parte 1 — as 8 ações registram no log", async () => {
+describe.skipIf(!HAS_DB)("AK Parte 1 — as ações registram no log (liberação de obra, permuta e INCC saíram com os módulos)", async () => {
   const { db, schema } = await import("@/lib/db");
   const { defaultPermissions } = await import("@/lib/permissions");
   let tenantId = "";
@@ -88,24 +88,6 @@ describe.skipIf(!HAS_DB)("AK Parte 1 — as 8 ações registram no log", async (
     expect(l.entityId).toBe(c.id);
   });
 
-  it("addReembolso → reembolso.create", async () => {
-    const { addReembolso } = await import("./receitas");
-    const res = await addReembolso(fd({ projectId: ids.project, data: "09/10/2026", origem: "CEF · medição 01/2026", valor: "1500.50" }));
-    expect(res.ok).toBe(true);
-    const [r] = await db.select().from(schema.reembolsos).where(eq(schema.reembolsos.tenantId, tenantId));
-    expect(r.valor).toBe("1500.50");
-    const [l] = await logs("reembolso.create");
-    expect(l.meta).toMatchObject({ projeto: "Projeto AK", data: "09/10/2026", origem: "CEF · medição 01/2026" });
-  });
-
-  it("addPermuta → permuta.create", async () => {
-    const { addPermuta } = await import("./receitas");
-    const r = await addPermuta(fd({ projectId: ids.project, unitCode: "101", cliente: "Cliente AK", dataRecebimento: "09/15/2026", tipo: "Terreno", estimado: "300000" }));
-    expect(r.ok).toBe(true);
-    const [l] = await logs("permuta.create");
-    expect(l.meta).toMatchObject({ unidade: "101", tipo: "Terreno" });
-  });
-
   it("toggleConciliado → conciliacao.flag (Prompt AT §2.2: o seletor só desfaz, com motivo)", async () => {
     const { toggleConciliado } = await import("./caixa");
     // marca antiga, sem vínculo (o caminho que criava isso foi fechado)
@@ -128,14 +110,6 @@ describe.skipIf(!HAS_DB)("AK Parte 1 — as 8 ações registram no log", async (
     expect(restantes).toHaveLength(0);
     const [l] = await logs("estoque.item.delete");
     expect(l.meta).toMatchObject({ nome: "Cimento", saldo: 0, movimentacoesExcluidas: 0 });
-  });
-
-  it("updateInccMonth → incc.update com de/para do mês e dos meses reprojetados (Prompt Q, 3.2)", async () => {
-    const { updateInccMonth } = await import("./incc");
-    const r = await updateInccMonth(ids.project, "02/2026", 0.4);
-    expect(r.ok).toBe(true);
-    const [l] = await logs("incc.update");
-    expect(l.meta).toMatchObject({ mes: "02/2026", mensal: { de: 0.3, para: 0.4 }, eraProjetado: false, mesesReescritos: 0, reprojetados: [] });
   });
 
   // setDefaultVersion saiu com a tela /versao (Prompt AP, BAP-4): não há mais

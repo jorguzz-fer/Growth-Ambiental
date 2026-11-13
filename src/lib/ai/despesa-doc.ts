@@ -12,9 +12,9 @@
  *     formulário + os alertas de cada campo;
  *   - `despesa-form.tsx` (cliente) só aplica o resultado e desenha.
  *
- * Os documentos reais que chegam da obra e que este módulo precisa dar conta:
+ * Os documentos reais que chegam do campo e que este módulo precisa dar conta:
  *   - DANFE de NF-e (tudo preenchido, inclusive chave de acesso);
- *   - cupom "SEM VALOR FISCAL" de loja de material (tem valor e item, não tem NF);
+ *   - cupom "SEM VALOR FISCAL" de loja ou posto (tem valor e item, não tem NF);
  *   - comprovante de Pix/TED (paga um serviço, CPF mascarado, sem nota);
  *   - boleto (vencimento sim, competência não);
  *   - orçamento/pedido (não é despesa ainda — vira alerta em quase tudo).
@@ -226,8 +226,8 @@ function acharProjeto(nome: string, lista: ContextoDespesa["projetos"]): Match {
   if (!n) return { id: null, fraco: false };
   const exato = lista.find((p) => normalizarNome(p.nome) === n);
   if (exato) return { id: exato.id, fraco: false };
-  // A obra costuma vir embutida no nome do destinatário ("CONSTRUTORA EXEMPLO
-  // LTDA (OBRA 25)") ou carimbada no cupom ("OBRA 28").
+  // O projeto costuma vir embutido no nome do destinatário ("CONSULTORIA EXEMPLO
+  // LTDA (PROJETO 25)") ou carimbado no cupom ("PROJETO 28").
   const parcial = lista.find((p) => {
     const pn = normalizarNome(p.nome);
     return pn.length >= 3 && (n.includes(pn) || pn.includes(n));
@@ -292,9 +292,9 @@ export function montarPreenchimentoDespesa(
   const preencheu = (campo: CampoDespesa) => preenchidos.push(ROTULO_CAMPO[campo]);
 
   // ── Projeto ───────────────────────────────────────────────────────────
-  // Lançar na obra errada é o erro mais caro desta tela (contamina DRE, fluxo
-  // e medição). Por isso o projeto NUNCA passa sem sinal: ou a IA identificou
-  // a obra no documento, ou o campo pede confirmação.
+  // Lançar no projeto errado é o erro mais caro desta tela (contamina DRE, fluxo
+  // e margem do contrato). Por isso o projeto NUNCA passa sem sinal: ou a IA
+  // identificou o projeto no documento, ou o campo pede confirmação.
   const proj = acharProjeto(x.projetoNome.valor, ctx.projetos);
   if (proj.id) {
     valores.projetoId = proj.id;
@@ -304,7 +304,7 @@ export function montarPreenchimentoDespesa(
       proj.fraco
         ? {
             nivel: "conferir",
-            motivo: `Obra identificada por semelhança com "${x.projetoNome.valor}" no documento — confirme.`,
+            motivo: `Projeto identificado por semelhança com "${x.projetoNome.valor}" no documento — confirme.`,
           }
         : avaliarCampo(x.projetoNome, { aplicadoVazio: false }),
     );
@@ -316,7 +316,7 @@ export function montarPreenchimentoDespesa(
   } else {
     marcar("projeto", {
       nivel: "conferir",
-      motivo: "O documento não identifica a obra — confirme se o projeto selecionado é o correto.",
+      motivo: "O documento não identifica o projeto — confirme se o projeto selecionado é o correto.",
     });
   }
 

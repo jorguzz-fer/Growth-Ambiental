@@ -56,27 +56,25 @@ export interface AnaliseDoDashboard {
 export function explicar(o: { status: StatusProjeto; definicaoNova: boolean }): Explicacao[] {
   const { status: st, definicaoNova: nova } = o;
   const c = st.composicao;
-  const caixa = nova ? "só da versão Atual" : "de todas as versões da obra";
+  const caixa = nova ? "só da versão Atual" : "de todas as versões do projeto";
   const per = nova ? "segue o período (pela data)" : "não segue o período (acumulado)";
   const orc = nova
     ? `um Orçamento por obra, o mais recente que não é cópia${c.orcamentosUsados.length ? ` (${c.orcamentosUsados.map((l) => `“${l}”`).join(", ")})` : ""}`
     : c.orcamentos > 1
       ? `a soma de ${c.orcamentos} Orçamentos`
-      : "o Orçamento da obra";
+      : "o Orçamento do projeto";
   const janela = nova && c.janela ? TEXTO_DA_JANELA[c.janela] : "receita de todo o horizonte contra custos lançados de qualquer competência";
   return [
-    { painel: "Os quatro de cima", cartao: "VGV total", texto: nova ? "Soma das unidades da versão Atual, em toda coluna. Cadastro, sem regime de caixa." : "Soma das unidades cadastradas em cada versão. Cadastro, sem regime de caixa." },
+    { painel: "Os quatro de cima", cartao: "Valor contratado", texto: "Valor atualizado (original + aditivos eficazes) dos contratos de serviço dos projetos, sem rascunho e cancelado. É o mesmo em toda coluna; sem regime de caixa." },
     { painel: "Os quatro de cima", cartao: "Realizado acum.", texto: "Entradas de caixa da própria versão, pela data, conciliadas ou não. Regime de caixa; segue versão e período." },
-    { painel: "Os quatro de cima", cartao: "A receber", texto: "Na Atual: recebíveis em aberto das unidades, pela data. No planejamento: receita planejada menos o realizado — saldo a realizar, não recebível." },
+    { painel: "Os quatro de cima", cartao: "A receber", texto: "Na Atual: recebíveis em aberto (Contas a Receber), pela data. No planejamento: receita planejada menos o realizado — saldo a realizar, não recebível." },
     { painel: "Os quatro de cima", cartao: "A pagar", texto: "Só na Atual: contas a pagar em aberto, pelo saldo das parcelas, com vencimento no período. Planejamento não tem conta a pagar." },
     { painel: "Status atual", cartao: "Entradas de caixa", texto: `Toda entrada de caixa (não só venda), ${caixa}, conciliada ou não. Regime de caixa; ${per}.` },
-    { painel: "Status atual", cartao: "% entradas de caixa", texto: "Entradas de caixa ÷ receita do cadastro do projeto (construção + terreno). O cadastro não tem data nem regime." },
+    { painel: "Status atual", cartao: "% entradas de caixa", texto: "Entradas de caixa ÷ receita prevista no cadastro do projeto. O cadastro não tem data nem regime." },
     { painel: "Status atual", cartao: "Executado", texto: `Despesas da Atual, sem canceladas, ${nova ? "pela competência quando há período" : "de qualquer competência"}.` },
     { painel: "Status atual", cartao: "% executado", texto: `Executado ÷ despesa planejada em ${orc}.` },
     { painel: "Margem e produtividade", cartao: "Margem de contribuição", texto: `Receita da Atual (pelo vencimento) − custo e despesa variáveis da Atual; janela: ${janela}.` },
     { painel: "Margem e produtividade", cartao: "% margem de contribuição", texto: "Margem ÷ receita do cadastro do projeto — uma terceira base de receita, diferente das duas acima." },
-    { painel: "Margem e produtividade", cartao: "Custo e receita por m²", texto: "Executado e receita da Atual ÷ metragem do cadastro." },
-    { painel: "Indicadores da obra", cartao: "Indicadores da obra", texto: "Cadastro do projeto (financiamento, CUB, metragem, %BDI). Os indicadores de evolução física, liberação e saldo de financiamento estão desligados até o cadastro da PLS por obra. Não seguem versão nem período." },
   ];
 }
 
@@ -104,12 +102,6 @@ export function divergencias(o: { status: StatusProjeto; colunas: readonly Colun
     out.push({
       titulo: "Realizado acum. (Atual) ≠ Entradas de caixa",
       texto: `${fmt(atual.realizado)} contra ${fmt(st.recebido)}. O primeiro segue a versão e o período escolhidos; o segundo ${c.definicaoNova ? "lê só a Atual e segue o período" : "soma todas as versões e todo o período"}.`,
-    });
-  const vgvsPlan = colunas.filter((x) => x.kind !== "atual" && !x.vgvAusente && x.vgv > 0);
-  if (!o.definicaoNova && atual && atual.vgv === 0 && vgvsPlan.length)
-    out.push({
-      titulo: "VGV só no planejamento",
-      texto: `A Atual não tem unidade (VGV ${fmt(0)}), mas ${vgvsPlan.map((x) => `${x.titulo} mostra ${fmt(x.vgv)}`).join(" e ")}: são unidades gravadas na versão de planejamento.`,
     });
   if (st.receitaPrevista === 0 && (st.receitaAtual !== 0 || st.recebido !== 0))
     out.push({
@@ -150,7 +142,8 @@ export function variacoes(antes: Instantaneo | null, agora: Instantaneo): Variac
 
 export function analisarDashboard(o: {
   status: StatusProjeto;
-  indicadores: IndicadoresObra;
+  /** Growth Ambiental: o painel de indicadores de obra saiu da tela; opcional. */
+  indicadores?: IndicadoresObra;
   colunas: readonly ColunaResumo[];
   definicaoNova: boolean;
   atencao: ObraEmAtencao[];

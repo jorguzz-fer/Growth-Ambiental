@@ -18,7 +18,7 @@
 /**
  * Decisão de 01/10/2026 (BE-2, item c): vai ao modelo SÓ o documento — nada
  * do cadastro de pessoas ou empresas entra no prompt (fornecedores com CPF/CNPJ,
- * a própria empresa, obras). O casamento com o cadastro é feito DEPOIS da
+ * a própria empresa, projetos). O casamento com o cadastro é feito DEPOIS da
  * leitura, aqui no servidor (`montarPreenchimentoDespesa`). Ficam só listas
  * de configuração que não identificam ninguém: o plano de contas, as
  * categorias e os tipos de documento fiscal (constantes do sistema).
@@ -46,12 +46,13 @@ export function promptSistemaDespesa(ctx: ContextoLeituraDespesa): string {
   const tipoList = ctx.tiposDocumento.map((t) => `- ${t.id} = ${t.label}`).join("\n");
 
   return (
-    "Você lê documentos de compra de uma construtora (nota fiscal, cupom, boleto, " +
-    "comprovante de pagamento, recibo, foto de papel) e preenche o lançamento da despesa.\n\n" +
-    "QUEM É QUEM: a construtora que lança é a PAGADORA (destinatária da nota, tomadora do serviço, " +
+    "Você lê documentos de despesa de uma consultoria ambiental (nota fiscal, cupom, boleto, " +
+    "comprovante de pagamento, recibo, foto de papel — ex.: hospedagem da equipe técnica, combustível, " +
+    "análises laboratoriais, taxas de órgão ambiental) e preenche o lançamento da despesa.\n\n" +
+    "QUEM É QUEM: a empresa que lança é a PAGADORA (destinatária da nota, tomadora do serviço, " +
     "quem paga o Pix/TED). O fornecedor é quem EMITE a nota ou RECEBE o pagamento. " +
     "Em comprovante de Pix/TED, o fornecedor é o RECEBEDOR, não o pagador. Nunca devolva a pagadora como fornecedor.\n\n" +
-    "FORNECEDOR e OBRA: copie como estão escritos no documento (nome, CNPJ/CPF, obra citada). " +
+    "FORNECEDOR e PROJETO: copie como estão escritos no documento (nome, CNPJ/CPF, projeto ou contrato citado). " +
     "O sistema compara com o cadastro depois; você não recebe o cadastro.\n\n" +
     `PLANO DE CONTAS (escolha o código mais adequado):\n${contaList}\n\n` +
     `TIPOS DE DOCUMENTO FISCAL aceitos:\n${tipoList}\n\n` +

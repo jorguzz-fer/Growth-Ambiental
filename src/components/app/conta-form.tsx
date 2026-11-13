@@ -2,7 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import { addConta } from "@/lib/actions/contas";
-import { avisoDeCadastro, TIPOS_DE_CONTA } from "@/lib/contas-regras";
+import { avisoDeCadastro, ROTULO_TIPO_DE_CONTA, TIPOS_DE_CONTA_OFERECIDOS } from "@/lib/contas-regras";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input, Label, Select } from "@/components/ui/input";
@@ -62,8 +62,8 @@ export function ContaForm() {
           <div>
             <Label>Tipo</Label>
             <Select name="tipo" defaultValue="Construtora">
-              {TIPOS_DE_CONTA.map((t) => (
-                <option key={t}>{t}</option>
+              {TIPOS_DE_CONTA_OFERECIDOS.map((t) => (
+                <option key={t} value={t}>{ROTULO_TIPO_DE_CONTA[t]}</option>
               ))}
             </Select>
           </div>

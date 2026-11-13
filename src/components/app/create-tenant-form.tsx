@@ -49,11 +49,11 @@ export function CreateTenantForm() {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div>
           <Label>Nome da empresa (tenant)</Label>
-          <Input name="tenantName" placeholder="Ex.: Incorporadora XPTO" required />
+          <Input name="tenantName" placeholder="Ex.: Consultoria Ambiental XPTO" required />
         </div>
         <div>
           <Label>Nome do primeiro projeto</Label>
-          <Input name="projectName" placeholder="Ex.: Empreendimento 1" defaultValue="Projeto 1" />
+          <Input name="projectName" placeholder="Ex.: Monitoramento Arqueológico 1" defaultValue="Projeto 1" />
         </div>
         <div>
           <Label>Responsável — nome</Label>

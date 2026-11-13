@@ -63,8 +63,16 @@ describe.skipIf(!HAS_DB)("Importação de planilha na versão (BI-3)", async () 
     if (tenantId) await db.delete(schema.tenants).where(eq(schema.tenants.id, tenantId));
   });
 
+  it("Growth Ambiental: planilha antiga com unidades é recusada inteira; nada é gravado", async () => {
+    const r = await importar(v.atual.id, planilha({ units: true, despesas: true }));
+    expect(r.ok).toBe(false);
+    expect((r as { error: string }).error).toMatch(/dados de incorporação \(1 unidade\(s\)\)/);
+    expect(await despesasDe(v.atual.id)).toHaveLength(0);
+    expect(await unidadesDe(v.atual.id)).toHaveLength(0);
+  });
+
   it("fora da Atual: recusa e nada é gravado", async () => {
-    const r = await importar(v.budget.id, planilha({ units: true, despesas: true }));
+    const r = await importar(v.budget.id, planilha({ despesas: true }));
     expect(r.ok).toBe(false);
     expect((r as { error: string }).error).toMatch(/só entram na versão Atual/);
     expect(await despesasDe(v.budget.id)).toHaveLength(0);
@@ -72,21 +80,21 @@ describe.skipIf(!HAS_DB)("Importação de planilha na versão (BI-3)", async () 
   });
 
   it("na Atual, categorias vazias: grava", async () => {
-    const r = await importar(v.atual.id, planilha({ units: true, despesas: true }));
-    expect(r).toEqual({ ok: true, result: { units: 1, reembolsos: 0, permutas: 0, despesas: 1, incc: 0 } });
+    const r = await importar(v.atual.id, planilha({ despesas: true }));
+    expect(r).toEqual({ ok: true, result: { units: 0, reembolsos: 0, permutas: 0, despesas: 1, incc: 0 } });
     expect(await despesasDe(v.atual.id)).toHaveLength(1);
   });
 
   it("na Atual, despesa já lançada com parcela: recusa inteira, nada apagado (antes: apagava e levava a parcela)", async () => {
     const [d] = await despesasDe(v.atual.id);
     await db.insert(schema.despesaParcelas).values({ tenantId, despesaId: d.id, numeroParcela: 1, valorOriginal: "50" });
-    const r = await importar(v.atual.id, planilha({ units: true, despesas: true }));
+    const r = await importar(v.atual.id, planilha({ despesas: true }));
     expect(r.ok).toBe(false);
-    expect((r as { error: string }).error).toMatch(/já tem unidades, despesas/);
+    expect((r as { error: string }).error).toMatch(/já tem/);
     const depois = await despesasDe(v.atual.id);
     expect(depois.map((x) => x.id)).toEqual([d.id]);
     expect(await db.select().from(schema.despesaParcelas).where(eq(schema.despesaParcelas.despesaId, d.id))).toHaveLength(1);
-    expect(await unidadesDe(v.atual.id)).toHaveLength(1);
+    expect(await unidadesDe(v.atual.id)).toHaveLength(0);
   });
 
   it("arquivo que não é a planilha: não quebra e não grava lançamento", async () => {

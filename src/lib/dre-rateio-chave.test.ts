@@ -86,7 +86,7 @@ describe.skipIf(!HAS_DB)("receita da DRE pelo rateio (chave dre_receita_rateio)"
     await db.update(schema.projects).set({ startDate: null, endDate: null }).where(eq(schema.projects.id, projectId));
     await db.insert(schema.contasReceber).values({ tenantId, projectId, descricao: "Sinal", unitCode: "A-1", valor: "5000", vencimento: "02/05/2026" } as never);
     const r = await getReceitaDaDrePorRateio(tenantId, atualId, projectId);
-    expect(r.pendencias).toEqual([{ unidade: "A-1", motivo: "a obra não tem início e fim cadastrados", valor: 555000 }]);
+    expect(r.pendencias).toEqual([{ unidade: "A-1", motivo: "o projeto não tem início e fim cadastrados", valor: 555000 }]);
     expect(r.contasComUnidade).toEqual({ qtd: 1, valor: 5000 });
   });
 });

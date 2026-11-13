@@ -57,7 +57,7 @@ export const CATALOGO: readonly MetricaDoCatalogo[] = [
   {
     id: "saldo",
     nome: "Saldo das contas",
-    definicao: "Saldo disponível hoje nas contas bancárias da empresa (sem as contas de terceiros). É da empresa, não de uma obra.",
+    definicao: "Saldo disponível hoje nas contas bancárias da empresa (sem as contas de terceiros). É da empresa, não de um projeto.",
     exige: ["caixa"],
     href: "/caixa",
     porObra: false,

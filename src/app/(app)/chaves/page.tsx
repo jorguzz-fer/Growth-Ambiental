@@ -199,8 +199,8 @@ export default async function ChavesPage() {
           <p className="mt-1.5 text-[13px] text-[var(--color-ink2)]">
             Versões de Orçamento e Previsão Atualizada que <strong>não estão Aprovadas</strong> nesta empresa.
             {rascunhoLigada
-              ? " Com a chave ligada, os valores abaixo já NÃO entram em DRE, Fluxo de Caixa, Dashboard, Projeção, Resumo, Medição e Contabilidade."
-              : " Ao ligar a chave, os valores abaixo deixam de entrar em DRE, Fluxo de Caixa, Dashboard, Projeção, Resumo, Medição e Contabilidade."}{" "}
+              ? " Com a chave ligada, os valores abaixo já NÃO entram em DRE, Fluxo de Caixa, Dashboard, Resumo e Contabilidade."
+              : " Ao ligar a chave, os valores abaixo deixam de entrar em DRE, Fluxo de Caixa, Dashboard, Resumo e Contabilidade."}{" "}
             A versão Atual (movimento real) nunca é filtrada. Nada é apagado: cada versão continua inteira na tela dela, e basta Aprovar para voltar a contar.
           </p>
           {naoAprovadas.length === 0 ? (
@@ -302,15 +302,15 @@ export default async function ChavesPage() {
         <CardContent className="p-5">
           <h2 className="text-sm font-semibold text-[var(--color-ink)]">Prévia · Fluxo de Caixa pela definição nova</h2>
           <p className="mt-1.5 text-[13px] text-[var(--color-ink2)]">
-            Por obra (versão Atual), de onde parte e onde termina o saldo acumulado hoje e pela definição nova. Hoje toda obra parte
-            do saldo das contas da empresa; pela nova, parte do caixa da própria obra e corre pelo realizado nos meses fechados. Mostra
+            Por projeto (versão Atual), de onde parte e onde termina o saldo acumulado hoje e pela definição nova. Hoje todo projeto parte
+            do saldo das contas da empresa; pela nova, parte do caixa do próprio projeto e corre pelo realizado nos meses fechados. Mostra
             também a permuta que sai das colunas de Orçamento e Previsão e o caixa gravado fora da Atual. Nada é gravado.
           </p>
           <div className="mt-3 overflow-x-auto">
             <table className="w-full text-[12.5px]" aria-label="Prévia do Fluxo de Caixa pela definição nova">
               <thead>
                 <tr className="border-b border-[var(--color-line)] text-left text-[11px] uppercase tracking-wide text-[var(--color-ink3)]">
-                  <th className="py-1.5 pr-3">Obra</th>
+                  <th className="py-1.5 pr-3">Projeto</th>
                   <th className="py-1.5 pr-3 text-right">Partida hoje</th>
                   <th className="py-1.5 pr-3 text-right">Partida nova</th>
                   <th className="py-1.5 pr-3 text-right">Acumulado hoje</th>
@@ -340,7 +340,7 @@ export default async function ChavesPage() {
         <CardContent className="p-5">
           <h2 className="text-sm font-semibold text-[var(--color-ink)]">Prévia · Dashboard pela definição nova</h2>
           <p className="mt-1.5 text-[13px] text-[var(--color-ink2)]">
-            Por obra, cartão a cartão, sem filtro de período: o número exibido hoje, o pela definição nova e a diferença. Entradas de
+            Por projeto, cartão a cartão, sem filtro de período: o número exibido hoje, o pela definição nova e a diferença. Entradas de
             caixa passam a somar só a Atual; o Executado passa a ser dividido por um Orçamento só; a margem usa a mesma janela de
             competências nos dois lados; VGV vem da Atual; A receber do planejamento mostra o negativo. Nada é gravado.
           </p>
@@ -348,7 +348,7 @@ export default async function ChavesPage() {
             <table className="w-full text-[12.5px]" aria-label="Prévia do Dashboard pela definição nova">
               <thead>
                 <tr className="border-b border-[var(--color-line)] text-left text-[11px] uppercase tracking-wide text-[var(--color-ink3)]">
-                  <th className="py-1.5 pr-3">Obra · cartão</th>
+                  <th className="py-1.5 pr-3">Projeto · cartão</th>
                   <th className="py-1.5 pr-3 text-right">Hoje</th>
                   <th className="py-1.5 pr-3 text-right">Definição nova</th>
                   <th className="py-1.5 text-right">Diferença</th>
@@ -385,7 +385,7 @@ export default async function ChavesPage() {
         <CardContent className="p-5">
           <h2 className="text-sm font-semibold text-[var(--color-ink)]">Prévia · Resumo Executivo pela definição nova</h2>
           <p className="mt-1.5 text-[13px] text-[var(--color-ink2)]">
-            Por obra (versão Atual): cada indicador hoje e pela definição nova. Mudam os sinais (S1, S2 e S3 passam a multiplicar
+            Por projeto (versão Atual): cada indicador hoje e pela definição nova. Mudam os sinais (S1, S2 e S3 passam a multiplicar
             pela quantidade), a permuta e a liberação canceladas (saem), a permuta por tipo (compara com o cadastro e ganha &ldquo;outros
             tipos&rdquo;) e o total de unidades (passa a contar as Permutadas). Com a chave ligada, a tela troca a tabela pelos blocos
             Vendas, Exposição e Atenção. Nada é gravado.
@@ -394,7 +394,7 @@ export default async function ChavesPage() {
             <table className="w-full text-[12.5px]" aria-label="Prévia do Resumo Executivo pela definição nova">
               <thead>
                 <tr className="border-b border-[var(--color-line)] text-left text-[11px] uppercase tracking-wide text-[var(--color-ink3)]">
-                  <th className="py-1.5 pr-3">Obra · indicador</th>
+                  <th className="py-1.5 pr-3">Projeto · indicador</th>
                   <th className="py-1.5 pr-3 text-right">Hoje</th>
                   <th className="py-1.5 pr-3 text-right">Definição nova</th>
                   <th className="py-1.5 text-right">Diferença</th>
@@ -435,7 +435,7 @@ export default async function ChavesPage() {
         <CardContent className="p-5">
           <h2 className="text-sm font-semibold text-[var(--color-ink)]">Prévia · Plano de pagamento pela definição nova (caixa)</h2>
           <p className="mt-1.5 text-[13px] text-[var(--color-ink2)]">
-            Por obra (versão Atual): o total dos recebíveis das vendas hoje e pela definição nova. Saem o financiamento do banco (o
+            Por projeto (versão Atual): o total dos recebíveis das vendas hoje e pela definição nova. Saem o financiamento do banco (o
             dinheiro chega como liberação de obra), a permuta do plano (não é dinheiro) e as seções com a caixinha &ldquo;Usar&rdquo;
             desmarcada. Nada é gravado e nenhuma caixinha é marcada sozinha.
           </p>
@@ -443,7 +443,7 @@ export default async function ChavesPage() {
             <table className="w-full text-[12.5px]" aria-label="Prévia do plano de pagamento pela definição nova">
               <thead>
                 <tr className="border-b border-[var(--color-line)] text-left text-[11px] uppercase tracking-wide text-[var(--color-ink3)]">
-                  <th className="py-1.5 pr-3">Obra</th>
+                  <th className="py-1.5 pr-3">Projeto</th>
                   <th className="py-1.5 pr-3 text-right">Recebíveis hoje</th>
                   <th className="py-1.5 pr-3 text-right">Definição nova</th>
                   <th className="py-1.5 pr-3 text-right">Sai: financiamento</th>
@@ -494,7 +494,7 @@ export default async function ChavesPage() {
         <CardContent className="p-5">
           <h2 className="text-sm font-semibold text-[var(--color-ink)]">Prévia · Receita da DRE pelo rateio do contrato</h2>
           <p className="mt-1.5 text-[13px] text-[var(--color-ink2)]">
-            Por obra (versão Atual): a receita da DRE hoje (parcelas pelo vencimento, liberações, contas a receber e revenda de
+            Por projeto (versão Atual): a receita da DRE hoje (parcelas pelo vencimento, liberações, contas a receber e revenda de
             permuta) e pelo rateio (total do contrato de cada unidade vendida dividido pelos meses da obra, mais as contas a receber).
             A coluna &ldquo;meses passados&rdquo; mostra quanto a DRE dos meses já encerrados muda: com o rateio, cada venda nova
             revisa os meses anteriores. O caixa não muda. Nada é gravado.
@@ -503,7 +503,7 @@ export default async function ChavesPage() {
             <table className="w-full text-[12.5px]" aria-label="Prévia da receita da DRE pelo rateio">
               <thead>
                 <tr className="border-b border-[var(--color-line)] text-left text-[11px] uppercase tracking-wide text-[var(--color-ink3)]">
-                  <th className="py-1.5 pr-3">Obra</th>
+                  <th className="py-1.5 pr-3">Projeto</th>
                   <th className="py-1.5 pr-3 text-right">Receita hoje</th>
                   <th className="py-1.5 pr-3 text-right">Pelo rateio</th>
                   <th className="py-1.5 pr-3 text-right">Meses passados: hoje</th>
@@ -555,10 +555,10 @@ export default async function ChavesPage() {
         <CardContent className="p-5">
           <h2 className="text-sm font-semibold text-[var(--color-ink)]">Prévia · Caixa: conciliação por conta</h2>
           <p className="mt-1.5 text-[13px] text-[var(--color-ink2)]">
-            Com a chave ligada, o Caixa deixa de ter seletor de obra e de versão e mostra a conciliação da empresa, conta a conta (a
-            versão Atual de todas as obras). O extrato importado depois de ligar nasce só com a conta; a obra de cada movimento passa a
-            ser a do item com que ele for conciliado. Os movimentos que já existem ficam na obra que têm: a tabela de obras abaixo
-            confere que o realizado de cada uma é o mesmo pelas duas leituras. Nada é gravado.
+            Com a chave ligada, o Caixa deixa de ter seletor de projeto e de versão e mostra a conciliação da empresa, conta a conta (a
+            versão Atual de todos os projetos). O extrato importado depois de ligar nasce só com a conta; o projeto de cada movimento passa a
+            ser o do item com que ele for conciliado. Os movimentos que já existem ficam no projeto que têm: a tabela de projetos abaixo
+            confere que o realizado de cada um é o mesmo pelas duas leituras. Nada é gravado.
           </p>
           <div className="mt-3 overflow-x-auto">
             <table className="w-full text-[12.5px]" aria-label="Prévia do Caixa por conta">
@@ -567,7 +567,7 @@ export default async function ChavesPage() {
                   <th className="py-1.5 pr-3">Conta</th>
                   <th className="py-1.5 pr-3 text-right">Movimentos</th>
                   <th className="py-1.5 pr-3 text-right">A conciliar</th>
-                  <th className="py-1.5 text-right">Sem obra</th>
+                  <th className="py-1.5 text-right">Sem projeto</th>
                 </tr>
               </thead>
               <tbody>
@@ -594,10 +594,10 @@ export default async function ChavesPage() {
             </table>
           </div>
           <div className="mt-3 overflow-x-auto">
-            <table className="w-full text-[12.5px]" aria-label="Realizado por obra nas duas leituras">
+            <table className="w-full text-[12.5px]" aria-label="Realizado por projeto nas duas leituras">
               <thead>
                 <tr className="border-b border-[var(--color-line)] text-left text-[11px] uppercase tracking-wide text-[var(--color-ink3)]">
-                  <th className="py-1.5 pr-3">Obra (versão Atual)</th>
+                  <th className="py-1.5 pr-3">Projeto (versão Atual)</th>
                   <th className="py-1.5 pr-3 text-right">Realizado hoje</th>
                   <th className="py-1.5 text-right">Pelo vínculo</th>
                 </tr>
@@ -615,8 +615,8 @@ export default async function ChavesPage() {
           </div>
           <p className="mt-3 text-[12.5px] text-[var(--color-ink3)]" data-previa-caixa-sem-obra>
             {previaCaixa.semObra.qtd === 0
-              ? "Nenhum movimento sem obra ainda: eles só nascem depois de ligar a chave."
-              : `${previaCaixa.semObra.qtd} movimento(s) sem obra; ${brl(previaCaixa.semObra.naoAtribuido)} ainda não atribuído(s) a obra (sem vínculo): entram no saldo da empresa e no realizado de nenhuma obra.`}
+              ? "Nenhum movimento sem projeto ainda: eles só nascem depois de ligar a chave."
+              : `${previaCaixa.semObra.qtd} movimento(s) sem projeto; ${brl(previaCaixa.semObra.naoAtribuido)} ainda não atribuído(s) a projeto (sem vínculo): entram no saldo da empresa e no realizado de nenhum projeto.`}
           </p>
         </CardContent>
       </Card>
@@ -624,7 +624,7 @@ export default async function ChavesPage() {
         <CardContent className="p-5">
           <h2 className="text-sm font-semibold text-[var(--color-ink)]">Prévia · Parcela do comprador: situação e atrasados</h2>
           <p className="mt-1.5 text-[13px] text-[var(--color-ink2)]">
-            Por obra (versão Atual): as parcelas de venda vencidas que ainda não têm recebimento conciliado no Caixa. Com a chave
+            Por projeto (versão Atual): as parcelas de venda vencidas que ainda não têm recebimento conciliado no Caixa. Com a chave
             ligada, elas aparecem como &ldquo;vencida&rdquo; em Contas a Receber e entram nos atrasados da faixa do Caixa. Se forem
             parcelas já pagas, concilie a entrada do extrato com a parcela antes de ligar. O recebido pela conciliação sai do
             previsto do Fluxo de Caixa. Nada é gravado.
@@ -633,7 +633,7 @@ export default async function ChavesPage() {
             <table className="w-full text-[12.5px]" aria-label="Prévia da situação das parcelas">
               <thead>
                 <tr className="border-b border-[var(--color-line)] text-left text-[11px] uppercase tracking-wide text-[var(--color-ink3)]">
-                  <th className="py-1.5 pr-3">Obra</th>
+                  <th className="py-1.5 pr-3">Projeto</th>
                   <th className="py-1.5 pr-3 text-right">Vencidas sem recebimento</th>
                   <th className="py-1.5 pr-3 text-right">Valor vencido</th>
                   <th className="py-1.5 text-right">Recebido pela conciliação</th>
@@ -707,26 +707,22 @@ export default async function ChavesPage() {
         <CardContent className="p-5">
           <h2 className="text-sm font-semibold text-[var(--color-ink)]">Prévia · INCC da empresa</h2>
           <p className="mt-1.5 text-[13px] text-[var(--color-ink2)]">
-            Com a chave ligada, cada obra passa a ler a série do INCC da empresa no lugar da própria. As séries das obras ficam
-            guardadas, e desligar volta a elas. A série da empresa é adotada em{" "}
-            <Link href="/parametros" className="text-[var(--color-accent2)] hover:underline">
-              Índices de Reajuste
-            </Link>
-            , a partir da série de uma obra.
+            Com a chave ligada, cada projeto passa a ler a série do INCC da empresa no lugar da própria. As séries dos projetos ficam
+            guardadas, e desligar volta a elas.
           </p>
           <p className="mt-2 text-[13px] font-medium text-[var(--color-ink)]" data-previa-incc-total>
             {inccEmpresa.length === 0
               ? "A empresa ainda não adotou uma série: ligar a chave não muda nada."
               : previaIncc.filter(mudaAlgo).length === 0
-                ? `Série da empresa com ${inccEmpresa.length} meses. Nenhuma obra muda.`
-                : `Série da empresa com ${inccEmpresa.length} meses. ${previaIncc.filter(mudaAlgo).length} obra(s) mudam.`}
+                ? `Série da empresa com ${inccEmpresa.length} meses. Nenhum projeto muda.`
+                : `Série da empresa com ${inccEmpresa.length} meses. ${previaIncc.filter(mudaAlgo).length} projeto(s) mudam.`}
           </p>
           {previaIncc.some(mudaAlgo) && (
             <div className="mt-3 overflow-x-auto">
-              <table className="w-full text-[12.5px]" aria-label="Obras cuja série do INCC difere da série da empresa">
+              <table className="w-full text-[12.5px]" aria-label="Projetos cuja série do INCC difere da série da empresa">
                 <thead>
                   <tr className="border-b border-[var(--color-line)] text-left text-[11px] uppercase tracking-wide text-[var(--color-ink3)]">
-                    <th className="py-1.5 pr-3">Obra</th>
+                    <th className="py-1.5 pr-3">Projeto</th>
                     <th className="py-1.5 pr-3 text-right">Meses com acumulado diferente</th>
                     <th className="py-1.5 pr-3 text-right">Meses sem índice na empresa</th>
                     <th className="py-1.5 text-right">Maior diferença do acumulado</th>

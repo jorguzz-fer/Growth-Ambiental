@@ -75,8 +75,8 @@ export function FuncionarioCampos({ v, onChange, podeDados, projetos }: { v: Val
         {c("cargo", "Cargo / função")}
         {c("setor", "Setor")}
         <div>
-          <Label>Obra</Label>
-          <Select value={v.projectId ?? ""} onChange={(e) => onChange("projectId", e.target.value)} aria-label="Obra">
+          <Label>Projeto</Label>
+          <Select value={v.projectId ?? ""} onChange={(e) => onChange("projectId", e.target.value)} aria-label="Projeto">
             <option value="">—</option>
             {projetos.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}
           </Select>

@@ -79,7 +79,7 @@ export function ReceitaSearch({ rows }: { rows: ReceitaBuscavel[] }) {
           readOnly
           onFocus={abrir}
           onClick={abrir}
-          placeholder="Buscar receita por cliente, unidade, descrição, projeto ou valor…"
+          placeholder="Buscar receita por cliente, contrato, descrição, projeto ou valor…"
           className="w-full cursor-pointer rounded-[8px] border border-[var(--color-accent2)]/25 bg-white py-2 pl-9 pr-3 text-[13px] text-[var(--color-ink2)] placeholder:text-[var(--color-ink4)] hover:bg-[var(--color-surface2)] focus:border-[var(--color-accent2)] focus:outline-none"
         />
       </div>

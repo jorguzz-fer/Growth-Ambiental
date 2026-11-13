@@ -274,7 +274,7 @@ export function lerRascunhoDaNota(get: (campo: string) => unknown): { ok: true; 
     return t || null;
   };
   const projectId = txt("projectId", 64);
-  if (!projectId) return { ok: false, error: "Escolha a obra (ou o escritório) da nota." };
+  if (!projectId) return { ok: false, error: "Escolha o projeto (ou o escritório) da nota." };
   const competencia = txt("competencia", 7);
   if (competencia && !/^(0[1-9]|1[0-2])\/\d{4}$/.test(competencia)) return { ok: false, error: "Competência no formato MM/AAAA." };
   const valores: Record<string, number> = {};
@@ -513,4 +513,4 @@ export function desfechoDoCancelamento(r: Pick<ResultadoNota, "status" | "http" 
 }
 
 /** Linhas da montagem que só repetem o cadastro da empresa (já listado à parte). */
-export const EMITENTE_REPETIDO = /^(O cadastro fiscal da empresa|CNPJ do emitente|Informe o item da lista|Informe o código IBGE do município da obra)/;
+export const EMITENTE_REPETIDO = /^(O cadastro fiscal da empresa|CNPJ do emitente|Informe o item da lista|Informe o código IBGE do município do projeto)/;

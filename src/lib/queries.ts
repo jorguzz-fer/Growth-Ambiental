@@ -2519,29 +2519,6 @@ export async function getClientes(tenantId: string): Promise<ClienteLista[]> {
     .orderBy(asc(schema.clientes.nomeCompleto));
 }
 
-/**
- * Compradores para o simulador (Prompt N, BN-3): nome e, SÓ quando a página
- * confirmou `clientesdados:ver`, a renda do cadastro (líquida; senão bruta).
- * Sem a permissão a coluna nem é selecionada — a renda não sai do servidor.
- */
-export async function getClientesParaSimulador(tenantId: string, comRenda: boolean): Promise<{ id: string; nome: string; renda: number | null }[]> {
-  const rows = await db
-    .select({
-      id: schema.clientes.id,
-      nome: schema.clientes.nomeCompleto,
-      ...(comRenda ? { rendaLiquida: schema.clientes.rendaLiquida, rendaBruta: schema.clientes.rendaBruta } : {}),
-    })
-    .from(schema.clientes)
-    .where(eq(schema.clientes.tenantId, tenantId))
-    .orderBy(asc(schema.clientes.nomeCompleto));
-  return rows.map((r) => {
-    const rl = "rendaLiquida" in r ? Number(r.rendaLiquida ?? 0) : 0;
-    const rb = "rendaBruta" in r ? Number(r.rendaBruta ?? 0) : 0;
-    const renda = comRenda ? rl || rb || null : null;
-    return { id: r.id, nome: r.nome, renda };
-  });
-}
-
 /** Texto sem acentos e minúsculo, no SQL — casa com `termosDaBusca`. */
 const semAcentoSql = (col: SQL | AnyColumn) =>
   sql`translate(lower(coalesce(${col}, '')), 'áàâãäéèêëíìîïóòôõöúùûüçñ', 'aaaaaeeeeiiiiooooouuuucn')`;
@@ -2608,21 +2585,6 @@ export async function getStatusContratoUsados(
     .groupBy(sql`1`)
     .orderBy(sql`1`);
   return rows;
-}
-
-/**
- * Unidades de cada obra do tenant (Prompt M, 6.6), sem repetir o mesmo
- * código dentro da obra. Cobre todas as versões, como a lista anterior.
- */
-export async function getUnidadesComObra(
-  tenantId: string,
-): Promise<{ projectId: string; code: string }[]> {
-  return db
-    .selectDistinct({ projectId: schema.versions.projectId, code: schema.units.code })
-    .from(schema.units)
-    .innerJoin(schema.versions, eq(schema.units.versionId, schema.versions.id))
-    .where(and(eq(schema.units.tenantId, tenantId), eq(schema.versions.tenantId, tenantId)))
-    .orderBy(asc(schema.units.code));
 }
 
 /**
@@ -3558,6 +3520,8 @@ export interface ContaReceberRow {
   unitCode: string | null;
   clienteId: string | null;
   clienteNome: string | null;
+  /** CPF ou CNPJ do cliente (para distinguir empresa contratante de pessoa física). */
+  clienteDocumento: string | null;
   descricao: string | null;
   tipo: string;
   valor: number;
@@ -3577,6 +3541,7 @@ export async function getContasReceber(tenantId: string, projectId?: string): Pr
       c: schema.contasReceber,
       projectName: schema.projects.name,
       clienteNome: schema.clientes.nomeCompleto,
+      clienteDocumento: schema.clientes.cpfCnpj,
     })
     .from(schema.contasReceber)
     .innerJoin(schema.projects, eq(schema.contasReceber.projectId, schema.projects.id))
@@ -3597,6 +3562,7 @@ export async function getContasReceber(tenantId: string, projectId?: string): Pr
     unitCode: r.c.unitCode,
     clienteId: r.c.clienteId,
     clienteNome: r.clienteNome,
+    clienteDocumento: r.clienteDocumento,
     descricao: r.c.descricao,
     tipo: r.c.tipo,
     valor: Number(r.c.valor),

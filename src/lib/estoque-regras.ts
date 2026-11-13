@@ -8,8 +8,12 @@ export const UNIDADES = ["un", "kg", "g", "t", "m", "m²", "m³", "L", "sc", "cx
 export type Unidade = (typeof UNIDADES)[number];
 
 /** Origens (entrada) e motivos (saída) padronizados — reduzem erro de quem lança na ponta. */
-export const ENTRADA_ORIGENS = ["Compra", "Permuta", "Devolução ao estoque", "Ajuste (inventário)", "Transferência entre obras"] as const;
-export const SAIDA_MOTIVOS = ["Consumo na obra", "Perda / Quebra", "Devolução ao fornecedor", "Transferência entre obras", "Ajuste (inventário)"] as const;
+// Growth Ambiental: materiais e equipamentos de campo. "Permuta",
+// "Consumo na obra" e "Transferência entre obras" ficam só nos movimentos
+// antigos (a origem é texto gravado, não é convertida).
+export const ENTRADA_ORIGENS = ["Compra", "Devolução ao estoque", "Retorno de campo", "Ajuste (inventário)", "Transferência entre projetos"] as const;
+export const SAIDA_MOTIVOS = ["Uso no projeto", "Envio para campo", "Perda / Quebra / Extravio", "Devolução ao fornecedor", "Transferência entre projetos", "Ajuste (inventário)"] as const;
+export const ORIGENS_ANTIGAS = ["Permuta", "Consumo na obra", "Transferência entre obras", "Perda / Quebra"] as const;
 export const ORIGEM_ESTORNO = "Estorno";
 
 /** 4-A.4 — tipos de documento do movimento. A nota fiscal já vive na despesa; aqui vai o RECEBIMENTO. */
@@ -68,9 +72,9 @@ export function recusaDoMovimento(m: MovimentoParaValidar): string | null {
     const temDespesa = !!m.despesaId;
     const temPermuta = !!m.permutaId;
     if (temDespesa && temPermuta) return "A entrada aponta para uma despesa OU para uma permuta — não as duas.";
-    if (!temDespesa && !temPermuta) return "Entrada sem origem não tem lastro: vincule a despesa (compra) ou a permuta que trouxe o material.";
+    if (!temDespesa && !temPermuta) return "Entrada sem origem não tem lastro: vincule a despesa (compra) que trouxe o material.";
   } else if (!m.projectId) {
-    return "Informe para qual obra o material foi. A saída não gera custo — a despesa já é da obra dela —, mas registra onde o material foi parar.";
+    return "Informe para qual projeto o material foi. A saída não gera custo — a despesa já é do projeto dele —, mas registra onde o material foi parar.";
   }
   return null;
 }

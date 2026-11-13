@@ -62,7 +62,7 @@ export function BalancoDiaTable({ rows }: { rows: BalancoRow[] }) {
 
   const exportCsv = () => {
     const head = [
-      "Dia", "Obra", "Cliente", "Saldo inicial", "Entradas", "Saidas",
+      "Dia", "Projeto", "Cliente", "Saldo inicial", "Entradas", "Saidas",
       "Saldo final", "Divergencias", "Responsavel", "Fechado em",
     ];
     const lines = filtered.map((r) =>
@@ -96,9 +96,9 @@ export function BalancoDiaTable({ rows }: { rows: BalancoRow[] }) {
             <Input type="date" value={ate} onChange={(e) => setAte(e.target.value)} />
           </div>
           <div>
-            <Label>Obra</Label>
+            <Label>Projeto</Label>
             <Select value={obra} onChange={(e) => setObra(e.target.value)}>
-              <option value="">Todas</option>
+              <option value="">Todos</option>
               {opts.obras.map((o) => <option key={o} value={o}>{o}</option>)}
             </Select>
           </div>
@@ -123,7 +123,7 @@ export function BalancoDiaTable({ rows }: { rows: BalancoRow[] }) {
               <THead>
                 <tr>
                   <TH>Dia</TH>
-                  <TH>Obra</TH>
+                  <TH>Projeto</TH>
                   <TH>Cliente</TH>
                   <TH className="text-right">Saldo inicial</TH>
                   <TH className="text-right">Entradas</TH>

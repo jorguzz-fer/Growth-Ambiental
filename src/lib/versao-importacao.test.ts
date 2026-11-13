@@ -12,7 +12,7 @@ describe("recusaDaImportacao (Prompt I, BI-3)", () => {
     const r = recusaDaImportacao("budget", { ...zero, despesas: 3, units: 2 }, zero);
     expect(r).toMatch(/só entram na versão Atual/);
     expect(r).toMatch(/unidades, despesas/);
-    expect(recusaDaImportacao("forecast", { ...zero, reembolsos: 1 }, zero)).toMatch(/liberações de obra/);
+    expect(recusaDaImportacao("forecast", { ...zero, reembolsos: 1 }, zero)).toMatch(/liberações de financiamento/);
     expect(recusaDaImportacao("custom", { ...zero, permutas: 1 }, zero)).not.toBeNull();
   });
   it("na Atual, categoria vazia passa", () => {

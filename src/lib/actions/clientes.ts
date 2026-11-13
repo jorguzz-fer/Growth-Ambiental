@@ -84,7 +84,7 @@ const int = (fd: FormData, k: string) => {
 };
 
 function readCliente(fd: FormData) {
-  return {
+  return soOsEnviados(fd, {
     unitCode: s(fd, "unitCode"),
     statusContrato: s(fd, "statusContrato"),
     // Sem nome: vazio — a action recusa (6.4). Antes virava "Sem nome".
@@ -122,7 +122,30 @@ function readCliente(fd: FormData) {
     indicadoPor: s(fd, "indicadoPor"),
     interesse: int(fd, "interesse"),
     obsEstrategicas: s(fd, "obsEstrategicas"),
-  };
+    // 0080 — contratante
+    nomeFantasia: s(fd, "nomeFantasia"),
+    contatoAdmNome: s(fd, "contatoAdmNome"),
+    contatoAdmEmail: s(fd, "contatoAdmEmail"),
+    contatoAdmTelefone: s(fd, "contatoAdmTelefone"),
+    contatoTecnicoNome: s(fd, "contatoTecnicoNome"),
+    contatoTecnicoEmail: s(fd, "contatoTecnicoEmail"),
+    contatoTecnicoTelefone: s(fd, "contatoTecnicoTelefone"),
+    contatoFinanceiroNome: s(fd, "contatoFinanceiroNome"),
+    contatoFinanceiroEmail: s(fd, "contatoFinanceiroEmail"),
+    contatoFinanceiroTelefone: s(fd, "contatoFinanceiroTelefone"),
+  });
+}
+
+/**
+ * Growth Ambiental: o formulário do contratante não tem mais os campos de
+ * comprador de imóvel (unidade, renda, FGTS, score…). Campo que NÃO veio no
+ * formulário fica fora da gravação — o Salvar não apaga o que já estava
+ * gravado. O nome (razão social) é sempre lido: vazio é recusado.
+ */
+function soOsEnviados<T extends Record<string, unknown>>(fd: FormData, dados: T): T {
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(dados)) if (k === "nomeCompleto" || fd.has(k)) out[k] = v;
+  return out as T;
 }
 
 /**

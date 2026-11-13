@@ -46,7 +46,7 @@ describe.skipIf(!HAS_DB)("Stakeholders — actions (Prompt W, PR W-1)", async ()
   });
 
   it("13 — 'Pagador por Terceiro' é o 20º papel da lista", () => {
-    expect(PAPEIS_STAKEHOLDER).toHaveLength(20);
+    expect(PAPEIS_STAKEHOLDER).toHaveLength(23);
     expect(PAPEIS_STAKEHOLDER).toContain("Pagador por Terceiro");
   });
 

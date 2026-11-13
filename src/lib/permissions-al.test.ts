@@ -48,8 +48,8 @@ function overridesAleatorios(seed: number): PermMatrix {
 }
 
 describe("Prompt AL · Partes 2 a 4 — contador configurável com teto de leitura", () => {
-  it("2.3 — o padrão do contador: as mesmas telas, só Ver (o Consolidado saiu no Prompt AB2; Notas Fiscais entrou no Prompt AG, 6.4)", () => {
-    expect([...CONTADOR_VE].sort()).toEqual(["acoes", "despesas", "dre", "fluxocaixa", "medicao", "notasfiscais", "planocontas", "resumo"]);
+  it("2.3 — o padrão do contador: as mesmas telas, só Ver (o Consolidado saiu no Prompt AB2; Notas Fiscais entrou no Prompt AG, 6.4; a Medição de obra saiu no Growth Ambiental)", () => {
+    expect([...CONTADOR_VE].sort()).toEqual(["acoes", "despesas", "dre", "fluxocaixa", "notasfiscais", "planocontas", "resumo"]);
     const p = defaultPermissions("contador");
     for (const s of SCREENS) {
       expect(p[s.id], s.id).toEqual({ ver: CONTADOR_VE.has(HERDA_DE[s.id] ?? s.id), criar: false, editar: false, excluir: false });

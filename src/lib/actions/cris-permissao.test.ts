@@ -60,7 +60,11 @@ describe("permissaoDaRota (AQ §2)", () => {
         if (a.ver !== ver || a.lancar !== lancar) mudou.push(`${rota} ${nome}`);
       }
     }
-    expect(mudou.every((m) => m.startsWith("/acerto "))).toBe(true);
+    // Só mudam as telas cujo item de menu declara exigência além do "ver" da
+    // chave (`exige`): o Acerto e, no Growth Ambiental, as telas de contrato
+    // com o financeiro ou a edição (antes nenhum papel não-admin via contratos).
+    const comExige = ["/acerto ", "/contratos/reembolsos ", "/contratos/modalidades "];
+    expect(mudou.filter((m) => !comExige.some((p) => m.startsWith(p)))).toEqual([]);
   });
 
   it("query e barra no fim não mudam a resposta; subrota herda o item (DRE Analítica = DRE)", () => {
@@ -69,12 +73,11 @@ describe("permissaoDaRota (AQ §2)", () => {
     expect(permissaoDaRota("/dre/analitica", p)).toMatchObject({ tela: "dre", ver: true, lancar: false });
   });
 
-  it("AQ-T3: Medição mantém o comportamento (permAlt: /medicaolanc usa a permissão de lançamento)", () => {
+  it("AQ-T3 (Growth Ambiental): a medição é do contrato — o engenheiro vê e lança; as rotas antigas não existem mais para a Cris", () => {
     const eng = defaultPermissions("engenheiro");
-    expect(permissaoDaRota("/medicaolanc", eng)).toEqual({ tela: "medicaolanc", ver: true, lancar: true });
-    expect(permissaoDaRota("/medicao", eng)).toEqual({ tela: "medicao", ver: false, lancar: false });
-    const contador = defaultPermissions("contador");
-    expect(permissaoDaRota("/medicao", contador)).toEqual({ tela: "medicao", ver: true, lancar: false });
+    expect(permissaoDaRota("/contratos/medicoes", eng)).toEqual({ tela: "contratos", ver: true, lancar: false });
+    expect(eng.contratosmedicao).toMatchObject({ ver: true, criar: true, editar: true });
+    for (const r of ["/medicao", "/medicaolanc"]) expect(ROTAS_CONHECIDAS.has(r), r).toBe(false);
   });
 });
 

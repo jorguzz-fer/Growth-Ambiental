@@ -60,20 +60,21 @@ export function textoDoRecorte(o: { projetos: number; nomeDoProjeto?: string; ve
 
 /** 4.1 — cada KPI declara a definição de cada natureza. */
 export const DEFINICAO_DO_KPI: Record<"vgv" | "realizado" | "aReceber" | "aPagar", { atual: string; planejamento: string }> = {
+  // Growth Ambiental: a chave interna `vgv` é o VALOR CONTRATADO.
   vgv: {
-    atual: "Atual: soma das unidades cadastradas na versão Atual.",
-    planejamento: "Orçamento/Previsão: soma das unidades cadastradas naquela versão.",
+    atual: "Valor atualizado (original + aditivos eficazes) dos contratos de serviço do projeto; rascunho e cancelado não contam.",
+    planejamento: "Orçamento/Previsão: o mesmo valor contratado — é fato do contrato, não cenário.",
   },
   realizado: {
     atual: "Entradas de caixa da própria versão, pela data, conciliadas ou não.",
     planejamento: "Entradas de caixa gravadas na versão, pela data (planejamento normalmente não tem).",
   },
   aReceber: {
-    atual: "Atual: recebíveis em aberto das unidades, pela data.",
+    atual: "Atual: recebíveis em aberto (Contas a Receber), pela data.",
     planejamento: "Orçamento/Previsão: receita planejada menos o realizado, nunca abaixo de zero — é saldo a realizar, não recebível.",
   },
   aPagar: {
-    atual: "Atual: contas a pagar em aberto, pelo saldo das parcelas, de todas as versões da obra.",
+    atual: "Atual: contas a pagar em aberto, pelo saldo das parcelas, de todas as versões do projeto.",
     planejamento: "Orçamento/Previsão: “—”, porque planejamento não tem conta a pagar.",
   },
 };
@@ -81,11 +82,11 @@ export const DEFINICAO_DO_KPI: Record<"vgv" | "realizado" | "aReceber" | "aPagar
 /** Chave "dashboard_definicao_nova" ligada: as definições que mudam (4.5, 4.2). */
 export const DEFINICAO_NOVA_DO_KPI: Pick<typeof DEFINICAO_DO_KPI, "vgv" | "aReceber"> = {
   vgv: {
-    atual: "VGV da versão Atual da obra, em toda coluna: unidade é fato da obra, não cenário.",
-    planejamento: "Orçamento/Previsão: mostram o mesmo VGV da Atual; as unidades gravadas nelas não entram.",
+    atual: "Valor atualizado dos contratos de serviço do projeto, em toda coluna: é fato do contrato, não cenário.",
+    planejamento: "Orçamento/Previsão: o mesmo valor contratado da Atual.",
   },
   aReceber: {
-    atual: "Atual: recebíveis em aberto das unidades, pela data.",
+    atual: "Atual: recebíveis em aberto (Contas a Receber), pela data.",
     planejamento: "Orçamento/Previsão: receita planejada menos o realizado — saldo a realizar, não recebível. Negativo quando o realizado passou do planejado.",
   },
 };

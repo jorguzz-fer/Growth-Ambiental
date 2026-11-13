@@ -50,7 +50,7 @@ export async function addFuncionario(fd: FormData): Promise<ResultadoFuncionario
   const campos = lerCampos(fd);
   const recusa = recusaDoFuncionario({ nome: campos.nome as string | null, cpf: campos.cpf as string | null, admissao: campos.admissao as string | null, salario: campos.salario as number | null });
   if (recusa) return { ok: false, error: recusa };
-  if (campos.projectId && !ctx.projects.some((p) => p.id === campos.projectId)) return { ok: false, error: "Obra não encontrada nesta empresa." };
+  if (campos.projectId && !ctx.projects.some((p) => p.id === campos.projectId)) return { ok: false, error: "Projeto não encontrado nesta empresa." };
   const podeSensivel = can(ctx.perms, TELA_DADOS_FUNCIONARIO, "editar");
   const dados = soCamposPermitidos(campos, podeSensivel);
   const aviso = avisoDeCpfDuplicado(campos.cpf as string | null, await getCpfsConhecidos(ctx.tenant.id));
@@ -73,7 +73,7 @@ export async function updateFuncionario(id: string, fd: FormData): Promise<Resul
   const depois = { ...(atual as Record<string, unknown>), ...campos };
   const recusa = recusaDoFuncionario({ nome: depois.nome as string | null, cpf: depois.cpf as string | null, admissao: depois.admissao as string | null, desligamento: atual.desligamento, salario: campos.salario == null ? null : (campos.salario as number) });
   if (recusa) return { ok: false, error: recusa };
-  if (campos.projectId && !ctx.projects.some((p) => p.id === campos.projectId)) return { ok: false, error: "Obra não encontrada nesta empresa." };
+  if (campos.projectId && !ctx.projects.some((p) => p.id === campos.projectId)) return { ok: false, error: "Projeto não encontrado nesta empresa." };
   const podeSensivel = can(ctx.perms, TELA_DADOS_FUNCIONARIO, "editar");
   const dados = soCamposPermitidos(campos, podeSensivel) as Record<string, unknown>;
   if ("salario" in dados) dados.salario = dados.salario == null ? null : String(dados.salario);

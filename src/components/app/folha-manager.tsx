@@ -73,7 +73,7 @@ export function FolhaManager({ folhas, candidatas, funcionarios, conferencia, ca
   return (
     <div className="space-y-4">
       <p className="rounded-[8px] bg-[var(--color-surface2)] px-3 py-2 text-[12.5px] text-[var(--color-ink2)]">
-        A folha é documento da <strong>empresa</strong>, de um mês. <strong>O pagamento é despesa e se lança em Despesas</strong>, com competência, conta CEF e categoria — aqui fica o arquivo (folha, holerites, guias e comprovantes). Vincule o registro à despesa que pagou a folha: o comprovante não precisa ser anexado duas vezes.
+        A folha é documento da <strong>empresa</strong>, de um mês. <strong>O pagamento é despesa e se lança em Despesas</strong>, com competência, conta do plano e categoria — aqui fica o arquivo (folha, holerites, guias e comprovantes). Vincule o registro à despesa que pagou a folha: o comprovante não precisa ser anexado duas vezes.
       </p>
       {msg && <p role={msg.ok ? "status" : "alert"} className={`text-[12.5px] ${msg.ok ? "text-[var(--color-success)]" : "text-[var(--color-danger)]"}`}>{msg.texto}</p>}
 

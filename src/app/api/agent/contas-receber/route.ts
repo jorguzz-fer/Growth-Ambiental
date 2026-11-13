@@ -1,6 +1,6 @@
 import { handleAgent } from "@/lib/agent/http";
 import { requireScreen } from "@/lib/agent/auth";
-import { getReceivables } from "@/lib/queries";
+import { getContasReceber, getReceivables } from "@/lib/queries";
 import { casaNome, empacotar, limiteDe } from "@/lib/agent/lista";
 import { intervalo } from "@/lib/agent/datas";
 import { brl, dateBR, dateInRange, ymd } from "@/lib/utils";
@@ -9,19 +9,35 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * Recebíveis previstos — a tela "Contas a Receber".
+ * Recebíveis previstos — a tela "Contas a Receber". É PREVISÃO, não extrato:
+ * mostra o que está a receber, não o que caiu na conta.
  *
- * `getReceivables` expande o plano de pagamento das unidades vendidas da
- * versão "atual" em parcelas datadas. É PREVISÃO, não extrato: mostra o que
- * está contratado a receber, não o que caiu na conta.
+ * Growth Ambiental: entram as contas a receber em aberto (faturas dos
+ * contratos e lançamentos), pelo SALDO, e — só nos dados antigos — as
+ * parcelas de venda de unidades (`getReceivables`). O campo `unidade` da
+ * resposta é contrato da API (não renomear): nulo nas contas a receber.
  *
- * `?projeto=OBRA 28` responde "quanto tem a receber da OBRA 28".
+ * `?projeto=PROJETO 28` responde "quanto tem a receber do PROJETO 28".
  */
 export async function GET(req: Request) {
   return handleAgent(req, { rota: "contas-receber" }, async (id, url) => {
     requireScreen(id, "contasreceber");
 
-    const todos = await getReceivables(id.tenantId);
+    const [parcelas, contas] = await Promise.all([getReceivables(id.tenantId), getContasReceber(id.tenantId)]);
+    const todos = [
+      ...contas
+        .filter((c) => c.status !== "Recebido" && c.status !== "Cancelada" && c.valor - c.valorRecebido > 0.005 && !!c.vencimento)
+        .map((c) => ({
+          unitCode: c.unitCode,
+          projectName: c.projectName,
+          clienteNome: c.clienteNome,
+          descricao: c.descricao ?? c.tipo,
+          dia: c.vencimento!,
+          valor: Math.round((c.valor - c.valorRecebido) * 100) / 100,
+          status: c.status,
+        })),
+      ...parcelas,
+    ];
     const { de, ate } = intervalo(url);
     const projeto = url.searchParams.get("projeto");
 

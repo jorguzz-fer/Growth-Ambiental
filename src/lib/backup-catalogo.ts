@@ -48,7 +48,7 @@ export interface TabelaDoPacote {
   semAso?: boolean;
 }
 
-const BM3 = "dado sensível do comprador (BM-3, Prompt M) — fora até nova decisão (BAO-2)";
+const BM3 = "dado sensível do cliente (BM-3, Prompt M) — fora até nova decisão (BAO-2)";
 const FUNC = "endereço, salário, jornada e dados bancários do funcionário (Prompt Z) — fora (BAO-2)";
 
 export const TABELAS_DO_PACOTE: readonly TabelaDoPacote[] = [

@@ -38,7 +38,11 @@ function antigoDefault(role: Role): PermMatrix {
     // — clientesdados (Prompt M) e, desde o Prompt Z, funcionariosdados e funcionariosaso.
     else if (TELAS_SENSIVEIS.has(s.id)) out[s.id] = { ...NONE };
     else if (role === "membro") out[s.id] = s.modulo === "Config" ? { ...NONE } : { ...EDIT };
-    else if (role === "engenheiro") out[s.id] = s.id === "medicaolanc" ? { ...FULL } : { ...NONE };
+    // Growth Ambiental: a medição por grupo de obra (medicaolanc) saiu; o
+    // engenheiro / técnico de campo lança a medição do SERVIÇO no contrato.
+    // Ampliação declarada, não acidental: ver contratos (sem o financeiro) e
+    // lançar medição de contrato (sem aprovar).
+    else if (role === "engenheiro") out[s.id] = s.id === "contratosmedicao" ? { ...EDIT } : s.id === "contratos" ? { ...VIEW } : { ...NONE };
     // Prompt AG, 6.4: "Notas Fiscais" é tela NOVA, que o prompt manda o
     // contador ver (e não emitir). Ampliação declarada, não acidental.
     else out[s.id] = CONTADOR_VE.has(s.id) || s.id === "notasfiscais" ? { ...VIEW } : { ...NONE };
@@ -122,13 +126,13 @@ describe("Parte 1 — padrão novo do membro", () => {
     }
   });
 
-  it("alcança exatamente as 11 telas decididas, com ver/criar/editar e sem excluir", () => {
+  it("alcança exatamente as telas decididas (7 depois que Medição de obra, Unidades e Permuta saíram), com ver/criar/editar e sem excluir", () => {
     for (const s of SCREENS) {
       // `conferencia` acompanha Despesas (Prompt AN, 5.4).
       const tela = HERDA_DE[s.id] ?? s.id;
       expect(perms[s.id], s.id).toEqual(MEMBRO_TELAS.has(tela) ? EDIT : NONE);
     }
-    expect(MEMBRO_TELAS.size).toBe(11);
+    expect([...MEMBRO_TELAS].sort()).toEqual(["caixa", "clientes", "contas", "contaspagar", "contasreceber", "despesas", "fornecedores"]);
   });
 
   it("tela nova nasce negada (critério positivo)", () => {
@@ -161,10 +165,10 @@ describe("Parte 2 — salvar só o que diverge", () => {
     expect(depois.dashboard).toEqual(NONE); // Parte 1 alcança
   });
 
-  it("alterar uma tela grava uma chave, não 38", () => {
+  it("alterar uma tela grava uma chave, não todas", () => {
     const m = defaultPermissions("contador");
-    m.unidades = { ...VIEW };
-    expect(Object.keys(overridesDivergentes("contador", m))).toEqual(["unidades"]);
+    m.clientes = { ...VIEW };
+    expect(Object.keys(overridesDivergentes("contador", m))).toEqual(["clientes"]);
   });
 
   it("negação que o admin viu vale com a chave em qualquer estado (nunca amplia)", () => {

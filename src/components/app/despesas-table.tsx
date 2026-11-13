@@ -95,7 +95,7 @@ export function DespesasTable({
           {showOrigem && <TH>Origem</TH>}
           <TH>Nº Doc</TH>
           <TH>Fornecedor</TH>
-          <TH>Conta CEF</TH>
+          <TH>Conta do plano</TH>
           <TH>Cat. DRE</TH>
           <TH className="text-right">Valor</TH>
           <TH>Status</TH>

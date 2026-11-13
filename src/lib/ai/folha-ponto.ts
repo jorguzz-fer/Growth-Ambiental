@@ -26,7 +26,7 @@ export async function lerFolhaDePontoComIA(docs: DocumentoParaLeitura[]): Promis
   const client = aiClient();
   const tool: Anthropic.ToolUnion = {
     name: "listar_presencas",
-    description: "Lista as pessoas presentes numa folha de ponto de obra assinada, com a quantidade de diárias (1 = dia inteiro, 0.5 = meio dia).",
+    description: "Lista as pessoas presentes numa folha de ponto de campo assinada, com a quantidade de diárias (1 = dia inteiro, 0.5 = meio dia).",
     input_schema: {
       type: "object",
       additionalProperties: false,
@@ -55,7 +55,7 @@ export async function lerFolhaDePontoComIA(docs: DocumentoParaLeitura[]): Promis
     tool_choice: { type: "tool", name: "listar_presencas" },
     // Decisão de 01/10/2026 (BE-2): só o documento vai ao modelo — os nomes da
     // equipe NÃO entram; o casamento com a equipe é local (casarNomesComEquipe).
-    system: [{ type: "text", text: "Você lê folhas de ponto assinadas de canteiro de obra (Brasil) e lista quem esteve presente. Não invente nome: só o que está escrito ou assinado. Copie cada nome como está na folha; o sistema compara com a equipe depois." }],
+    system: [{ type: "text", text: "Você lê folhas de ponto assinadas de equipes de campo de projetos (Brasil) e lista quem esteve presente. Não invente nome: só o que está escrito ou assinado. Copie cada nome como está na folha; o sistema compara com a equipe depois." }],
     messages: [{ role: "user", content: [...docs.flatMap((d): Anthropic.ContentBlockParam[] => (docs.length > 1 ? [{ type: "text", text: `Arquivo: ${d.filename}` }, bloco(d)] : [bloco(d)])), { type: "text", text: "Liste as presenças desta folha de ponto." }] }],
   });
   const block = message.content.find((b) => b.type === "tool_use");

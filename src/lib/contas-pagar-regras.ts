@@ -98,7 +98,7 @@ export interface FiltrosContasPagar {
   ate?: string;
 }
 
-export const CLIENTE_PROPRIO = "Empreendimento próprio";
+export const CLIENTE_PROPRIO = "Projeto próprio (sem cliente)";
 
 export function filtrarContasPagar<T extends { fornecedorNome: string | null; clienteNome: string | null; projectId: string; categoriaDre: string | null; vencimento: string | null }>(
   rows: readonly T[],

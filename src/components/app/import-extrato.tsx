@@ -647,7 +647,7 @@ export function ImportExtratoButton({
 
             <div className="space-y-3">
               <div>
-                <Label>Projeto (obra)</Label>
+                <Label>Projeto</Label>
                 <Select
                   value={addProjeto}
                   onChange={(e) => setAddProjeto(e.target.value)}

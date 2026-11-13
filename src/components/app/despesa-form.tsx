@@ -879,7 +879,7 @@ export function DespesaForm({
         {/* Prompt AT §6.2 — compra lançada a partir da linha do extrato do cartão. */}
         {!isEdit && prefill?.extratoCartaoId && (
           <p role="status" className="rounded-[8px] border border-[var(--color-accent2)]/30 bg-[var(--color-accent4)] px-3 py-2 text-[12.5px] text-[var(--color-ink2)]" data-veio-do-cartao>
-            Veio do extrato do cartão: cartão, data da compra, valor e descrição já vieram preenchidos. Complete a obra, a categoria e o fornecedor; ao lançar, a linha do extrato é conciliada com esta compra.
+            Veio do extrato do cartão: cartão, data da compra, valor e descrição já vieram preenchidos. Complete o projeto, a categoria e o fornecedor; ao lançar, a linha do extrato é conciliada com esta compra.
           </p>
         )}
         {/* Prompt U — compra no cartão: valor, vencimento, forma e status seguem a fatura. */}
@@ -1242,7 +1242,7 @@ export function DespesaForm({
             )}
           </div>
 
-          <CampoIA label="Conta CEF / Plano de Contas" alerta={alertas.contaCef}>
+          <CampoIA label="Conta do plano de contas" alerta={alertas.contaCef}>
             <Select
               value={contaCef}
               onChange={(e) => {

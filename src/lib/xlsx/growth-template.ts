@@ -6,12 +6,14 @@ import type { InccRow, PaymentPlan, UnitStatus } from "@/lib/calc/types";
 import { normalizar } from "@/lib/planocontas-regras";
 
 /**
- * Formato padrão Growth Tools (planilha modelo .xlsx) — 5 abas:
- *   1. Parametros     (INCC 48 meses)
- *   2. Dados_de_Venda (unidades + cascata do plano de pagamento)
- *   3. Reembolso
- *   4. Permuta
- *   5. Despesas_CEF   (matriz subitem × 48 meses)
+ * Planilha da versão (.xlsx). Growth Ambiental — o MODELO tem 2 abas:
+ *   1. Parametros (os 48 meses da matriz)
+ *   2. Despesas   (matriz conta do plano × 48 meses)
+ *
+ * Formato ANTIGO (incorporação), aceito na leitura e usado na exportação só
+ * de versão que ainda tem esses dados: Parametros com INCC, Dados_de_Venda
+ * (unidades), Reembolso (liberações), Permuta e Despesas_CEF. A importação
+ * recusa as abas de incorporação com dados (os módulos saíram).
  *
  * Este módulo GERA o template (com estrutura de referência preenchida) e PARSEIA
  * uma planilha preenchida de volta para os tipos do domínio. Usado pela tela
@@ -23,7 +25,9 @@ export const SHEETS = {
   vendas: "Dados_de_Venda",
   reembolso: "Reembolso",
   permuta: "Permuta",
-  despesas: "Despesas_CEF",
+  despesas: "Despesas",
+  /** nome antigo da aba de despesas, aceito na leitura. */
+  despesasAntiga: "Despesas_CEF",
 } as const;
 
 const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
@@ -49,6 +53,8 @@ const UNIT_HEADERS = [
 const REEMB_HEADERS = ["Data (DD/MM/AAAA)", "Origem", "Valor R$", "Porcentagem %", "Observacoes", "SERIAL (auto = INT(Data))"];
 const PERM_HEADERS = ["ID", "Unidade", "Cliente", "Data Recebimento", "Tipo", "Descricao", "Valor Estimado R$", "Status", "Data Venda", "Valor Venda R$", "Tipo Permuta", "Observacoes"];
 const PARAM_HEADERS = ["MES", "INCC MENSAL (%)", "INCC ACUMULADO (%)", "Observacao"];
+/** Parametros do modelo novo: só os meses (base da matriz de despesas). */
+const PARAM_HEADERS_MESES = ["MES", "Observacao"];
 const DESP_MONTH_COLS = Array.from({ length: 48 }, (_, i) => `${MESES[i % 12]}/Ano${Math.floor(i / 12) + 1}`);
 /** "Codigo" (0079) é a chave da importação; planilha antiga, sem ela, casa pelo nome. */
 const DESP_HEADERS = ["Grupo", "Subitem", "Codigo", ...DESP_MONTH_COLS];
@@ -81,25 +87,10 @@ function linhasDeDespesa(plano: GrupoDaPlanilha[]): (string | number)[][] {
 export function buildTemplateBuffer(incc: InccRow[], plano: GrupoDaPlanilha[] = planilhaDoPlanoPadrao()): Buffer {
   const wb = XLSX.utils.book_new();
 
-  // Parametros (48 meses de INCC)
-  const paramRows = [
-    PARAM_HEADERS,
-    ...incc.map((r) => [r.m, r.mo, r.ac, ""]),
-  ];
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(paramRows), SHEETS.parametros);
+  // Parametros: os 48 meses da matriz (a linha do tempo do projeto).
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([PARAM_HEADERS_MESES, ...incc.map((r) => [r.m, ""])]), SHEETS.parametros);
 
-  // Dados_de_Venda (cabeçalho + linha de instrução)
-  const vendaRows = [
-    UNIT_HEADERS,
-    ["* Preencha uma linha por unidade — deixe em branco os campos nao utilizados", "", "", "", "", "", "Disponivel|Reservado|Vendido", "", "Sim|Nao"],
-  ];
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(vendaRows), SHEETS.vendas);
-
-  // Reembolso / Permuta (só cabeçalho)
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([REEMB_HEADERS]), SHEETS.reembolso);
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([PERM_HEADERS]), SHEETS.permuta);
-
-  // Despesas_CEF (contas do plano da empresa × 48 meses em branco)
+  // Despesas (contas do plano da empresa × 48 meses em branco)
   const despRows: (string | number)[][] = [DESP_HEADERS, ...linhasDeDespesa(plano)];
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(despRows), SHEETS.despesas);
 
@@ -165,13 +156,18 @@ export function buildExportBuffer(data: ExportData, plano: GrupoDaPlanilha[] = p
   const baseYear = data.incc[0]
     ? parseInt(data.incc[0].m.split("/")[1], 10)
     : new Date().getFullYear();
+  // Growth Ambiental: as abas de incorporação só saem quando a versão tem esses dados antigos.
+  const legado = data.units.length > 0 || data.reembolsos.length > 0 || data.permutas.length > 0;
 
-  // Parametros / INCC
+  // Parametros (com INCC só no formato antigo)
   XLSX.utils.book_append_sheet(
     wb,
-    XLSX.utils.aoa_to_sheet([PARAM_HEADERS, ...data.incc.map((r) => [r.m, r.mo, r.ac, ""])]),
+    XLSX.utils.aoa_to_sheet(
+      legado ? [PARAM_HEADERS, ...data.incc.map((r) => [r.m, r.mo, r.ac, ""])] : [PARAM_HEADERS_MESES, ...data.incc.map((r) => [r.m, ""])],
+    ),
     SHEETS.parametros,
   );
+  if (legado) {
 
   // Dados_de_Venda
   XLSX.utils.book_append_sheet(
@@ -202,6 +198,7 @@ export function buildExportBuffer(data: ExportData, plano: GrupoDaPlanilha[] = p
     ]),
     SHEETS.permuta,
   );
+  }
 
   // Despesas_CEF (matriz conta × 48 meses preenchida). A despesa numa conta
   // que saiu do plano (inativa, excluída) ganha linha própria: exportar não
@@ -224,7 +221,7 @@ export function buildExportBuffer(data: ExportData, plano: GrupoDaPlanilha[] = p
     const idx = DESP_PRIMEIRO_MES + col;
     row[idx] = (Number(row[idx]) || 0) + d.valor;
   }
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(despRows), SHEETS.despesas);
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(despRows), legado ? SHEETS.despesasAntiga : SHEETS.despesas);
 
   return XLSX.write(wb, { type: "buffer", bookType: "xlsx" }) as Buffer;
 }
@@ -296,15 +293,17 @@ function sheetRows(wb: XLSX.WorkBook, name: string): Record<string, unknown>[] {
 export function parseWorkbook(buffer: Buffer | ArrayBuffer, plano: GrupoDaPlanilha[] = planilhaDoPlanoPadrao()): ParsedWorkbook {
   const wb = XLSX.read(buffer, { type: "buffer" });
 
-  // Parametros / INCC
-  const incc = sheetRows(wb, SHEETS.parametros)
+  // Parametros: os meses da matriz; INCC só quando a planilha (antiga) traz as colunas.
+  const params = sheetRows(wb, SHEETS.parametros).filter((r) => /^\d{2}\/\d{4}$/.test(str(r["MES"])));
+  const meses = params.map((r) => str(r["MES"]));
+  const incc = params
+    .filter((r) => "INCC MENSAL (%)" in r)
     .map((r) => ({
       mes: str(r["MES"]),
       monthly: num(r["INCC MENSAL (%)"]),
       accumulated: num(r["INCC ACUMULADO (%)"]),
-    }))
-    .filter((r) => /^\d{2}\/\d{4}$/.test(r.mes));
-  const baseYear = incc[0] ? parseInt(incc[0].mes.split("/")[1], 10) : new Date().getFullYear();
+    }));
+  const baseYear = meses[0] ? parseInt(meses[0].split("/")[1], 10) : new Date().getFullYear();
 
   // Unidades
   const units: ParsedUnit[] = [];
@@ -360,7 +359,8 @@ export function parseWorkbook(buffer: Buffer | ArrayBuffer, plano: GrupoDaPlanil
   const acha = localizadorDeConta(plano);
   const despesas: ParsedDespesa[] = [];
   const despesasSemConta: DespesaSemConta[] = [];
-  for (const r of sheetRows(wb, SHEETS.despesas)) {
+  const abaDeDespesas = wb.Sheets[SHEETS.despesas] ? SHEETS.despesas : SHEETS.despesasAntiga;
+  for (const r of sheetRows(wb, abaDeDespesas)) {
     const grupo = str(r["Grupo"]);
     const subitem = str(r["Subitem"]);
     const codigo = str(r["Codigo"]);

@@ -69,6 +69,20 @@ export async function importVersionData(formData: FormData): Promise<ResultadoIm
       error: `A aba de despesas tem valores em linhas que não são contas ativas do Plano de Contas da empresa: ${lista}${mais}. Corrija a linha (ou baixe o modelo de novo) e importe outra vez — nada foi gravado.`,
     };
   }
+  // Growth Ambiental: unidades, liberações e permutas saíram. Planilha antiga
+  // com essas abas preenchidas é recusada (nada é gravado), para não recriar
+  // dados de módulos que não existem mais.
+  const deIncorporacao = [
+    parsed.units.length ? `${parsed.units.length} unidade(s)` : "",
+    parsed.reembolsos.length ? `${parsed.reembolsos.length} liberação(ões)` : "",
+    parsed.permutas.length ? `${parsed.permutas.length} permuta(s)` : "",
+  ].filter(Boolean);
+  if (deIncorporacao.length) {
+    return {
+      ok: false,
+      error: `A planilha tem dados de incorporação (${deIncorporacao.join(", ")}) nas abas Dados_de_Venda, Reembolso ou Permuta. Esses módulos saíram do Growth Ambiental: apague essas abas (ou baixe o modelo novo) e importe só as despesas — nada foi gravado.`,
+    };
+  }
   // Categoria da DRE de cada conta: herdada do plano com a chave
   // `despesa_categoria_do_plano` ligada; desligada, segue a regra anterior.
   const categoriaPorConta = new Map<string, string>();

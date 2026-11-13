@@ -75,8 +75,8 @@ export async function responderMetrica(
       texto: `Saldo disponível hoje nas contas da empresa: ${brl(saldoDisponivel(contas))}.`,
       detalhes: [
         `${daEmpresa.length} conta(s), sem as contas de terceiros.`,
-        "É o saldo da empresa: as contas não são separadas por obra.",
-        ...(intencao.obra || intencao.de ? ["Obra e período não se aplicam a este número."] : []),
+        "É o saldo da empresa: as contas não são separadas por projeto.",
+        ...(intencao.obra || intencao.de ? ["Projeto e período não se aplicam a este número."] : []),
       ],
       link: { href: metrica.href, rotulo: "Ver no Controle de Caixa" },
       entendido: metrica.nome,
@@ -85,19 +85,19 @@ export async function responderMetrica(
 
   // ── Obras: a citada (casada aqui), a da tela, ou todas as que o usuário vê ──
   let obras = ctx.projects;
-  let escopo = "todas as obras que você vê";
+  let escopo = "todos os projetos que você vê";
   if (intencao.obra) {
     const r = resolverObra(intencao.obra, ctx.projects);
-    if (r.tipo === "nenhuma") return resposta({ texto: `Não achei a obra “${intencao.obra}” entre as que você vê.`, detalhes: [], link: null, entendido: metrica.nome });
+    if (r.tipo === "nenhuma") return resposta({ texto: `Não achei o projeto “${intencao.obra}” entre os que você vê.`, detalhes: [], link: null, entendido: metrica.nome });
     if (r.tipo === "varias")
-      return resposta({ texto: `“${intencao.obra}” bate com mais de uma obra. Qual delas?`, detalhes: r.candidatos.map((p) => p.name), link: null, entendido: metrica.nome });
+      return resposta({ texto: `“${intencao.obra}” bate com mais de um projeto. Qual deles?`, detalhes: r.candidatos.map((p) => p.name), link: null, entendido: metrica.nome });
     obras = [r.projeto];
     escopo = r.projeto.name;
   } else if (!intencao.todas && projetoDaTela) {
     const daTela = ctx.projects.find((p) => p.id === projetoDaTela);
     if (daTela) {
       obras = [daTela];
-      escopo = `${daTela.name} (obra da tela)`;
+      escopo = `${daTela.name} (projeto da tela)`;
     }
   }
   const umaObra = obras.length === 1 ? obras[0] : null;
@@ -127,7 +127,7 @@ export async function responderMetrica(
       detalhes: [
         `Realizado ${brl(real)} contra ${brl(orc)} orçados.`,
         metrica.definicao,
-        ...(comparaveis.length > 1 ? [`Soma de ${comparaveis.length} obra(s); o percentual é recalculado das somas.`] : []),
+        ...(comparaveis.length > 1 ? [`Soma de ${comparaveis.length} projeto(s); o percentual é recalculado das somas.`] : []),
         ...(fora.length ? [`Fora da conta (sem Orçamento ou sem Atual): ${fora.join(", ")}.`] : []),
       ],
       link: umaObra ? { href: `/projeto?proj=${umaObra.id}`, rotulo: "Ver Orçado x Realizado" } : null,
@@ -159,7 +159,7 @@ export async function responderMetrica(
   const rotulo = ROTULO_DO_CENARIO[cenario];
   if (!dentro.length)
     return resposta({
-      texto: `Nenhuma obra em ${escopo} tem ${rotulo}${rascunhoFora && cenario !== "atual" ? " que conte nos relatórios (Aprovado)" : ""}.`,
+      texto: `Nenhum projeto em ${escopo} tem ${rotulo}${rascunhoFora && cenario !== "atual" ? " que conte nos relatórios (Aprovado)" : ""}.`,
       detalhes: [],
       link: null,
       entendido: `${metrica.nome} · ${rotulo} · ${escopo} · ${periodo}`,
@@ -176,7 +176,7 @@ export async function responderMetrica(
     texto: `${metrica.nome} — ${rotulo} — ${escopo}, ${periodo}: ${brl(total)}.`,
     detalhes: [
       metrica.definicao,
-      ...(dentro.length > 1 ? [`Soma de ${dentro.length} de ${resolvidas.length} obra(s).`] : []),
+      ...(dentro.length > 1 ? [`Soma de ${dentro.length} de ${resolvidas.length} projeto(s).`] : []),
       ...(fora.length ? [`Sem ${rotulo}${rascunhoFora && cenario !== "atual" ? " Aprovado" : ""}, fora da soma: ${fora.join(", ")}.`] : []),
       ...(intencao.cenario ? [] : ["Sem cenário na pergunta, uso a Atual. Pergunte “orçado” ou “previsão” para os outros."]),
     ],

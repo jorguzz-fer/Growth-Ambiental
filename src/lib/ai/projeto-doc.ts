@@ -3,7 +3,7 @@
  *
  * O que a IA devolve (`DadosProjetoLidos`) e a regra que transforma isso numa
  * PROPOSTA campo a campo, comparada com o que já está no cadastro. Nada aqui
- * grava: a proposta entra no formulário da obra e o Salvar do usuário é que
+ * grava: a proposta entra no formulário do projeto e o Salvar do usuário é que
  * grava, pela mesma `updateProject`, com `origem: "assistente"` no log.
  */
 import { isoParaDataInterna } from "@/lib/ai/campos";
@@ -18,11 +18,7 @@ export interface DadosProjetoLidos {
   dataInicio: string;
   dataFim: string;
   valorConstrucao: number | null;
-  valorTerreno: number | null;
   custoConstrucao: number | null;
-  custoTerreno: number | null;
-  proprietarioTerreno: string;
-  formaPagamentoTerreno: string;
   /** Nomes de campos lidos com baixa confiança. */
   baixaConfianca: string[];
   observacoes: string[];
@@ -37,26 +33,18 @@ export type CampoProjeto =
   | "startDate"
   | "endDate"
   | "valorConstrucao"
-  | "valorTerreno"
-  | "custoConstrucao"
-  | "custoTerreno"
-  | "proprietarioTerreno"
-  | "formaPagamentoTerreno";
+  | "custoConstrucao";
 
 export const ROTULO_CAMPO_PROJETO: Record<CampoProjeto, string> = {
-  name: "Nome da obra",
+  name: "Nome do projeto",
   endereco: "Endereço",
   cep: "CEP",
   municipioObra: "Município",
   ufObra: "UF",
   startDate: "Data de início",
   endDate: "Data de fim",
-  valorConstrucao: "Valor da construção",
-  valorTerreno: "Valor do terreno",
-  custoConstrucao: "Custo da construção",
-  custoTerreno: "Custo do terreno",
-  proprietarioTerreno: "Proprietário do terreno",
-  formaPagamentoTerreno: "Forma de pagamento do terreno",
+  valorConstrucao: "Receita prevista do projeto",
+  custoConstrucao: "Custo previsto do projeto",
 };
 
 export interface CampoProposto {
@@ -95,14 +83,10 @@ export function montarPropostaDeProjeto(lido: DadosProjetoLidos, atual: ValoresA
     startDate: lido.dataInicio ? isoParaDataInterna(lido.dataInicio) : "",
     endDate: lido.dataFim ? isoParaDataInterna(lido.dataFim) : "",
     valorConstrucao: num(lido.valorConstrucao),
-    valorTerreno: num(lido.valorTerreno),
     custoConstrucao: num(lido.custoConstrucao),
-    custoTerreno: num(lido.custoTerreno),
-    proprietarioTerreno: txt(lido.proprietarioTerreno),
-    formaPagamentoTerreno: txt(lido.formaPagamentoTerreno),
   };
   const baixa = new Set((lido.baixaConfianca ?? []).map((s) => s.trim()));
-  const nomeLido: Record<CampoProjeto, string> = { name: "nome", endereco: "endereco", cep: "cep", municipioObra: "municipio", ufObra: "uf", startDate: "dataInicio", endDate: "dataFim", valorConstrucao: "valorConstrucao", valorTerreno: "valorTerreno", custoConstrucao: "custoConstrucao", custoTerreno: "custoTerreno", proprietarioTerreno: "proprietarioTerreno", formaPagamentoTerreno: "formaPagamentoTerreno" };
+  const nomeLido: Record<CampoProjeto, string> = { name: "nome", endereco: "endereco", cep: "cep", municipioObra: "municipio", ufObra: "uf", startDate: "dataInicio", endDate: "dataFim", valorConstrucao: "valorConstrucao", custoConstrucao: "custoConstrucao" };
   const campos: CampoProposto[] = [];
   for (const campo of Object.keys(ROTULO_CAMPO_PROJETO) as CampoProjeto[]) {
     const proposto = lidos[campo];
@@ -114,7 +98,7 @@ export function montarPropostaDeProjeto(lido: DadosProjetoLidos, atual: ValoresA
   return { campos, observacoes: (lido.observacoes ?? []).filter(Boolean) };
 }
 
-/** sessionStorage: a proposta aceita vai daqui para o formulário da obra. */
+/** sessionStorage: a proposta aceita vai daqui para o formulário do projeto. */
 export const CHAVE_PROPOSTA_PROJETO = "gt:proposta-projeto";
 /** Evento disparado no `window` quando uma proposta é guardada. */
 export const EVENTO_PROPOSTA_PROJETO = "gt:proposta-projeto";

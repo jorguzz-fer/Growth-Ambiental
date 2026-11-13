@@ -22,23 +22,23 @@ import {
 import { LembrarProjeto, RecuperarProjeto } from "@/components/app/projeto-da-aba";
 import {
   getMonthlyRevenue,
-  getUnits,
-  getIndicadoresObra,
-  getIndicadoresObraConsolidado,
   getStatusProjeto,
   getVersionsDoProjeto,
   getContasPagar,
+  getContasReceber,
   getReceivables,
 } from "@/lib/queries";
 import { parseDate } from "@/lib/calc";
 import { brl0, brlk, monthInRange, dateInRange } from "@/lib/utils";
 import { estaVencida } from "@/lib/despesa-status";
 import { analisarDashboard } from "@/lib/dashboard-analise";
+import { listarContratos } from "@/lib/contratos-queries";
+import { valorContratadoDosProjetos } from "@/lib/valor-contratado";
 import { AssistenteDashboard } from "@/components/app/assistente-dashboard";
 import { PageHeader } from "@/components/app/page-header";
 import { ProjectPicker } from "@/components/app/project-picker";
 import { Card, CardContent } from "@/components/ui/card";
-import { IndicadoresObraPanel, StatusProjetoPanel } from "@/components/app/indicadores-obra";
+import { StatusProjetoPanel } from "@/components/app/indicadores-obra";
 import { VersionMultiSelect } from "@/components/app/version-multiselect";
 import { DateRangeFilter } from "@/components/app/date-range-filter";
 import { can } from "@/lib/permissions";
@@ -65,13 +65,11 @@ async function versionSummary(
    * ATUAL da obra em toda coluna (4.5: unidade é fato da obra, não cenário) e
    * "A receber" do planejamento deixa de esconder o negativo (4.2).
    */
-  opts: { definicaoNova?: boolean; atualId?: string | null } = {},
+  opts: { definicaoNova?: boolean; atualId?: string | null; valorContratado?: number } = {},
 ): Promise<Summary> {
   const hasRange = !!(de || ate);
   const nova = !!opts.definicaoNova;
-  const idDoVgv = nova ? opts.atualId ?? null : version.id;
-  const [unitRows, revenueAll, cashRows] = await Promise.all([
-    idDoVgv ? getUnits(version.tenantId, idDoVgv) : Promise.resolve([]),
+  const [revenueAll, cashRows] = await Promise.all([
     getMonthlyRevenue(version.id, projectId),
     // Prompt AT §3: os gravados na versão e a parte dos movimentos sem obra
     // que o vínculo atribui a ela (a função lê com o tenant da versão).
@@ -98,8 +96,10 @@ async function versionSummary(
   }
   return {
     version,
-    vgv: unitRows.reduce((a, u) => a + Number(u.valor), 0),
-    vgvAusente: nova && !idDoVgv,
+    // Growth Ambiental: o campo interno `vgv` passa a levar o VALOR CONTRATADO
+    // (contratos de serviço do projeto, `valor-contratado.ts`). É fato do
+    // contrato, não cenário: o mesmo em toda coluna. O identificador fica.
+    vgv: opts.valorContratado ?? 0,
     realizado,
     receitaProj,
     aReceber: nova ? receitaProj - realizado : Math.max(0, receitaProj - realizado),
@@ -142,7 +142,6 @@ export default async function DashboardPage({
       />
     );
   }
-  const isAll = escopo.tipo !== "projeto";
   const project = escopo.tipo === "projeto" ? escopo.projeto : null;
   const doEscopo = escopo.tipo === "projeto" ? null : projetosDoEscopo(ctx.projects, escopo.tipo);
   const projetosDaTela = project ? [project] : doEscopo!.projetos;
@@ -157,12 +156,16 @@ export default async function DashboardPage({
   const wanted = (sp.vs ?? "").split(",").filter(Boolean);
   const { selecionadas: selected, descartadas } = selecaoDoDashboard(versoes, wanted);
 
+  // Valor contratado (substitui o VGV): contratos de serviço dos projetos.
+  const contratosDaEmpresa = await listarContratos(ctx.tenant.id);
+  const contratadoDe = (ids: string[]) => valorContratadoDosProjetos(contratosDaEmpresa, new Set(ids));
+
   let summaries: Summary[];
   // Consolidado: em quantas obras cada coluna é feita (1.6 / cobertura).
   const obrasPorTipo: Record<string, number> = {};
   if (project) {
     const atualId = versoes.find((v) => v.kind === "atual")?.id ?? null;
-    summaries = await Promise.all(selected.map((v) => versionSummary(project.id, v, de, ate, { definicaoNova: dashNovo, atualId })));
+    summaries = await Promise.all(selected.map((v) => versionSummary(project.id, v, de, ate, { definicaoNova: dashNovo, atualId, valorContratado: contratadoDe([project.id]) })));
   } else {
     const versoesPorObra = await Promise.all(
       projetosDaTela.map(async (p) => ({ p, vs: await getVersionsDoProjeto(ctx.tenant.id, p.id) })),
@@ -175,7 +178,7 @@ export default async function DashboardPage({
             // A mais antiga do tipo, como nas demais telas.
             const v = vs.find((x) => x.kind === kind);
             const atualId = vs.find((x) => x.kind === "atual")?.id ?? null;
-            return v ? [versionSummary(p.id, v, de, ate, { definicaoNova: dashNovo, atualId })] : [];
+            return v ? [versionSummary(p.id, v, de, ate, { definicaoNova: dashNovo, atualId, valorContratado: contratadoDe([p.id]) })] : [];
           }),
         );
         return somarResumos(kind, resumos);
@@ -184,13 +187,6 @@ export default async function DashboardPage({
     summaries = colunas.filter((c): c is Summary => c !== null);
   }
 
-  const indicadores = isAll
-    ? await getIndicadoresObraConsolidado(
-        ctx.tenant.id,
-        projetosDaTela.map((p) => p.id),
-        { definicaoNova: dashNovo },
-      )
-    : await getIndicadoresObra(ctx.tenant.id, project!.id, { definicaoNova: dashNovo });
   const statusProjeto = await getStatusProjeto(
     ctx.tenant.id,
     projetosDaTela.map((p) => p.id),
@@ -217,11 +213,20 @@ export default async function DashboardPage({
   // ── Versão "Atual — caixa real": dados reais ────────────────────────────
   // Budget/Forecast permanecem estritamente em suas seções. A versão Atual
   // reflete o caixa real do período: (a) fechamentos já realizados (entradas
-  // conciliadas), (b) recebíveis das unidades vendidas ainda não recebidos
+  // conciliadas), (b) recebíveis em aberto (Contas a Receber) ainda não recebidos
   // (entradas projetadas) e (c) despesas lançadas ainda não pagas (saídas
   // projetadas / contas a pagar).
   const hasRangeDash = !!(de || ate);
-  const realReceb = (await getReceivables(ctx.tenant.id)).filter(
+  // Growth Ambiental: o a receber é o das Contas a Receber (faturas dos
+  // contratos e lançamentos), pelo saldo em aberto, somado às parcelas de
+  // venda de unidades que ainda existam nos dados antigos.
+  const [parcelasDeVenda, contasReceberDoTenant] = await Promise.all([getReceivables(ctx.tenant.id), getContasReceber(ctx.tenant.id)]);
+  const realReceb = [
+    ...parcelasDeVenda.map((r) => ({ projectId: r.projectId, dia: r.dia, valor: r.valor })),
+    ...contasReceberDoTenant
+      .filter((c) => c.status !== "Recebido" && c.status !== "Cancelada" && c.valor - c.valorRecebido > 0.005 && !!c.vencimento)
+      .map((c) => ({ projectId: c.projectId, dia: c.vencimento!, valor: Math.round((c.valor - c.valorRecebido) * 100) / 100 })),
+  ].filter(
     (r) =>
       idsDaTela.has(r.projectId) &&
       (!hasRangeDash || dateInRange(r.dia, de, ate)),
@@ -262,7 +267,7 @@ export default async function DashboardPage({
   }
 
   const kpis = [
-    { icon: "🏢", label: "VGV total", def: dashNovo ? DEFINICAO_NOVA_DO_KPI.vgv : DEFINICAO_DO_KPI.vgv, get: (s: Summary) => (s.vgvAusente ? "—" : brlk(s.vgv)) },
+    { icon: "📄", label: "Valor contratado", def: DEFINICAO_DO_KPI.vgv, get: (s: Summary) => brlk(s.vgv) },
     { icon: "↗", label: "Realizado acum.", def: DEFINICAO_DO_KPI.realizado, get: (s: Summary) => brlk(s.realizado) },
     {
       icon: "⏱",
@@ -285,7 +290,7 @@ export default async function DashboardPage({
   const cabecalho = (s: Summary) =>
     project
       ? rotuloDaVersao(s.version)
-      : { titulo: ROTULO_DA_NATUREZA[s.version.kind] ?? s.version.kind, complemento: `soma de ${obrasPorTipo[s.version.kind] ?? 0} obra(s)`, copia: false };
+      : { titulo: ROTULO_DA_NATUREZA[s.version.kind] ?? s.version.kind, complemento: `soma de ${obrasPorTipo[s.version.kind] ?? 0} projeto(s)`, copia: false };
   const recorte = textoDoRecorte({
     projetos: projetosDaTela.length,
     nomeDoProjeto: project?.name,
@@ -303,8 +308,8 @@ export default async function DashboardPage({
   // Contas a Pagar.
   const atencao: { obra: string; motivo: string }[] = [];
   const atencaoLimites: string[] = [
-    "Medição recente: a medição por serviço não está em uso, então não há data de medição por obra para comparar.",
-    "Caixa projetado negativo: o Dashboard não calcula saldo projetado por obra — o número está no Fluxo de Caixa.",
+    "Medição recente: a data da última medição de cada contrato está em Contratos › Medições; o Dashboard não a compara.",
+    "Caixa projetado negativo: o Dashboard não calcula saldo projetado por projeto — o número está no Fluxo de Caixa.",
   ];
   if (can(ctx.perms, "contaspagar", "ver")) {
     for (const p of projetosDaTela) {
@@ -317,7 +322,6 @@ export default async function DashboardPage({
   }
   const analise = analisarDashboard({
     status: statusProjeto,
-    indicadores,
     colunas: summaries.map((s) => {
       const c = cabecalho(s);
       return { titulo: c.titulo, complemento: c.complemento, kind: s.version.kind, vgv: s.vgv, vgvAusente: !!s.vgvAusente, realizado: s.realizado, aReceber: s.aReceber, aPagar: s.aPagar };
@@ -372,7 +376,7 @@ export default async function DashboardPage({
           fluxoPorMes: graficoFluxo.meses.map((mm, i) => ({ mes: mm, entradas: graficoFluxo.entradas[i], saidas: graficoFluxo.saidas[i] })),
           drePorMes: graficoDre.meses.map((mm, i) => ({ mes: mm, receita: graficoDre.receita[i], resultado: graficoDre.partes.Resultado[i] })),
         }}
-        sugestoes={["Como está a obra em uma frase?", "E se a receita dos próximos meses cair 10%?", "Qual mês tem a maior saída prevista?"]}
+        sugestoes={["Como está o projeto em uma frase?", "E se a receita dos próximos meses cair 10%?", "Qual mês tem a maior saída prevista?"]}
       />
       {/* Prompt AA, 1.6 — o recorte escrito, e o seletor de versões logo abaixo do título. */}
       <div className="mb-4 space-y-2">
@@ -474,13 +478,13 @@ export default async function DashboardPage({
       />
       <p className="mt-2 text-[11.5px] text-[var(--color-ink3)]" data-recorte-painel="graficos">
         <strong className="text-[var(--color-ink2)]">Os dois gráficos</strong> mostram {mesesGrafico[0]} a {mesesGrafico[mesesGrafico.length - 1]} da versão Atual
-        {atuaisDaTela.length < projetosDaTela.length ? ` (${projetosDaTela.length - atuaisDaTela.length} obra(s) sem Atual ficaram fora)` : ""}; sem período, os
+        {atuaisDaTela.length < projetosDaTela.length ? ` (${projetosDaTela.length - atuaisDaTela.length} projeto(s) sem Atual ficaram fora)` : ""}; sem período, os
         cinco meses anteriores, o atual e os seis seguintes.
       </p>
 
-      {/* Indicadores físico-financeiros da obra (BDI, evolução, liberação). */}
+      {/* Status e margem do projeto. Growth Ambiental: o painel de indicadores
+          físico-financeiros de obra (financiamento, BDI, CUB, PLS) saiu. */}
       <StatusProjetoPanel st={statusProjeto} />
-      <IndicadoresObraPanel ind={indicadores} />
       </div>
       <AssistenteDashboard usuario={ctx.userId ?? "anon"} analise={analise} />
       </div>

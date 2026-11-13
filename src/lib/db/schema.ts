@@ -1531,6 +1531,17 @@ export const clientes = pgTable("cliente", {
   indicadoPor: text("indicado_por"),
   interesse: integer("interesse"),
   obsEstrategicas: text("obs_estrategicas"),
+  // ── 0080 — Contratante (Growth Ambiental): nome_completo = razão social ──
+  nomeFantasia: text("nome_fantasia"),
+  contatoAdmNome: text("contato_adm_nome"),
+  contatoAdmEmail: text("contato_adm_email"),
+  contatoAdmTelefone: text("contato_adm_telefone"),
+  contatoTecnicoNome: text("contato_tecnico_nome"),
+  contatoTecnicoEmail: text("contato_tecnico_email"),
+  contatoTecnicoTelefone: text("contato_tecnico_telefone"),
+  contatoFinanceiroNome: text("contato_financeiro_nome"),
+  contatoFinanceiroEmail: text("contato_financeiro_email"),
+  contatoFinanceiroTelefone: text("contato_financeiro_telefone"),
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
 });
 
@@ -1601,7 +1612,7 @@ export const contasReceber = pgTable("conta_receber", {
     onDelete: "set null",
   }),
   descricao: text("descricao"),
-  /** Sinal | Parcela mensal | Outros | Outras Receitas. */
+  /** Ver TIPOS_DE_RECEITA em conta-receber-regras.ts ("Sinal" e "Parcela mensal" só nos dados antigos). */
   tipo: text("tipo").notNull().default("Outros"),
   valor: numeric("valor", { precision: 15, scale: 2 }).notNull().default("0"),
   /** data prevista "MM/DD/YYYY". */

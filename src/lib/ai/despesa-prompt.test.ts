@@ -11,7 +11,7 @@ const CTX: ContextoLeituraDespesa = {
     { code: "1.1", name: "Materiais" },
     { code: "1.2", name: "Mão de obra" },
   ],
-  categorias: ["Custo de Obra"],
+  categorias: ["Custo Variável"],
   tiposDocumento: [
     { id: "SEM_DOC", label: "Sem documento" },
     { id: "NFE", label: "NF-e" },
@@ -27,7 +27,7 @@ describe("parte estável do prompt (a que é cacheada)", () => {
   });
 
   it("decisão de 01/10 (BE-2): nenhum dado de pessoa ou empresa do cadastro vai ao modelo", () => {
-    // o tipo nem aceita mais fornecedores, obras ou a empresa
+    // o tipo nem aceita mais fornecedores, projetos ou a empresa
     expect(Object.keys(CTX).sort()).toEqual(["categorias", "contas", "tiposDocumento"]);
     expect(p).not.toMatch(/\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}/); // nenhum CNPJ
     expect(p).not.toContain("FORNECEDORES já cadastrados");
@@ -35,9 +35,10 @@ describe("parte estável do prompt (a que é cacheada)", () => {
     expect(p).toContain("você não recebe o cadastro");
   });
 
-  it("deixa explícito que a construtora é a pagadora, nunca a fornecedora", () => {
-    expect(p).toContain("PAGADORA");
+  it("deixa explícito que a empresa que lança é a pagadora, nunca a fornecedora", () => {
+    expect(p).toContain("a empresa que lança é a PAGADORA");
     expect(p).toContain("RECEBEDOR");
+    expect(p).not.toMatch(/construtora/i);
   });
 
   /**

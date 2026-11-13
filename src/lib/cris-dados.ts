@@ -5,11 +5,9 @@ import type { TenantContext } from "@/lib/context";
 import { can, type Modulo } from "@/lib/permissions";
 import { chaveLigada } from "@/lib/chaves-tenant";
 import { versionIdOfKind, versionInputsByMonth } from "@/lib/dre-inputs";
-import { getBankAccounts, getBaixadoSemConciliar, getContasPagar, getContasReceber, getUnits } from "@/lib/queries";
+import { getBankAccounts, getBaixadoSemConciliar, getContasPagar, getContasReceber } from "@/lib/queries";
 import { isContaDaEmpresa, saldoDisponivel } from "@/lib/contas-saldo";
 import { hojeISO } from "@/lib/despesa-status";
-import { parcelasDeVenda, SECOES_FORA_DA_CONCILIACAO } from "@/lib/recebimento-parcela";
-import { totalDoContrato } from "@/lib/calc/receita-rateio";
 import { receitaValida, urlDaReceita } from "@/lib/relatorio-custom";
 import { detalheDoContrato, listarContratos } from "@/lib/contratos-queries";
 import { hojeMDY, venceEm } from "@/lib/contrato-regras";
@@ -26,11 +24,12 @@ export { FERRAMENTAS_DE_DADOS, NOMES_DAS_FERRAMENTAS_DE_DADOS } from "@/lib/cris
  * - O modelo escolhe a ferramenta e os filtros; o SERVIDOR calcula e agrega;
  *   o modelo escreve o texto sobre o resultado. Nunca linhas cruas em massa
  *   (no máximo 30 grupos por resposta), nunca SQL do modelo, nunca o banco.
- * - Cada ferramenta confere o "ver" do módulo da pessoa; obra só entre as que
- *   ela vê. Sem permissão, a ferramenta diz isso e não lê nada.
+ * - Cada ferramenta confere o "ver" do módulo da pessoa; projeto só entre os
+ *   que ela vê (o parâmetro se chama `obras`, nome antigo). Sem permissão, a ferramenta diz isso e não lê nada.
  * - DADO PESSOAL FORA de todas: CPF, CNPJ de pessoa física, renda, salário,
  *   dados bancários, saúde. Nome de fornecedor aparece (as telas de despesa
- *   mostram); de comprador e de membro de equipe, não: vão a unidade e a função.
+ *   mostram); cliente contratante só quando é empresa (CNPJ); de cliente pessoa
+ *   física e de membro de equipe, não: vão "pessoa física (nome omitido)" e a função.
  * - A análise não depende da tela aberta (AC-T2): as ferramentas são as mesmas
  *   em qualquer tela; só o que já é da tela vem no bloco <tela>.
  * - Relatório exportável: `montar_relatorio` monta a receita de Relatórios
@@ -196,21 +195,27 @@ export async function executarFerramentaDeDados(ctx: TenantContext, nome: string
       const somente = texto(o, "somente") || "todas";
       const ids = new Set(obras.map((x) => x.id));
       const hoje = hojeISO();
-      const parcelas = (await parcelasDeVenda(tenantId, hoje)).filter((p) => ids.has(p.projectId) && !SECOES_FORA_DA_CONCILIACAO.has(p.secao) && noPeriodo(mesDaData(p.dia), de, ate));
-      const filtradas = parcelas.filter((p) => somente === "todas" || (somente === "vencidas" ? p.situacao === "vencida" : p.situacao === "a vencer" || p.situacao === "parcial"));
-      const chave = (p: (typeof parcelas)[number]): Record<string, string> => (agrup === "unidade" ? { obra: p.projectName, unidade: p.unitCode } : agrup === "mes" ? { mes: mesDaData(p.dia) ?? "sem data" } : { obra: p.projectName });
-      const contas = (await getContasReceber(tenantId)).filter((c) => ids.has(c.projectId) && c.status !== "Recebido" && c.status !== "Cancelada" && noPeriodo(mesDaData(c.vencimento), de, ate));
+      const vencISO = (v: string | null) => (v && /^\d{2}\/\d{2}\/\d{4}$/.test(v) ? `${v.slice(6)}-${v.slice(0, 2)}-${v.slice(3, 5)}` : null);
+      const abertas = (await getContasReceber(tenantId)).filter((c) => ids.has(c.projectId) && c.status !== "Recebido" && c.status !== "Cancelada" && noPeriodo(mesDaData(c.vencimento), de, ate));
+      const situacao = (c: (typeof abertas)[number]) => {
+        const v = vencISO(c.vencimento);
+        return v && v < hoje ? "vencida" : "a_vencer";
+      };
+      const filtradas = abertas.filter((c) => somente === "todas" || situacao(c) === (somente === "vencidas" ? "vencida" : "a_vencer"));
+      // Cliente CONTRATANTE (empresa, com CNPJ) identifica a cobrança; nome de
+      // pessoa física é dado pessoal e não vai ao modelo.
+      const cliente = (c: (typeof abertas)[number]) => {
+        if (!(c.clienteNome ?? "").trim()) return "cliente não informado";
+        return (c.clienteDocumento ?? "").replace(/\D/g, "").length === 14 ? c.clienteNome! : "pessoa física (nome omitido)";
+      };
+      const chave = (c: (typeof abertas)[number]): Record<string, string> => (agrup === "mes" ? { mes: mesDaData(c.vencimento) ?? "sem data" } : agrup === "cliente" ? { cliente: cliente(c) } : { projeto: c.projectName ?? "—" });
+      const saldo = (c: (typeof abertas)[number]) => c.valor - c.valorRecebido;
       return JSON.stringify({
-        fonte: "Parcelas dos planos de pagamento das unidades vendidas (versão Atual) e contas a receber lançadas",
+        fonte: "Contas a Receber (faturas dos contratos e recebíveis lançados), em aberto",
         periodo,
         somente,
-        parcelasDeVenda: {
-          aReceber: agrupar(filtradas.map((p) => ({ chave: chave(p), valor: p.saldo }))),
-          recebidoPelaConciliacao: r2(parcelas.reduce((a, p) => a + p.recebido, 0)),
-          vencidas: { quantidade: parcelas.filter((p) => p.situacao === "vencida").length, valor: r2(parcelas.filter((p) => p.situacao === "vencida").reduce((a, p) => a + p.saldo, 0)) },
-        },
-        contasAReceberLancadas: { emAberto: contas.length, valor: r2(contas.reduce((a, c) => a + c.valor - c.valorRecebido, 0)) },
-        observacao: "Sem nome de comprador: a unidade identifica a venda.",
+        aReceber: agrupar(filtradas.map((c) => ({ chave: chave(c), valor: saldo(c) }))),
+        vencidas: { quantidade: abertas.filter((c) => situacao(c) === "vencida").length, valor: r2(abertas.filter((c) => situacao(c) === "vencida").reduce((a, c) => a + saldo(c), 0)) },
         ...aviso,
       });
     }
@@ -267,45 +272,34 @@ export async function executarFerramentaDeDados(ctx: TenantContext, nome: string
       return JSON.stringify({ fonte: "DRE: Orçamento × Atual, por competência", periodo, grupos, ...(semOrcamento.length ? { obrasSemOrcamento: semOrcamento } : {}), ...aviso });
     }
 
-    case "unidades_e_vendas": {
-      if (!pode(ctx, "unidades")) return semPermissao("Unidades");
-      const agrup = texto(o, "agrupar") || "obra";
-      const linhas: { chave: Record<string, string>; valor: number; qtd: number }[] = [];
-      const contratos: Record<string, number> = {};
-      for (const obra of obras) {
-        const vid = await versionIdOfKind(obra.id, "atual");
-        if (!vid) continue;
-        for (const u of await getUnits(tenantId, vid)) {
-          const chave: Record<string, string> = agrup === "situacao" ? { situacao: u.status } : agrup === "obra" ? { obra: obra.name } : { obra: obra.name, situacao: u.status };
-          linhas.push({ chave, valor: Number(u.valor), qtd: 1 });
-          if (u.status === "Vendido") contratos[obra.name] = r2((contratos[obra.name] ?? 0) + totalDoContrato(u.paymentPlan, u.status));
-        }
-      }
-      return JSON.stringify({ fonte: "Unidades da versão Atual (valor = tabela/VGV)", ...agrupar(linhas), totalDosContratosVendidos: contratos, ...aviso });
-    }
-
     case "medicao_estoque_equipes": {
       const assunto = texto(o, "assunto");
       const agrup = texto(o, "agrupar") || "obra";
       const ids = obras.map((x) => x.id);
       const nomeDaObra = new Map(obras.map((x) => [x.id, x.name]));
       if (assunto === "medicao") {
-        if (!pode(ctx, "medicao")) return semPermissao("Medição");
-        const linhas: { chave: Record<string, string>; valor: number }[] = [];
-        for (const obra of obras) {
-          const vid = await versionIdOfKind(obra.id, "atual");
-          if (!vid) continue;
-          const ms = await db.select().from(schema.medicoes).where(and(eq(schema.medicoes.tenantId, tenantId), eq(schema.medicoes.versionId, vid)));
-          for (const m of ms) if (noPeriodo(m.competencia, de, ate)) linhas.push({ chave: agrup === "grupo" ? { obra: obra.name, grupo: m.grupoName } : agrup === "mes" ? { mes: m.competencia } : { obra: obra.name }, valor: Number(m.valor) });
-        }
-        return JSON.stringify({ fonte: "Medição de obra, versão Atual", periodo, ...agrupar(linhas), ...aviso });
+        // Medição do SERVIÇO, no contrato (a medição por grupo de obra saiu).
+        if (!pode(ctx, "contratos")) return semPermissao("Contratos");
+        if (ids.length === 0) return JSON.stringify({ grupos: [] });
+        const ms = await db
+          .select({ valor: schema.contratoMedicoes.valor, competencia: schema.contratoMedicoes.competencia, status: schema.contratoMedicoes.status, projectId: schema.contratoMedicoes.projectId, codigo: schema.contratos.codigo })
+          .from(schema.contratoMedicoes)
+          .innerJoin(schema.contratos, eq(schema.contratoMedicoes.contratoId, schema.contratos.id))
+          .where(and(eq(schema.contratoMedicoes.tenantId, tenantId), inArray(schema.contratoMedicoes.projectId, ids)));
+        const linhas = ms
+          .filter((m) => noPeriodo(m.competencia, de, ate) && m.status !== "cancelada")
+          .map((m) => ({
+            chave: (agrup === "contrato" ? { contrato: m.codigo } : agrup === "situacao" ? { situacao: m.status } : agrup === "mes" ? { mes: m.competencia } : { projeto: nomeDaObra.get(m.projectId ?? "") ?? "—" }) as Record<string, string>,
+            valor: Number(m.valor),
+          }));
+        return JSON.stringify({ fonte: "Medições de serviço dos contratos (medição não é receita: a receita vem do faturamento)", periodo, ...agrupar(linhas), ...aviso });
       }
       if (assunto === "estoque") {
         if (!pode(ctx, "estoque")) return semPermissao("Estoque");
         if (ids.length === 0) return JSON.stringify({ grupos: [] });
         const movs = await db.select().from(schema.stockMovements).where(and(eq(schema.stockMovements.tenantId, tenantId), inArray(schema.stockMovements.projectId, ids)));
-        const linhas = movs.map((m) => ({ chave: { obra: nomeDaObra.get(m.projectId ?? "") ?? "—", movimento: m.tipo }, valor: Number(m.quantidade) * Number(m.custoUnit) }));
-        return JSON.stringify({ fonte: "Movimentos de estoque por obra (valor = quantidade × custo unitário)", ...agrupar(linhas), ...aviso });
+        const linhas = movs.map((m) => ({ chave: { projeto: nomeDaObra.get(m.projectId ?? "") ?? "—", movimento: m.tipo }, valor: Number(m.quantidade) * Number(m.custoUnit) }));
+        return JSON.stringify({ fonte: "Movimentos de materiais e equipamentos por projeto (valor = quantidade × custo unitário)", ...agrupar(linhas), ...aviso });
       }
       if (assunto === "equipes") {
         if (!pode(ctx, "equipes")) return semPermissao("Equipes");
@@ -324,10 +318,10 @@ export async function executarFerramentaDeDados(ctx: TenantContext, nome: string
           .filter((d) => noPeriodo(mesDaData(d.data), de, ate))
           .map((d) => {
             const m = membro.get(d.equipeProjetoId);
-            const chave: Record<string, string> = agrup === "funcao" ? { funcao: (m?.funcaoId && funcoes.get(m.funcaoId)) || "sem função" } : agrup === "mes" ? { mes: mesDaData(d.data) ?? "—" } : { obra: nomeDaObra.get(m?.projectId ?? "") ?? "—" };
+            const chave: Record<string, string> = agrup === "funcao" ? { funcao: (m?.funcaoId && funcoes.get(m.funcaoId)) || "sem função" } : agrup === "mes" ? { mes: mesDaData(d.data) ?? "—" } : { projeto: nomeDaObra.get(m?.projectId ?? "") ?? "—" };
             return { chave, valor: Number(d.quantidade) };
           });
-        return JSON.stringify({ fonte: "Diárias registradas nas equipes (valor = número de diárias; sem nome nem salário)", periodo, pessoasNasEquipes: membros.length, ...agrupar(linhas), ...aviso });
+        return JSON.stringify({ fonte: "Presença de campo: diárias registradas nas equipes dos projetos (valor = número de diárias; sem nome nem salário)", periodo, pessoasNasEquipes: membros.length, ...agrupar(linhas), ...aviso });
       }
       return JSON.stringify({ erro: "assunto deve ser medicao, estoque ou equipes" });
     }

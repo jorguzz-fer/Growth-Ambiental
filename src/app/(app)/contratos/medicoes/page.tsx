@@ -5,15 +5,17 @@ import { PageHeader } from "@/components/app/page-header";
 import { AccessDenied } from "@/components/app/access-denied";
 import { listarMedicoes } from "@/lib/contratos-queries";
 import { StatusBadge, brl } from "@/components/app/contratos/visual";
+import { AvisoTelaRemovida } from "@/components/app/aviso-tela-removida";
 
 export const dynamic = "force-dynamic";
 
 /** Medições de todos os contratos. Lançar e aprovar ficam na aba Medições de cada contrato. */
-export default async function MedicoesDeContratoPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
+export default async function MedicoesDeContratoPage({ searchParams }: { searchParams: Promise<{ status?: string; saiu?: string }> }) {
   const ctx = await getTenantContext();
   if (!ctx) return null;
   if (!can(ctx.perms, "contratos", "ver")) return <AccessDenied />;
-  const { status } = await searchParams;
+  const sp = await searchParams;
+  const { status } = sp;
   const todas = await listarMedicoes(ctx.tenant.id);
   const pendentes = todas.filter((x) => x.m.status === "enviada" || x.m.status === "em_analise");
   const lista = status === "pendentes" ? pendentes : status ? todas.filter((x) => x.m.status === status) : todas;
@@ -21,6 +23,7 @@ export default async function MedicoesDeContratoPage({ searchParams }: { searchP
   return (
     <>
       <PageHeader eyebrow="Contratos" title="Medições de Contrato" subtitle={`${todas.length} medição(ões) · ${brl(pendentes.reduce((s, x) => s + Number(x.m.valor), 0))} aguardando aprovação`} />
+      <AvisoTelaRemovida de={sp.saiu} />
       <div className="mb-3 flex flex-wrap gap-1.5">
         {filtros.map(([k, r]) => (
           <Link key={k} href={k ? `/contratos/medicoes?status=${k}` : "/contratos/medicoes"} className={`rounded-full border px-3 py-1 text-[12px] ${(status ?? "") === k ? "border-[var(--color-brand-segmento)] bg-[var(--color-brand-segmento)]/10" : "border-[var(--color-line)]"}`}>

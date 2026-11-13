@@ -98,7 +98,8 @@ export interface LinhaDeContrato {
   modalidadeId: string | null;
   gestor: string | null;
   principal: string | null;
-  projetos: { id: string; nome: string }[];
+  /** `valorAlocado`: a parte do contrato prevista para o projeto (nula = não informada). */
+  projetos: { id: string; nome: string; valorAlocado: number | null }[];
   dataInicio: string | null;
   termino: string | null;
   saldo: SaldoDoContrato;
@@ -130,7 +131,7 @@ export async function listarContratos(tenantId: string, hoje = hojeMDY()): Promi
       modalidadeId: c.modalidadeId,
       gestor: c.gestor,
       principal: c.contratoPrincipalId ? codigo.get(c.contratoPrincipalId) ?? null : null,
-      projetos: base.projetos.filter((p) => p.contratoId === c.id).map((p) => ({ id: p.projectId, nome: p.nome })),
+      projetos: base.projetos.filter((p) => p.contratoId === c.id).map((p) => ({ id: p.projectId, nome: p.nome, valorAlocado: p.valorAlocado == null ? null : Number(p.valorAlocado) })),
       dataInicio: c.dataInicio,
       termino: saldo.terminoAtualizado,
       saldo,

@@ -8,7 +8,7 @@ import {
   cancelarContaReceber,
   type ResultadoContaReceber,
 } from "@/lib/actions/contas-receber";
-import { TIPOS_DE_RECEITA as TIPOS_RECEITA } from "@/lib/conta-receber-regras";
+import { tiposDeReceitaOferecidos } from "@/lib/conta-receber-regras";
 import { estadoDaConta, type EstadoCalculado } from "@/lib/conta-receber-estado";
 import type { ContaReceberRow, EntradaDisponivel } from "@/lib/queries";
 import { ContaReceberRecebimentos, tomDoEstado, type RecebimentoExibido } from "@/components/app/conta-receber-recebimentos";
@@ -67,7 +67,7 @@ function NovaConta({
   prefill?: PrefillContaReceber | null;
 }) {
   // Prompt L, 3-A.2 — entrada do extrato encaminhada abre com os dados preenchidos.
-  const [tipo, setTipo] = useState<string>(prefill?.descricao ? "Outras Receitas" : "Sinal");
+  const [tipo, setTipo] = useState<string>(prefill?.descricao ? "Outras Receitas" : "Fatura de serviço");
   const [valor, setValor] = useState(prefill?.valor ?? "");
   const [projectId, setProjectId] = useState(projetoSelecionado ?? projetos[0]?.id ?? "");
   const [vencimento, setVencimento] = useState(prefill?.vencimento ?? "");
@@ -87,11 +87,12 @@ function NovaConta({
       titulo: "Nova conta a receber",
       campos: [
         { nome: "projeto", rotulo: "Projeto", tipo: "opcao", opcoes: projetos.map((p) => p.nome) },
-        { nome: "tipo", rotulo: "Tipo", tipo: "opcao", opcoes: [...TIPOS_RECEITA] },
+        { nome: "tipo", rotulo: "Tipo", tipo: "opcao", opcoes: tiposDeReceitaOferecidos() },
         { nome: "valor", rotulo: "Valor", tipo: "numero", dica: "em reais" },
         { nome: "vencimento", rotulo: "Vencimento", tipo: "data", dica: "MM/DD/YYYY" },
         { nome: "descricao", rotulo: "Descrição", tipo: "texto", dica: "obrigatória em Outras Receitas" },
-        { nome: "unidade", rotulo: "Unidade", tipo: "opcao", opcoes: unidades },
+        // Unidade só existe nos dados antigos (incorporação).
+        ...(unidades.length ? [{ nome: "unidade", rotulo: "Unidade (dados antigos)", tipo: "opcao" as const, opcoes: unidades }] : []),
         { nome: "banco", rotulo: "Banco", tipo: "opcao", opcoes: bancos.map((b) => b.nome) },
       ],
     },
@@ -123,7 +124,7 @@ function NovaConta({
       setAviso({ ok: true, texto: "Conta a receber lançada." });
       formRef.current?.reset();
       setValor("");
-      setTipo("Sinal");
+      setTipo("Fatura de serviço");
       setVencimento("");
       setDescricao("");
       setUnitCode("");
@@ -148,7 +149,7 @@ function NovaConta({
           <div>
             <Label>Tipo *</Label>
             <Select name="tipo" value={tipo} onChange={(e) => setTipo(e.target.value)}>
-              {TIPOS_RECEITA.map((t) => (
+              {tiposDeReceitaOferecidos().map((t) => (
                 <option key={t} value={t}>
                   {t}
                 </option>
@@ -175,8 +176,10 @@ function NovaConta({
               <Input name="descricao" placeholder="Opcional" value={descricao} onChange={(e) => setDescricao(e.target.value)} />
             </div>
           )}
+          {/* Growth Ambiental: unidade só aparece quando o projeto tem unidades nos dados antigos. */}
+          {unidades.length > 0 && (
           <div>
-            <Label>Unidade (opcional)</Label>
+            <Label>Unidade (dados antigos, opcional)</Label>
             <Select name="unitCode" value={unitCode} onChange={(e) => setUnitCode(e.target.value)}>
               <option value="">—</option>
               {unidades.map((u) => (
@@ -186,6 +189,7 @@ function NovaConta({
               ))}
             </Select>
           </div>
+          )}
           <div>
             <Label>Cliente (opcional)</Label>
             <Select name="clienteId" defaultValue="">
@@ -290,7 +294,7 @@ function ContaRow({
             <div>
               <Label>Tipo</Label>
               <Select name="tipo" value={tipo} onChange={(e) => setTipo(e.target.value)}>
-                {TIPOS_RECEITA.map((t) => (
+                {tiposDeReceitaOferecidos(c.tipo).map((t) => (
                   <option key={t} value={t}>
                     {t}
                   </option>
@@ -557,7 +561,7 @@ export function ContasReceberManager({
                 {contasOrd.rows.length === 0 && (
                   <TR>
                     <TD colSpan={7} className="py-8 text-center text-[var(--color-ink4)]">
-                      Nenhuma conta a receber lançada. Recebíveis das vendas aparecem abaixo.
+                      Nenhuma conta a receber lançada. As faturas dos contratos entram aqui quando são emitidas em Contratos.
                     </TD>
                   </TR>
                 )}
@@ -566,9 +570,11 @@ export function ContasReceberManager({
         </CardContent>
       </Card>
 
-      {/* Recebíveis originados em Unidades / Vendas (derivados do plano de pagamento). */}
+      {/* Recebíveis de planos de pagamento de unidades: só nos dados antigos de incorporação. */}
+      {unitReceb.length > 0 && (
+      <>
       <h2 className="mb-2 font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-wide text-[var(--color-ink3)]">
-        Recebíveis das vendas (Unidades) · {brl0(totalVendas)}
+        Parcelas de venda de unidades (dados antigos) · {brl0(totalVendas)}
       </h2>
       <Card>
         <CardContent className="p-0">
@@ -610,7 +616,7 @@ export function ContasReceberManager({
                 {recebOrd.rows.length === 0 && (
                   <TR>
                     <TD colSpan={unitReceb.some((r) => r.situacao) ? 7 : 6} className="py-6 text-center text-[var(--color-ink4)]">
-                      Sem recebíveis de vendas (unidades vendidas geram recebíveis pelo plano de pagamento).
+                      Sem recebíveis de vendas de unidades.
                     </TD>
                   </TR>
                 )}
@@ -618,6 +624,8 @@ export function ContasReceberManager({
             </Table>
         </CardContent>
       </Card>
+      </>
+      )}
     </div>
   );
 }

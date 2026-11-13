@@ -27,8 +27,13 @@ describe("5.1 — a abertura traz o achado, com número da tela", () => {
     const a = analisarResumo({ ...base, definicaoNova: true, atencao: [{ texto: "2 unidade(s) vendida(s) sem data de venda.", href: "/u" }, { texto: "x", href: "/x" }] });
     expect(a.abertura).toBe("OBRA: 2 unidade(s) vendida(s) sem data de venda. E mais 1 exceção(ões) no bloco Atenção.");
   });
-  it("sem unidade: ausência, não zero", () => {
-    expect(analisarResumo({ ...base, unidades: { total: 0, vendidas: 0 } }).abertura).toContain('ficam "—", não zero');
+  it("Growth Ambiental — sem unidade: a abertura fala dos contratos de serviço", () => {
+    expect(analisarResumo({ ...base, unidades: { total: 0, vendidas: 0 } }).abertura).toBe("OBRA: nenhum contrato de serviço ligado ao projeto. Cadastre em Contratos para ver contratado, medido, faturado e a receber.");
+    const servicos = { contratos: 2, contratado: 1000, medido: 250, faturado: 200, recebido: 150, aMedir: 750, medidoNaoFaturado: 50, aReceber: 50 };
+    const a = analisarResumo({ ...base, unidades: { total: 0, vendidas: 0 }, servicos });
+    expect(a.abertura).toBe("OBRA: 2 contrato(s), R$ 1000 contratado(s); medido R$ 250 (25%); faturado a receber R$ 50.");
+    expect(a.explicacoes.map((x) => x.bloco)).toEqual(["Contratos de serviço do projeto"]);
+    expect(a.explicacoes.map((x) => x.bloco).join(" ")).not.toMatch(/Vendas|Unidades|Financiamento/);
   });
 });
 

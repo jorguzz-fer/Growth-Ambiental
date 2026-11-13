@@ -411,7 +411,7 @@ export default async function DREPage({
       />
       {doEscopo && doEscopo.semSituacao > 0 && (
         <p className="mb-4 rounded-[8px] bg-[var(--color-surface3)] px-3 py-2 text-[13px] text-[var(--color-ink2)]">
-          {doEscopo.semSituacao} obra(s) sem status ficaram fora deste filtro. Classifique-as
+          {doEscopo.semSituacao} projeto(s) sem status ficaram fora deste filtro. Classifique-os
           como Ativo ou Finalizado em Projetos.
         </p>
       )}
@@ -420,8 +420,8 @@ export default async function DREPage({
         // Escopo sem nenhuma obra: estado vazio, nunca uma DRE zerada.
         <Card>
           <CardContent className="p-8 text-center text-[var(--color-ink3)]">
-            Nenhuma obra classificada como{" "}
-            {escopo.tipo === "ativos" ? "Ativo" : "Finalizado"}. Classifique as obras em
+            Nenhum projeto classificado como{" "}
+            {escopo.tipo === "ativos" ? "Ativo" : "Finalizado"}. Classifique os projetos em
             Projetos.
           </CardContent>
         </Card>
@@ -472,7 +472,7 @@ export default async function DREPage({
           {/* 3.2 e 6.2 — a tela declara o regime de cada bloco e o que a cascata inclui. */}
           <p className="mt-3 text-[11.5px] leading-relaxed text-[var(--color-ink3)]" data-regime>
             Regime de cada bloco: despesas por <strong>competência</strong>; receita da venda e contas a receber pelo{" "}
-            <strong>vencimento</strong> das parcelas; liberações de obra e permutas pela data de <strong>liquidação</strong>;
+            <strong>vencimento</strong> das parcelas; liberações de financiamento e permutas (dados antigos) pela data de <strong>liquidação</strong>;
             encargos financeiros (multa, juros) pela {definicaoNova ? <><strong>competência</strong> da despesa que os gerou</> : <>data de <strong>pagamento</strong></>}. Retiradas, Investimentos e Empréstimos
             estão incluídos na cascata, como hoje — a classificação contábil dessas três linhas aguarda decisão.
             “—” numa célula: a linha não teve nenhum lançamento; “R$ 0” é soma que deu zero.

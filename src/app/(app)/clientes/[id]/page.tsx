@@ -3,13 +3,13 @@ import { notFound } from "next/navigation";
 import { and, desc, eq, getTableColumns } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { getTenantContext } from "@/lib/context";
-import { getUnidadesComObra } from "@/lib/queries";
-import { lerSelecaoDeProjeto } from "@/lib/projeto-selecao";
 import { can } from "@/lib/permissions";
 import { updateCliente, deleteCliente, uploadClienteDoc } from "@/lib/actions/clientes";
 import { FormComResultado } from "@/components/app/form-com-resultado";
 import { vinculosDoCliente } from "@/lib/clientes-vinculos";
-import { bloqueiosDeExclusao, LIMITE_UPLOAD_MB, montarOpcoesDeUnidade } from "@/lib/clientes-regras";
+import { bloqueiosDeExclusao, LIMITE_UPLOAD_MB } from "@/lib/clientes-regras";
+import { brl } from "@/lib/utils";
+import { ROTULO_STATUS_CONTRATO, type StatusContrato } from "@/lib/contrato-regras";
 import { isR2Configured, readUrl } from "@/lib/storage/r2";
 import { PageHeader } from "@/components/app/page-header";
 import { Card, CardContent } from "@/components/ui/card";
@@ -26,13 +26,7 @@ import {
 
 export const dynamic = "force-dynamic";
 
-export default async function EditarClientePage({
-  params,
-  searchParams,
-}: {
-  params: Promise<{ id: string }>;
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
+export default async function EditarClientePage({ params }: { params: Promise<{ id: string }> }) {
   const ctx = await getTenantContext();
   if (!ctx) return null;
   // A página verifica "ver" antes de consultar qualquer dado (Prompt M, 2.2).
@@ -72,22 +66,21 @@ export default async function EditarClientePage({
   const bloqueiosExclusao = canExcluir
     ? bloqueiosDeExclusao(await vinculosDoCliente(db, ctx.tenant.id, cliente))
     : [];
-  // Unidades por obra (6.6): o seletor abre na obra da unidade vinculada, que
-  // aparece sempre — sinalizada quando não é da obra escolhida.
-  const sel = lerSelecaoDeProjeto(ctx.projects, await searchParams);
-  const unidadesComObra = await getUnidadesComObra(ctx.tenant.id);
-  const unidades = montarOpcoesDeUnidade(
-    ctx.projects,
-    unidadesComObra,
-    cliente.unitCode,
-    sel.tipo === "projeto" ? sel.projeto.id : null,
-  );
-  // O documento só ETIQUETA a unidade: a lista do tenant, com a vinculada.
-  const unitCodes = [
-    ...new Set([...(cliente.unitCode ? [cliente.unitCode] : []), ...unidadesComObra.map((u) => u.code)]),
-  ].sort();
+  // Histórico do contratante: os contratos de serviço dele (mais recentes primeiro).
+  const contratosDoCliente = await db
+    .select({
+      id: schema.contratos.id,
+      codigo: schema.contratos.codigo,
+      titulo: schema.contratos.titulo,
+      status: schema.contratos.status,
+      valorOriginal: schema.contratos.valorOriginal,
+      dataInicio: schema.contratos.dataInicio,
+    })
+    .from(schema.contratos)
+    .where(and(eq(schema.contratos.clienteId, cliente.id), eq(schema.contratos.tenantId, ctx.tenant.id)))
+    .orderBy(desc(schema.contratos.createdAt));
 
-  // Documentos de venda/contrato vinculados a este cliente (mais recentes primeiro).
+  // Documentos do contratante (mais recentes primeiro).
   const r2 = isR2Configured();
   const docsRaw = await db
     .select()
@@ -103,6 +96,7 @@ export default async function EditarClientePage({
       <PageHeader
         eyebrow={ctx.tenant.name}
         title={`Cliente: ${cliente.nomeCompleto}`}
+        subtitle={cliente.nomeFantasia ?? undefined}
       />
       <Card>
         <CardContent className="p-5">
@@ -110,7 +104,6 @@ export default async function EditarClientePage({
             <input type="hidden" name="id" value={cliente.id} />
             <ClienteFields
               cliente={cliente}
-              unidades={unidades}
               veDados={veDados}
               editaDados={editaDados}
               cpfMascarado={cpfMascarado}
@@ -127,11 +120,49 @@ export default async function EditarClientePage({
         </CardContent>
       </Card>
 
-      {/* Documentos de venda / contrato */}
+      {/* Histórico: contratos de serviço do contratante */}
+      <Card className="mt-6">
+        <CardContent className="p-5">
+          <h2 className="mb-3 text-sm font-semibold text-[var(--color-ink)]">Contratos deste cliente</h2>
+          {contratosDoCliente.length === 0 ? (
+            <p className="text-[13px] text-[var(--color-ink4)]">
+              Nenhum contrato cadastrado para este cliente.{" "}
+              <Link href="/contratos" className="text-[var(--color-accent2)] hover:underline">Abrir Contratos</Link>
+            </p>
+          ) : (
+            <Table>
+              <THead>
+                <tr>
+                  <TH>Código</TH>
+                  <TH>Contrato</TH>
+                  <TH>Situação</TH>
+                  <TH>Início</TH>
+                  <TH className="text-right">Valor original</TH>
+                </tr>
+              </THead>
+              <tbody>
+                {contratosDoCliente.map((c) => (
+                  <TR key={c.id}>
+                    <TD className="font-[family-name:var(--font-mono)]">
+                      <Link href={`/contratos/${c.id}`} className="text-[var(--color-accent2)] hover:underline">{c.codigo}</Link>
+                    </TD>
+                    <TD className="text-[var(--color-ink)]">{c.titulo}</TD>
+                    <TD className="text-[var(--color-ink2)]">{ROTULO_STATUS_CONTRATO[c.status as StatusContrato] ?? c.status}</TD>
+                    <TD className="font-[family-name:var(--font-mono)] text-[var(--color-ink3)]">{c.dataInicio ?? "—"}</TD>
+                    <TD className="text-right font-[family-name:var(--font-mono)]">{brl(Number(c.valorOriginal))}</TD>
+                  </TR>
+                ))}
+              </tbody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Documentos do contratante */}
       <Card className="mt-6">
         <CardContent className="p-5">
           <h2 className="mb-3 text-sm font-semibold text-[var(--color-ink)]">
-            Documentos de venda &amp; contrato
+            Documentos do cliente
           </h2>
           {!r2 ? (
             <p className="text-[13px] text-[var(--color-ink3)]">
@@ -143,7 +174,7 @@ export default async function EditarClientePage({
                 action={uploadClienteDoc}
                 aoConcluir="recarregar"
                 sucesso="Documento enviado."
-                className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-4"
+                className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3"
               >
                 <input type="hidden" name="clienteId" value={cliente.id} />
                 <div>
@@ -153,16 +184,9 @@ export default async function EditarClientePage({
                     <option value="" disabled>
                       — escolha —
                     </option>
-                    {["Contrato assinado", "Proposta", "Documentos do comprador", "Comprovante", "Termo aditivo", "Distrato", "Outros"].map((t) => (
+                    {["Contrato assinado", "Proposta", "Documentos do contratante", "Comprovante", "Termo aditivo", "Distrato", "Outros"].map((t) => (
                       <option key={t} value={t}>{t}</option>
                     ))}
-                  </Select>
-                </div>
-                <div>
-                  <Label>Unidade</Label>
-                  <Select name="unitCode" defaultValue={cliente.unitCode ?? ""}>
-                    <option value="">—</option>
-                    {unitCodes.map((c) => <option key={c} value={c}>{c}</option>)}
                   </Select>
                 </div>
                 <div>
@@ -173,7 +197,7 @@ export default async function EditarClientePage({
                   <Button type="submit">Enviar documento</Button>
                 </div>
                 {/* 6.9.2 — como a versão funciona, dito na tela. */}
-                <p className="text-[12px] text-[var(--color-ink3)] sm:col-span-4">
+                <p className="text-[12px] text-[var(--color-ink3)] sm:col-span-3">
                   Outro arquivo do mesmo tipo vira a versão seguinte e a anterior fica
                   guardada; cada tipo tem numeração própria.
                 </p>
@@ -187,7 +211,6 @@ export default async function EditarClientePage({
                 <tr>
                   <TH>Arquivo</TH>
                   <TH>Tipo</TH>
-                  <TH>Unidade</TH>
                   <TH className="text-right">Versão</TH>
                   <TH>Enviado por</TH>
                   <TH>Enviado em</TH>
@@ -199,7 +222,6 @@ export default async function EditarClientePage({
                   <TR key={d.id}>
                     <TD className="font-medium text-[var(--color-ink)]">{d.filename}</TD>
                     <TD className="text-[var(--color-ink2)]">{d.tipo ?? "—"}</TD>
-                    <TD className="font-[family-name:var(--font-mono)]">{d.unitCode ?? "—"}</TD>
                     <TD className="text-right font-[family-name:var(--font-mono)] text-[var(--color-ink3)]">v{d.versao}</TD>
                     <TD className="text-[var(--color-ink3)]">{d.uploadedBy ?? "—"}</TD>
                     <TD className="font-[family-name:var(--font-mono)] text-[var(--color-ink3)]">
@@ -232,8 +254,8 @@ export default async function EditarClientePage({
             <h2 className="text-sm font-semibold text-[var(--color-ink)]">Excluir cliente</h2>
             <p className="mt-1 text-[12.5px] text-[var(--color-ink3)]">
               Apaga o cadastro. Exige digitar o nome do cliente e não é permitida enquanto houver
-              unidade com contrato ativo, contas a receber, documentos, obra ou recebimento por
-              terceiro vinculados.
+              contas a receber, documentos, projeto ou recebimento por terceiro vinculados (e, nos
+              cadastros antigos, unidade com contrato de venda ativo).
             </p>
             {bloqueiosExclusao.length > 0 ? (
               <p className="mt-3 text-[13px] text-[var(--color-warning)]">
