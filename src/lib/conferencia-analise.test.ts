@@ -34,7 +34,7 @@ describe("Prompt AN · Parte 7 — assistente da Conferência", () => {
 
   it("agrupar por causa provável: o fornecedor com 3 vira um grupo", () => {
     expect(a.grupos[0]).toEqual({ criterio: "fornecedor", rotulo: "ABC Materiais", quantos: 3, valor: 1000 });
-    expect(a.grupos.some((g) => g.criterio === "conta CEF" && g.rotulo === "1.2" && g.quantos === 2)).toBe(true);
+    expect(a.grupos.some((g) => g.criterio === "conta do plano" && g.rotulo === "1.2" && g.quantos === 2)).toBe(true);
   });
 
   it("o que tira dos relatórios, com o efeito verdadeiro de cada motivo", () => {

@@ -73,9 +73,9 @@ export function AssistenteConferencia({ usuario, analise }: { usuario: string; a
         nada(TEXTO_SEM_PENDENCIA)
       ) : (
         <div className="space-y-2">
-          <Acao cor="#E7EDFD" cor2="#2B5CD9" d="M4 6h16M4 12h10M4 18h6" titulo="Agrupar por causa provável" descricao="Mesmo fornecedor, conta CEF ou competência" contador={grupos.length} aberta={aberta === "grupos"} onClick={() => toggle("grupos")}>
+          <Acao cor="#E7EDFD" cor2="#2B5CD9" d="M4 6h16M4 12h10M4 18h6" titulo="Agrupar por causa provável" descricao="Mesmo fornecedor, conta do plano ou competência" contador={grupos.length} aberta={aberta === "grupos"} onClick={() => toggle("grupos")}>
             {grupos.length === 0 ? (
-              nada("Nenhum grupo de dois ou mais lançamentos com o mesmo fornecedor, conta CEF ou competência.")
+              nada("Nenhum grupo de dois ou mais lançamentos com o mesmo fornecedor, conta do plano ou competência.")
             ) : (
               <ul className="space-y-1 text-[12px] text-[var(--color-ink2)]">
                 {grupos.map((g) => (

@@ -225,7 +225,7 @@ export async function planilhaDoSemestre(tenantId: string, info: SemesterInfo) {
   XLSX.utils.book_append_sheet(
     wb,
     sheetFromAoa([
-      ["Competência", "Nº Doc", "Projeto", "Conta CEF", "Categoria DRE", "Vencimento", "Valor", "Status"],
+      ["Competência", "Nº Doc", "Projeto", "Conta do plano", "Categoria DRE", "Vencimento", "Valor", "Status"],
       ...despRows.map((d) => [
         d.competencia ?? "",
         d.numDoc ?? "",

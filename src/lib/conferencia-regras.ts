@@ -131,15 +131,15 @@ export interface Homogeneidade {
   /** Fornecedores distintos na seleção (lançamento sem fornecedor conta como um a mais, cada). */
   fornecedores: number;
   contasCef: number;
-  /** Mesmo fornecedor, ou mesma conta CEF, em TODA a seleção. */
+  /** Mesmo fornecedor, ou mesma conta do plano, em TODA a seleção. */
   homogenea: boolean;
-  criterio: "fornecedor" | "conta CEF" | null;
+  criterio: "fornecedor" | "conta do plano" | null;
 }
 
 /**
  * A seleção é homogênea? O lote é legítimo quando dez notas do mesmo
  * fornecedor caíram sem categoria; é perigoso quando fornecedores diferentes
- * viram uma categoria só (3.2). Lançamento SEM fornecedor (ou sem conta CEF)
+ * viram uma categoria só (3.2). Lançamento SEM fornecedor (ou sem conta do plano)
  * não prova nada — conta como distinto de todos.
  */
 export function homogeneidade(sel: readonly { id: string; fornecedorId: string | null; contaCef: string | null }[]): Homogeneidade {
@@ -159,12 +159,12 @@ export function homogeneidade(sel: readonly { id: string; fornecedorId: string |
     fornecedores,
     contasCef,
     homogenea: porFornecedor || porConta,
-    criterio: porFornecedor ? "fornecedor" : porConta ? "conta CEF" : null,
+    criterio: porFornecedor ? "fornecedor" : porConta ? "conta do plano" : null,
   };
 }
 
 /** Aviso antes do preview quando a seleção mistura fornecedores (3.2). */
 export function avisoDaSelecao(h: Homogeneidade, quantos: number): string | null {
   if (quantos <= 1 || h.homogenea) return null;
-  return `A seleção tem ${h.fornecedores} fornecedores diferentes. O lote só vale para um fornecedor ou uma conta CEF — escolha a categoria linha a linha, ou marque só um fornecedor.`;
+  return `A seleção tem ${h.fornecedores} fornecedores diferentes. O lote só vale para um fornecedor ou uma conta do plano — escolha a categoria linha a linha, ou marque só um fornecedor.`;
 }

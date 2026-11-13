@@ -262,7 +262,7 @@ export function EquipesManager({ projectId, projectName, equipe, alocaveis, func
               <Button type="submit" variant="outline" size="sm">Filtrar</Button>
             </form>
           </div>
-          <p className="text-[12px] text-[var(--color-ink2)]">Total da equipe: <strong>{qtd(acumulado.total.quantidade)} diária(s)</strong> · <strong>{brl0(acumulado.total.valor)}</strong> (só autônomos; CLT e sócio são presença). <strong>A diária não gera despesa:</strong> o lançamento é proposto abaixo e acontece em Despesas, com o autônomo como fornecedor — ali nascem competência, categoria, conta CEF e documento.</p>
+          <p className="text-[12px] text-[var(--color-ink2)]">Total da equipe: <strong>{qtd(acumulado.total.quantidade)} diária(s)</strong> · <strong>{brl0(acumulado.total.valor)}</strong> (só autônomos; CLT e sócio são presença). <strong>A diária não gera despesa:</strong> o lançamento é proposto abaixo e acontece em Despesas, com o autônomo como fornecedor — ali nascem competência, categoria, conta do plano e documento.</p>
           <Table>
             <THead><tr><TH>Membro</TH><TH className="text-right">Diárias</TH><TH className="text-right">Valor</TH><TH className="text-right">Sem lançamento</TH><TH></TH></tr></THead>
             <tbody>

@@ -1242,7 +1242,7 @@ export function DespesaForm({
             )}
           </div>
 
-          <CampoIA label="Conta CEF / Plano de Contas" alerta={alertas.contaCef}>
+          <CampoIA label="Conta do plano de contas" alerta={alertas.contaCef}>
             <Select
               value={contaCef}
               onChange={(e) => {

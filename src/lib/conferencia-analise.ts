@@ -27,13 +27,13 @@ export interface LinhaAnalisada {
 }
 
 export interface Grupo {
-  criterio: "fornecedor" | "conta CEF" | "competência";
+  criterio: "fornecedor" | "conta do plano" | "competência";
   rotulo: string;
   quantos: number;
   valor: number;
 }
 
-/** 7.1 · agrupar por causa provável: mesmo fornecedor, conta CEF ou período (2+). */
+/** 7.1 · agrupar por causa provável: mesmo fornecedor, conta do plano ou período (2+). */
 export function agruparPorCausa(linhas: readonly LinhaAnalisada[], limite = 6): Grupo[] {
   const juntar = (criterio: Grupo["criterio"], chave: (l: LinhaAnalisada) => string | null) => {
     const m = new Map<string, Grupo>();
@@ -49,7 +49,7 @@ export function agruparPorCausa(linhas: readonly LinhaAnalisada[], limite = 6): 
   };
   return [
     ...juntar("fornecedor", (l) => l.fornecedorNome?.trim() || null),
-    ...juntar("conta CEF", (l) => l.contaCef?.trim() || null),
+    ...juntar("conta do plano", (l) => l.contaCef?.trim() || null),
     ...juntar("competência", (l) => l.competencia?.trim() || null),
   ]
     .sort((a, b) => b.quantos - a.quantos || b.valor - a.valor)

@@ -659,7 +659,7 @@ function RateioObras({
             </Select>
           </div>
           <div>
-            <Label>Conta CEF</Label>
+            <Label>Conta do plano</Label>
             <Select value={f.contaCef} onChange={(e) => setF({ ...f, contaCef: e.target.value })}>
               <option value="">—</option>
               {contas.map((c) => (
