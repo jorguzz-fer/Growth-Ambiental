@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { updateStakeholder, setStakeholderAtivo, deleteStakeholder } from "@/lib/actions/stakeholders";
-import { filtrarCadastros, papeisForaDaLista, sinaisDoCadastro, TIPOS_DE_CHAVE_PIX, TIPOS_DE_CONTA, type SinaisDoCadastro } from "@/lib/stakeholder-regras";
+import { filtrarCadastros, sinaisDoCadastro, TIPOS_DE_CHAVE_PIX, TIPOS_DE_CONTA, type SinaisDoCadastro } from "@/lib/stakeholder-regras";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
@@ -146,7 +146,8 @@ function StakeholderRow({
   const [tipo, setTipo] = useState(s.tipo);
   // BW-2 — papel gravado fora da lista aparece marcado e é reenviado; antes a
   // edição o perdia em silêncio (o formulário só reenvia os marcados).
-  const desconhecidos = papeisForaDaLista(s.papeis);
+  // Growth Ambiental: papel antigo (de incorporação), que não é mais oferecido, também é preservado.
+  const desconhecidos = s.papeis.filter((p) => !papeis.includes(p));
 
   const toggleAtivo = () =>
     start(async () => {

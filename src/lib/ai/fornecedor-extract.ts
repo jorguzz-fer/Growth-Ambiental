@@ -1,6 +1,6 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
-import { PAPEIS_STAKEHOLDER } from "@/lib/calc/constants";
+import { PAPEIS_STAKEHOLDER, PAPEIS_STAKEHOLDER_OFERECIDOS } from "@/lib/calc/constants";
 import { aiClient, createMessageWithFallback, isAiConfigured } from "@/lib/ai/client";
 import type { DadosFornecedorLidos } from "@/lib/ai/fornecedor-doc";
 
@@ -79,7 +79,7 @@ export async function extractFornecedorFromDocument(
           type: "array",
           description:
             "Papéis mais prováveis do fornecedor, dentre os listados. Vazio se incerto.",
-          items: { type: "string", enum: [...PAPEIS_STAKEHOLDER] },
+          items: { type: "string", enum: [...PAPEIS_STAKEHOLDER_OFERECIDOS] },
         },
         baixaConfianca: {
           type: "array",

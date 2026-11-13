@@ -72,7 +72,18 @@ export const PAPEIS_STAKEHOLDER = [
   "Consultor/Assessor",
   "Seguradora",
   "Pagador por Terceiro",
+  // Growth Ambiental: fornecedores típicos de consultoria ambiental.
+  "Laboratório de Análises",
+  "Locadora de Veículos e Equipamentos",
+  "Hospedagem e Alimentação",
 ] as const;
+
+/**
+ * Growth Ambiental: papéis de incorporação imobiliária. Continuam VÁLIDOS
+ * nos cadastros antigos (a edição os preserva), mas não são oferecidos.
+ */
+export const PAPEIS_STAKEHOLDER_ANTIGOS: readonly string[] = ["Comprador de Unidade", "Imobiliária Parceira", "Corretor Autônomo", "Incorporador", "Construtora"];
+export const PAPEIS_STAKEHOLDER_OFERECIDOS: readonly string[] = PAPEIS_STAKEHOLDER.filter((p) => !PAPEIS_STAKEHOLDER_ANTIGOS.includes(p));
 export type PapelStakeholder = (typeof PAPEIS_STAKEHOLDER)[number];
 
 /**
