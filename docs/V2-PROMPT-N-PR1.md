@@ -10,7 +10,7 @@ gravação nem alterada. Sem migração.**
 
 | | Prompt | Aqui |
 |---|---|---|
-| **2.1 SM-01** | veredito pela maior parcela; tela mostra as duas | `maiorParcela` / `mesDaMaiorParcela` (parcela corrigida, sem reforços) × `maxParcela` (30 % da renda); a tela mostra os dois valores e o selo. No caso do teste real (1ª parcela SAC 8.318 > 4.800) o selo passa de "dentro" para **"acima"** |
+| **2.1 SM-01** | veredito pela maior parcela; tela mostra as duas | `maiorParcela` / `mesDaMaiorParcela` (parcela corrigida, sem reforços) × `maxParcela` (30 % da renda); a tela mostra os dois valores e o selo. No caso da simulação pré-carregada (1ª parcela SAC acima do teto) [valores removidos] o selo passa de "dentro" para **"acima"** |
 | **2.2 SM-02** | decidir: aplicar nos três ou exibir só em SBPE | **Opção 1 — correção nos três tipos**, a partir da 5ª parcela, pelo acumulado do mês do vencimento (como as mensais do plano). Coluna "Correção" por mês; SAC e PRICE passam a exibir parcela corrigida |
 | **2.3 SM-03 / BN-2** | taxa vira campo, 1 % como padrão, rótulo mensal/premissa | `taxaMensal` no input; campo "Juros ao mês % (premissa)" pré-preenchido com 1 |
 | **2.4 SM-04** | entrada efetiva, recursos futuros (com mês), financiamento; % sobre a efetiva | três KPIs; `entradaEfetiva` = entrada + sinais até o início do plano; `recursosFuturos` lista nome/valor/mês; `pctEntrada` sobre a efetiva |
@@ -30,7 +30,7 @@ gravação nem alterada. Sem migração.**
 
 ## Testes de `simulator.test.ts` que mudaram (relatório, item 6)
 
-Os 4 originais foram reescritos em 11: (a) `totalEntrada` deixou de existir — virou entrada efetiva + recursos futuros + financiamento (2.4); (b) "gera fluxo de 36 meses" virou "tantas linhas quanto parcelas" (2.5); (c) `dentroLimite` passou a usar a maior parcela: o caso real que era "dentro" (4.378 ≤ 4.800) agora é "acima" (8.318 > 4.800) (2.1); (d) SAC e PRICE recebem a correção a partir da 5ª parcela (2.2); a 1ª parcela SAC (8.318,35) e a fórmula PRICE continuam iguais antes da correção.
+Os 4 originais foram reescritos em 11: (a) `totalEntrada` deixou de existir — virou entrada efetiva + recursos futuros + financiamento (2.4); (b) "gera fluxo de 36 meses" virou "tantas linhas quanto parcelas" (2.5); (c) `dentroLimite` passou a usar a maior parcela: o caso pré-carregado que era "dentro" (parcela base abaixo do teto) agora é "acima" (1ª parcela SAC acima do teto) (2.1); (d) SAC e PRICE recebem a correção a partir da 5ª parcela (2.2); a 1ª parcela SAC e a fórmula PRICE continuam iguais antes da correção.
 
 ## Verificação
 

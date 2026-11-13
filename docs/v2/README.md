@@ -30,9 +30,11 @@ O mesmo dado recebe sempre o **mesmo marcador**, nos dois arquivos. Isso importa
 o `PROMPTS.md` usa o fato de um CPF aparecer em dois cadastros como diagnóstico,
 e a leitura continua possível com `[CPF-3]` nos dois lugares.
 
-Ficaram de propósito: nomes de **empresas** (fornecedores, construtora,
-incorporadora), **primeiros nomes** soltos de usuários e funcionários — que
-sozinhos não identificam ninguém — e o nome do titular da conta.
+Na auditoria de sanitização do Growth Ambiental (`docs/AUDITORIA_SANITIZACAO.md`)
+saíram também os nomes de empresas, fornecedores, funcionários e titulares de
+conta que tinham ficado nesta primeira redação: no `PROMPTS.md` e no mockup eles
+viraram placeholders ("Cliente Piloto", "Construtora Piloto", "Fornecedor
+Exemplo", "SOCIO A/B").
 
 A redação usou três varreduras independentes (padrões de documento, nomes em
 maiúsculas e nomes em título), com revisão manual de cada candidato. **Não

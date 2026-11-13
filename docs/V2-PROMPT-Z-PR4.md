@@ -43,7 +43,7 @@ Sem migração. Nenhum dado existente alterado.
 
 ## Teste de navegador (local, admin)
 Funcionários: painel "Somente leitura" com as seis seções. Equipes: alocar
-Inácio (autônomo, R$ 200) → o painel propõe 1 diária de hoje → "Confirmar"
+Prestador Exemplo (autônomo, R$ 200) → o painel propõe 1 diária de hoje → "Confirmar"
 grava com a mensagem "Nenhuma despesa foi gerada"; "Diárias sem lançamento:
 1", "Obra sem equipe: 2", "Alocação sem função: 1"; o acumulado mostra
 "Lançar em Despesas →". Seeds apagados.

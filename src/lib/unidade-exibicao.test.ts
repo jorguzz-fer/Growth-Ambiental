@@ -24,7 +24,7 @@ describe("exibição de Unidades (Prompt J, seção 3)", () => {
     expect(vgvFormatado(375000)).toBe(brlSemEspacos("R$ 375.000"));
     expect(vgvFormatado(999999.99)).toBe(brlSemEspacos("R$ 1.000.000")); // arredonda para cima, ainda sem "mi"
     expect(vgvFormatado(1_000_000)).toBe("R$ 1,00 mi");
-    expect(vgvFormatado(40_190_000)).toBe("R$ 40,19 mi");
+    expect(vgvFormatado(12_500_000)).toBe("R$ 12,50 mi");
     expect(vgvFormatado(0)).toBe(brlSemEspacos("R$ 0"));
     expect(vgvFormatado(NaN)).toBe(brlSemEspacos("R$ 0"));
   });

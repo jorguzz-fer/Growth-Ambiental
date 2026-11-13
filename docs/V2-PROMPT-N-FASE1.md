@@ -36,8 +36,9 @@ declarados (teste 11). Nada toca `payment_plan`, `unit`, `conta_receber`,
 ### 2 · Correções de cálculo (confirmadas no código)
 
 - **2.1 SM-01** `dentroLimite: parcMensal <= maxParcela` (`simulator.ts:122`):
-  compara a parcela base (saldo ÷ n), não a maior parcela do fluxo. No teste
-  real: 4.378 ≤ 4.800 "dentro", com 1ª parcela SAC de 8.318. Passa a comparar
+  compara a parcela base (saldo ÷ n), não a maior parcela do fluxo. Na
+  simulação pré-carregada: parcela base abaixo do teto ("dentro"), com a 1ª
+  parcela SAC acima dele [valores removidos]. Passa a comparar
   a **maior parcela** (sem os reforços) e a tela mostra as duas.
 - **2.2 SM-02** `parcTotal = SAC ? parcSAC : PRICE ? parcPRICE : parcComIncc`:
   em SAC e PRICE a correção é calculada e descartada; a coluna INCC cresce e a

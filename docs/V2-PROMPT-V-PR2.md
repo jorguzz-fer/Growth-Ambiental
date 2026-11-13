@@ -18,7 +18,7 @@ rótulo, os estados vazios, a escolha explícita do Orçamento e os avisos.
    é truncado**: mostra o percentual real, "▲" e um aviso com o excedente
    em R$.
 5. **3.5 (opção 2)** a coluna **"% Ref. CEF" saiu** — os dez números eram do
-   piloto, indexados por posição, somavam 99,66 e o "100%" era escrito à mão.
+   piloto, indexados por posição, não somavam 100 e o "100%" era escrito à mão.
    `PCT_REF_CEF` fica em `constants.ts` sem leitor; o rodapé explica por quê.
 6. **3.6** aviso de **retenção final** quando o total medido ≥ 95% do orçado.
 7. **3.7** obra sem versão de Orçamento: aviso explícito no topo; nada de
