@@ -91,14 +91,13 @@ export function ImportVersion({
           {pending ? "Importando…" : "Selecionar planilha preenchida"}
         </span>
         <span className="text-xs text-[var(--color-ink3)]">
-          .xlsx ou .xls · formato padrão Growth Tools
+          .xlsx ou .xls · modelo da planilha da versão (abas Parametros e Despesas)
         </span>
       </div>
 
       {result && (
         <p className="mt-3 rounded-[8px] bg-[#d1fae5] px-3 py-2 text-[13px] text-[#065f46]">
-          Importado: {result.units} unidades · {result.reembolsos} liberações ·{" "}
-          {result.permutas} permutas · {result.despesas} despesas · {result.incc} meses INCC.
+          Importado: {result.despesas} despesa(s).
         </p>
       )}
       {error && (

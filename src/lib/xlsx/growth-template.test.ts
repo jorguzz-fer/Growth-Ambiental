@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import * as XLSX from "xlsx";
-import { buildTemplateBuffer, parseWorkbook, planilhaDoPlanoPadrao, SHEETS, type GrupoDaPlanilha } from "./growth-template";
+import { buildExportBuffer, buildTemplateBuffer, parseWorkbook, planilhaDoPlanoPadrao, SHEETS, type GrupoDaPlanilha } from "./growth-template";
+import { emptyPlan } from "@/lib/calc/plan";
 import type { InccRow } from "@/lib/calc/types";
 import { PLANO_CONTAS_PADRAO as PLANO_CONTAS } from "@/lib/calc/plano-ambiental";
 
@@ -17,52 +18,51 @@ function rowFor(hs: string[], obj: Record<string, unknown>): unknown[] {
   return hs.map((h) => obj[h] ?? "");
 }
 
-/** Gera o template, preenche uma linha por aba e serializa de volta. */
+/** Planilha no formato ANTIGO (incorporação): a exportação de uma versão com unidades, liberações e permutas. */
 function filledWorkbook(): Buffer {
-  const tmpl = XLSX.read(buildTemplateBuffer(incc), { type: "buffer" });
-  const wb = XLSX.utils.book_new();
-
-  // Parametros: reutiliza o do template
-  XLSX.utils.book_append_sheet(wb, tmpl.Sheets[SHEETS.parametros], SHEETS.parametros);
-
-  const vH = headers(tmpl, SHEETS.vendas);
-  const unit = rowFor(vH, {
-    Unidade: "UNID 999", "Valor R$": 500000, Status: "Vendido",
-    "Usar AS?": "Sim", "AS Valor": 5000, "AS Venc": "02/27/2026", "AS Nr": 1, "AS->S1?": "Nao",
+  const plan = emptyPlan();
+  plan.usarAS = true;
+  plan.AS = { val: 5000, venc: "02/27/2026", n: 1, usarS1: false };
+  return buildExportBuffer({
+    incc: incc,
+    units: [{ code: "UNID 999", bloco: null, tipo: null, m2: null, andar: null, valor: 500000, status: "Vendido", mesVenda: null, plan }],
+    reembolsos: [{ data: "01/27/2026", origem: "X", valor: 50000, pct: "", obs: "", serial: null }],
+    permutas: [{ unitCode: "UNID 999", cliente: "", dataRecebimento: "", tipo: "Carro", descricao: "", estimado: 40000, status: "Vendido", dataVenda: "", valorVenda: 35000, tipoPermuta: "", obs: "" }],
+    despesas: [{ contaCef: PLANO_CONTAS.obra[0].sub[0].id, competencia: "01/2025", valor: 125000 }],
   });
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([vH, unit]), SHEETS.vendas);
-
-  const rH = headers(tmpl, SHEETS.reembolso);
-  XLSX.utils.book_append_sheet(
-    wb,
-    XLSX.utils.aoa_to_sheet([rH, rowFor(rH, { "Data (DD/MM/AAAA)": "01/27/2026", Origem: "X", "Valor R$": 50000 })]),
-    SHEETS.reembolso,
-  );
-
-  const pH = headers(tmpl, SHEETS.permuta);
-  XLSX.utils.book_append_sheet(
-    wb,
-    XLSX.utils.aoa_to_sheet([pH, rowFor(pH, { Unidade: "UNID 999", Tipo: "Carro", "Valor Estimado R$": 40000, Status: "Vendido", "Valor Venda R$": 35000 })]),
-    SHEETS.permuta,
-  );
-
-  // Despesas: coloca 125000 no Jan/Ano1 do 1º subitem do plano padrão
-  const despAoa = XLSX.utils.sheet_to_json(tmpl.Sheets[SHEETS.despesas], { header: 1 }) as unknown[][];
-  despAoa[1][3] = 125000; // 1ª coluna de mês (depois de Grupo, Subitem, Codigo)
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(despAoa), SHEETS.despesas);
-
-  return XLSX.write(wb, { type: "buffer", bookType: "xlsx" }) as Buffer;
 }
 
 describe("growth-template", () => {
-  it("gera um workbook com as 5 abas padrão", () => {
+  it("o modelo (Growth Ambiental) tem só Parametros (meses) e Despesas", () => {
     const wb = XLSX.read(buildTemplateBuffer(incc), { type: "buffer" });
-    expect(wb.SheetNames).toEqual([
-      "Parametros", "Dados_de_Venda", "Reembolso", "Permuta", "Despesas_CEF",
-    ]);
+    expect(wb.SheetNames).toEqual(["Parametros", "Despesas"]);
+    expect(headers(wb, SHEETS.parametros)).toEqual(["MES", "Observacao"]);
   });
 
-  it("Despesas_CEF traz TODOS os subitens do plano de contas", () => {
+  it("modelo novo: despesa da aba Despesas vira lançamento; sem colunas de INCC, nada de INCC é lido", () => {
+    const tmpl = XLSX.read(buildTemplateBuffer(incc), { type: "buffer" });
+    const aoa = XLSX.utils.sheet_to_json(tmpl.Sheets[SHEETS.despesas], { header: 1 }) as unknown[][];
+    aoa[1][4] = 900; // Fev/Ano1
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, tmpl.Sheets[SHEETS.parametros], SHEETS.parametros);
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), SHEETS.despesas);
+    const p = parseWorkbook(XLSX.write(wb, { type: "buffer", bookType: "xlsx" }) as Buffer);
+    expect(p.incc).toEqual([]);
+    expect(p.units).toEqual([]);
+    expect(p.despesas).toEqual([{ contaCef: PLANO_CONTAS.obra[0].sub[0].id, competencia: "02/2025", vencimento: "02/2025", valor: 900 }]);
+  });
+
+  it("exportação de versão sem dados de incorporação: formato novo", () => {
+    const wb = XLSX.read(buildExportBuffer({ incc, units: [], reembolsos: [], permutas: [], despesas: [] }), { type: "buffer" });
+    expect(wb.SheetNames).toEqual(["Parametros", "Despesas"]);
+  });
+
+  it("exportação de versão com dados antigos: formato antigo, com as 5 abas", () => {
+    const wb = XLSX.read(filledWorkbook(), { type: "buffer" });
+    expect(wb.SheetNames).toEqual(["Parametros", "Dados_de_Venda", "Reembolso", "Permuta", "Despesas_CEF"]);
+  });
+
+  it("Despesas traz TODOS os subitens do plano de contas", () => {
     // A contagem é derivada de PLANO_CONTAS, não fixada à mão: o plano cresce
     // (o pacote de Controladoria acrescentou as contas F.6 a F.9 ao grupo
     // Financeiro/Contábil, para RG-03, RG-04 e RG-07) e um número cravado aqui
@@ -76,7 +76,7 @@ describe("growth-template", () => {
     expect(rows.length).toBe(1 + esperado); // cabeçalho + subitens
   });
 
-  it("round-trip: parseia unidade + plano de pagamento", () => {
+  it("formato antigo (leitura): parseia unidade + plano de pagamento", () => {
     const p = parseWorkbook(filledWorkbook());
     expect(p.units).toHaveLength(1);
     const u = p.units[0];
@@ -87,7 +87,7 @@ describe("growth-template", () => {
     expect(u.plan.AS).toMatchObject({ val: 5000, venc: "02/27/2026", n: 1, usarS1: false });
   });
 
-  it("round-trip: reembolsos, permutas e INCC", () => {
+  it("formato antigo (leitura): reembolsos, permutas e INCC", () => {
     const p = parseWorkbook(filledWorkbook());
     expect(p.reembolsos).toHaveLength(1);
     expect(p.reembolsos[0].valor).toBe(50000);
@@ -97,7 +97,7 @@ describe("growth-template", () => {
     expect(p.incc[0]).toMatchObject({ mes: "05/2025", accumulated: 0.26 });
   });
 
-  it("round-trip: despesa da matriz vira lançamento com conta e competência", () => {
+  it("formato antigo (leitura): despesa da aba Despesas_CEF vira lançamento com conta e competência", () => {
     const p = parseWorkbook(filledWorkbook());
     expect(p.despesas).toHaveLength(1);
     // 1º subitem do plano padrão (o código vem do plano, nunca fixo no teste); Jan/Ano1 com base 2025
@@ -105,8 +105,7 @@ describe("growth-template", () => {
   });
 });
 
-import { buildExportBuffer, type ExportData } from "./growth-template";
-import { emptyPlan } from "@/lib/calc/plan";
+import type { ExportData } from "./growth-template";
 
 describe("buildExportBuffer (round-trip export → import)", () => {
   it("exporta dados preenchidos e reimporta recuperando-os", () => {
