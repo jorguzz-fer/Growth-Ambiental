@@ -73,6 +73,8 @@ describe("Assistente de Contas a Receber — análises puras (Prompt K, 8.3)", (
       conta({ id: "semCli", clienteId: null, clienteNome: null }),
       conta({ id: "outras", tipo: "Outras Receitas", unitCode: null, descricao: "Aluguel do stand" }),
       conta({ id: "outrasSemCli", tipo: "Outras Receitas", unitCode: null, clienteId: null, clienteNome: null, descricao: "x" }),
+      // Growth Ambiental: fatura de serviço não tem unidade
+      conta({ id: "fatura", tipo: "Fatura de serviço", unitCode: null }),
     ]);
     expect(r.map((x) => [x.id, x.faltaUnidade, x.faltaCliente])).toEqual([
       ["semUn", true, false],

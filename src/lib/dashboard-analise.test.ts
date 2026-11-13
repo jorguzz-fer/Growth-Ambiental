@@ -37,11 +37,11 @@ describe("6.1 · divergência entre cartões — a causa que está no dado", () 
 describe("6.1 · explicar o indicador", () => {
   it("cada painel declara fonte, regime e janela; muda com a chave", () => {
     const off = explicar({ status: st(), definicaoNova: false });
-    expect(off.find((e) => e.cartao === "Entradas de caixa")?.texto).toContain("de todas as versões da obra");
+    expect(off.find((e) => e.cartao === "Entradas de caixa")?.texto).toContain("de todas as versões do projeto");
     expect(off.find((e) => e.cartao === "% executado")?.texto).toContain("a soma de 2 Orçamentos");
     const on = explicar({ status: st({}, { definicaoNova: true, orcamentosUsados: ["Orç novo"], janela: "projeto" }), definicaoNova: true });
     expect(on.find((e) => e.cartao === "% executado")?.texto).toContain("“Orç novo”");
-    expect(on.find((e) => e.cartao === "Margem de contribuição")?.texto).toContain("início e o fim da obra");
+    expect(on.find((e) => e.cartao === "Margem de contribuição")?.texto).toContain("início e o fim do projeto");
   });
 });
 

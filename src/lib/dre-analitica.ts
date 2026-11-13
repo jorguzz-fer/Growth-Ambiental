@@ -113,7 +113,7 @@ export function linhasDaDreAnalitica(e: EntradaAnalitica, contas: readonly Conta
   // Receita, com o que a compõe.
   push({ id: "receita", pai: null, nivel: 0, tipo: "categoria", label: "Receita", valor: R });
   const lancadoComoReceita = e.lancamentos.filter((l) => l.categoria === "Receita").reduce((a, l) => a + l.valor, 0);
-  if (e.receitaVendas) push({ id: "receita:vendas", pai: "receita", nivel: 1, tipo: "detalhe", label: "Unidades vendidas e liberações de obra", valor: e.receitaVendas });
+  if (e.receitaVendas) push({ id: "receita:vendas", pai: "receita", nivel: 1, tipo: "detalhe", label: "Receitas (faturas, contas a receber e, nos dados antigos, vendas e liberações)", valor: e.receitaVendas });
   if (e.receitaPermuta) push({ id: "receita:permuta", pai: "receita", nivel: 1, tipo: "detalhe", label: "Revenda de bens de permuta", valor: e.receitaPermuta });
   if (lancadoComoReceita) push({ id: "receita:despesa", pai: "receita", nivel: 1, tipo: "detalhe", label: "Lançado como despesa na categoria Receita", valor: lancadoComoReceita });
 

@@ -72,7 +72,7 @@ export function camposFaltando(p: ProjetoParaAnalise): string[] {
   if (vazio(p.valorConstrucao) && vazio(p.valorTerreno)) f.push("valores (receitas)");
   if (vazio(p.custoConstrucao) && vazio(p.custoTerreno)) f.push("custos");
   if (vazio(p.endereco)) f.push("endereço");
-  if (vazio(p.municipioObra) && vazio(p.codigoMunicipioObra)) f.push("município da obra");
+  if (vazio(p.municipioObra) && vazio(p.codigoMunicipioObra)) f.push("município do projeto");
   return f;
 }
 
@@ -133,7 +133,7 @@ const pct = (v: number) => `${v.toLocaleString("pt-BR", { maximumFractionDigits:
 export function lerComparativo(card: CardOrcadoRealizado | null): string[] {
   if (!card) return [];
   if (card.semOrcamento && card.semLancamentos) return ["Sem orçamento lançado e sem lançamentos na versão Atual: não há o que comparar ainda."];
-  if (card.semOrcamento) return ["Sem orçamento lançado: há realizado, mas não há base para % de execução. Lance o Orçamento da obra."];
+  if (card.semOrcamento) return ["Sem orçamento lançado: há realizado, mas não há base para % de execução. Lance o Orçamento do projeto."];
   if (card.semLancamentos) return ["Orçamento lançado, mas sem lançamentos na versão Atual: nada realizado por competência ainda."];
   const out: string[] = [];
   for (const l of card.linhas) {

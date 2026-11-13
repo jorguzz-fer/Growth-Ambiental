@@ -56,13 +56,13 @@ export interface AnaliseDoDashboard {
 export function explicar(o: { status: StatusProjeto; definicaoNova: boolean }): Explicacao[] {
   const { status: st, definicaoNova: nova } = o;
   const c = st.composicao;
-  const caixa = nova ? "só da versão Atual" : "de todas as versões da obra";
+  const caixa = nova ? "só da versão Atual" : "de todas as versões do projeto";
   const per = nova ? "segue o período (pela data)" : "não segue o período (acumulado)";
   const orc = nova
     ? `um Orçamento por obra, o mais recente que não é cópia${c.orcamentosUsados.length ? ` (${c.orcamentosUsados.map((l) => `“${l}”`).join(", ")})` : ""}`
     : c.orcamentos > 1
       ? `a soma de ${c.orcamentos} Orçamentos`
-      : "o Orçamento da obra";
+      : "o Orçamento do projeto";
   const janela = nova && c.janela ? TEXTO_DA_JANELA[c.janela] : "receita de todo o horizonte contra custos lançados de qualquer competência";
   return [
     { painel: "Os quatro de cima", cartao: "Valor contratado", texto: "Valor atualizado (original + aditivos eficazes) dos contratos de serviço dos projetos, sem rascunho e cancelado. É o mesmo em toda coluna; sem regime de caixa." },

@@ -53,7 +53,7 @@ export function linhasDoFluxoAnalitico(e: EntradaDoFluxoAnalitico, contas: reado
   const doGrupo = new Map(contas.map((c) => [c.groupCode, { nome: c.groupName, kind: c.kind }]));
 
   push({ id: "entradas", pai: null, nivel: 0, tipo: "categoria", label: "Entradas", valor: entradas });
-  if (e.vendas) push({ id: "entradas:vendas", pai: "entradas", nivel: 1, tipo: "detalhe", label: "Unidades vendidas e liberações de obra", valor: e.vendas });
+  if (e.vendas) push({ id: "entradas:vendas", pai: "entradas", nivel: 1, tipo: "detalhe", label: "Receitas (faturas, contas a receber e, nos dados antigos, vendas e liberações)", valor: e.vendas });
   if (e.permuta) push({ id: "entradas:permuta", pai: "entradas", nivel: 1, tipo: "detalhe", label: "Revenda de bens de permuta", valor: e.permuta });
 
   push({ id: "saidas", pai: null, nivel: 0, tipo: "categoria", label: "(−) Saídas", valor: totalSaidas });

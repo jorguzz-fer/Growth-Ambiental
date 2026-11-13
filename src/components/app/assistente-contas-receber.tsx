@@ -267,14 +267,14 @@ export function AssistenteContasReceber({
               <path d="M8 9h8M8 13h8M8 17h4" />
             </svg>
           }
-          titulo="Sem unidade ou cliente"
-          descricao="Contas que não dizem de quem são nem de qual venda"
+          titulo="Sem cliente"
+          descricao="Contas que não dizem de quem são (e, nos dados antigos de venda, de qual unidade)"
           contador={semVinculo.length}
           aberta={aberta === "semVinculo"}
           onClick={() => setAberta(aberta === "semVinculo" ? null : "semVinculo")}
         >
           {semVinculo.length === 0 ? (
-            nada("Todas as contas têm unidade e cliente.")
+            nada("Todas as contas têm cliente.")
           ) : (
             <ul className="space-y-1.5">
               {semVinculo.map((s) => (
@@ -296,7 +296,7 @@ export function AssistenteContasReceber({
             </svg>
           }
           titulo="Valor fora do padrão"
-          descricao="Parcela mensal que destoa das outras da mesma unidade (mais de 20 %)"
+          descricao="Dados antigos: parcela mensal de venda que destoa das outras da mesma unidade (mais de 20 %)"
           contador={foraDoPadrao.length}
           aberta={aberta === "foraDoPadrao"}
           onClick={() => setAberta(aberta === "foraDoPadrao" ? null : "foraDoPadrao")}

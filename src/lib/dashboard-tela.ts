@@ -74,7 +74,7 @@ export const DEFINICAO_DO_KPI: Record<"vgv" | "realizado" | "aReceber" | "aPagar
     planejamento: "Orçamento/Previsão: receita planejada menos o realizado, nunca abaixo de zero — é saldo a realizar, não recebível.",
   },
   aPagar: {
-    atual: "Atual: contas a pagar em aberto, pelo saldo das parcelas, de todas as versões da obra.",
+    atual: "Atual: contas a pagar em aberto, pelo saldo das parcelas, de todas as versões do projeto.",
     planejamento: "Orçamento/Previsão: “—”, porque planejamento não tem conta a pagar.",
   },
 };

@@ -82,6 +82,6 @@ export function naJanela(mm: string | null | undefined, j: JanelaDaMargem, de = 
 
 export const TEXTO_DA_JANELA: Record<OrigemDaJanela, string> = {
   periodo: "competências do período escolhido, nos dois lados",
-  projeto: "competências entre o início e o fim da obra (cadastro), nos dois lados",
-  sem_janela: "todas as competências, nos dois lados — a obra não tem início e fim no cadastro",
+  projeto: "competências entre o início e o fim do projeto (cadastro), nos dois lados",
+  sem_janela: "todas as competências, nos dois lados — o projeto não tem início e fim no cadastro",
 };
