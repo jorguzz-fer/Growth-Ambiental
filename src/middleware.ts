@@ -13,6 +13,9 @@ export function middleware(req: NextRequest) {
 
   if (
     PUBLIC_PATHS.includes(pathname) ||
+    // Landing page estática de implantação/onboarding (public/site).
+    pathname === "/site" ||
+    pathname.startsWith("/site/") ||
     pathname.startsWith("/api") ||
     pathname.startsWith("/_next")
   ) {

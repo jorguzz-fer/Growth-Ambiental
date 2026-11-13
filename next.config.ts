@@ -21,6 +21,13 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["unpdf"],
   // Rolling Forecast foi descontinuado: URLs antigas /rolling redirecionam
   // para /forecast (o enforcement de permissão da rota-destino continua valendo).
+  // Landing page estática de implantação/onboarding em public/site: /site e
+  // /site/ servem o index.html (os demais arquivos saem direto de public/).
+  async rewrites() {
+    return [
+      { source: "/site", destination: "/site/index.html" },
+    ];
+  },
   async redirects() {
     return [
       { source: "/rolling", destination: "/forecast", permanent: true },
