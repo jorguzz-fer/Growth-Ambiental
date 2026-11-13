@@ -22,6 +22,18 @@ export function ehIndiceDeReajuste(v: unknown): v is IndiceDeReajuste {
   return typeof v === "string" && (INDICES_DE_REAJUSTE as readonly string[]).includes(v);
 }
 
+/**
+ * Growth Ambiental: índices oferecidos no reajuste de um contrato de serviço.
+ * As variantes do INCC (custo da construção civil) continuam VÁLIDAS para os
+ * registros antigos, mas não são oferecidas em contrato novo. Na edição, o
+ * índice já gravado continua na lista.
+ */
+export const INDICES_PARA_CONTRATO_DE_SERVICO = ["IPCA", "IGP-M", "INPC"] as const;
+export function indicesOferecidosNoContrato(atual?: string | null): string[] {
+  const base: string[] = [...INDICES_PARA_CONTRATO_DE_SERVICO];
+  return atual && !base.includes(atual) && ehIndiceDeReajuste(atual) ? [...base, atual] : base;
+}
+
 /** Quem publica o índice — para a dica da fonte. */
 export function publicadorDoIndice(v: string | null | undefined): "IBGE" | "FGV" | null {
   if (v === "IPCA" || v === "INPC") return "IBGE";

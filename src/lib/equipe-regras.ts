@@ -7,11 +7,17 @@
  * não gera despesa (BZ-1): a tela PROPÕE o lançamento em /despesas.
  */
 
-export const FUNCOES_PADRAO = ["Pedreiro", "Mestre de Obra", "Comercial", "Gestor Administrativo", "Engenheiro"] as const;
+/**
+ * Funções criadas na primeira leitura de uma empresa sem funções (equipes-db).
+ * Growth Ambiental: funções de equipe de campo de consultoria ambiental. As
+ * empresas que já têm a lista não mudam (ela é editável na tela).
+ */
+export const FUNCOES_PADRAO = ["Técnico de campo", "Coordenador de campo", "Arqueólogo(a)", "Biólogo(a)", "Engenheiro(a) ambiental", "Auxiliar de campo", "Comercial", "Gestor Administrativo"] as const;
 /** papéis de `stakeholder` que entram como autônomo (3.3). "Mão de Obra CLT" é papel antigo do cadastro: quem está lá é tratado como autônomo até migrar para Funcionários. */
 export const PAPEIS_AUTONOMO = ["Prestador de Serviço", "Mão de Obra RPA", "Mão de Obra CLT", "Responsável Técnico (RT)"] as const;
 export const PAPEIS_SOCIO = ["Sócio/Quotista"] as const;
-export const TIPOS_DOC_EQUIPE_DIA = ["Folha de ponto assinada", "Foto da equipe no canteiro", "Recibo de diária", "Outros"] as const;
+// "Foto da equipe no canteiro" fica aceita para os registros antigos; o novo é "em campo".
+export const TIPOS_DOC_EQUIPE_DIA = ["Folha de ponto assinada", "Foto da equipe em campo", "Recibo de diária", "Relatório de atividades de campo", "Outros", "Foto da equipe no canteiro"] as const;
 export const QUANTIDADES_DIARIA = [0.5, 1, 1.5, 2] as const;
 
 export type OrigemMembro = "autonomo" | "clt" | "socio";

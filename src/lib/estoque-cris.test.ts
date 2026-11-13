@@ -18,8 +18,8 @@ describe("Prompt Y2 · Materiais e Equipamentos com a Cris", () => {
   });
 
   it("baixa para o projeto vira saída com motivo, projeto e quantidade", () => {
-    const r = movimentoDaProposta({ tipo: "baixa", material: "Cimento CP-II (CIM) · sc", quantidade: "10", motivo: "Consumo na obra", obra: "PROJETO A" }, M, O, D, "entrada");
-    expect(r).toEqual({ mov: { tipo: "saida", itemId: "m1", quantidade: "10", origem: "Consumo na obra", projectId: "p1" }, avisos: [] });
+    const r = movimentoDaProposta({ tipo: "baixa", material: "Cimento CP-II (CIM) · sc", quantidade: "10", motivo: "Uso no projeto", obra: "PROJETO A" }, M, O, D, "entrada");
+    expect(r).toEqual({ mov: { tipo: "saida", itemId: "m1", quantidade: "10", origem: "Uso no projeto", projectId: "p1" }, avisos: [] });
   });
 
   it("entrada aponta a despesa; motivo de baixa numa entrada é avisado", () => {

@@ -326,7 +326,7 @@ export function EquipesManager({ projectId, projectName, equipe, alocaveis, func
                               <p className="text-[12px] text-[var(--color-ink2)]"><strong>Documentos do dia</strong> · folha de ponto assinada, foto da equipe, recibo de diária. Por dia, não por membro: a folha e a foto cobrem a equipe inteira.</p>
                               {canCriar && r2 && (
                                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-end">
-                                  <div><Label>Tipo *</Label><Select value={tipoDoc} onChange={(e) => setTipoDoc(e.target.value)} aria-label="Tipo do documento do dia">{TIPOS_DOC_EQUIPE_DIA.map((t) => <option key={t} value={t}>{t}</option>)}</Select></div>
+                                  <div><Label>Tipo *</Label><Select value={tipoDoc} onChange={(e) => setTipoDoc(e.target.value)} aria-label="Tipo do documento do dia">{TIPOS_DOC_EQUIPE_DIA.filter((t) => t !== "Foto da equipe no canteiro").map((t) => <option key={t} value={t}>{t}</option>)}</Select></div>
                                   <div className="sm:col-span-2"><Label>Arquivos ou fotos (até {LIMITE_UPLOAD_MB} MB; fotos comprimidas)</Label><input ref={fileRef} type="file" multiple accept="image/*,application/pdf" className="text-xs" aria-label="Arquivos do dia" /></div>
                                   <div><Button type="button" size="sm" className="w-full" disabled={pending} onClick={() => anexar(d.id)}>Anexar</Button></div>
                                 </div>

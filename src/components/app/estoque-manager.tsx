@@ -411,7 +411,7 @@ function MovTab({ items, todosItens, movimentos, filtros, projetos, despesas, pe
             </div>
             <p className="rounded-[8px] bg-[var(--color-surface2)] px-3 py-2 text-[12px] text-[var(--color-ink2)]">
               {tipo === "entrada"
-                ? "Toda entrada aponta a despesa (compra) ou a permuta que trouxe o material — é o lastro do valor. O custo é o do cadastro no momento e fica gravado no movimento."
+                ? `Toda entrada aponta a despesa (compra)${permutas.length ? " ou a permuta (dados antigos)" : ""} que trouxe o material ou equipamento — é o lastro do valor. O custo é o do cadastro no momento e fica gravado no movimento.`
                 : "A saída registra para qual projeto o material foi. Sem efeito contábil: não cria despesa, não altera a DRE nem reclassifica custo — o custo já é da despesa de compra."}
             </p>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-6">
@@ -443,13 +443,16 @@ function MovTab({ items, todosItens, movimentos, filtros, projetos, despesas, pe
                       {despesas.map((d) => <option key={d.id} value={d.id}>{d.numDoc ?? "s/ nº"}{d.fornecedor ? ` · ${d.fornecedor}` : ""} · {brl0(d.valor)}</option>)}
                     </Select>
                   </div>
+                  {/* Permuta: só nos dados antigos de incorporação. */}
+                  {permutas.length > 0 && (
                   <div className="sm:col-span-3">
-                    <Label>ou Permuta {despesaId ? "" : "*"}</Label>
+                    <Label>ou Permuta (dados antigos) {despesaId ? "" : "*"}</Label>
                     <Select value={permutaId} onChange={(e) => { setPermutaId(e.target.value); if (e.target.value) setDespesaId(""); }} aria-label="Permuta vinculada">
                       <option value="">— ou escolha a permuta —</option>
                       {permutas.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
                     </Select>
                   </div>
+                  )}
                   {despesa && (
                     <div className="rounded-[8px] border border-[var(--color-line)] bg-white px-3 py-2 text-[12px] text-[var(--color-ink2)] sm:col-span-6" data-despesa-resumo>
                       <strong className="text-[var(--color-ink)]">{despesa.numDoc ?? "Despesa"}</strong> · {despesa.fornecedor ?? "sem fornecedor"} · competência {despesa.competencia ?? "—"} · {brl0(despesa.valor)} · projeto {despesa.projectName ?? "—"}

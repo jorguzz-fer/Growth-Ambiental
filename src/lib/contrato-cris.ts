@@ -8,7 +8,7 @@
  * servidor que um preenchimento à mão.
  */
 import type { FormularioDaTela } from "@/lib/cris";
-import { INDICES_DE_REAJUSTE } from "@/lib/incc-regras";
+import { INDICES_PARA_CONTRATO_DE_SERVICO } from "@/lib/incc-regras";
 import { CRITERIOS_MEDICAO, ROTULO_CRITERIO, lerNumero, type CriterioMedicao } from "@/lib/contrato-regras";
 
 export const MAX_ITENS_PROPOSTOS = 10;
@@ -45,7 +45,7 @@ export function formularioDoContrato(opcoes: { clientes: string[]; modalidades: 
       { nome: "condicaoPagamento", rotulo: "Condição de pagamento", tipo: "texto" },
       { nome: "periodicidadeMedicao", rotulo: "Periodicidade de medição", tipo: "texto", dica: 'ex.: "mensal"' },
       { nome: "prazoPagamentoDias", rotulo: "Prazo de pagamento (dias)", tipo: "numero" },
-      { nome: "indiceReajuste", rotulo: "Índice de reajuste", tipo: "opcao", opcoes: [...INDICES_DE_REAJUSTE] },
+      { nome: "indiceReajuste", rotulo: "Índice de reajuste", tipo: "opcao", opcoes: [...INDICES_PARA_CONTRATO_DE_SERVICO] },
       { nome: "retencaoPct", rotulo: "Retenção contratual (%)", tipo: "numero" },
       { nome: "regrasReembolso", rotulo: "Regras de reembolso de despesas", tipo: "texto" },
       { nome: "regrasMedicao", rotulo: "Regras de medição (resumo)", tipo: "texto" },

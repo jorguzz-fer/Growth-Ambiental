@@ -62,10 +62,10 @@ describe.skipIf(!HAS_DB)("Equipes de Projetos (Prompt Z, Parte 3)", async () => 
     await db.delete(schema.tenants).where(eq(schema.tenants.id, tenant.id));
   });
 
-  it("BZ-3 — as cinco funções nascem na primeira leitura; nova função é editável; 3.3 — o seletor lista autônomo, sócio e CLT ativo com a origem", async () => {
+  it("BZ-3 — as funções padrão (de campo) nascem na primeira leitura; nova função é editável; 3.3 — o seletor lista autônomo, sócio e CLT ativo com a origem", async () => {
     const funcoes = await garantirFuncoesPadrao(tenant.id);
-    expect(funcoes.map((f) => f.nome)).toEqual(["Pedreiro", "Mestre de Obra", "Comercial", "Gestor Administrativo", "Engenheiro"]);
-    expect(await addFuncao("Pedreiro")).toMatchObject({ ok: false, error: expect.stringMatching(/já existe/) });
+    expect(funcoes.map((f) => f.nome)).toEqual(["Técnico de campo", "Coordenador de campo", "Arqueólogo(a)", "Biólogo(a)", "Engenheiro(a) ambiental", "Auxiliar de campo", "Comercial", "Gestor Administrativo"]);
+    expect(await addFuncao("Técnico de campo")).toMatchObject({ ok: false, error: expect.stringMatching(/já existe/) });
     expect(await addFuncao("Eletricista")).toMatchObject({ ok: true });
     const al = await getAlocaveis(tenant.id);
     expect(al.map((x) => [x.nome, x.origem])).toEqual([["Carlos CLT", "clt"], ["João Pedreiro", "autonomo"], ["Sócio Gestor", "socio"]]); // loja e desligada ficam fora
@@ -73,8 +73,8 @@ describe.skipIf(!HAS_DB)("Equipes de Projetos (Prompt Z, Parte 3)", async () => 
 
   it("5 / 6 / 7 / 8 / 10 / 10b — alocação referencia o cadastro; origem única; funções diferentes por obra; desligado não entra; diária por alocação; CLT e sócio sem valor", async () => {
     const funcoes = await garantirFuncoesPadrao(tenant.id);
-    const mestre = funcoes.find((f) => f.nome === "Mestre de Obra")!.id;
-    const pedreiro = funcoes.find((f) => f.nome === "Pedreiro")!.id;
+    const mestre = funcoes.find((f) => f.nome === "Coordenador de campo")!.id;
+    const pedreiro = funcoes.find((f) => f.nome === "Técnico de campo")!.id;
     expect(await alocarMembro(fd({ projectId: obraA, stakeholderId: autonomoId, funcionarioId: cltId }))).toMatchObject({ ok: false, error: expect.stringMatching(/não os dois/) });
     expect(await alocarMembro(fd({ projectId: obraA, funcionarioId: desligadoId }))).toMatchObject({ ok: false, error: expect.stringMatching(/desligado/) });
     expect(await alocarMembro(fd({ projectId: obraA, funcionarioId: cltId, valorDiaria: "200" }))).toMatchObject({ ok: false, error: expect.stringMatching(/não têm diária/) });
@@ -88,7 +88,7 @@ describe.skipIf(!HAS_DB)("Equipes de Projetos (Prompt Z, Parte 3)", async () => 
     alocCltA = (r3 as { ok: true; id: string }).id;
     expect(await alocarMembro(fd({ projectId: obraA, stakeholderId: socioId }))).toMatchObject({ ok: true });
     const equipe = await getEquipeDoProjeto(tenant.id, obraA);
-    expect(equipe.map((m) => [m.nome, m.origem, m.funcaoNome, m.valorDiaria])).toEqual([["Carlos CLT", "clt", null, null], ["João Pedreiro", "autonomo", "Mestre de Obra", 250], ["Sócio Gestor", "socio", null, null]]);
+    expect(equipe.map((m) => [m.nome, m.origem, m.funcaoNome, m.valorDiaria])).toEqual([["Carlos CLT", "clt", null, null], ["João Pedreiro", "autonomo", "Coordenador de campo", 250], ["Sócio Gestor", "socio", null, null]]);
     // 5 — a alocação não copia nome nem documento
     const [row] = await db.select().from(schema.equipesProjeto).where(eq(schema.equipesProjeto.id, alocAutonomoA));
     expect(JSON.stringify(row)).not.toMatch(/João|52998224725/);
@@ -120,7 +120,7 @@ describe.skipIf(!HAS_DB)("Equipes de Projetos (Prompt Z, Parte 3)", async () => 
   it("11 / 12 — documento e foto por DIA (não por membro), várias imagens de uma vez", async () => {
     const [dia] = await getDiasDaEquipe(tenant.id, obraA);
     expect(await addEquipeDiaDocs(fd({ equipeDiaId: dia.id, tipo: "Diário", file: new File([new Uint8Array(5)], "x.jpg", { type: "image/jpeg" }) }))).toEqual({ ok: false, error: expect.stringMatching(/tipo do documento/) });
-    expect(await addEquipeDiaDocs(fd({ equipeDiaId: dia.id, tipo: "Foto da equipe no canteiro", file: [new File([new Uint8Array(5)], "a.jpg", { type: "image/jpeg" }), new File([new Uint8Array(5)], "b.jpg", { type: "image/jpeg" })] }))).toEqual({ ok: true, added: 2 });
+    expect(await addEquipeDiaDocs(fd({ equipeDiaId: dia.id, tipo: "Foto da equipe em campo", file: [new File([new Uint8Array(5)], "a.jpg", { type: "image/jpeg" }), new File([new Uint8Array(5)], "b.jpg", { type: "image/jpeg" })] }))).toEqual({ ok: true, added: 2 });
     const docs = await getDocumentsByEquipeDias(tenant.id, [dia.id]);
     expect(docs).toHaveLength(2);
     expect(docs.every((d) => d.equipeDiaId === dia.id && d.funcionarioId == null && d.stakeholderId == null)).toBe(true);
