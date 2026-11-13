@@ -9,6 +9,7 @@ import { logAudit } from "@/lib/audit";
 import { reservarNumero } from "@/lib/db/numbering";
 import { ehIndiceDeReajuste } from "@/lib/incc-regras";
 import { ymd } from "@/lib/utils";
+import { dataValida } from "@/lib/plano-regras";
 import { isR2Configured, putObject } from "@/lib/storage/r2";
 import { LIMITE_UPLOAD_BYTES, LIMITE_UPLOAD_MB } from "@/lib/clientes-regras";
 import {
@@ -53,7 +54,7 @@ const quem = (ctx: TenantContext) => ctx.userEmail || ctx.userId || null;
 function data(v: unknown, rotulo: string): { ok: true; v: string | null } | { ok: false; error: string } {
   const s = txt(v);
   if (!s) return { ok: true, v: null };
-  return ymd(s) != null && /^\d{2}\/\d{2}\/\d{4}$/.test(s) ? { ok: true, v: s } : { ok: false, error: `${rotulo}: data inválida.` };
+  return dataValida(s) ? { ok: true, v: s } : { ok: false, error: `${rotulo}: data inválida.` };
 }
 const competenciaValida = (v: unknown) => typeof v === "string" && /^(0[1-9]|1[0-2])\/\d{4}$/.test(v.trim());
 

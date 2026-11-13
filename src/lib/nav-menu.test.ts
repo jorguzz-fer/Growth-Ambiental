@@ -77,6 +77,9 @@ const TELAS_NOVAS: Record<string, string> = {
   "/contratos/medicoes": "contratos",
   "/contratos/reembolsos": "contratos",
   "/contratos/modalidades": "contratos",
+  // Growth Ambiental — Planejamento de projetos.
+  "/plano": "plano",
+  "/modelos": "modelos",
 };
 /**
  * Prompt V, 0.2: /medicaolanc SAIU do menu (continua rota e aba da tela única
