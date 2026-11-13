@@ -179,7 +179,7 @@ describe("rateio entre obras — CA-26 / CA-27", () => {
   });
 
   it("rateio vazio e valor negativo são recusados", () => {
-    expect(validarRateio(1000, [])).toContain("ao menos uma obra");
+    expect(validarRateio(1000, [])).toContain("ao menos um projeto");
     expect(
       validarRateio(1000, [{ projectId: "a", valor: -100, percentual: -10 }]),
     ).toContain("negativo");

@@ -62,7 +62,7 @@ describe("obras do rateio (Prompt I, §18)", () => {
     expect(recusaDeObrasDoRateio([{ projectId: "p1" }, { projectId: "p2" }], empresa)).toBeNull();
   });
   it("obra vazia, repetida ou de outra empresa: recusa", () => {
-    expect(recusaDeObrasDoRateio([{ projectId: "" }], empresa)).toMatch(/Escolha a obra/);
+    expect(recusaDeObrasDoRateio([{ projectId: "" }], empresa)).toMatch(/Escolha o projeto/);
     expect(recusaDeObrasDoRateio([{ projectId: "p1" }, { projectId: "p1" }], empresa)).toMatch(/duas vezes/);
     expect(recusaDeObrasDoRateio([{ projectId: "p9" }], empresa)).toMatch(/não pertence/);
   });

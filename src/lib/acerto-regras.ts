@@ -71,10 +71,10 @@ export function recusaDeAcerto(itens: readonly ItemDeAcerto[], despesas: Readonl
 export function recusaDeObrasDoRateio(linhas: readonly { projectId: string }[], projetosDaEmpresa: ReadonlySet<string>): string | null {
   const vistos = new Set<string>();
   for (const l of linhas) {
-    if (!l.projectId) return "Escolha a obra em todas as linhas do rateio.";
-    if (vistos.has(l.projectId)) return "A mesma obra aparece duas vezes no rateio.";
+    if (!l.projectId) return "Escolha o projeto em todas as linhas do rateio.";
+    if (vistos.has(l.projectId)) return "O mesmo projeto aparece duas vezes no rateio.";
     vistos.add(l.projectId);
-    if (!projetosDaEmpresa.has(l.projectId)) return "Uma das obras do rateio não pertence a esta empresa.";
+    if (!projetosDaEmpresa.has(l.projectId)) return "Um dos projetos do rateio não pertence a esta empresa.";
   }
   return null;
 }

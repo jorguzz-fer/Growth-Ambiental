@@ -87,7 +87,7 @@ export async function alocarMembro(fd: FormData): Promise<Resultado> {
   if (!ctx) return { ok: false, error: SEM_SESSAO };
   if (!can(ctx.perms, TELA, "criar")) return { ok: false, error: "Sem permissão para alocar na equipe." };
   const projectId = s(fd.get("projectId"));
-  if (!projectId || !ctx.projects.some((p) => p.id === projectId)) return { ok: false, error: "Obra não encontrada nesta empresa." };
+  if (!projectId || !ctx.projects.some((p) => p.id === projectId)) return { ok: false, error: "Projeto não encontrado nesta empresa." };
   const stakeholderId = s(fd.get("stakeholderId"));
   const funcionarioId = s(fd.get("funcionarioId"));
   const o = await origemDe(ctx.tenant.id, stakeholderId, funcionarioId);
@@ -179,7 +179,7 @@ export async function registrarDiariasDoDia(input: { projectId: string; data: st
   const ctx = await getTenantContext();
   if (!ctx) return { ok: false, error: SEM_SESSAO };
   if (!can(ctx.perms, TELA, "criar")) return { ok: false, error: "Sem permissão para registrar diárias." };
-  if (!ctx.projects.some((p) => p.id === input.projectId)) return { ok: false, error: "Obra não encontrada nesta empresa." };
+  if (!ctx.projects.some((p) => p.id === input.projectId)) return { ok: false, error: "Projeto não encontrado nesta empresa." };
   const data = (input.data ?? "").trim();
   if (!BR.test(data)) return { ok: false, error: "Informe a data do dia." };
   if (!input.itens?.length) return { ok: false, error: "Marque quem trabalhou no dia." };

@@ -81,7 +81,7 @@ describe.skipIf(!HAS_DB)("Prompt AG · rascunho da nota de serviço", async () =
 
   it("recusas: conta a receber de outra obra, obra sem Atual, valor inválido", async () => {
     como("owner");
-    expect(await salvarRascunhoDeNota(fd({ ...base, contaReceberId: contaDeOutra }))).toMatchObject({ ok: false, error: expect.stringContaining("não é desta obra") });
+    expect(await salvarRascunhoDeNota(fd({ ...base, contaReceberId: contaDeOutra }))).toMatchObject({ ok: false, error: expect.stringContaining("não é deste projeto") });
     expect(await salvarRascunhoDeNota(fd({ ...base, projectId: semAtual.id }))).toMatchObject({ ok: false, error: expect.stringContaining("versão Atual") });
     expect(await salvarRascunhoDeNota(fd({ ...base, valorServicos: "-5" }))).toMatchObject({ ok: false });
     expect(await salvarRascunhoDeNota(fd({ ...base, aliquotaIss: "7" }))).toMatchObject({ ok: false, error: expect.stringContaining("0 a 5%") });

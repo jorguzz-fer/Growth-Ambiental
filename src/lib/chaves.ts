@@ -41,9 +41,9 @@ export const CHAVES = [
     id: "restituicao_segue_despesa",
     titulo: "Saída da restituição segue a despesa",
     efeito:
-      "A saída de caixa de uma restituição avulsa (e o estorno dela) cai na obra da despesa restituída; a entrada de um repasse cai na obra do recebimento. Antes, caíam na obra aberta na tela. Só daqui em diante: nada já lançado muda. O lote continua na obra da tela até a decisão B11.",
+      "A saída de caixa de uma restituição avulsa (e o estorno dela) cai no projeto da despesa restituída; a entrada de um repasse cai no projeto do recebimento. Antes, caíam no projeto aberto na tela. Só daqui em diante: nada já lançado muda. O lote continua no projeto da tela até a decisão B11.",
     origem: "Prompt I, §21 (decisão B11, opção 2)",
-    previa: { href: "/restituicoes#previa", rotulo: "Restituições — em que obra cairão as próximas saídas" },
+    previa: { href: "/restituicoes#previa", rotulo: "Restituições — em que projeto cairão as próximas saídas" },
   },
   {
     id: "rascunho_fora_dos_relatorios",
@@ -65,17 +65,17 @@ export const CHAVES = [
     id: "fluxo_definicao_nova",
     titulo: "Fluxo de Caixa pela definição nova",
     efeito:
-      "No Fluxo de Caixa: o realizado vem sempre da versão Atual (antes, da primeira versão marcada); a permuta deixa de somar nas colunas de Orçamento e Previsão; projeto sem Atual mostra a ausência em vez de usar outra versão; o saldo acumulado de uma obra parte do caixa dela (não das contas da empresa) e corre pelo realizado nos meses fechados. Nada é gravado.",
+      "No Fluxo de Caixa: o realizado vem sempre da versão Atual (antes, da primeira versão marcada); a permuta deixa de somar nas colunas de Orçamento e Previsão; projeto sem Atual mostra a ausência em vez de usar outra versão; o saldo acumulado de um projeto parte do caixa dele (não das contas da empresa) e corre pelo realizado nos meses fechados. Nada é gravado.",
     origem: "Prompt AD, Partes 1, 2 e BAD-1 (8.1)",
-    previa: { href: "/chaves#previa-fluxo", rotulo: "Prévia — saldo e acumulado de hoje × definição nova, por obra" },
+    previa: { href: "/chaves#previa-fluxo", rotulo: "Prévia — saldo e acumulado de hoje × definição nova, por projeto" },
   },
   {
     id: "dashboard_definicao_nova",
     titulo: "Dashboard pela definição nova",
     efeito:
-      "No Dashboard: \"Entradas de caixa\" soma só a versão Atual (antes, todas as versões da obra); \"Executado\" é dividido por UM Orçamento, o mais recente que não é cópia (antes, a soma de todos); a margem usa a mesma janela de competências na receita e nos custos; o VGV vem da Atual em toda coluna; \"A receber\" do planejamento mostra o negativo; e os painéis de status passam a seguir o período. Nada é gravado.",
+      "No Dashboard: \"Entradas de caixa\" soma só a versão Atual (antes, todas as versões do projeto); \"Executado\" é dividido por UM Orçamento, o mais recente que não é cópia (antes, a soma de todos); a margem usa a mesma janela de competências na receita e nos custos; o VGV vem da Atual em toda coluna; \"A receber\" do planejamento mostra o negativo; e os painéis de status passam a seguir o período. Nada é gravado.",
     origem: "Prompt AA, 4-B.1, 4-B.2, 4-B.3, 4.5, 4.2 e 2.3.2 (10.2)",
-    previa: { href: "/chaves#previa-dashboard", rotulo: "Prévia — cada cartão hoje × definição nova, por obra" },
+    previa: { href: "/chaves#previa-dashboard", rotulo: "Prévia — cada cartão hoje × definição nova, por projeto" },
   },
   {
     id: "resumo_definicao_nova",
@@ -83,7 +83,7 @@ export const CHAVES = [
     efeito:
       "No Resumo Executivo: os sinais S1, S2 e S3 multiplicam pela quantidade (como o Ato e como a Projeção); permuta e liberação canceladas saem dos totais; a permuta por tipo compara com o cadastro e mostra \"outros tipos\" (a soma fecha); unidades Permutadas aparecem e o Total é a contagem de unidades; e a tela ganha os blocos Vendas, Exposição e Atenção. Nada é gravado.",
     origem: "Prompt AE, Partes 1, 2.3, 2.4, 2.6 e 2.7 (seção 6)",
-    previa: { href: "/chaves#previa-resumo", rotulo: "Prévia — os indicadores de hoje × definição nova, por obra" },
+    previa: { href: "/chaves#previa-resumo", rotulo: "Prévia — os indicadores de hoje × definição nova, por projeto" },
   },
   {
     id: "despesa_categoria_do_plano",
@@ -103,11 +103,11 @@ export const CHAVES = [
   },
   {
     id: "incc_por_empresa",
-    titulo: "INCC da empresa: uma série para todas as obras",
+    titulo: "INCC da empresa: uma série para todos os projetos",
     efeito:
-      "Todas as obras passam a ler a série do INCC da empresa (adotada na tela de INCC a partir da série de uma obra) onde o INCC corrige as parcelas: Caixa, comparação da Projeção e Simulador. O seletor de obra sai da tela de INCC. As séries de cada obra ficam guardadas, sem alteração: desligar volta a elas. Sem série da empresa adotada, ligar não muda nada.",
+      "Todos os projetos passam a ler a série do INCC da empresa (adotada na tela de INCC a partir da série de um projeto) onde o INCC corrige as parcelas: Caixa, comparação da Projeção e Simulador. O seletor de projeto sai da tela de INCC. As séries de cada projeto ficam guardadas, sem alteração: desligar volta a elas. Sem série da empresa adotada, ligar não muda nada.",
     origem: "Prompt Q2 (Fase 3, BQ2-1)",
-    previa: { href: "/chaves#previa-incc", rotulo: "Prévia — obras cuja série difere da série da empresa" },
+    previa: { href: "/chaves#previa-incc", rotulo: "Prévia — projetos cuja série difere da série da empresa" },
   },
   {
     id: "plano_definicao_nova",
@@ -121,17 +121,17 @@ export const CHAVES = [
     id: "dre_receita_rateio",
     titulo: "Receita da DRE pelo rateio do contrato",
     efeito:
-      "Na DRE (e onde ela aparece: DRE Analítica, gráfico do Dashboard, card Orçado x Realizado de Projetos), a receita da versão Atual passa a ser o total do contrato de cada unidade vendida (soma do plano de pagamento, só as seções com a caixinha \"Usar\" marcada), dividido igualmente pelos meses da obra, inclusive os que já passaram: cada venda nova revisa a DRE dos meses anteriores. Somam-se as contas a receber lançadas. Saem da receita da DRE as parcelas pelo vencimento, as liberações de obra e a revenda da permuta (o bem já está no contrato). O caixa (Fluxo, Contas a Receber, Caixa) não muda. Nada é gravado.",
+      "Na DRE (e onde ela aparece: DRE Analítica, gráfico do Dashboard, card Orçado x Realizado de Projetos), a receita da versão Atual passa a ser o total do contrato de cada unidade vendida (soma do plano de pagamento, só as seções com a caixinha \"Usar\" marcada), dividido igualmente pelos meses do projeto, inclusive os que já passaram: cada venda nova revisa a DRE dos meses anteriores. Somam-se as contas a receber lançadas. Saem da receita da DRE as parcelas pelo vencimento, as liberações de obra e a revenda da permuta (o bem já está no contrato). O caixa (Fluxo, Contas a Receber, Caixa) não muda. Nada é gravado.",
     origem: "Prompt AR, Fase 2 (BAR-6 e decisões de 11/11/2026); Prompt I, §54 e §57",
-    previa: { href: "/chaves#previa-rateio", rotulo: "Prévia — receita da DRE de hoje × rateio, por obra, e as pendências" },
+    previa: { href: "/chaves#previa-rateio", rotulo: "Prévia — receita da DRE de hoje × rateio, por projeto, e as pendências" },
   },
   {
     id: "caixa_conciliacao_por_conta",
-    titulo: "Caixa: conciliação por conta, sem obra no extrato",
+    titulo: "Caixa: conciliação por conta, sem projeto no extrato",
     efeito:
-      "O Caixa vira a tela de conciliação da empresa: saem o seletor de obra, o de versão e o modo comparação; a tela mostra a versão Atual de todas as obras; os cartões entram no bloco de saldos e cada conta ou cartão vira o filtro da tela. O extrato importado (e o do Open Finance) passa a nascer só com a conta: a obra de cada movimento vem do vínculo (a despesa, a conta a receber ou a parcela com que foi conciliado). Movimento sem vínculo aparece no realizado da empresa como \"não atribuído a obra\". Os movimentos que já existem mantêm a obra que têm: nenhum número antigo muda.",
+      "O Caixa vira a tela de conciliação da empresa: saem o seletor de projeto, o de versão e o modo comparação; a tela mostra a versão Atual de todos os projetos; os cartões entram no bloco de saldos e cada conta ou cartão vira o filtro da tela. O extrato importado (e o do Open Finance) passa a nascer só com a conta: o projeto de cada movimento vem do vínculo (a despesa, a conta a receber ou a parcela com que foi conciliado). Movimento sem vínculo aparece no realizado da empresa como \"não atribuído a projeto\". Os movimentos que já existem mantêm o projeto que têm: nenhum número antigo muda.",
     origem: "Prompt AT, seções 3 e 4 (decisão do dono de 08/11/2026)",
-    previa: { href: "/chaves#previa-caixa-conta", rotulo: "Prévia — movimentos e pendências por conta, e os movimentos sem obra" },
+    previa: { href: "/chaves#previa-caixa-conta", rotulo: "Prévia — movimentos e pendências por conta, e os movimentos sem projeto" },
   },
   {
     id: "parcela_recebida_situacao",
@@ -139,7 +139,7 @@ export const CHAVES = [
     efeito:
       "As parcelas de venda passam a ter situação em Contas a Receber (a vencer, recebida, parcial, vencida), pelos recebimentos conciliados no Caixa. A faixa do Caixa passa a contar nos atrasados as parcelas vencidas e não recebidas. No Fluxo de Caixa, a parte recebida da parcela sai do previsto (ela já está no realizado, pela entrada do extrato). Atenção: parcela antiga paga mas nunca conciliada aparece como vencida até ser conciliada. Conciliar a parcela no Caixa não depende desta chave.",
     origem: "Prompt AT, seção 5.3, e BAT-6 (decisão do dono de 12/11/2026)",
-    previa: { href: "/chaves#previa-parcela", rotulo: "Prévia — parcelas vencidas sem recebimento, por obra" },
+    previa: { href: "/chaves#previa-parcela", rotulo: "Prévia — parcelas vencidas sem recebimento, por projeto" },
   },
 ] as const satisfies readonly Chave[];
 

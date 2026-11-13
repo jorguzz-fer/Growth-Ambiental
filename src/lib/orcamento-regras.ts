@@ -2,7 +2,7 @@
  * Regras da grade de Orçamentos / Previsão Atualizada (Prompt D). Módulo PURO.
  *
  * - "Receitas do Projeto" é linha FIXA do sistema (BD-5): o total vem do
- *   cadastro do projeto (BD-1: entrada financeira da construtora) e a
+ *   cadastro do projeto (BD-1: entrada financeira da empresa) e a
  *   distribuição mensal é do usuário. Não é grupo do Plano de Contas e não
  *   pode ser removida (4-A.4).
  * - As demais linhas vêm dos grupos do Plano de Contas da natureza do bloco,
@@ -47,7 +47,7 @@ export interface CadastroDeReceita {
 const informado = (v: string | number | null | undefined) => !(v === null || v === undefined || String(v).trim() === "");
 
 /**
- * BD-1: o total de "Receitas do Projeto" = entrada financeira da construtora
+ * BD-1: o total de "Receitas do Projeto" = entrada financeira da empresa
  * (regra que a tela de Projetos já mostra). `null` = o cadastro não tem valor
  * de receita — a célula mostra "falta preencher", nunca R$ 0,00 (3.5).
  */

@@ -544,7 +544,7 @@ export async function ratearEntreObras(
 ): Promise<AcertoResult> {
   const ctx = await getTenantContext();
   if (!ctx || !can(ctx.perms, "despesas", "criar") || !can(ctx.perms, "caixa", "criar")) {
-    return { ok: false, error: "Sem permissão para ratear pagamentos entre obras." };
+    return { ok: false, error: "Sem permissão para ratear pagamentos entre projetos." };
   }
   // Prompt S, 3-C — um PED por obra é despesa: categoria credora recusada.
   if (input.categoriaDre && !categoriaValidaParaDespesa(input.categoriaDre)) {
@@ -606,11 +606,11 @@ export async function ratearEntreObras(
         const versao = await getAtualVersion(ctx.tenant.id, linha.projectId);
         if (!versao) {
           throw new Error(
-            "Uma das obras do rateio não tem versão Atual — crie-a antes de ratear.",
+            "Um dos projetos do rateio não tem versão Atual — crie-a antes de ratear.",
           );
         }
         if (versao.locked) {
-          throw new Error("Uma das obras do rateio está com a versão Atual congelada — rateio bloqueado.");
+          throw new Error("Um dos projetos do rateio está com a versão Atual congelada — rateio bloqueado.");
         }
         versaoPrimeira ??= versao.id;
         const numObra = await reserveDespesaNumber(ctx.tenant.id);
@@ -670,7 +670,7 @@ export async function ratearEntreObras(
           tenantId: ctx.tenant.id,
           bankAccountId: input.bankAccountId || null,
           data: input.dataPagamento || null,
-          descricao: `Rateio entre obras — acerto ${numDoc}`,
+          descricao: `Rateio entre projetos — acerto ${numDoc}`,
           valor: String(-valorTotal),
           cat: "acerto",
           rec: true,

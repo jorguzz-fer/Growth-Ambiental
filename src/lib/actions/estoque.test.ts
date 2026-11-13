@@ -89,7 +89,7 @@ describe.skipIf(!HAS_DB)("Estoque — actions (Prompt Y, PR Y-1)", async () => {
   });
 
   it("10 / 12 / 2 / 10a — saída exige obra; maior que o saldo avisa e só grava com confirmação; saldo negativo aparece; nenhuma despesa criada ou alterada", async () => {
-    expect(await addStockMovement(fd({ itemId, tipo: "saida", quantidade: "3" }))).toMatchObject({ ok: false, error: expect.stringMatching(/qual obra/) });
+    expect(await addStockMovement(fd({ itemId, tipo: "saida", quantidade: "3" }))).toMatchObject({ ok: false, error: expect.stringMatching(/qual projeto/) });
     const r1 = await addStockMovement(fd({ itemId, tipo: "saida", quantidade: "25", projectId, origem: "Consumo na obra" }));
     expect(r1).toMatchObject({ ok: false, precisaConfirmar: true, error: expect.stringMatching(/fica em -15 sc/) });
     expect(await saldo()).toBe(10); // nada gravado

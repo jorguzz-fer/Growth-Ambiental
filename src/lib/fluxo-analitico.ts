@@ -34,7 +34,7 @@ const r2 = (v: number) => Math.round(v * 100) / 100;
 const porCodigo = (a: string, b: string) => a.localeCompare(b, undefined, { numeric: true });
 
 const BLOCOS = [
-  { id: "cef", label: "Obra (grupos CEF)" },
+  { id: "cef", label: "Custos diretos dos serviços" },
   { id: "complementar", label: "Complementares" },
   { id: "ressarcimento", label: "Ressarcimentos a terceiros" },
   { id: "sem", label: "Sem conta do plano" },

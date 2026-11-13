@@ -156,7 +156,7 @@ export async function pagarFatura(input: PagarFaturaInput): Promise<ResultadoPag
   if (!(valor > 0)) return { ok: false, error: "Informe um valor maior que zero." };
   if (!input.data || !ymd(input.data)) return { ok: false, error: "Informe a data do pagamento." };
   const versaoCaixa = await getWorkingVersion(ctx.tenant.id, input.projectId);
-  if (!versaoCaixa) return { ok: false, error: "Escolha a obra em que a saída de caixa será lançada." };
+  if (!versaoCaixa) return { ok: false, error: "Escolha o projeto em que a saída de caixa será lançada." };
   if (versaoCaixa.locked) return { ok: false, error: "Versão congelada — pagamento bloqueado." };
 
   try {
@@ -315,7 +315,7 @@ export async function informarJurosDaFatura(input: JurosDaFaturaInput): Promise<
   if (!(valor > 0)) return { ok: false, error: "Informe o valor do juro cobrado." };
   if (!input.data || !ymd(input.data)) return { ok: false, error: "Informe a data da cobrança." };
   const versao = await getWorkingVersion(ctx.tenant.id, input.projectId);
-  if (!versao) return { ok: false, error: "Escolha a obra em que a despesa financeira será lançada." };
+  if (!versao) return { ok: false, error: "Escolha o projeto em que a despesa financeira será lançada." };
   if (versao.locked) return { ok: false, error: "Versão congelada." };
   try {
     const despesaId = await db.transaction(async (tx) => {
