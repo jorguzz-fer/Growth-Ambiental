@@ -131,10 +131,9 @@ export function Sidebar({ perms, mobileOpen, onCloseMobile }: SidebarProps) {
         <div className={`flex items-center gap-[11px] ${rail ? "justify-center px-0 py-[22px]" : "px-5 pb-5 pt-[22px]"}`}>
           <div className="grid h-[34px] w-[34px] flex-none place-items-center rounded-[9px] bg-white">
             <svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path
-                d="M12 2L3 7v13a1 1 0 0 0 1 1h5v-7h6v7h5a1 1 0 0 0 1-1V7l-9-5z"
-                fill="var(--color-brand)"
-              />
+              {/* árvore: copa em três camadas + tronco */}
+              <path d="M12 2 7.5 8H10l-4 5h3l-4 5h14l-4-5h3l-4-5h2.5L12 2z" fill="#16a34a" />
+              <rect x="10.75" y="18" width="2.5" height="4" rx="0.6" fill="#92400e" />
             </svg>
           </div>
           {!rail && (
@@ -143,7 +142,7 @@ export function Sidebar({ perms, mobileOpen, onCloseMobile }: SidebarProps) {
                 GROWTH
               </div>
               <div className="mt-1 text-[9.5px] tracking-[2.2px] text-[var(--color-nav-mut)]">
-                CONSTRUCTION
+                AMBIENTAL
               </div>
             </div>
           )}

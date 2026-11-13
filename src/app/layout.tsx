@@ -29,7 +29,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Growth Tools · Construction App",
+  title: "Growth Tools · Ambiental App",
   description:
     "FP&A e BI para incorporadoras imobiliárias — Tools for Growth (TFG).",
 };
