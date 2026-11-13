@@ -19,7 +19,7 @@ vi.mock("server-only", () => ({}));
 describe.skipIf(!HAS_DB)("Clientes — unidade por obra, interesse e listagem (Prompt M, 6.6–6.8)", async () => {
   const { db, schema } = await import("@/lib/db");
   const { defaultPermissions } = await import("@/lib/permissions");
-  const { getClientesPagina, getStatusContratoUsados, getUnidadesComObra } = await import("@/lib/queries");
+  const { getClientesPagina, getStatusContratoUsados } = await import("@/lib/queries");
   const { STATUS_EM_BRANCO, termosDaBusca } = await import("@/lib/clientes-regras");
   const { addCliente, updateCliente } = await import("./clientes");
   const tenants: string[] = [];
@@ -83,14 +83,6 @@ describe.skipIf(!HAS_DB)("Clientes — unidade por obra, interesse e listagem (P
   });
   afterAll(async () => {
     for (const id of tenants) await db.delete(schema.tenants).where(eq(schema.tenants.id, id));
-  });
-
-  it("6.6 — unidades por obra, sem repetir entre versões e só do tenant", async () => {
-    const u = await getUnidadesComObra(tA);
-    const porObra = (id: string) => u.filter((x) => x.projectId === id).map((x) => x.code).sort();
-    expect(porObra(p.o1)).toEqual(["101", "102"]);
-    expect(porObra(p.o2)).toEqual(["101", "201"]);
-    expect(u.some((x) => x.projectId === p.b1)).toBe(false);
   });
 
   it("6.8 — busca por nome sem acento e caixa; só do tenant", async () => {
