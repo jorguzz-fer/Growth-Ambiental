@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import * as XLSX from "xlsx";
 import { buildTemplateBuffer, parseWorkbook, SHEETS } from "./growth-template";
 import type { InccRow } from "@/lib/calc/types";
-import { PLANO_CONTAS } from "@/lib/calc/constants";
+import { PLANO_CONTAS_PADRAO as PLANO_CONTAS } from "@/lib/calc/plano-ambiental";
 
 const incc: InccRow[] = [
   { m: "05/2025", mo: 0.26, ac: 0.26 },

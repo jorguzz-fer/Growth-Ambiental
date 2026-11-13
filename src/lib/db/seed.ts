@@ -11,12 +11,12 @@
 import { eq } from "drizzle-orm";
 import { db, schema } from "./index";
 import {
-  PLANO_CONTAS,
   PAPEIS_STAKEHOLDER,
   DEFAULT_INCC,
 } from "@/lib/calc/constants";
 import { bla401, emptyUnit } from "@/lib/calc/__fixtures__";
 import { hashPassword } from "@/lib/password";
+import { PLANO_CONTAS_PADRAO, linhasDoPlano } from "@/lib/calc/plano-ambiental";
 import type { CalcUnit } from "@/lib/calc/types";
 
 /** Senha inicial dos usuários semeados — TROCAR no primeiro acesso. */
@@ -140,15 +140,8 @@ async function seedDemoData(tenantId: string) {
     .returning();
   const forecast = insertedVersions.find((v) => v.key === "forecast")!;
 
-  console.log("Plano de contas (CEF + complementar)...");
-  const chartRows = [
-    ...PLANO_CONTAS.obra.flatMap((g) =>
-      g.sub.map((s) => ({ tenantId, code: s.id, name: s.nome, groupCode: g.id, groupName: g.nome, kind: "cef" as const })),
-    ),
-    ...PLANO_CONTAS.complementar.flatMap((g) =>
-      g.sub.map((s) => ({ tenantId, code: s.id, name: s.nome, groupCode: g.id, groupName: g.nome, kind: "complementar" as const })),
-    ),
-  ];
+  console.log("Plano de contas (consultoria ambiental)...");
+  const chartRows = linhasDoPlano(PLANO_CONTAS_PADRAO, tenantId);
   await db.insert(schema.chartAccounts).values(chartRows);
   console.log(`  ${chartRows.length} subitens.`);
 

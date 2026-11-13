@@ -49,6 +49,10 @@ const PADRAO_POR_GRUPO: Readonly<Record<string, CategoriaDRE>> = {
   RH: "Custo Fixo",
   P: "Custo Variável", // pós-obra é custo da obra entregue
   TR: "Custo Variável", // INSS de obra, ISS, taxas e ITBI do empreendimento
+  // Plano da Growth Ambiental (plano-ambiental.ts). Códigos que o plano de
+  // construção não usa — não mudam a DRE de quem está nele.
+  IMP: "Despesa Variável", // imposto sobre o faturamento acompanha a receita
+  J: "Despesa Fixa", // jurídico e registros da empresa: estrutura
 };
 
 export const ehCategoria = (v: unknown): v is CategoriaDRE =>

@@ -288,14 +288,14 @@ A tela Consolidado saiu. O endereço /consolidado leva à **Projeção de Receit
 
 ## Plano de Contas (/planocontas) — módulo Planejamento
 
-**Para que serve:** manter os grupos e subitens que classificam orçamento e despesas. A classificação é dupla: Grupo CEF/Obra + Categoria DRE.
+**Para que serve:** manter os grupos e subitens que classificam orçamento e despesas. A classificação é dupla: grupo do plano + Categoria DRE.
 
 **O que se faz:**
-- Grupos CEF / Obra e Grupos Complementares.
+- Custos diretos dos projetos (campo, laboratório, terceiros técnicos, órgãos ambientais) e "Receitas, impostos e estrutura" (receitas de serviços, impostos sobre o faturamento e a estrutura da empresa).
 - Criar grupo ou subitem (código, nome, natureza Despesa/Receita), renomear o grupo, editar, inativar ou excluir.
 - **Categoria da DRE de cada conta**: aparece ao lado de cada subitem, com "(padrão)" quando segue a boa prática do sistema. Em "Editar", escolha outra categoria ou "Padrão" para voltar. Conta de despesa não aceita "Receita"; conta de receita é sempre "Receita".
 - A lista das Categorias DRE fica ao lado e é **fixa**.
-- **Contas novas com a Cris**: diga, dite ou anexe a lista de contas ("crie Topografia no grupo 1, código 1.11"). A Cris propõe até 10 contas por vez, só em grupos que já existem; a tela mostra a lista para conferir, com a categoria da DRE que cada uma vai ter, e quem cria é o botão "Criar as contas marcadas". Criar grupo, inativar, excluir e reordenar continuam pelos botões da tela.
+- **Contas novas com a Cris**: diga, dite ou anexe a lista de contas ("crie Batimetria no grupo 1, código 1.7"). A Cris propõe até 10 contas por vez, só em grupos que já existem; a tela mostra a lista para conferir, com a categoria da DRE que cada uma vai ter, e quem cria é o botão "Criar as contas marcadas". Criar grupo, inativar, excluir e reordenar continuam pelos botões da tela.
 
 **O que confunde:**
 - A Natureza define o bloco da linha em Orçamentos.

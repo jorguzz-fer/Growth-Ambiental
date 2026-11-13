@@ -8,13 +8,13 @@ export default function Home() {
         Tools for Growth · TFG
       </span>
       <h1 className="mt-3 font-[family-name:var(--font-serif)] text-4xl text-[var(--color-ink)] sm:text-5xl">
-        Growth Tools{" "}
-        <span className="text-[var(--color-accent2)]">Construction</span>
+        Growth{" "}
+        <span className="text-[var(--color-brand-segmento)]">Ambiental</span>
       </h1>
       <p className="mt-4 max-w-xl text-[var(--color-ink2)]">
-        FP&amp;A e BI para incorporadoras imobiliárias. Projeção de receitas,
-        controle de despesas por plano de contas CEF, conciliação de caixa e
-        relatórios gerenciais — em uma única ferramenta.
+        Gestão financeira, FP&amp;A e BI para consultorias ambientais. Receita
+        por contrato e projeto, custos de campo e de laboratório, conciliação
+        de caixa e relatórios gerenciais — em uma única ferramenta.
       </p>
       <div className="mt-8 flex gap-3">
         <Link href="/dashboard" className={buttonVariants({ size: "lg" })}>
