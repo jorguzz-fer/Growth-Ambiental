@@ -11,9 +11,14 @@
  * demonstração tem sempre ~12 meses de histórico e ~12 meses de projeção.
  */
 
+/** Nomes que a empresa de demonstração já teve: a recriação também os apaga. */
+export const NOMES_ANTERIORES = ["Veredas Consultoria Ambiental"];
+/** E-mails da equipe em versões anteriores (removidos na recriação, se ficarem sem empresa). */
+export const EMAILS_ANTERIORES = ["helena.duarte", "fernanda.rocha", "rafael.moura"].map((u) => `${u}@veredas-ambiental.exemplo`);
+
 export const EMPRESA = {
-  nome: "Veredas Consultoria Ambiental",
-  nomeFantasia: "Veredas Ambiental",
+  nome: "Consultoria Ambiental",
+  nomeFantasia: "Consultoria Ambiental",
   municipio: "Curitiba",
   uf: "PR",
   cnae: "7119-7/03",
@@ -109,9 +114,9 @@ export const FUNCIONARIOS = [
 
 /** Membros da equipe com login (sem senha: só aparecem em Usuários). */
 export const EQUIPE_COM_ACESSO = [
-  { nome: "Helena Martins Duarte", email: "helena.duarte@veredas-ambiental.exemplo", role: "admin" },
-  { nome: "Fernanda Lima Rocha", email: "fernanda.rocha@veredas-ambiental.exemplo", role: "membro" },
-  { nome: "Rafael Tavares Moura", email: "rafael.moura@veredas-ambiental.exemplo", role: "engenheiro" },
+  { nome: "Helena Martins Duarte", email: "helena.duarte@consultoria-ambiental.exemplo", role: "admin" },
+  { nome: "Fernanda Lima Rocha", email: "fernanda.rocha@consultoria-ambiental.exemplo", role: "membro" },
+  { nome: "Rafael Tavares Moura", email: "rafael.moura@consultoria-ambiental.exemplo", role: "engenheiro" },
 ] as const;
 
 export const ESTOQUE = [
