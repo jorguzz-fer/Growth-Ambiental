@@ -29,9 +29,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Growth Tools · Ambiental App",
+  title: "Growth Ambiental",
   description:
-    "FP&A e BI para incorporadoras imobiliárias — Tools for Growth (TFG).",
+    "Gestão financeira, FP&A e BI para consultorias ambientais — Tools for Growth (TFG).",
 };
 
 export default function RootLayout({

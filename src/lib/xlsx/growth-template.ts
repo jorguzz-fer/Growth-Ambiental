@@ -1,5 +1,5 @@
 import * as XLSX from "xlsx";
-import { PLANO_CONTAS } from "@/lib/calc/constants";
+import { PLANO_CONTAS_PADRAO as PLANO_CONTAS } from "@/lib/calc/plano-ambiental";
 import { emptyPlan } from "@/lib/calc/plan";
 import { calcUnitTotal } from "@/lib/calc/projection";
 import type { InccRow, PaymentPlan, UnitStatus } from "@/lib/calc/types";
@@ -75,7 +75,7 @@ export function buildTemplateBuffer(incc: InccRow[]): Buffer {
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([REEMB_HEADERS]), SHEETS.reembolso);
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([PERM_HEADERS]), SHEETS.permuta);
 
-  // Despesas_CEF (91 subitens do plano de contas × 48 meses em branco)
+  // Despesas_CEF (subitens do plano de contas padrão × 48 meses em branco)
   const despRows: (string | number)[][] = [DESP_HEADERS];
   for (const g of [...PLANO_CONTAS.obra, ...PLANO_CONTAS.complementar]) {
     for (const s of g.sub) despRows.push([g.nome, s.nome, ...Array(48).fill("")]);
@@ -347,7 +347,7 @@ export function parseWorkbook(buffer: Buffer | ArrayBuffer): ParsedWorkbook {
   return { incc, units, reembolsos, permutas, despesas };
 }
 
-/** Mapa nome-do-subitem → código do plano de contas (grupos de obra). */
+/** Mapa nome-do-subitem → código do plano de contas padrão (custos diretos + estrutura). */
 function subitemNameToCode(): Map<string, string> {
   const m = new Map<string, string>();
   for (const g of PLANO_CONTAS.obra) for (const s of g.sub) m.set(s.nome, s.id);

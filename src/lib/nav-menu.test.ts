@@ -70,11 +70,18 @@ const TELAS_NOVAS: Record<string, string> = {
   "/dre/analitica": "dre", // Prompt AC3: mora sob /dre, mesma permissão
   "/fluxocaixa/analitico": "fluxocaixa", // Prompt AD3: mora sob /fluxocaixa, mesma permissão
   "/relatorios": "relatorios", // Prompt RC: tela nova, chave própria
+  // Growth Ambiental — módulo Contratos: tudo sob /contratos, uma chave de rota.
+  "/contratos": "contratos",
+  "/contratos/painel": "contratos",
+  "/contratos/aditivos": "contratos",
+  "/contratos/medicoes": "contratos",
+  "/contratos/reembolsos": "contratos",
+  "/contratos/modalidades": "contratos",
 };
 /**
  * Prompt V, 0.2: /medicaolanc SAIU do menu (continua rota e aba da tela única
  * de Medição de Obra). O item /medicao aparece para quem tem `medicao` OU
- * `medicaolanc` — o engenheiro continua vendo o módulo Obra.
+ * `medicaolanc` — o engenheiro continua vendo o módulo Projetos (antigo Obra).
  */
 const FUNDIDAS_NO_ITEM: Record<string, string> = { "/medicao": "medicaolanc" };
 /** Prompt AL: /contabilidade saiu do sistema (virou redirecionamento para /usuarios). */
@@ -131,6 +138,8 @@ describe("NAV_MENU — nenhuma tela se perde", () => {
  */
 const EXIGE_DA_PAGINA: Record<string, [string, "ver" | "editar"][]> = {
   "/acerto": [["despesas", "editar"], ["caixa", "ver"]],
+  "/contratos/reembolsos": [["contratosfinanceiro", "ver"]],
+  "/contratos/modalidades": [["contratos", "editar"]],
 };
 
 /** Visibilidade pela regra de sempre, sobre a lista antiga mais as novas. */
@@ -224,7 +233,9 @@ describe("isItemActive — prefixo na fronteira de segmento", () => {
     }
     // Só os analíticos casam com o relatório-pai pelo prefixo; nenhum outro par.
     const pares = todos.flatMap((x) => todos.filter((y) => y !== x && isItemActive(x.href, y.href)).map((y) => `${x.href}>${y.href}`));
-    expect(pares).toEqual(["/dre/analitica>/dre", "/fluxocaixa/analitico>/fluxocaixa"]);
+    // Contratos: as telas do módulo moram sob /contratos (o mais específico vence).
+    const doModulo = ["painel", "aditivos", "medicoes", "reembolsos", "modalidades"].map((t) => `/contratos/${t}>/contratos`);
+    expect(pares).toEqual(["/dre/analitica>/dre", "/fluxocaixa/analitico>/fluxocaixa", ...doModulo]);
   });
 
   it("/perfil e rota nula não ativam nada", () => {
@@ -233,7 +244,7 @@ describe("isItemActive — prefixo na fronteira de segmento", () => {
   });
 
   it("módulo ativo acompanha a tela", () => {
-    expect(activeModuleId("/projeto")).toBe("planejamento");
+    expect(activeModuleId("/projeto")).toBe("obra"); // Growth Ambiental: módulo Projetos
     expect(activeModuleId("/unidades/nova")).toBe("receitas");
     expect(activeModuleId("/diagnosticoia")).toBe("config"); // Prompt AM2: virou Diagnóstico de IA, em Configurações
     expect(activeModuleId("/conferencia")).toBe("config");
@@ -255,6 +266,10 @@ describe("Prompt REN (Fase 3) — mudanças de menu e rótulos", () => {
   it("Projeção de Receitas mora em Business Intelligence; Cartões, no Caixa", () => {
     expect(moduloDe("/projecao")).toBe("bi");
     expect(moduloDe("/cartoes")).toBe("caixa");
+  });
+
+  it("Growth Ambiental: o módulo Obra se chama Projetos", () => {
+    expect(NAV_MENU.find((m) => m.id === "obra")!.label).toBe("Projetos");
   });
 
   it("nada em inglês nem 'Obra' genérico nos rótulos renomeados", () => {

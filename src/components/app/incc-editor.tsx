@@ -4,7 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { InccRow } from "@/lib/calc";
 import { definirVarianteIncc, marcarComoProjecao, projectFutureIncc, updateInccMonth } from "@/lib/actions/incc";
-import { avisoDeFaixa, JANELA_DA_MEDIA, mesesFuturosOficiais, mesesNaMedia, ordDeHoje, VARIANTES_DO_INCC } from "@/lib/incc-regras";
+import { avisoDeFaixa, INDICES_DE_REAJUSTE, JANELA_DA_MEDIA, mesesFuturosOficiais, mesesNaMedia, ordDeHoje, publicadorDoIndice } from "@/lib/incc-regras";
 import type { InccLinhaDaTela } from "@/lib/queries";
 import { Input, Label, Select } from "@/components/ui/input";
 import { dateBR } from "@/lib/utils";
@@ -15,7 +15,7 @@ import { Table, THead, TH, TR, TD } from "@/components/ui/table";
 const CONFIRM_MSG = "Confirma a alteração deste índice? Ela recalcula os meses projetados e muda os números do Caixa e da comparação entre cenários na próxima renderização.";
 
 /**
- * Editor da tabela INCC (Prompt Q).
+ * Editor da série de índice de reajuste (antiga tabela INCC, Prompt Q).
  *
  * 1.2 — a projeção NUNCA roda sozinha: se há meses futuros ainda oficiais, a
  * tela informa e oferece a ação; o botão de reprojetar só recalcula os meses
@@ -88,8 +88,13 @@ export function InccEditor({ projectId, initial, variante, canEdit }: { projectI
 
   const mudarVariante = (v: string) => {
     if (!v) return;
-    if (!window.confirm(`Declarar que esta tabela guarda o ${v}? Nenhum índice muda; é só o rótulo do que a tabela é.`)) return;
-    rodar(() => definirVarianteIncc(projectId, v), () => `Variante declarada: ${v}.`);
+    if (
+      !window.confirm(
+        `Declarar que esta série guarda o ${v}? Nenhum valor da tabela muda: é só o rótulo do que a série é.\n\nSe a tabela guardava outro índice, informe os valores do ${v} mês a mês depois de trocar.`,
+      )
+    )
+      return;
+    rodar(() => definirVarianteIncc(projectId, v), () => `Índice declarado: ${v}.`);
   };
 
   return (
@@ -97,10 +102,10 @@ export function InccEditor({ projectId, initial, variante, canEdit }: { projectI
       {canEdit && (
         <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
           <div>
-            <Label>Variante do índice (BQ-1)</Label>
+            <Label>Índice da série</Label>
             <Select value={variante ?? ""} onChange={(e) => mudarVariante(e.target.value)} disabled={pending}>
               <option value="">— a confirmar —</option>
-              {VARIANTES_DO_INCC.map((v) => (
+              {INDICES_DE_REAJUSTE.map((v) => (
                 <option key={v} value={v}>
                   {v}
                 </option>
@@ -109,14 +114,14 @@ export function InccEditor({ projectId, initial, variante, canEdit }: { projectI
           </div>
           <div className="sm:col-span-2">
             <Label>Fonte do índice informado (opcional)</Label>
-            <Input value={fonte} onChange={(e) => setFonte(e.target.value)} placeholder="Ex.: FGV · divulgação de 05/10/2026" disabled={pending} />
+            <Input value={fonte} onChange={(e) => setFonte(e.target.value)} placeholder={`Ex.: ${publicadorDoIndice(variante) ?? "IBGE"} · divulgação de 10/10/2026`} disabled={pending} />
           </div>
         </div>
       )}
       {canEdit && futurosOficiais.length > 0 && (
         <div role="status" className="mb-4 rounded-[10px] border border-[var(--color-warning)]/40 bg-[#fef3c7]/60 px-4 py-2.5 text-[13px] text-[#92400e]">
           Há <strong>{futurosOficiais.length}</strong> mês(es) futuro(s) marcado(s) como oficial(is) e sem projeção ({futurosOficiais.slice(0, 6).join(", ")}
-          {futurosOficiais.length > 6 ? "…" : ""}). Nada é projetado sozinho: se esses meses não foram informados pela FGV, converta-os em projeção pela ação do
+          {futurosOficiais.length > 6 ? "…" : ""}). Nada é projetado sozinho: se o índice desses meses ainda não foi divulgado, converta-os em projeção pela ação do
           mês ou pelo botão abaixo.
         </div>
       )}
@@ -146,7 +151,7 @@ export function InccEditor({ projectId, initial, variante, canEdit }: { projectI
 
       <p className="mb-4 rounded-[8px] bg-[var(--color-surface2)] px-3 py-2 text-[12px] leading-relaxed text-[var(--color-ink3)]">
         Edite qualquer índice diretamente na tabela — a alteração pede confirmação, marca o mês como oficial e recalcula só os meses projetados. Meses
-        oficiais nunca são sobrescritos pela projeção, estejam no futuro ou não. Índice fora da faixa usual avisa e deixa salvar; o INCC pode ser negativo.
+        oficiais nunca são sobrescritos pela projeção, estejam no futuro ou não. Índice fora da faixa usual avisa e deixa salvar; o índice pode ser negativo (deflação).
       </p>
 
       <Table>

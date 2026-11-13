@@ -155,3 +155,22 @@ export function mensagemColisaoNumDoc(e: unknown, numDoc: string | null): string
   if (!texto.includes(INDICE_NUM_DOC) && !(codigo === "23505" && /num_doc/.test(texto))) return null;
   return `O número ${numDoc ?? ""} já foi usado em outra despesa desta empresa. Nada foi gravado. Confira o "próximo número" na tela Numeração de Despesas — ele provavelmente foi recuado para uma faixa já emitida.`;
 }
+
+/**
+ * Growth Ambiental — reserva o próximo número de uma entidade qualquer
+ * (ex.: "contrato" → "CT-000001"), com a mesma garantia da numeração das
+ * despesas: `UPDATE ... RETURNING` em transação, sem repetir nem reaproveitar.
+ * A sequência nasce em 1 na primeira reserva (entidade nova não tem histórico).
+ */
+export async function reservarNumero(tenantId: string, entity: string, prefixo: string): Promise<string> {
+  return db.transaction(async (tx) => {
+    await tx.insert(schema.numberSequences).values({ tenantId, entity, prefix: prefixo, nextNumber: 1 }).onConflictDoNothing();
+    const [u] = await tx
+      .update(schema.numberSequences)
+      .set({ nextNumber: sql`${schema.numberSequences.nextNumber} + 1`, updatedAt: new Date() })
+      .where(and(eq(schema.numberSequences.tenantId, tenantId), eq(schema.numberSequences.entity, entity)))
+      .returning();
+    const num = String(u.nextNumber - 1).padStart(u.digits, "0");
+    return u.usePrefix && u.prefix ? `${u.prefix}-${num}` : num;
+  });
+}

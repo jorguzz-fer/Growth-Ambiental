@@ -184,7 +184,7 @@ Quase toda tela pede a obra no seletor do topo; com a versão de trabalho congel
 
 ---
 
-## Medição de Projeto (/medicao e /medicaolanc) — módulo Obra
+## Medição de Projeto (/medicao e /medicaolanc) — módulo Projetos
 
 **Para que serve:** registra o valor medido por grupo de obra (grupos CEF do Plano de Contas) em cada competência e compara com o orçado no Relatório CEF. É informação auxiliar: **não entra na DRE**.
 
@@ -214,7 +214,7 @@ Quase toda tela pede a obra no seletor do topo; com a versão de trabalho congel
 
 ---
 
-## Estoque (/estoque) — módulo Obra
+## Estoque (/estoque) — módulo Projetos
 
 **Para que serve:** é o controle **físico** do almoxarifado: o que entrou, de onde veio e para qual obra saiu. **Não tem efeito contábil**, porque o custo já está na despesa de compra.
 
@@ -238,14 +238,14 @@ Quase toda tela pede a obra no seletor do topo; com a versão de trabalho congel
 
 ---
 
-## Parâmetros / INCC (/parametros) — módulo Obra
+## Índices de Reajuste (/parametros) — módulo Projetos
 
-**Para que serve:** guarda a tabela do INCC, com a variação mensal e o acumulado. Essa tabela é usada para corrigir as parcelas a partir da 5ª.
+**Para que serve:** guarda a série do índice de reajuste (IPCA, IGP-M, INPC ou uma das variantes do INCC), com a variação mensal e o acumulado. A série corrige as parcelas dos planos de pagamento a partir da 5ª. O reajuste anual dos contratos de consultoria entra quando o cadastro de contratos existir. A tela se chamava "Parâmetros / INCC".
 
 **INCC da empresa (uma série só):** o INCC vai ser um por empresa. Hoje cada obra ainda tem a própria tabela. Na tela, o proprietário ou um administrador **adota a série de uma obra como a da empresa** (as tabelas das obras ficam guardadas). A série da empresa só passa a valer quando a plataforma liga a chave "INCC da empresa": aí todas as obras leem a mesma série, o seletor de obra sai da tela e a edição vale para a empresa. Desligar volta às tabelas de cada obra.
 
 **O que se faz nela:**
-- Escolher a variante (DI, M ou 10) e informar a fonte do índice.
+- Escolher qual índice a série guarda (IPCA, IGP-M, INPC, INCC-DI, INCC-M ou INCC-10) e informar a fonte (IBGE ou FGV). Trocar o índice não muda os valores: eles são informados mês a mês.
 - Editar a variação de um mês na tabela. A edição pede confirmação, marca o mês como **Oficial** e recalcula só os meses projetados. Pode ser negativa, e um valor fora da faixa usual gera aviso, mas pode ser salvo.
 - **Recalcular projeção**: preenche os meses "Projeção" com a média móvel. Meses oficiais nunca são sobrescritos.
 - **Projetar**: devolve à projeção um mês futuro que foi marcado como oficial por engano.
@@ -322,10 +322,10 @@ Quase toda tela pede a obra no seletor do topo; com a versão de trabalho congel
 - Para **ligar o comprador à unidade**, vá em Receitas → Clientes → Novo ou Editar → Unidade comprada e Status do contrato.
 - Para **registrar um recebimento avulso**, vá em Receitas → Contas a Receber → crie a conta → Receber → "Extrato bancário" (para conciliar) ou outra forma, com justificativa.
 - Para **lançar a liberação do banco**, vá em Receitas → Liberações de Obra → "+ Nova liberação".
-- Para **lançar uma medição**, vá em Obra → Medição de Projeto → Nova medição. O laudo é anexado em Medições lançadas.
-- Para **ver orçado × medido**, vá em Obra → Medição de Projeto → Relatório CEF → Imprimir página.
-- Para **atualizar o INCC do mês**, vá em Obra → Parâmetros / INCC → edite o mês na tabela → confirme.
-- Para **dar entrada de material comprado**, vá em Obra → Estoque → Movimentos → Dar entrada → vincule a despesa de compra.
+- Para **lançar uma medição**, vá em Projetos → Medição de Projeto → Nova medição. O laudo é anexado em Medições lançadas.
+- Para **ver orçado × medido**, vá em Projetos → Medição de Projeto → Relatório CEF → Imprimir página.
+- Para **atualizar o índice de reajuste do mês** (IPCA, IGP-M, INCC…), vá em Projetos → Índices de Reajuste → edite o mês na tabela → confirme.
+- Para **dar entrada de material comprado**, vá em Projetos → Estoque → Movimentos → Dar entrada → vincule a despesa de compra.
 - Para **lançar as diárias de um autônomo**, vá em Pessoas → Equipes de Projetos → Acumulado por membro → "Lançar em Despesas →".
 - Para **simular uma proposta**, vá em Receitas → Simulador → escolha a obra → preencha os valores → confira a maior parcela contra o limite de renda.
 `;

@@ -13,6 +13,8 @@ export interface ChartSubitem {
 export interface ChartGroup {
   id: string;
   nome: string;
+  /** Natureza das contas do grupo; ausente = "despesa". */
+  natureza?: "receita" | "despesa";
   sub: ChartSubitem[];
 }
 

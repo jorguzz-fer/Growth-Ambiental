@@ -5,6 +5,7 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { precheckLogin } from "@/lib/actions/auth-precheck";
 import { PasswordInput } from "@/components/ui/password-input";
+import { BrandMark } from "@/components/app/brand-mark";
 
 /**
  * Login em duas etapas: (1) e-mail + senha; (2) se o usuário tem MFA ativo,
@@ -76,12 +77,15 @@ export default function LoginPage() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-[#0d0d14] px-4 py-10">
-      <div className="mb-6 text-center">
-        <div className="font-[family-name:var(--font-serif)] text-xl text-white">
-          Growth Tools
-        </div>
-        <div className="mt-0.5 font-[family-name:var(--font-mono)] text-[9px] uppercase tracking-[0.2em] text-white/30">
-          Ambiental App
+      <div className="mb-6 flex items-center gap-3">
+        <BrandMark size={44} />
+        <div>
+          <div className="font-[family-name:var(--font-inter)] text-[24px] font-extrabold leading-none tracking-[0.2px] text-white">
+            GROWTH
+          </div>
+          <div className="mt-1 font-[family-name:var(--font-inter)] text-[11px] tracking-[0.32em] text-[var(--color-brand-segmento)]">
+            AMBIENTAL
+          </div>
         </div>
       </div>
 

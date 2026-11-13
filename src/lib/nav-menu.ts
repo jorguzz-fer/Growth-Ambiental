@@ -20,6 +20,7 @@ export type ModuleIcon =
   | "receitas"
   | "despesas"
   | "caixa"
+  | "contratos"
   | "obra"
   | "pessoas"
   | "config";
@@ -91,10 +92,24 @@ export const NAV_MENU: NavModule[] = [
     label: "Planejamento",
     icon: "planejamento",
     items: [
-      { href: "/projeto", label: "Projetos" },
       { href: "/budget", label: "Orçamentos" },
       { href: "/forecast", label: "Previsão Atualizada" },
       { href: "/planocontas", label: "Plano de Contas" },
+    ],
+  },
+  {
+    // Growth Ambiental — Contratos e Aditivos. Tudo mora sob /contratos (uma
+    // chave de rota); as abas e telas internas conferem as chaves de ação.
+    id: "contratos",
+    label: "Contratos",
+    icon: "contratos",
+    items: [
+      { href: "/contratos", label: "Contratos", tambem: ["/contratos/novo"] },
+      { href: "/contratos/painel", label: "Painel de Contratos" },
+      { href: "/contratos/aditivos", label: "Aditivos" },
+      { href: "/contratos/medicoes", label: "Medições de Contrato" },
+      { href: "/contratos/reembolsos", label: "Despesas Reembolsáveis", exige: [{ tela: "contratosfinanceiro", acao: "ver" }] },
+      { href: "/contratos/modalidades", label: "Modalidades de Serviço", exige: [{ tela: "contratos", acao: "editar" }] },
     ],
   },
   {
@@ -137,16 +152,21 @@ export const NAV_MENU: NavModule[] = [
     ],
   },
   {
+    // Growth Ambiental: o módulo "Obra" passou a se chamar "Projetos". O id
+    // continua "obra" (chave interna, não aparece na tela).
     id: "obra",
-    label: "Obra",
+    label: "Projetos",
     icon: "obra",
     items: [
+      // Growth Ambiental: o cadastro de Projetos saiu de Planejamento e abre
+      // o módulo Projetos. Rota e permissão ("projeto") continuam as mesmas.
+      { href: "/projeto", label: "Cadastro de Projetos" },
       // Prompt V, 0.2: UM item. /medicao (relatório) e /medicaolanc (lançar e
       // lançadas) continuam como rotas e abas da mesma tela; quem só tem a
       // permissão de lançamento é levado à aba dele pela própria página.
       { href: "/medicao", label: "Medição de Projeto", permAlt: "medicaolanc", hrefAlt: "/medicaolanc", tambem: ["/medicaolanc"] },
       { href: "/estoque", label: "Estoque" },
-      { href: "/parametros", label: "Parâmetros / INCC" },
+      { href: "/parametros", label: "Índices de Reajuste" },
     ],
   },
   {

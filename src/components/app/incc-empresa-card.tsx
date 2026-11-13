@@ -48,12 +48,12 @@ export function InccEmpresaCard({
   return (
     <div data-incc-empresa className="mb-4 rounded-[10px] border border-[var(--color-line)] bg-white px-4 py-3 text-[12.5px] text-[var(--color-ink2)]">
       <p>
-        <strong className="text-[var(--color-ink)]">INCC da empresa.</strong>{" "}
+        <strong className="text-[var(--color-ink)]">Índice da empresa.</strong>{" "}
         {emUso
           ? "Em uso: todas as obras leem esta série, e a tela edita a série da empresa. As séries de cada obra ficam guardadas."
           : mesesDaEmpresa > 0
-            ? `Série da empresa adotada (${mesesDaEmpresa} meses). Ela passa a valer para todas as obras quando a plataforma ligar a chave "INCC da empresa". Até lá, cada obra usa a própria série.`
-            : "O INCC vai ser um só por empresa. Escolha a obra cuja série vira a da empresa; as séries das obras ficam guardadas. Nenhum número muda até a plataforma ligar a chave."}
+            ? `Série da empresa adotada (${mesesDaEmpresa} meses). Ela passa a valer para todos os projetos quando a plataforma ligar a chave "INCC da empresa". Até lá, cada projeto usa a própria série.`
+            : "O índice de reajuste pode ser um só por empresa. Escolha o projeto cuja série vira a da empresa; as séries dos projetos ficam guardadas. Nenhum número muda até a plataforma ligar a chave."}
       </p>
       {podeAdotar && projetos.length > 0 && (
         <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -65,7 +65,7 @@ export function InccEmpresaCard({
             ))}
           </Select>
           <Button size="sm" variant="outline" disabled={pending || !obra} onClick={adotar}>
-            {pending ? "Adotando…" : mesesDaEmpresa > 0 ? "Substituir pela série desta obra" : "Adotar a série desta obra"}
+            {pending ? "Adotando…" : mesesDaEmpresa > 0 ? "Substituir pela série deste projeto" : "Adotar a série deste projeto"}
           </Button>
         </div>
       )}

@@ -75,7 +75,7 @@ describe.skipIf(!HAS_DB)("Parâmetros / INCC — o que a tela declara (Prompt Q,
   });
 
   it("5.1/BQ-1 · variante: nula = a confirmar; só DI, M ou 10; gravada em todas as linhas da obra, auditada, sem mudar índice", async () => {
-    expect(await definirVarianteIncc(projectId, "INCC-X")).toEqual({ ok: false, error: expect.stringMatching(/Variante inválida/) });
+    expect(await definirVarianteIncc(projectId, "INCC-X")).toEqual({ ok: false, error: expect.stringMatching(/Índice inválido/) });
     const antes = (await getInccTabela(tenantId, projectId)).linhas.map((l) => [l.m, l.mo, l.ac, l.projected]);
     expect(await definirVarianteIncc(projectId, "INCC-M")).toEqual({ ok: true, meses: 0 });
     const depois = await getInccTabela(tenantId, projectId);
@@ -87,5 +87,15 @@ describe.skipIf(!HAS_DB)("Parâmetros / INCC — o que a tela declara (Prompt Q,
     expect(l.meta).toMatchObject({ variante: { de: null, para: "INCC-M" } });
     ctxRef.current = { tenant, projects, userId: null, userEmail: "quem@teste", role: "viewer", perms: defaultPermissions("viewer" as "owner") };
     expect(await definirVarianteIncc(projectId, "INCC-DI")).toEqual({ ok: false, error: expect.stringMatching(/permissão/) });
+  });
+
+  it("Growth Ambiental · Índices de Reajuste: IPCA, IGP-M e INPC são aceitos, sem mudar nenhum valor", async () => {
+    ctxRef.current = { tenant, projects, userId: null, userEmail: "quem@teste", role: "owner", perms: defaultPermissions("owner") };
+    const antes = (await getInccTabela(tenantId, projectId)).linhas.map((l) => [l.m, l.mo, l.ac, l.projected]);
+    for (const v of ["IPCA", "IGP-M", "INPC"]) {
+      expect(await definirVarianteIncc(projectId, v)).toEqual({ ok: true, meses: 0 });
+      expect((await getInccTabela(tenantId, projectId)).variante).toBe(v);
+    }
+    expect((await getInccTabela(tenantId, projectId)).linhas.map((l) => [l.m, l.mo, l.ac, l.projected])).toEqual(antes);
   });
 });

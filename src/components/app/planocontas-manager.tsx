@@ -79,9 +79,9 @@ export function PlanoContasManager({
 }) {
   return (
     <div className="space-y-8">
-      <GroupSection title="Grupos CEF / Obra" kind="cef" groups={cef} perms={perms} />
+      <GroupSection title="Custos diretos dos projetos" kind="cef" groups={cef} perms={perms} />
       <GroupSection
-        title="Grupos Complementares"
+        title="Receitas, impostos e estrutura"
         kind="complementar"
         groups={comp}
         perms={perms}

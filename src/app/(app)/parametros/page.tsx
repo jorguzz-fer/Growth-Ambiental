@@ -37,7 +37,7 @@ export default async function ParametrosPage({
   const emUso = await inccDaEmpresaAtivo(ctx.tenant.id);
   const selecao = emUso ? null : lerSelecaoDeProjeto(ctx.projects, await searchParams);
   if (selecao && selecao.tipo !== "projeto") {
-    return <PedirProjeto titulo="Parâmetros / INCC" projetos={ctx.projects} oQue="editar o INCC" />;
+    return <PedirProjeto titulo="Índices de Reajuste" projetos={ctx.projects} oQue="editar o índice de reajuste" />;
   }
   const project = selecao?.tipo === "projeto" ? selecao.projeto : null;
   const alvo = project?.id ?? SERIE_DA_EMPRESA;
@@ -68,9 +68,9 @@ export default async function ParametrosPage({
   return (
     <>
       <PageHeader
-        eyebrow={project?.name ?? "Empresa · uma série para todas as obras"}
-        title={`Parâmetros / INCC${variante ? ` · ${variante}` : ""}`}
-        subtitle={`${variante ?? "Variante do INCC a confirmar (DI, M ou 10)"} · mês de referência · correção a partir da 5ª parcela, pelo acumulado do mês do vencimento`}
+        eyebrow={project?.name ?? "Empresa · uma série para todos os projetos"}
+        title={`Índices de Reajuste${variante ? ` · ${variante}` : ""}`}
+        subtitle={`${variante ?? "Índice a confirmar (IPCA, IGP-M, INPC ou INCC)"} · mês de referência · correção a partir da 5ª parcela, pelo acumulado do mês do vencimento`}
         actions={
           project ? (
             <ProjectPicker
@@ -82,15 +82,15 @@ export default async function ParametrosPage({
       />
       {project && <LembrarProjeto projectId={project.id} />}
       <CrisDaTela
-        titulo={`Parâmetros / INCC — ${project ? `série da obra ${project.name}` : "série da empresa"}`}
+        titulo={`Índices de Reajuste — ${project ? `série do projeto ${project.name}` : "série da empresa"}`}
         dados={{
-          serie: project ? "da obra" : "da empresa",
+          serie: project ? "do projeto" : "da empresa",
           variante,
           meses: linhas.map((l) => ({ mes: l.m, mensal: l.mo, acumulado: l.ac, projetado: l.projected })),
           regra: "Correção a partir da 5ª parcela, pelo acumulado do mês do vencimento; aplicada no Caixa, na comparação entre cenários e na Projeção; não na DRE nem em Contas a Receber.",
           mesesFaltantes: analise.faltantes,
         }}
-        sugestoes={["Explique como o INCC corrige as parcelas", "Projete o INCC dos próximos 6 meses pela média de 12 meses", "Quais meses ainda são projeção?", "O que muda com o INCC da empresa?"]}
+        sugestoes={["Explique como o índice corrige as parcelas", "Projete o índice dos próximos 6 meses pela média de 12 meses", "Quais meses ainda são projeção?", "Qual a diferença entre IPCA e IGP-M?"]}
       />
       {/* Abaixo de 1180px o painel desce para baixo do conteúdo (Prompt E, 6.2). */}
       <div className="flex flex-col gap-6 min-[1180px]:flex-row min-[1180px]:items-start">
@@ -98,8 +98,9 @@ export default async function ParametrosPage({
       {/* Prompt Q, seção 5 — o que a tela governa, declarado onde o usuário lê. */}
       <div className="mb-4 grid grid-cols-1 gap-2 text-[12.5px] text-[var(--color-ink2)] sm:grid-cols-2">
         <p className="rounded-[10px] border border-[var(--color-line)] bg-[var(--color-surface2)] px-3 py-2">
-          <strong className="text-[var(--color-ink)]">Mês de referência.</strong> Cada linha é o mês a que o índice se refere (a FGV divulga no mês seguinte). A parcela
-          que vence no mês usa o <strong>acumulado</strong> daquele mês, a partir da 5ª parcela.
+          <strong className="text-[var(--color-ink)]">Mês de referência.</strong> Cada linha é o mês a que o índice se refere (IBGE e FGV divulgam no mês seguinte). A
+          parcela que vence no mês usa o <strong>acumulado</strong> daquele mês, a partir da 5ª parcela. O reajuste anual dos contratos de consultoria entra com o
+          cadastro de contratos.
         </p>
         <p className="rounded-[10px] border border-[var(--color-line)] bg-[var(--color-surface2)] px-3 py-2">
           <strong className="text-[var(--color-ink)]">Onde incide e onde não.</strong> A correção entra no Caixa, na comparação entre cenários e na Projeção.{" "}

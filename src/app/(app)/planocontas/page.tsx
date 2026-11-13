@@ -50,13 +50,13 @@ function groupBy(rows: ChartAccountRow[], kind: Kind): Group[] {
 
 /** Categorias DRE — relatório fixo (não editável). */
 const DRE_CATS = [
-  { name: "Receita", desc: "Vendas de unidades, reembolsos, permuta", icon: "📈", color: "var(--color-success)" },
-  { name: "Custo Variável", desc: "Medição de obra do mês (engenheiro), mão de obra direta", icon: "📊", color: "var(--color-danger)" },
-  { name: "Custo Fixo", desc: "Administração local, aluguel canteiro", icon: "➖", color: "var(--color-ink3)" },
-  { name: "Despesa Variável", desc: "Comissões, marketing proporcional", icon: "📉", color: "#f59e0b" },
+  { name: "Receita", desc: "Contratos de licenciamento, estudos, monitoramento e consultoria", icon: "📈", color: "var(--color-success)" },
+  { name: "Custo Variável", desc: "Campo, laboratório, terceiros técnicos e taxas dos projetos", icon: "📊", color: "var(--color-danger)" },
+  { name: "Custo Fixo", desc: "Equipe técnica própria (folha e encargos)", icon: "➖", color: "var(--color-ink3)" },
+  { name: "Despesa Variável", desc: "Impostos sobre o faturamento, comissões, propostas", icon: "📉", color: "#f59e0b" },
   { name: "Despesa Fixa", desc: "Escritório, contabilidade, tecnologia", icon: "➖", color: "#f59e0b" },
   { name: "Retiradas", desc: "Pró-labore, distribuição de lucros", icon: "💰", color: "var(--color-accent)" },
-  { name: "Investimento", desc: "Compra de terreno, equipamentos permanentes", icon: "🏢", color: "#3b82f6" },
+  { name: "Investimento", desc: "Equipamentos de campo, veículos, laboratório próprio", icon: "🏢", color: "#3b82f6" },
   { name: "Empréstimos", desc: "Captação e amortização de empréstimos", icon: "🏦", color: "#0ea5e9" },
 ];
 
@@ -101,7 +101,7 @@ export default async function PlanoContasPage() {
     <>
       <PageHeader
         title="Plano de Contas"
-        subtitle="Dupla classificação: Grupo CEF/Obra + Categoria DRE (uma por conta)"
+        subtitle="Dupla classificação: grupo do plano + Categoria DRE (uma por conta)"
       />
 
       {/* Prompt G, Parte 1 — restyle no ponto de uso (cartão 16px / `--color-line`);

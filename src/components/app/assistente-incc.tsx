@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input, Label, Select } from "@/components/ui/input";
 
 /**
- * Painel do assistente de Parâmetros / INCC (Prompt Q, seção 6; Prompt E).
+ * Painel do assistente de Índices de Reajuste (antiga Parâmetros / INCC) (Prompt Q, seção 6; Prompt E).
  *
  * Nível autorizado (6.1): PROPÕE E PARA. Hoje, sem fonte externa definida e
  * sem a variante confirmada (BQ-1), o assistente NÃO sugere valor de índice:
@@ -64,11 +64,11 @@ export function AssistenteIncc({ usuario, rows, variante, analise }: { usuario: 
   }
 
   const { faltantes, curva, cobertura, total } = analise;
-  const nada = (t: string) => <p className="text-[12px] text-[var(--color-ink2)]">{total === 0 ? "Esta obra ainda não tem tabela INCC." : t}</p>;
+  const nada = (t: string) => <p className="text-[12px] text-[var(--color-ink2)]">{total === 0 ? "Este projeto ainda não tem série de índice." : t}</p>;
   const coberturaProblemas = cobertura.vencimentosForaDaTabela.length + (cobertura.janelaForaDaTabela ? 1 : 0);
 
   return (
-    <aside aria-label="Assistente de Parâmetros / INCC" className="w-full shrink-0 rounded-[16px] border border-[var(--color-line)] bg-white p-4 shadow-sm min-[1180px]:sticky min-[1180px]:top-20 min-[1180px]:w-[300px]">
+    <aside aria-label="Assistente de Índices de Reajuste" className="w-full shrink-0 rounded-[16px] border border-[var(--color-line)] bg-white p-4 shadow-sm min-[1180px]:sticky min-[1180px]:top-20 min-[1180px]:w-[300px]">
       <div className="mb-3 flex items-start gap-2.5">
         <Faisca />
         <div className="min-w-0 flex-1">
@@ -77,7 +77,7 @@ export function AssistenteIncc({ usuario, rows, variante, analise }: { usuario: 
             {/* Prompt E, 6.1: o painel não grava nada (só mostra o efeito), então o selo é este. */}
             <Badge tone="neutral">Somente leitura</Badge>
           </div>
-          <div className="text-[12px] text-[var(--color-ink2)]">Tabela INCC · {variante ?? "variante a confirmar"}</div>
+          <div className="text-[12px] text-[var(--color-ink2)]">Série · {variante ?? "índice a confirmar"}</div>
         </div>
         <button type="button" onClick={alternar} aria-expanded={true} aria-label="Recolher o assistente" title="Recolher" className="rounded-[8px] p-1 text-[var(--color-ink3)] hover:bg-[var(--color-surface2)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent2)]/40">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" aria-hidden>
@@ -96,7 +96,7 @@ export function AssistenteIncc({ usuario, rows, variante, analise }: { usuario: 
                 {faltantes.length} mês(es) já encerrado(s) continuam como projeção: <strong className="text-[var(--color-ink)]">{faltantes.join(", ")}</strong>.
               </p>
               <p className="mt-1.5 text-[var(--color-ink2)]">
-                Quer atualizar? <strong>Informe o índice oficial</strong> ({variante ?? "variante a confirmar"}) direto na tabela, com a fonte. O assistente não consegue
+                Quer atualizar? <strong>Informe o índice oficial</strong> ({variante ?? "índice a confirmar"}) direto na tabela, com a fonte. O assistente não consegue
                 buscar o índice: não há fonte externa definida, e índice não se estima nem se interpola.
               </p>
             </div>
@@ -178,7 +178,7 @@ export function AssistenteIncc({ usuario, rows, variante, analise }: { usuario: 
           )}
         </AcaoDoPainel>
 
-        <AcaoDoPainel cor="#FEF3C7" icone={<Icone cor="#B45309" d="M3 5h18v14H3zM3 10h18M8 5v14" />} titulo="Cobertura" descricao="A tabela cobre a janela da obra e os vencimentos das vendas?" contador={coberturaProblemas} aberta={aberta === "cobertura"} onClick={() => setAberta(aberta === "cobertura" ? null : "cobertura")}>
+        <AcaoDoPainel cor="#FEF3C7" icone={<Icone cor="#B45309" d="M3 5h18v14H3zM3 10h18M8 5v14" />} titulo="Cobertura" descricao="A série cobre o período do projeto e os vencimentos das parcelas?" contador={coberturaProblemas} aberta={aberta === "cobertura"} onClick={() => setAberta(aberta === "cobertura" ? null : "cobertura")}>
           {rows.length === 0 ? (
             nada("")
           ) : (

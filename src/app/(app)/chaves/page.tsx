@@ -710,7 +710,7 @@ export default async function ChavesPage() {
             Com a chave ligada, cada obra passa a ler a série do INCC da empresa no lugar da própria. As séries das obras ficam
             guardadas, e desligar volta a elas. A série da empresa é adotada em{" "}
             <Link href="/parametros" className="text-[var(--color-accent2)] hover:underline">
-              Parâmetros / INCC
+              Índices de Reajuste
             </Link>
             , a partir da série de uma obra.
           </p>

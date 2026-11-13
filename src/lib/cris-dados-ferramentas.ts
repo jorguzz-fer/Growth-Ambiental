@@ -86,6 +86,21 @@ export const FERRAMENTAS_DE_DADOS: Anthropic.Tool[] = [
     },
   },
   {
+    name: "contratos_e_saldos",
+    description:
+      "Contratos da empresa (Contratos e Aditivos): valor original e atualizado, aditivos (e os que ainda não têm efeito), medições, saldo a medir, prazos e vencimentos e, para quem tem acesso financeiro, faturado, recebido, medido não faturado, custo apropriado e margem gerencial. Filtra por código ou título do contrato. Medição não é receita; faturado vem das contas a receber do contrato.",
+    input_schema: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        contratos: { type: "array", items: { type: "string" }, description: "Códigos (CT-000001) ou trechos do título; vazio = todos." },
+        assunto: { type: "string", enum: ["resumo", "aditivos", "medicoes", "financeiro", "prazos"] },
+        somente: { type: "string", enum: ["todos", "vigentes", "vencendo_60_dias"] },
+      },
+      required: ["contratos", "assunto", "somente"],
+    },
+  },
+  {
     name: "montar_relatorio",
     description:
       "Monta um relatório exportável em Relatórios Customizados (CSV e PDF) com a DRE, a DRE por categoria e grupo, ou o Fluxo de Caixa previsto; por cenário, mês a mês ou por obra. Devolve o link para a pessoa abrir; escreva-o como link markdown.",

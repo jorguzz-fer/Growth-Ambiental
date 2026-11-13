@@ -11,7 +11,8 @@ import {
   ChevronsLeft,
   ChevronsRight,
   HandCoins,
-  HardHat,
+  FolderKanban,
+  ScrollText,
   Users,
   Receipt,
   Settings,
@@ -25,6 +26,7 @@ import {
   visibleMenu,
   type ModuleIcon,
 } from "@/lib/nav-menu";
+import { BrandMark } from "@/components/app/brand-mark";
 
 const ICONS: Record<ModuleIcon, LucideIcon> = {
   bi: ChartColumn,
@@ -32,7 +34,8 @@ const ICONS: Record<ModuleIcon, LucideIcon> = {
   receitas: HandCoins,
   despesas: Receipt,
   caixa: Wallet,
-  obra: HardHat,
+  contratos: ScrollText,
+  obra: FolderKanban,
   pessoas: Users,
   config: Settings,
 };
@@ -129,21 +132,13 @@ export function Sidebar({ perms, mobileOpen, onCloseMobile }: SidebarProps) {
         } ${rail ? "w-[76px] min-w-[76px]" : "w-[252px] min-w-[252px]"}`}
       >
         <div className={`flex items-center gap-[11px] ${rail ? "justify-center px-0 py-[22px]" : "px-5 pb-5 pt-[22px]"}`}>
-          <div className="grid h-[34px] w-[34px] flex-none place-items-center rounded-[9px] bg-white">
-            <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
-              <path
-                d="M20 3C10 3 4 8.5 4 15.5c0 1.6.3 3 .9 4.3C7.3 13.8 11.3 9.6 16.5 7.5 12 10.4 8.6 14.6 6.6 20.7c1.4.6 2.9.8 4.4.8C17.6 21.5 20 13.5 20 3z"
-                fill="#15803d"
-              />
-            </svg>
-          </div>
+          <BrandMark size={34} />
           {!rail && (
-            <div className="text-center">
+            <div>
               <div className="text-[19px] font-extrabold leading-none tracking-[0.2px] text-white">
                 GROWTH
               </div>
-              {/* -mr compensa o espaço que o tracking deixa após a última letra */}
-              <div className="mt-1 mr-[-2.2px] text-[9.5px] tracking-[2.2px] text-[var(--color-nav-mut)]">
+              <div className="mt-1 text-[9.5px] tracking-[3.2px] text-[var(--color-brand-segmento)]">
                 AMBIENTAL
               </div>
             </div>

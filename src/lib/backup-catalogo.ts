@@ -98,6 +98,17 @@ export const TABELAS_DO_PACOTE: readonly TabelaDoPacote[] = [
   { tabela: "estorno_cartao", chave: "estornosCartao", familia: "Caixa e cartões", recorte: { tipo: "data", colunas: ["data"] } },
   // ── Operação ──────────────────────────────────────────────────────────────
   { tabela: "medicao", chave: "medicoes", familia: "Operação", recorte: { tipo: "competencia", coluna: "competencia" } },
+  // Contratos e Aditivos (0077): o contrato e tudo que é dele vêm inteiros (são o
+  // cadastro que dá sentido às faturas e medições); a medição, pela competência.
+  { tabela: "contrato_modalidade", chave: "contratoModalidades", familia: "Receita", recorte: { tipo: "cadastro" } },
+  { tabela: "contrato", chave: "contratos", familia: "Receita", recorte: { tipo: "cadastro" } },
+  { tabela: "contrato_projeto", chave: "contratoProjetos", familia: "Receita", recorte: { tipo: "cadastro" } },
+  { tabela: "contrato_item", chave: "contratoItens", familia: "Receita", recorte: { tipo: "cadastro" } },
+  { tabela: "contrato_aditivo", chave: "contratoAditivos", familia: "Receita", recorte: { tipo: "cadastro" } },
+  { tabela: "contrato_aditivo_item", chave: "contratoAditivoItens", familia: "Receita", recorte: { tipo: "cadastro" } },
+  { tabela: "contrato_marco", chave: "contratoMarcos", familia: "Receita", recorte: { tipo: "cadastro" } },
+  { tabela: "contrato_medicao", chave: "contratoMedicoes", familia: "Receita", recorte: { tipo: "competencia", coluna: "competencia" } },
+  { tabela: "contrato_reembolso", chave: "contratoReembolsos", familia: "Receita", recorte: { tipo: "cadastro" } },
   { tabela: "servico", chave: "servicos", familia: "Operação", recorte: { tipo: "cadastro" } },
   { tabela: "medicao_servico", chave: "medicaoServicos", familia: "Operação", recorte: { tipo: "competencia", coluna: "competencia" } },
   { tabela: "stock_item", chave: "stockItems", familia: "Operação", recorte: { tipo: "cadastro" } },

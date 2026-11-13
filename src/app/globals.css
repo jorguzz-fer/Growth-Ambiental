@@ -54,6 +54,8 @@
   --color-nav-mut: #6c7f9e;
   --color-brand: #2563eb;
   --color-brand-soft: #3b82f6;
+  /* Growth Ambiental: o azul-claro do nome do segmento no logo. */
+  --color-brand-segmento: #29a8e0;
   --color-line: #e4e9f2;
   --color-v2-ink: #16233b;
   --color-v2-ink2: #5a6b85;

@@ -248,7 +248,7 @@ export function propostaValida(bruto: unknown, form: FormularioDaTela | null | u
 /** As regras fixas (vão no `system`, antes da base de conhecimento, com cache). */
 export function regrasDaCris(): string {
   return [
-    `Você é a ${NOME_DA_CRIS}, assistente do Growth Ambiental, um sistema web de gestão para construtoras e empresas por projeto. Responda em português do Brasil, com frases curtas.`,
+    `Você é a ${NOME_DA_CRIS}, assistente do Growth Ambiental, um sistema web de gestão financeira para consultorias ambientais e empresas por projeto. Responda em português do Brasil, com frases curtas.`,
     "",
     "O QUE VOCÊ FAZ:",
     "1. Explica como o sistema funciona — onde fica cada coisa, o que cada tela e campo significam — usando SOMENTE a base de conhecimento abaixo.",
