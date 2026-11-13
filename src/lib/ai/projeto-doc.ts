@@ -18,11 +18,7 @@ export interface DadosProjetoLidos {
   dataInicio: string;
   dataFim: string;
   valorConstrucao: number | null;
-  valorTerreno: number | null;
   custoConstrucao: number | null;
-  custoTerreno: number | null;
-  proprietarioTerreno: string;
-  formaPagamentoTerreno: string;
   /** Nomes de campos lidos com baixa confiança. */
   baixaConfianca: string[];
   observacoes: string[];
@@ -37,11 +33,7 @@ export type CampoProjeto =
   | "startDate"
   | "endDate"
   | "valorConstrucao"
-  | "valorTerreno"
-  | "custoConstrucao"
-  | "custoTerreno"
-  | "proprietarioTerreno"
-  | "formaPagamentoTerreno";
+  | "custoConstrucao";
 
 export const ROTULO_CAMPO_PROJETO: Record<CampoProjeto, string> = {
   name: "Nome do projeto",
@@ -51,12 +43,8 @@ export const ROTULO_CAMPO_PROJETO: Record<CampoProjeto, string> = {
   ufObra: "UF",
   startDate: "Data de início",
   endDate: "Data de fim",
-  valorConstrucao: "Valor da construção",
-  valorTerreno: "Valor do terreno",
-  custoConstrucao: "Custo da construção",
-  custoTerreno: "Custo do terreno",
-  proprietarioTerreno: "Proprietário do terreno",
-  formaPagamentoTerreno: "Forma de pagamento do terreno",
+  valorConstrucao: "Receita prevista do projeto",
+  custoConstrucao: "Custo previsto do projeto",
 };
 
 export interface CampoProposto {
@@ -95,14 +83,10 @@ export function montarPropostaDeProjeto(lido: DadosProjetoLidos, atual: ValoresA
     startDate: lido.dataInicio ? isoParaDataInterna(lido.dataInicio) : "",
     endDate: lido.dataFim ? isoParaDataInterna(lido.dataFim) : "",
     valorConstrucao: num(lido.valorConstrucao),
-    valorTerreno: num(lido.valorTerreno),
     custoConstrucao: num(lido.custoConstrucao),
-    custoTerreno: num(lido.custoTerreno),
-    proprietarioTerreno: txt(lido.proprietarioTerreno),
-    formaPagamentoTerreno: txt(lido.formaPagamentoTerreno),
   };
   const baixa = new Set((lido.baixaConfianca ?? []).map((s) => s.trim()));
-  const nomeLido: Record<CampoProjeto, string> = { name: "nome", endereco: "endereco", cep: "cep", municipioObra: "municipio", ufObra: "uf", startDate: "dataInicio", endDate: "dataFim", valorConstrucao: "valorConstrucao", valorTerreno: "valorTerreno", custoConstrucao: "custoConstrucao", custoTerreno: "custoTerreno", proprietarioTerreno: "proprietarioTerreno", formaPagamentoTerreno: "formaPagamentoTerreno" };
+  const nomeLido: Record<CampoProjeto, string> = { name: "nome", endereco: "endereco", cep: "cep", municipioObra: "municipio", ufObra: "uf", startDate: "dataInicio", endDate: "dataFim", valorConstrucao: "valorConstrucao", custoConstrucao: "custoConstrucao" };
   const campos: CampoProposto[] = [];
   for (const campo of Object.keys(ROTULO_CAMPO_PROJETO) as CampoProjeto[]) {
     const proposto = lidos[campo];

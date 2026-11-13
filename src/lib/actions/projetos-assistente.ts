@@ -54,11 +54,7 @@ export async function proporDadosDoProjetoPorDocumento(projectId: string, docume
       startDate: projeto.startDate,
       endDate: projeto.endDate,
       valorConstrucao: projeto.valorConstrucao,
-      valorTerreno: projeto.valorTerreno,
       custoConstrucao: projeto.custoConstrucao,
-      custoTerreno: projeto.custoTerreno,
-      proprietarioTerreno: projeto.proprietarioTerreno,
-      formaPagamentoTerreno: projeto.formaPagamentoTerreno,
     });
     return { ok: true, proposta };
   } catch (e) {

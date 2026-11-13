@@ -58,16 +58,15 @@ describe("Prompt B · assistente de Projetos (24–29)", () => {
   });
 
   it("proposta a partir do documento: só o que foi lido e difere do cadastro", () => {
-    const lido: DadosProjetoLidos = { nome: "OBRA 28", endereco: "Av. B, 10", cep: "11700000", municipio: "Praia Grande", uf: "sp", dataInicio: "2025-12-10", dataFim: "2026-12-25", valorConstrucao: 300000, valorTerreno: 80000, custoConstrucao: null, custoTerreno: 50000, proprietarioTerreno: "", formaPagamentoTerreno: "permuta", baixaConfianca: ["custoTerreno"], observacoes: ["valor do terreno vem da proposta, não do contrato"] };
-    const p = montarPropostaDeProjeto(lido, { name: "OBRA 28", endereco: "Rua A", cep: null, municipioObra: "Praia Grande", ufObra: "SP", startDate: "12/10/2025", endDate: "12/10/2026", valorConstrucao: "300000", valorTerreno: "75000", custoConstrucao: "213199.19", custoTerreno: null, proprietarioTerreno: null, formaPagamentoTerreno: null });
+    const lido: DadosProjetoLidos = { nome: "PROJETO 28", endereco: "Av. B, 10", cep: "11700000", municipio: "Praia Grande", uf: "sp", dataInicio: "2025-12-10", dataFim: "2026-12-25", valorConstrucao: 320000, custoConstrucao: 180000, baixaConfianca: ["custoConstrucao"], observacoes: ["o custo vem da proposta, não do contrato"] };
+    const p = montarPropostaDeProjeto(lido, { name: "PROJETO 28", endereco: "Rua A", cep: null, municipioObra: "Praia Grande", ufObra: "SP", startDate: "12/10/2025", endDate: "12/10/2026", valorConstrucao: "300000", custoConstrucao: null });
     expect(p.campos.map((c) => `${c.campo}:${c.atual}→${c.proposto}${c.conferir ? "!" : ""}`)).toEqual([
       "endereco:Rua A→Av. B, 10",
       "cep:→11700-000",
       "endDate:12/10/2026→12/25/2026",
-      "valorTerreno:75000→80000",
-      "custoTerreno:→50000!",
-      "formaPagamentoTerreno:→permuta",
+      "valorConstrucao:300000→320000",
+      "custoConstrucao:→180000!",
     ]);
-    expect(p.observacoes).toEqual(["valor do terreno vem da proposta, não do contrato"]);
+    expect(p.observacoes).toEqual(["o custo vem da proposta, não do contrato"]);
   });
 });

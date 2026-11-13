@@ -25,6 +25,7 @@ import {
   getStatusProjeto,
   getVersionsDoProjeto,
   getContasPagar,
+  getContasReceber,
   getReceivables,
 } from "@/lib/queries";
 import { parseDate } from "@/lib/calc";
@@ -216,7 +217,16 @@ export default async function DashboardPage({
   // (entradas projetadas) e (c) despesas lançadas ainda não pagas (saídas
   // projetadas / contas a pagar).
   const hasRangeDash = !!(de || ate);
-  const realReceb = (await getReceivables(ctx.tenant.id)).filter(
+  // Growth Ambiental: o a receber é o das Contas a Receber (faturas dos
+  // contratos e lançamentos), pelo saldo em aberto, somado às parcelas de
+  // venda de unidades que ainda existam nos dados antigos.
+  const [parcelasDeVenda, contasReceberDoTenant] = await Promise.all([getReceivables(ctx.tenant.id), getContasReceber(ctx.tenant.id)]);
+  const realReceb = [
+    ...parcelasDeVenda.map((r) => ({ projectId: r.projectId, dia: r.dia, valor: r.valor })),
+    ...contasReceberDoTenant
+      .filter((c) => c.status !== "Recebido" && c.status !== "Cancelada" && c.valor - c.valorRecebido > 0.005 && !!c.vencimento)
+      .map((c) => ({ projectId: c.projectId, dia: c.vencimento!, valor: Math.round((c.valor - c.valorRecebido) * 100) / 100 })),
+  ].filter(
     (r) =>
       idsDaTela.has(r.projectId) &&
       (!hasRangeDash || dateInRange(r.dia, de, ate)),
