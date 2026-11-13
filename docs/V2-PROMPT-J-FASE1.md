@@ -10,7 +10,7 @@ código mostra hoje, seção a seção, e como o trabalho se divide em PRs curta
 | | Situação | Fonte |
 |---|---|---|
 | **BJ-1** · data da venda | **Respondida pelo código.** `unit.mes_venda` guarda `MM/DD/YYYY` (é o que o `DateField` grava; a base local tem `01/27/2026`). A lista renderiza o texto cru, então mostra mês/dia. A rota do agente já passa por `dateBR`. A seção 3.2 é **correção de exibição**, não padronização | `V2-BLOCO2-DECISOES.md`, `date-field.tsx`, `unidades/page.tsx:224` |
-| **BJ-2** · duplicatas | **Nenhuma em produção** (30/09). A trava única `(version_id, code)` pode entrar. A migração falha e para se, até lá, aparecer duplicata; a consulta 2 de `docs/sql/v2-prompt-j-diagnostico.sql` reconfere na hora | `V2-DIAGNOSTICO-PRODUCAO.md` |
+| **BJ-2** · duplicatas | **Nenhuma em produção** (30/09). A trava única `(version_id, code)` pode entrar. A migração falha e para se, até lá, aparecer duplicata; a consulta 2 de `docs/sql/v2-prompt-j-diagnostico.sql` reconfere na hora | diagnóstico de produção do cliente anterior, removido |
 | **BJ-3** · escrita assistida | **Decidida**: proposta com confirmação humana, sem gravação direta, exclusão nunca assistida. Condição 1 (retorno `{ ok, error }`) entra na **mesma PR** do assistente ou antes dela | Prompt J |
 
 Teste do dia 25 (BJ-1): fica para a verificação da PR J-1, **na base local**, com
@@ -140,7 +140,7 @@ Das quatro ações do painel:
 | Revisar cadastro (venda sem data, valor zero, código repetido, vendida sem plano) | **Não** — código puro | J-4 |
 | Lance a venda conversando (texto, voz opcional) → preenche o formulário | **Sim** — texto digitado pelo usuário vai ao modelo | J-5 |
 | Cadastrar a partir do contrato | **Sim** — o **documento** (com nome, CPF, endereço do comprador) vai ao modelo | J-5, ver pergunta |
-| Receita reconhecida | — | **Não entra**: depende da seção 54 do Prompt I (rateio), que espera as datas das 19 obras |
+| Receita reconhecida | — | **Não entra**: depende da seção 54 do Prompt I (rateio), que espera as datas das obras sem início e fim |
 
 Entrada por voz: Web Speech API do navegador, só como atalho do campo de
 texto, e o texto funciona sozinho.

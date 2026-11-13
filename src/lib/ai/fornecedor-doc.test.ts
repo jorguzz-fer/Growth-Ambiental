@@ -31,19 +31,19 @@ function lido(over: Partial<DadosFornecedorLidos> = {}): DadosFornecedorLidos {
 describe("preenchimento do cadastro de fornecedor", () => {
   it("preenche o que está vazio e preserva o que o usuário digitou", () => {
     const res = montarPreenchimentoFornecedor(
-      lido({ nome: "A F ANDRADE COM MAT CONSTR EIRELI", doc: "10.365.725/0002-18", cidade: "Itanhaém" }),
+      lido({ nome: "MATERIAIS EXEMPLO COM MAT CONSTR EIRELI", doc: "00.000.003/0002-06", cidade: "Santos" }),
       { nome: "Nome digitado à mão" },
       [],
     );
     expect(res.valores.nome).toBeUndefined();
-    expect(res.valores.doc).toBe("10.365.725/0002-18");
-    expect(res.valores.cidade).toBe("Itanhaém");
+    expect(res.valores.doc).toBe("00.000.003/0002-06");
+    expect(res.valores.cidade).toBe("Santos");
     expect(res.alertas.nome).toBeUndefined();
   });
 
   it("marca como 'conferir' o que a IA leu com baixa confiança", () => {
     const res = montarPreenchimentoFornecedor(
-      lido({ nome: "Casarão Itanhaém", tel: "(13)3426-8176", baixaConfianca: ["tel"] }),
+      lido({ nome: "Depósito Litoral", tel: "(13)3000-0000", baixaConfianca: ["tel"] }),
       {},
       ["Fornecedor"],
     );
@@ -52,7 +52,7 @@ describe("preenchimento do cadastro de fornecedor", () => {
   });
 
   it("cobra nome e documento quando o arquivo não os traz", () => {
-    const res = montarPreenchimentoFornecedor(lido({ cidade: "Itanhaém" }), {}, ["Fornecedor"]);
+    const res = montarPreenchimentoFornecedor(lido({ cidade: "Santos" }), {}, ["Fornecedor"]);
     expect(res.alertas.nome?.nivel).toBe("faltando");
     expect(res.alertas.doc?.nivel).toBe("faltando");
     // Campo opcional vazio não vira alerta — a tela ficaria ilegível.
@@ -61,18 +61,18 @@ describe("preenchimento do cadastro de fornecedor", () => {
 
   it("CPF mascarado entra no campo, mas pede conferência dos dígitos", () => {
     const res = montarPreenchimentoFornecedor(
-      lido({ nome: "Israel Pereira Salvador", doc: "***.844.476-**", tipo: "PF" }),
+      lido({ nome: "Pessoa Exemplo da Silva", doc: "***.123.456-**", tipo: "PF" }),
       {},
       ["Fornecedor"],
     );
-    expect(res.valores.doc).toBe("***.844.476-**");
+    expect(res.valores.doc).toBe("***.123.456-**");
     expect(res.alertas.doc?.nivel).toBe("conferir");
     expect(res.valores.tipo).toBe("PF");
   });
 
   it("aplica os papéis lidos e cobra escolha quando ninguém definiu nenhum", () => {
     const comPapeis = montarPreenchimentoFornecedor(
-      lido({ nome: "X", doc: "42.844.364/0001-06", papeis: ["Fornecedor"] }),
+      lido({ nome: "X", doc: "00.000.004/0001-70", papeis: ["Fornecedor"] }),
       {},
       [],
     );

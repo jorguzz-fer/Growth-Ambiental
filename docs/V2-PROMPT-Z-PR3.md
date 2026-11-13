@@ -64,7 +64,7 @@ lançamento alterado; nenhuma despesa é gerada por esta tela (BZ-1).
 - Suíte: 150 arquivos, 1440 testes; `tsc`, `eslint`, `next build`.
 
 ## Teste de navegador (local, admin)
-Menu "Pessoas › Equipes de Projetos"; seletor mostra "Inácio de Sousa ·
+Menu "Pessoas › Equipes de Projetos"; seletor mostra "Prestador Exemplo ·
 autônomo · Fornecedores" e a CLT de teste; alocar a CLT mostra "— (folha /
 retirada)" no lugar do valor; "Marcar todos" + "Registrar o dia" → "1
 diária registrada… Nenhuma despesa foi gerada"; o dia aparece na lista.

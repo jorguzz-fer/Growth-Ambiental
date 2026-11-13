@@ -37,7 +37,7 @@ desligada**.
   - com a chave ligada, o mês fechado mostra o previsto esmaecido e o
     realizado em destaque;
   - o assistente lista os meses fechados que seguem com previsto, com o
-    selo "já venceu". No local, são 9 meses em 2026 na SIGNATURE.
+    selo "já venceu". No local, são 9 meses em 2026 na EMPREENDIMENTO PILOTO.
 
 ## 4. BAD-3: a comparação padrão
 
@@ -162,7 +162,7 @@ Prompt E).
 
 - **Os mesmos números.** A Empresa toda em 2026 tem previsto de entradas
   R$ 4.321, saídas R$ 43.702 e saldo −R$ 39.381, igual ao AD-1.
-  - A SIGNATURE mostra −R$ 14.567 de previsto no ano.
+  - A EMPREENDIMENTO PILOTO mostra −R$ 14.567 de previsto no ano.
 - **O que entrou sem mudar total:**
   - o mês só com realizado;
   - o caixa sem data, contado fora da tabela;
@@ -188,7 +188,7 @@ foi alterado.
   venceu e continua nos totais.
 - **Com o painel aberto, a tabela larga rola na horizontal** para mostrar a
   coluna "Saldo acumulado". É o mesmo padrão da Conferência.
-- **Na base local, o Orçamento da SIGNATURE não tem nenhum valor planejado
+- **Na base local, o Orçamento da EMPREENDIMENTO PILOTO não tem nenhum valor planejado
   em 2026.** O painel diz exatamente isso e não inventa destaque.
   - O exemplo com achado foi feito com dados temporários, já apagados.
 - **1.4 · conciliação:** o realizado conta lançamentos conciliados e não

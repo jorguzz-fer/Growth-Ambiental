@@ -51,7 +51,7 @@ no deploy. Nenhuma migração do B depende de outra fora da ordem.
   pelo Budget/Forecast. É dela que a Duração derivada sai (seção 9).
 - **Base local**: 3 projetos (1 obra com datas vazias e duração 24, 1 obra
   teste, 1 escritório), 0 documentos de projeto, 0 `budget_line`, 0
-  `time_entry`, 2 unidades na versão forecast. Produção: 27 projetos — rodar o
+  `time_entry`, 2 unidades na versão forecast. Produção: rodar o
   SQL (relatórios A–F).
 
 ## Bloqueios — decisões adotadas

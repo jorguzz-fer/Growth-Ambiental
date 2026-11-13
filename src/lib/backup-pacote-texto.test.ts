@@ -22,7 +22,7 @@ describe("texto do pacote completo", () => {
   });
 
   const resumo: ResumoDoPacote = {
-    empresa: "RMV",
+    empresa: "Empresa Exemplo",
     semestre: "2026-H1",
     rotulo: "1º semestre de 2026 (Jan–Jun)",
     geradoEm: new Date("2026-10-26T12:00:00Z"),

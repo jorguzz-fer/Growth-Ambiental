@@ -47,7 +47,7 @@ ou retenção.
 ## Para ligar em produção (passo a passo)
 
 1. **Variáveis no Coolify** (o app reinicia sozinho):
-   - `NFSE_TENANT_ID` = o id da RMV (a tabela `tenant`).
+   - `NFSE_TENANT_ID` = o id da Cliente Piloto (a tabela `tenant`).
    - `FOCUS_NFE_TOKEN_HOMOLOGACAO` = o token de homologação do painel da Focus.
    - Mais tarde, `FOCUS_NFE_TOKEN_PRODUCAO`.
    - O R2 já está configurado (é o mesmo dos documentos de despesas).

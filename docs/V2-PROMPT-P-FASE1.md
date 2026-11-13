@@ -11,7 +11,7 @@ divide em PRs curtas. **Só leitura; nada foi alterado.**
 | | Situação | Fonte |
 |---|---|---|
 | **BP-1** · inventário próprio ou Estoque? | **Decidido (30/09):** a tela de Permuta é o registro do **ativo recebido** (valor); quando o bem é insumo, a entrada no Estoque **aponta para a permuta** (`stock_movement.permuta_id`, que já existe) e a tela mostra "no Estoque". O Estoque controla quantidade e custo; a Permuta, o valor. Nenhum relatório soma os dois. O código confirma: só `addStockMovement` grava `permuta_id` (entrada com origem "Permuta", select na tela `/estoque`); `/estoque` apenas mostra a descrição da permuta na linha. Produção (30/09): **nenhum** movimento com `permuta_id` | `V2-BLOCO2-DECISOES.md`, `estoque.ts:57-71`, `queries.ts:618` |
-| **BP-2** · o status governa? | **Decidido: sim.** Produção (30/09): nenhuma permuta "Disponível" com valor e data de venda, logo **não muda número hoje**. Mesmo assim entra atrás da chave da §57 (ver 4.4 abaixo) | `V2-DIAGNOSTICO-PRODUCAO.md` |
+| **BP-2** · o status governa? | **Decidido: sim.** Produção (30/09): nenhuma permuta "Disponível" com valor e data de venda, logo **não muda número hoje**. Mesmo assim entra atrás da chave da §57 (ver 4.4 abaixo) | (diagnóstico de produção do cliente anterior, removido) |
 | **BP-3** · escambo é venda? | **Decidido (30/09, a levar ao contador com a §54):** a permuta é **parte do pagamento da venda** da unidade; o bem entra no inventário pelo valor da permuta, **sem receita própria**; a venda posterior gera **caixa**, e a diferença entre o que entrou e o valor do bem é **resultado na venda do ativo**. Escambo segue a mesma regra: troca realiza o resultado pela diferença, sem caixa | `V2-BLOCO2-DECISOES.md` |
 
 ## O que já está feito por prompts anteriores

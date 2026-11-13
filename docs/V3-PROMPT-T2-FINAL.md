@@ -3,7 +3,7 @@
 **O que mudou**
 
 - **Acerto Contábil, aba Vincular despesas.** A tela se oferece à Cris. Ela preenche data, conta, valor transferido, forma, favorecido e observação, e marca as despesas:
-  - pelos números dos PEDs ditos ou digitados, aceitando o final do número ("1682" acha "BMV-2026-001682");
+  - pelos números dos PEDs ditos ou digitados, aceitando o final do número ("1682" acha "EXM-2026-001682");
   - em lote, todas as despesas em aberto de um fornecedor.
   Cada despesa marcada entra com o saldo inteiro, que a pessoa pode ajustar. Número que não acha, ou que bate com mais de uma despesa, é avisado e não marca nada.
 - **A confirmação é a da tela.** Nada é gravado pela Cris. Um aviso diz quantas despesas ela marcou e pede para conferir e clicar em **Concluir acerto**, que continua com todas as validações do servidor.

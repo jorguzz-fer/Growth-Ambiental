@@ -14,7 +14,7 @@ com `down`.
 | **4.3 · versão bloqueada** | já recusava (PR I-3) | igual, com `{ ok, error }` |
 | **4.4 · relatório** | só a contagem de inseridas | `{ inseridas, atualizadas, ignoradas: [{ code, motivo }] }`; a tela mostra o resumo e a lista das ignoradas. A auditoria `unit.import` guarda os códigos inseridos, e das atualizadas o **antes e depois** de cada campo tocado |
 | **pré-visualização** | "já existe" era erro | mostra **Nova / Atualizar** por linha; avisa (sem impedir) quando muda o status de uma unidade **vendida**; recusa código que só difere na **caixa** de um existente ou de outra linha da planilha ("A" × "a"), porque a trava do banco os trata como dois; aceita `Permutado` (como o formulário) |
-| **BJ-2 · migração 0046** | — | `DO` que **lista as repetidas e para** (`RAISE EXCEPTION`), sem apagar nada; só cria o índice quando não há nenhuma. Testada com uma repetição simulada em transação revertida: reportou `"BLA 401" × 2` e não criou o índice |
+| **BJ-2 · migração 0046** | — | `DO` que **lista as repetidas e para** (`RAISE EXCEPTION`), sem apagar nada; só cria o índice quando não há nenhuma. Testada com uma repetição simulada em transação revertida: reportou `"UNID 401" × 2` e não criou o índice |
 
 ## Casamento do código
 
@@ -55,7 +55,7 @@ repetição pela tela.
   formulário e depois reimportada só com valor → plano, data da venda, status
   e tipo de cadastro intactos; congelada recusa sem gravar; o índice recusa o
   segundo `101` na versão e aceita em outra versão.
-- **Antes/depois** local (consulta 1 do SQL): 2 unidades, R$ 1.076.607,00
+- **Antes/depois** local (consulta 1 do SQL): 2 unidades, [valor removido]
   antes e depois.
 - Navegador (base local, linhas de teste removidas ao fim): planilha com uma
   unidade nova e uma existente (vendida, com plano) → pré-visualização "Nova /

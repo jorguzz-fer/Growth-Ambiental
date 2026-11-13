@@ -2,7 +2,7 @@
 
 Entregue em 3 PRs: Fase 1 (#215), AH-1 (#216), AH-2.
 
-1. **BAH-1**: base local, 1 cadastro (RMV) com todos os campos fiscais
+1. **BAH-1**: base local, 1 cadastro (Cliente Piloto) com todos os campos fiscais
    vazios — **nenhuma pendência nova**, nada corrigido. Produção: 1º e 2º
    relatórios de `docs/sql/v2-prompt-ah-diagnostico.sql`.
 2. **BAH-2**: confirmado — a tela é pré-condição do Emissor (Prompt AG usa
@@ -11,7 +11,7 @@ Entregue em 3 PRs: Fase 1 (#215), AH-1 (#216), AH-2.
    5" + ajuda; LC 116 → sem placeholder, ajuda "construção civil costuma ser
    7.02 (obra) ou 7.05 (reforma) — confirme com a contabilidade"; CNAE → sem
    placeholder, ajuda "construção de edifícios costuma ser 4120-4/00…".
-   `3552502` não aparece em lugar nenhum da interface.
+   O código IBGE da cidade-sede não aparece em lugar nenhum da interface.
 4. **Validações**: `salvarDadosFiscais` chama `recusaDoCadastroFiscal`, que
    usa os validadores existentes sem reescrevê-los:
    ```ts
@@ -35,7 +35,7 @@ Entregue em 3 PRs: Fase 1 (#215), AH-1 (#216), AH-2.
 9. **Assistente**: quatro ações somente leitura (falta para emitir, onde
    encontrar, conferir, histórico); não sugere nem preenche valor fiscal,
    não chama action, não lê env; nada vai a modelo.
-10. **Nenhum dado de `tenant` alterado**: linha RMV idêntica antes e depois
+10. **Nenhum dado de `tenant` alterado**: linha Cliente Piloto idêntica antes e depois
     (conferida por SQL); testes com banco usam tenant próprio.
 11. **Nenhuma migração criada.**
 12. **Limitações**: sem tabela de municípios do IBGE, não há checagem nome ×

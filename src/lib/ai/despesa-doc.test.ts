@@ -27,7 +27,7 @@ const baixa = (valor: string, nota: string): CampoLido => ({
 });
 const vazioC = (nota = ""): CampoLido => ({ valor: "", confianca: "baixa", nota });
 
-const CHAVE_NFE = "35260810365725000218550020000175474713510943";
+const CHAVE_NFE = "35260800000003000206550020000001231123456780";
 
 function extracao(over: Partial<ExtractedDespesa> = {}): ExtractedDespesa {
   return {
@@ -57,8 +57,8 @@ function extracao(over: Partial<ExtractedDespesa> = {}): ExtractedDespesa {
 
 const CTX: ContextoDespesa = {
   fornecedores: [
-    { id: "f-andrade", nome: "A F ANDRADE COM MAT CONSTR EIRELI - ME", doc: "10.365.725/0002-18" },
-    { id: "f-casarao", nome: "Casarão Itanhaém", doc: null },
+    { id: "f-materiais", nome: "MATERIAIS EXEMPLO COM MAT CONSTR EIRELI - ME", doc: "00.000.003/0002-06" },
+    { id: "f-deposito", nome: "Depósito Litoral", doc: null },
   ],
   contas: ["1.1", "2.3"],
   categorias: ["Custo de Obra", "Despesas Administrativas"],
@@ -87,10 +87,10 @@ describe("conversão de datas ISO → formato interno", () => {
 
 describe("documento do fornecedor", () => {
   it("só considera completo CPF/CNPJ com todos os dígitos", () => {
-    expect(docCompleto("42.844.364/0001-06")).toBe(true);
-    expect(docCompleto("133.844.476-03")).toBe(true);
+    expect(docCompleto("00.000.004/0001-70")).toBe(true);
+    expect(docCompleto("000.000.003-53")).toBe(true);
     // Comprovante de Pix mascara o CPF — não serve para identificar ninguém.
-    expect(docCompleto("***.844.476-**")).toBe(false);
+    expect(docCompleto("***.123.456-**")).toBe(false);
     expect(docCompleto("")).toBe(false);
   });
 });
@@ -122,9 +122,9 @@ describe("DANFE de NF-e (documento completo)", () => {
   const res = montarPreenchimentoDespesa(
     extracao({
       natureza: "NOTA_FISCAL",
-      resumo: "Compra de 1 saco de cimento na A F Andrade, NF-e 17547",
-      fornecedorNome: alta("A F ANDRADE COM MAT CONSTR EIRELI - ME"),
-      fornecedorDoc: alta("10.365.725/0002-18"),
+      resumo: "Compra de 1 saco de cimento na Materiais Exemplo, NF-e 17547",
+      fornecedorNome: alta("MATERIAIS EXEMPLO COM MAT CONSTR EIRELI - ME"),
+      fornecedorDoc: alta("00.000.003/0002-06"),
       valor: { valor: 34.56, confianca: "alta", nota: "" },
       competencia: alta("2026-08"),
       dataEmissao: alta("2026-08-21"),
@@ -132,7 +132,7 @@ describe("DANFE de NF-e (documento completo)", () => {
       descricao: alta("Cimento 50kg Portland composto"),
       categoriaDre: alta("Custo de Obra"),
       contaCef: alta("1.1"),
-      projetoNome: alta("BMV CONSTRUCOES LTDA (OBRA 25)"),
+      projetoNome: alta("CONSTRUTORA EXEMPLO LTDA (OBRA 25)"),
       docFiscalTipo: alta("NFE"),
       numDoc: alta("17547"),
       serie: alta("2"),
@@ -143,7 +143,7 @@ describe("DANFE de NF-e (documento completo)", () => {
   );
 
   it("preenche os campos da nota sem alerta", () => {
-    expect(res.valores.fornecedorId).toBe("f-andrade");
+    expect(res.valores.fornecedorId).toBe("f-materiais");
     expect(res.valores.valor).toBe("34.56");
     expect(res.valores.competencia).toBe("08/2026");
     expect(res.valores.vencimento).toBe("08/21/2026");
@@ -171,8 +171,8 @@ describe("cupom de loja sem valor fiscal", () => {
   const res = montarPreenchimentoDespesa(
     extracao({
       natureza: "CUPOM",
-      fornecedorNome: alta("CASARAO ITANHAEM COM MAT CONSTR LTDA"),
-      fornecedorDoc: alta("10.365.725/0002-18"),
+      fornecedorNome: alta("DEPOSITO LITORAL COM MAT CONSTR LTDA"),
+      fornecedorDoc: alta("00.000.003/0002-06"),
       valor: { valor: 35.35, confianca: "alta", nota: "Total após desconto" },
       dataEmissao: alta("2026-07-21"),
       descricao: alta("2 discos diamantados segmentados 110mm"),
@@ -217,9 +217,9 @@ describe("comprovante de Pix (sem nota, CPF mascarado)", () => {
   const res = montarPreenchimentoDespesa(
     extracao({
       natureza: "COMPROVANTE",
-      resumo: "Pix de R$ 900,00 para Israel Pereira Salvador — ajudante autônomo",
-      fornecedorNome: alta("Israel Pereira Salvador"),
-      fornecedorDoc: baixa("***.844.476-**", "CPF mascarado no comprovante"),
+      resumo: "Pix de R$ 900,00 para Pessoa Exemplo da Silva — ajudante autônomo",
+      fornecedorNome: alta("Pessoa Exemplo da Silva"),
+      fornecedorDoc: baixa("***.123.456-**", "CPF mascarado no comprovante"),
       valor: { valor: 900, confianca: "alta", nota: "" },
       descricao: alta("Ajudante autônomo"),
       pago: { valor: true, confianca: "alta", nota: "Situação: Efetivado" },
@@ -233,7 +233,7 @@ describe("comprovante de Pix (sem nota, CPF mascarado)", () => {
   it("não vincula fornecedor não cadastrado e diz o que fazer", () => {
     expect(res.valores.fornecedorId).toBeUndefined();
     expect(res.alertas.fornecedor?.nivel).toBe("conferir");
-    expect(res.alertas.fornecedor?.motivo).toContain("Israel Pereira Salvador");
+    expect(res.alertas.fornecedor?.motivo).toContain("Pessoa Exemplo da Silva");
     expect(res.alertas.fornecedor?.motivo).toContain("não está cadastrado");
   });
 
@@ -334,16 +334,16 @@ describe("leituras defeituosas", () => {
 describe("decisão de 01/10 — a empresa não vai ao modelo; a checagem é local", () => {
   const lidoComCnpj = (doc: string) =>
     montarPreenchimentoDespesa(
-      extracao({ fornecedorNome: alta("A F ANDRADE COM MAT CONSTR EIRELI - ME"), fornecedorDoc: alta(doc) }),
-      { ...CTX, empresaDoc: "10.365.725/0002-18" },
+      extracao({ fornecedorNome: alta("MATERIAIS EXEMPLO COM MAT CONSTR EIRELI - ME"), fornecedorDoc: alta(doc) }),
+      { ...CTX, empresaDoc: "00.000.003/0002-06" },
     );
   it("se a leitura devolver o CNPJ da própria empresa, não vincula e pede o fornecedor certo", () => {
-    const r = lidoComCnpj("10365725000218");
+    const r = lidoComCnpj("00000003000206");
     expect(r.valores.fornecedorId).toBeUndefined();
     expect(r.alertas.fornecedor?.motivo).toContain("própria empresa");
   });
   it("sem empresaDoc, o casamento é o de sempre", () => {
-    const r = montarPreenchimentoDespesa(extracao({ fornecedorNome: alta("A F ANDRADE COM MAT CONSTR EIRELI - ME"), fornecedorDoc: alta("10.365.725/0002-18") }), CTX);
-    expect(r.valores.fornecedorId).toBe("f-andrade");
+    const r = montarPreenchimentoDespesa(extracao({ fornecedorNome: alta("MATERIAIS EXEMPLO COM MAT CONSTR EIRELI - ME"), fornecedorDoc: alta("00.000.003/0002-06") }), CTX);
+    expect(r.valores.fornecedorId).toBe("f-materiais");
   });
 });

@@ -98,7 +98,7 @@ describe("ordenarTabela", () => {
   const rows: Linha[] = [
     L("3", "Cimento SA", 300, "03/10/2026"),
     L("1", "ávila materiais", 1000, "12/31/2025"),
-    L("2", "Brasil Mix", 50.5, "01/05/2026"),
+    L("2", "Betoneira Exemplo", 50.5, "01/05/2026"),
   ];
 
   it("sem estado devolve a ordem original (padrão da tela)", () => {

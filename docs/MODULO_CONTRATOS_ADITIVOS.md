@@ -1,7 +1,7 @@
 # Growth Ambiental · Módulo de Contratos e Aditivos
 
 Gestão contratual para consultoria ambiental, arqueologia, patrimônio cultural e
-serviços técnicos. Genérico e configurável por empresa (a Scientia é o primeiro
+serviços técnicos. Genérico e configurável por empresa (a o primeiro cliente é o primeiro
 cliente, mas nada é específico dela).
 
 ## 1. Arquitetura — uma camada sobre o que já existe

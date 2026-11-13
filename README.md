@@ -1,11 +1,12 @@
-# Growth Tools · Construction App
+# Growth Ambiental
 
-SaaS de **FP&A e BI para incorporadoras imobiliárias** — Tools for Growth (TFG).
-Cliente piloto: RMV Empreendimentos / BMV Construções — empreendimento
-**SIGNATURE SUARÃO** (195 unidades, padrão MCMV/PEC).
+ERP SaaS multi-tenant de **gestão financeira, FP&A e BI para consultorias
+ambientais, de arqueologia e de patrimônio cultural** — Tools for Growth (TFG).
+Derivado do Growth Tools · Construction (mesma base técnica), em stack de
+produção para deploy em **VPS + Coolify**.
 
-Reconstrução do protótipo single-file (`growth-tools-construction.zip`) em stack
-de produção para deploy em **VPS + Coolify**.
+- Módulo de Contratos e Aditivos: [`docs/MODULO_CONTRATOS_ADITIVOS.md`](./docs/MODULO_CONTRATOS_ADITIVOS.md)
+- Auditoria de dados herdados: [`docs/AUDITORIA_SANITIZACAO.md`](./docs/AUDITORIA_SANITIZACAO.md)
 
 - Especificação funcional: [`docs/SPEC.md`](./docs/SPEC.md)
 - Stack e roadmap de produção: [`docs/STACK.md`](./docs/STACK.md)
@@ -75,7 +76,7 @@ npm run dev                     # http://localhost:3000
 | `npm run test:all` | `typecheck` + `lint` + `test:db` — é o portão de qualidade |
 | `npm run db:generate` | Gera migrações Drizzle |
 | `npm run db:migrate` | Aplica migrações |
-| `npm run db:seed` | Popula o tenant de demonstração (RMV) |
+| `npm run db:seed` | Cria uma empresa de **demonstração fictícia** (exige `SEED_ADMIN_EMAIL`; recusa produção) |
 | `npm run db:studio` | Drizzle Studio (explorar o banco) |
 
 #### Por que `test:all` e não `test`
@@ -148,16 +149,17 @@ migração (`migrate.mjs`, um bundle esbuild do migrator do Drizzle — não pre
 do `drizzle-kit` em runtime) antes de subir o servidor. É idempotente: a cada
 deploy aplica só o que falta.
 
-**Seed (opcional, 1ª vez):** para popular o tenant de demonstração (RMV /
-SIGNATURE SUARÃO), abra o **terminal do container do app** no Coolify e rode:
+**Seed de demonstração (opcional):** o banco funciona vazio — empresas reais
+nascem pelo console da plataforma (`/plataforma`). Para avaliar o app com uma
+empresa **fictícia**, rode no terminal do container (ou localmente
+`npm run db:seed`):
 
 ```bash
-node seed.mjs
+SEED_ADMIN_EMAIL=voce@exemplo.com SEED_DEMO_EM_PRODUCAO=sim node seed.mjs
 ```
 
-O `seed.mjs` é um bundle autossuficiente embarcado na imagem (usa o
-`DATABASE_URL` do próprio container). Localmente, o equivalente é
-`npm run db:seed`.
+Sem `SEED_ADMIN_PASSWORD`, a senha é gerada, mostrada uma vez e a troca é
+obrigatória no primeiro acesso. Nenhum usuário, e-mail ou senha fica no código.
 
 Variáveis obrigatórias em produção:
 
@@ -166,6 +168,7 @@ NODE_ENV=production
 DATABASE_URL=postgresql://postgres:SENHA@servico-pg:5432/postgres
 AUTH_SECRET=<openssl rand -base64 32>
 AUTH_TRUST_HOST=true          # necessário atrás do Traefik
+SUPERADMIN_EMAILS=operador@exemplo.com   # operadores do console /plataforma (sem isto, ninguém acessa)
 NEXT_PUBLIC_APP_URL=https://app.growthtools.com.br
 ```
 

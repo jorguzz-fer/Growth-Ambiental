@@ -26,9 +26,9 @@ customizadas não entram nas colunas consolidadas.
 
 | Tela | KPIs | Painéis |
 |---|---|---|
-| Dashboard da SIGNATURE | **igual** | **igual** |
+| Dashboard da EMPREENDIMENTO PILOTO | **igual** | **igual** |
 | Dashboard da OBRA 7 (não era a do cookie) | **igual** | **igual** |
-| Dashboard da SIGNATURE com período | **igual** | **igual** |
+| Dashboard da EMPREENDIMENTO PILOTO com período | **igual** | **igual** |
 | Dashboard **Todos** | só a mudança decidida (abaixo) | **igual** |
 
 Em "Todos", a única diferença:

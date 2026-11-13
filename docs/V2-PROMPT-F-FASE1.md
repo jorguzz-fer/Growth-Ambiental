@@ -38,7 +38,7 @@ com "Comparar Orçamento × Previsão" e "Explicar desvios".
   antecipado sem cabeçalho/seletores (FC-11); conta ausente de um lado vira
   **0** (5.3).
 - **Base local**: 1 previsão ("Forecast", padrão, **sem origem**, Rascunho,
-  não travada) em SIGNATURE SUARÃO; 0 `budget_account`. Produção: rodar o
+  não travada) em EMPREENDIMENTO PILOTO; 0 `budget_account`. Produção: rodar o
   SQL (relatórios A–E; o C é a linha de base do teste 11.14).
 
 ## Bloqueios — decisões adotadas

@@ -53,14 +53,14 @@ arquivos / 1570.
 
 Navegador (local), **admin**: `/medicao` abre no Relatório com as 3 abas; um
 item "Medição de Obra" no menu, destacado também em `/medicaolanc` (aba Nova
-medição ativa); Lançadas com 2 linhas e filtro de autor [Todos, RMV Admin,
+medição ativa); Lançadas com 2 linhas e filtro de autor [Todos, Cliente Piloto Admin,
 autor não registrado]; `&autor=sem` → 1 linha e "Limpar filtros".
 **Engenheiro** (usuário temporário local): item do menu aponta para
 `/medicaolanc` e fica destacado; `/medicao` direto = "Acesso negado" e nenhum
 relatório no DOM (17c); Lançadas mostra só a sem autor — a do admin **não
 está no HTML** (17e); sem filtro de autor nem coluna Orçado (17i); lança uma
 medição e a vê com o próprio nome; `?aba=relatorio` cai em Nova medição.
-Admin depois vê as três autoras (Eng Teste, RMV Admin, autor não registrado)
+Admin depois vê as três autoras (Eng Teste, Cliente Piloto Admin, autor não registrado)
 e o Relatório soma R$ 63 = todos os autores (17h). Usuário, membership,
 medições e auditoria do teste apagados; `medicao` local segue com 0 linhas.
 

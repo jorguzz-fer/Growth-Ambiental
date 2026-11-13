@@ -15,7 +15,7 @@ export function marcarDespesas(
     const ped = bruto.trim();
     if (!ped) continue;
     const alvo = norm(ped);
-    // Aceita o número inteiro ou o final dele (ex.: "1682" acha "BMV-2026-001682").
+    // Aceita o número inteiro ou o final dele (ex.: "1682" acha "EXM-2026-001682").
     const achadas = despesas.filter((d) => d.numDoc && (norm(d.numDoc) === alvo || norm(d.numDoc).endsWith(alvo.replace(/^0+/, ""))));
     if (achadas.length === 1) ids.add(achadas[0].id);
     else naoAchados.push(achadas.length > 1 ? `${ped} (mais de um)` : ped);

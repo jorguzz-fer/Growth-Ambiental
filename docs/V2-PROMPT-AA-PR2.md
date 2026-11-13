@@ -49,7 +49,7 @@ Ela usa as mesmas funções da tela, com a chave desligada e ligada. Para
 "Entradas de caixa" e "Executado", é o que o BAA-3 mede.
 
 **Base local:**
-- O VGV da Previsão da SIGNATURE passa de R$ 1.076.607 (unidades gravadas na
+- O VGV da Previsão da EMPREENDIMENTO PILOTO passa de [valor removido] (unidades gravadas na
   Previsão) para R$ 0 (a Atual não tem unidade).
 - Liberação e saldo viram "—".
 - O resto fica igual: não há cópia com caixa nem dois Orçamentos.

@@ -6,7 +6,7 @@ import type { EmitenteFiscal } from "@/lib/calc/emitente-fiscal";
 /** Prompt AG, seção 6 — o assistente das Notas Fiscais. */
 const EMITENTE: EmitenteFiscal = {
   razaoSocial: "X", cnpj: "11222333000181", inscricaoMunicipal: "1", regimeTributario: "LUCRO_PRESUMIDO", itemListaServico: "7.02",
-  aliquotaIss: 3, codigoMunicipio: "3552502", municipio: "Itanhaém", uf: "SP", logradouro: "Av", numero: "1", bairro: "C", cep: "11740-000", email: "a@b.c",
+  aliquotaIss: 3, codigoMunicipio: "3509502", municipio: "Campinas", uf: "SP", logradouro: "Av", numero: "1", bairro: "C", cep: "13010-000", email: "a@b.c",
 };
 const AGORA = new Date("2026-10-26T15:00:00Z");
 let seq = 0;
@@ -18,7 +18,7 @@ const nota = (o: Partial<NotaParaAnalise>): NotaParaAnalise => ({
   tomadorEmail: null, tomadorTelefone: null, tomadorLogradouro: null, tomadorNumero: null, tomadorComplemento: null, tomadorBairro: null,
   tomadorCodigoMunicipio: null, tomadorUf: null, tomadorCep: null, ...o,
 });
-const obras = new Map([["p1", { codigoMunicipio: "3552502" }]]);
+const obras = new Map([["p1", { codigoMunicipio: "3509502" }]]);
 
 describe("analisarNotas", () => {
   it("conferir: pendência própria por nota; o cadastro da empresa aparece uma vez, à parte", () => {

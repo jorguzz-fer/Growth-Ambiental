@@ -38,7 +38,7 @@ Prompt J (3.2).
 | `docs/sql/v2-bloco2-diagnostico.sql` | **BJ-2**: unidades repetidas. **BK-4**: contas "Recebido" sem caixa. **BP-1**: permuta já no Estoque. **BP-2**: permuta gerando receita sem estar vendida. **BO-2**: o campo "%" das Liberações |
 | `docs/sql/v2-status-contrato.sql` | Status do contrato de cliente (Prompt M, 6.2) |
 
-**Rodados em 30/09/2026.** Resultado e leitura em [`V2-DIAGNOSTICO-PRODUCAO.md`](./V2-DIAGNOSTICO-PRODUCAO.md).
+**Rodados em 30/09/2026.** Resultado e leitura no diagnóstico de produção do cliente anterior, removido.
 
 ## Decisões suas
 
@@ -192,5 +192,5 @@ que evita isso:
 
 ### O que ainda falta para a receita por rateio (I-9)
 
-- as **19 obras sem início e fim** preenchidas em Projetos;
+- as **obras sem início e fim** preenchidas em Projetos;
 - a variante do **INCC** (BQ-1) — não trava a I-9, só o rótulo do Prompt Q.

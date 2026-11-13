@@ -9,11 +9,11 @@
 
 **Produto:** SaaS de **FP&A (Financial Planning & Analysis) e BI** especializado para **incorporadoras e construtoras imobiliárias**.
 
-**Empresa:** Tools for Growth (TFG) — Co-fundadores: Thiago, Dr. Kleber Ferreira, Fernando Jorge.
+**Empresa:** Tools for Growth (TFG) — Sócios da TFG.
 
-**Cliente piloto:** RMV Empreendimentos / BMV Construções — empreendimento **SIGNATURE SUARÃO** (195 unidades, padrão MCMV/PEC, custo de edificações R$ 46.789.988,90).
+**Cliente piloto:** Cliente Piloto (incorporadora) / Construtora Piloto — empreendimento **EMPREENDIMENTO PILOTO** (padrão MCMV/PEC; quantidade de unidades e custo de edificações: [valor removido]).
 
-**Precificação piloto:** R$ 1.200–1.500/mês (cliente fundador).
+**Precificação piloto:** [valor removido] (cliente fundador).
 
 **Proposta de valor:** consolidar, em uma única ferramenta, o planejamento financeiro de um empreendimento imobiliário — projeção de receitas de venda (planos de pagamento complexos com correção INCC), controle de despesas por plano de contas CEF, conciliação de caixa via Open Finance, e relatórios gerenciais (DRE, fluxo de caixa, medição de obra para a Caixa Econômica Federal).
 
@@ -21,9 +21,9 @@
 
 | Conceito | Descrição |
 |---|---|
-| **Tenant (empresa cliente)** | A incorporadora. Ex.: "RMV Empreendimentos". Multi-tenant. |
-| **Projeto / Unidade organizacional** | Um empreendimento (ex.: "Bloco A — RMV", 95 unidades) ou um escritório/filial. O usuário troca o contexto ativo. |
-| **Unidade (imóvel)** | Apartamento à venda. Possui código (`BLA 401`), bloco, tipo, m², andar, valor (VGV), status (Disponível / Reservado / Vendido) e **plano de pagamento completo**. |
+| **Tenant (empresa cliente)** | A incorporadora. Ex.: "Cliente Piloto (incorporadora)". Multi-tenant. |
+| **Projeto / Unidade organizacional** | Um empreendimento (ex.: "Bloco A — Cliente Piloto") ou um escritório/filial. O usuário troca o contexto ativo. |
+| **Unidade (imóvel)** | Apartamento à venda. Possui código (`UNID 401`), bloco, tipo, m², andar, valor (VGV), status (Disponível / Reservado / Vendido) e **plano de pagamento completo**. |
 | **Versão (cenário)** | Cada projeto tem versões de planejamento com **dados completamente isolados**. Ver §4. |
 | **Plano de pagamento** | Cascata de fontes de recebimento de uma unidade vendida (ver §5). |
 | **INCC** | Índice Nacional de Custo da Construção — corrige parcelas a partir da 5ª (ver §6). |
@@ -81,7 +81,7 @@ Config
 
 ### Unidade (`unit`)
 ```
-id, code (ex. "BLA 401"), bloco, tipo (ex. "3D T1"), m2, andar,
+id, code (ex. "UNID 401"), bloco, tipo (ex. "3D T1"), m2, andar,
 valor (VGV da unidade), status (Disponivel|Reservado|Vendido),
 mesVenda, usarAS,
 // blocos do plano de pagamento (cada um liga o próximo via flag "usar..."):
@@ -291,7 +291,7 @@ Tela com abas internas:
 | **Gráficos** | Chart.js 4.4.1. |
 | **Formatação BRL** | Helpers `brl`, `brl0`, `brlk`. |
 | **Persistência** | ❌ Nenhuma — todo o estado é em memória (variáveis JS). Recarregar a página perde tudo. |
-| **Autenticação** | ❌ Nenhuma — usuário "RMV Admin" hardcoded. |
+| **Autenticação** | ❌ Nenhuma — usuário "Cliente Piloto Admin" hardcoded. |
 | **Backend / API** | ❌ Nenhum — 100% client-side. |
 
 ---

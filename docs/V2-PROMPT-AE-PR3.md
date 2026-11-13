@@ -1,7 +1,7 @@
 # Prompt AE · AE-3 — o assistente do Resumo
 
 Parte 5. **Somente leitura.** Nenhum número da tela muda: o Resumo continua
-igual ao do AE-1 na SIGNATURE (Atual, Previsão e as três comparadas).
+igual ao do AE-1 na EMPREENDIMENTO PILOTO (Atual, Previsão e as três comparadas).
 
 - **Onde fica:** painel de 300px no modo de uma versão. Tem o selo
   "Somente leitura" e dá para recolher; a preferência fica por usuário no
@@ -10,7 +10,7 @@ igual ao do AE-1 na SIGNATURE (Atual, Previsão e as três comparadas).
   - com a chave e uma exceção no bloco Atenção, a primeira exceção e
     quantas mais há;
   - sem exceção, o critério que mais confunde: "1 de 2 unidades vendidas. O
-    VGV de R$ 1.076.607 conta todas; Sinais a Subsídio contam só as
+    VGV de [valor removido] conta todas; Sinais a Subsídio contam só as
     vendidas";
   - sem unidade, diz que é ausência, não zero.
 - **As ações:**

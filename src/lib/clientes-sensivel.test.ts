@@ -30,8 +30,8 @@ describe("permissão de dados do cliente (BM-3)", () => {
 
 describe("mascararDocumento (5.1)", () => {
   it("CPF mostra só os dígitos centrais", () => {
-    expect(mascararDocumento("123.748.618-09")).toBe("•••.748.618-••");
-    expect(mascararDocumento("12374861809")).toBe("•••.748.618-••");
+    expect(mascararDocumento("000.000.002-72")).toBe("•••.000.002-••");
+    expect(mascararDocumento("00000000272")).toBe("•••.000.002-••");
   });
   it("CNPJ mostra só a raiz central", () => {
     expect(mascararDocumento("12.345.678/0001-90")).toBe("••.345.678/••••-••");

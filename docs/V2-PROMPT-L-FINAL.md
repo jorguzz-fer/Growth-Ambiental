@@ -6,7 +6,7 @@ PRs: #181 (Fase 1), #182 (L-1), #183 (L-2), #184 (L-3), #185 (L-4), L-5
 relatório obrigatório.
 
 ## 1. BL-2 — `rec = true` sem vínculo (nenhum alterado)
-Base local, tenant RMV Empreendimentos: **21 movimentos, R$ −12.465,60**, por
+Base local, tenant Cliente Piloto (incorporadora): **21 movimentos, R$ −12.465,60**, por
 mês: 01/2026 (3, −1.921,20), 03/2026 (6, −3.561,60), 05/2026 (3, −1.640,40),
 07/2026 (3, −1.710,60), 09/2026 (3, −1.780,80), 11/2026 (3, −1.851,00). A
 consulta está no SQL (bloco BL-2) para rodar em produção. **Nenhum `rec` foi

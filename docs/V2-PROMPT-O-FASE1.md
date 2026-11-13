@@ -11,7 +11,7 @@ curtas. **Só leitura; nada foi alterado.**
 | | Situação | Fonte |
 |---|---|---|
 | **BO-1** · soma em duplicidade | **Respondido; a correção é do Prompt I (§56/§57), não deste.** O código confirma: `getMonthlyRevenue` (Atual) soma `expandUnitReceivables` do plano **e** `reembursementsByMonth(getReembolsos)`; `getMonthlyRevenueBySource` idem (`reemb` separado); `calcTotals.reemb`; `budget.ts` (receita consolidada) soma unidades + reembolsos; Projeção, Consolidado e Resumo exibem a linha. Aqui a tela fica como está. **Consequência (6.4):** o assistente nunca trata a liberação como receita nem a soma a total de receita | `queries.ts:1457-1470, 1760-1770`, `budget.ts:552`, `projection.ts:410` |
-| **BO-2** · o campo "%" | **Decidido (30/09): sai da tela.** Produção: 1 lançamento (RMV) com "30". Já cumprido: `addReembolso` grava `pct: null` e o formulário não tem o campo. A coluna fica; o valor gravado não muda. Consulta 2 do SQL reconfere | `V2-BLOCO2-DECISOES.md`, `receitas.ts:45-47` |
+| **BO-2** · o campo "%" | **Decidido (30/09): sai da tela.** Produção: havia lançamento com o campo preenchido [dado de produção removido]. Já cumprido: `addReembolso` grava `pct: null` e o formulário não tem o campo. A coluna fica; o valor gravado não muda. Consulta 2 do SQL reconfere | `V2-BLOCO2-DECISOES.md`, `receitas.ts:45-47` |
 
 ## O que já está feito por prompts anteriores
 

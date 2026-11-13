@@ -69,7 +69,7 @@ describe("Prompt AH · regras da tela Empresa", () => {
   });
   it("3 — nome vazio é recusado com o motivo", () => {
     expect(recusaDoNome("  ")).toMatch(/razão social/);
-    expect(recusaDoNome("RMV")).toBeNull();
+    expect(recusaDoNome("ABC")).toBeNull();
   });
 });
 

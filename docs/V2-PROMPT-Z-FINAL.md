@@ -20,7 +20,7 @@ Docs: `V2-PROMPT-Z-FASE1.md`, `-PR1` a `-PR4`; SQL em
   para produção.
 
 ## 2. Registros em `time_entry`, por tenant
-Base local: RMV Empreendimentos **0**. Produção: consulta no SQL (BZ-4).
+Base local: Cliente Piloto (incorporadora) **0**. Produção: consulta no SQL (BZ-4).
 **Nenhum apagado, convertido ou migrado.**
 
 ## 3. Despesas geradas pela apuração antiga

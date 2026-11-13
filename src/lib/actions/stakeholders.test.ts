@@ -61,26 +61,26 @@ describe.skipIf(!HAS_DB)("Stakeholders — actions (Prompt W, PR W-1)", async ()
   });
 
   it("6/7 — CNPJ e CPF inválidos são recusados na criação e na edição", async () => {
-    expect((await addStakeholder(fd({ nome: "X", tipo: "PJ", doc: "20.957.509/0001-35" }))).ok).toBe(false);
-    expect((await addStakeholder(fd({ nome: "X", tipo: "PF", doc: "332.641.358-00" }))).ok).toBe(false);
-    const ok = await addStakeholder(fd({ nome: "Válido", tipo: "PJ", doc: "20.957.509/0001-34" }));
+    expect((await addStakeholder(fd({ nome: "X", tipo: "PJ", doc: "00.000.001/0001-35" }))).ok).toBe(false);
+    expect((await addStakeholder(fd({ nome: "X", tipo: "PF", doc: "000.000.001-00" }))).ok).toBe(false);
+    const ok = await addStakeholder(fd({ nome: "Válido", tipo: "PJ", doc: "00.000.001/0001-36" }));
     expect(ok.ok).toBe(true);
     const id = (ok as { id: string }).id;
-    const u = await updateStakeholder(fd({ id, nome: "Válido", tipo: "PJ", doc: "20.957.509/0001-35" }));
+    const u = await updateStakeholder(fd({ id, nome: "Válido", tipo: "PJ", doc: "00.000.001/0001-35" }));
     expect(u.ok).toBe(false);
     expect((u as { error: string }).error).toMatch(/CNPJ inválido/);
-    expect((await linha(id)).doc).toBe("20.957.509/0001-34");
+    expect((await linha(id)).doc).toBe("00.000.001/0001-36");
   });
 
   it("8 — documento com espaços é gravado sem eles, nas duas actions", async () => {
-    const ok = await addStakeholder(fd({ nome: "  Espaços  ", tipo: "PF", doc: "  332.641.358-09  " }));
+    const ok = await addStakeholder(fd({ nome: "  Espaços  ", tipo: "PF", doc: "  000.000.001-91  " }));
     expect(ok.ok).toBe(true);
     const id = (ok as { id: string }).id;
     const l = await linha(id);
     expect(l.nome).toBe("Espaços");
-    expect(l.doc).toBe("332.641.358-09");
-    await updateStakeholder(fd({ id, nome: "Espaços", tipo: "PF", doc: " 332.641.358-09 " }));
-    expect((await linha(id)).doc).toBe("332.641.358-09");
+    expect(l.doc).toBe("000.000.001-91");
+    await updateStakeholder(fd({ id, nome: "Espaços", tipo: "PF", doc: " 000.000.001-91 " }));
+    expect((await linha(id)).doc).toBe("000.000.001-91");
   });
 
   it("9 — PJ com documento de 11 dígitos AVISA, sem bloquear", async () => {
@@ -114,10 +114,10 @@ describe.skipIf(!HAS_DB)("Stakeholders — actions (Prompt W, PR W-1)", async ()
   });
 
   it("13a — PF com papel de serviço ou mão de obra exige endereço ao gravar", async () => {
-    const r = await addStakeholder(fd({ nome: "Pedreiro", tipo: "PF", doc: "332.641.358-09", papeis: ["Mão de Obra RPA"] }));
+    const r = await addStakeholder(fd({ nome: "Pedreiro", tipo: "PF", doc: "000.000.001-91", papeis: ["Mão de Obra RPA"] }));
     expect(r.ok).toBe(false);
     expect((r as { error: string }).error).toMatch(/endereço residencial/);
-    const ok = await addStakeholder(fd({ nome: "Pedreiro", tipo: "PF", doc: "332.641.358-09", papeis: ["Mão de Obra RPA"], endereco: "Rua A", numero: "1" }));
+    const ok = await addStakeholder(fd({ nome: "Pedreiro", tipo: "PF", doc: "000.000.001-91", papeis: ["Mão de Obra RPA"], endereco: "Rua A", numero: "1" }));
     expect(ok.ok).toBe(true);
     // PF com outro papel, ou PJ, não exige
     expect((await addStakeholder(fd({ nome: "Corretor", tipo: "PF", papeis: ["Corretor Autônomo"] }))).ok).toBe(true);
@@ -159,11 +159,11 @@ describe.skipIf(!HAS_DB)("Stakeholders — actions (Prompt W, PR W-1)", async ()
   });
 
   it("auditoria: documento mascarado no create e no update", async () => {
-    const r = await addStakeholder(fd({ nome: "Log", tipo: "PF", doc: "332.641.358-09" }));
+    const r = await addStakeholder(fd({ nome: "Log", tipo: "PF", doc: "000.000.001-91" }));
     const id = (r as { id: string }).id;
     const c = await ultimoLog(id);
-    expect(JSON.stringify(c.meta)).not.toContain("332.641.358-09");
-    expect(JSON.stringify(c.meta)).toContain("•••.641.358-••");
+    expect(JSON.stringify(c.meta)).not.toContain("000.000.001-91");
+    expect(JSON.stringify(c.meta)).toContain("•••.000.001-••");
     await updateStakeholder(fd({ id, nome: "Log", tipo: "PF", doc: "123.456.789-09" }));
     const u = await ultimoLog(id);
     expect(u.action).toBe("stakeholder.update");
@@ -172,7 +172,7 @@ describe.skipIf(!HAS_DB)("Stakeholders — actions (Prompt W, PR W-1)", async ()
 
   describe("exclusão (seção 2)", () => {
     const novo = async (nome: string) => {
-      const r = await addStakeholder(fd({ nome, tipo: "PJ", doc: "20.957.509/0001-34", papeis: ["Construtora"] }));
+      const r = await addStakeholder(fd({ nome, tipo: "PJ", doc: "00.000.001/0001-36", papeis: ["Construtora"] }));
       return (r as { id: string }).id;
     };
     const excluir = (id: string, confirmacao: string) => deleteStakeholder(fd({ id, confirmacao }));
@@ -236,10 +236,10 @@ describe.skipIf(!HAS_DB)("Stakeholders — actions (Prompt W, PR W-1)", async ()
       expect(l.action).toBe("stakeholder.delete");
       const meta = l.meta as { nome: string; doc: string; papeis: string[]; vinculos: Record<string, number> };
       expect(meta.nome).toBe("Auditado");
-      expect(meta.doc).toBe("••.957.509/••••-••");
+      expect(meta.doc).toBe("••.000.001/••••-••");
       expect(meta.papeis).toEqual(["Construtora"]);
       expect(meta.vinculos).toEqual({ despesas: 0, obrigacoesTerceiro: 0, recebimentosTerceiro: 0, acertos: 0, compensacoes: 0, documentos: 0 });
-      expect(JSON.stringify(meta)).not.toContain("20.957.509/0001-34");
+      expect(JSON.stringify(meta)).not.toContain("00.000.001/0001-36");
     });
 
     it("sem permissão de excluir devolve { ok: false }", async () => {

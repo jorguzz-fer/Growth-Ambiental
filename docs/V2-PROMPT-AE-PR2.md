@@ -3,7 +3,7 @@
 Partes 1, 2.3, 2.4, 2.6, 2.7 e 4.1, atrás da chave por empresa
 **`resumo_definicao_nova`**, que nasce **desligada** (seção 6). **Desligada,
 o Resumo é idêntico ao do AE-1.** Isso foi conferido no navegador na
-SIGNATURE, com a Atual, a Previsão e as três versões comparadas.
+EMPREENDIMENTO PILOTO, com a Atual, a Previsão e as três versões comparadas.
 
 ## Em `calcTotals`, por parâmetro (8.3: só o Resumo usa)
 

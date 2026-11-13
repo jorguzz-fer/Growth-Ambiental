@@ -5,9 +5,10 @@ entrou junto porque a decisão BAF-2 já foi tomada e ela é só remover um camp
 
 ## §11 do prompt, item a item
 
-**1–2. Consultas do BAF-1** (produção, 29/09/2026 — detalhe em
-`V2-BLOCO0-BLOQUEIOS.md` §5.2): **0 duplicatas**. O "buraco" de ~202 mil números
-é artefato de um `num_doc` digitado (`202606`), não perda real. Nenhum número
+**1–2. Consultas do BAF-1** (produção do cliente anterior — detalhe em
+`V2-BLOCO0-BLOQUEIOS.md` §5.2): **nenhuma duplicata**. O "buraco" grande na
+sequência é artefato de um `num_doc` digitado à mão (um número sem prefixo, fora
+da faixa do contador), não perda real. Nenhum número
 foi renumerado.
 
 **3. BAF-2 — a flag "Numeração automática ativa":** opção 2, **sai da tela**. A
@@ -47,20 +48,20 @@ mesma action que grava:
 
 - **número já emitido → sempre recusado.** *"O número PED-000010 já foi emitido
   — o lançamento seguinte repetiria um documento. Escolha um número ainda não
-  usado (o maior emitido neste formato é PED-026240)."*
+  usado (o maior emitido neste formato é PED-0NNNNN)."*
 - **abaixo do maior emitido → só com `CONFIRMO` digitado.** *"O próximo número
-  (PED-000500) fica abaixo do maior já emitido (PED-026240). 62 número(s) entre
-  PED-000500 e PED-026240 já estão em uso: quando o contador chegar neles, o
-  lançamento será recusado. O mínimo sem esse risco é 26241. Para salvar mesmo
+  (PED-000500) fica abaixo do maior já emitido (PED-0NNNNN). K número(s) entre
+  PED-000500 e PED-0NNNNN já estão em uso: quando o contador chegar neles, o
+  lançamento será recusado. O mínimo sem esse risco é NNNNN+1. Para salvar mesmo
   assim, digite CONFIRMO."* O log grava `recuoConfirmado` e `emUsoAFrente`.
-- **salvar sem mudar formato nem contador → passa**, como sempre (é o caso da
-  BMV hoje, com o contador em 432 abaixo do lote importado). E não gera linha de
+- **salvar sem mudar formato nem contador → passa**, como sempre (era o caso da
+  Construtora Piloto, com o contador abaixo de um lote importado). E não gera linha de
   log vazia (AK Parte 2).
 
 **Desvio consciente do §2.2 — a régua.** O prompt mede contra o "maior sufixo
-emitido" de qualquer formato. Na BMV isso é `202606`, um número digitado que
-**não pode colidir** com `PED-000432`: a régua obrigaria a pular o contador para
-202607. A trava mede só os números que o contador **pode reproduzir** — texto
+emitido" de qualquer formato. Na Construtora Piloto isso era um número digitado sem prefixo, que
+**não pode colidir** com `PED-000nnn`: a régua obrigaria a pular o contador para
+depois dele. A trava mede só os números que o contador **pode reproduzir** — texto
 exatamente igual a `prefixo-000n` —, que é a mesma igualdade do índice único.
 
 A action agora **devolve** `{ ok, error }` em vez de lançar: mensagem de exceção
@@ -77,8 +78,8 @@ de Server Action não chega ao navegador em produção.
 > e nada é gravado.
 
 A tela também mostra o **maior número já emitido no formato**, em vermelho
-quando o próximo está abaixo dele. Na BMV, hoje, essa linha aparece em vermelho
-— é o retrato real (contador em 432, lote importado a partir de 26179).
+quando o próximo está abaixo dele. Na Construtora Piloto essa linha aparecia em vermelho
+(contador abaixo de um lote importado) [dado de produção removido].
 
 **1.4 — colisão legível.** `addDespesa` (lançamento e réplicas recorrentes)
 traduz a violação do índice em *"O número PED-… já foi usado em outra despesa
@@ -100,14 +101,15 @@ checagem de duplicata; a action não toca `despesa`.
 - Erro lançado por `addDespesa` segue o padrão do arquivo (exceção); em produção
   o Next pode esconder o texto. Vale para todas as mensagens daquela action, não
   só esta — fica para o Prompt S.
-- A BMV vai encostar no lote importado quando o contador chegar a 26179. Com o
+- A Construtora Piloto vai encostar no lote importado quando o contador chegar ao
+  início dele. Com o
   índice, o lançamento nesse ponto é recusado (não duplica). Antes disso, alguém
   com a tela de Numeração precisa pular o contador — o aviso vermelho já diz.
 
 ## Testes
 
 - `src/lib/db/numbering-trava.test.ts` — régua de ocupação (retrato sintético da
-  BMV, outros formatos, prefixo com dígitos, igual ao maior), mensagem de colisão,
+  Construtora Piloto, outros formatos, prefixo com dígitos, igual ao maior), mensagem de colisão,
   e integração do índice (repetido barrado no mesmo tenant, permitido em outro,
   nulos e vazios convivem).
 - Navegador, build de produção + Postgres local: recusa de número usado, de

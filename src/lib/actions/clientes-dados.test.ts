@@ -32,7 +32,7 @@ describe.skipIf(!HAS_DB)("clientes — campos sensíveis preservados", async () 
       .values({
         tenantId,
         nomeCompleto: "Fulano",
-        cpfCnpj: "123.748.618-09",
+        cpfCnpj: "000.000.002-72",
         rendaBruta: "15000.00",
         scoreCredito: 800,
         estadoCivil: "Casado(a)",
@@ -70,7 +70,7 @@ describe.skipIf(!HAS_DB)("clientes — campos sensíveis preservados", async () 
     expect(c.scoreCredito).toBe(800);
     expect(c.estadoCivil).toBe("Casado(a)");
     expect(c.empresa).toBe("ACME");
-    expect(c.cpfCnpj).toBe("123.748.618-09");
+    expect(c.cpfCnpj).toBe("000.000.002-72");
   });
 
   it("sem a permissão: mandar campo sensível à força não grava", async () => {

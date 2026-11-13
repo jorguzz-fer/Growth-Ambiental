@@ -7,7 +7,7 @@ const M = [
   { id: "m2", nome: "Areia", sku: null, unidade: "m³" },
 ];
 const O = [{ id: "p1", rotulo: "OBRA A" }];
-const D = [{ id: "d1", rotulo: "BMV-1 · Concreteira · R$ 1.000" }];
+const D = [{ id: "d1", rotulo: "EXM-1 · Concreteira · R$ 1.000" }];
 
 describe("Prompt Y2 · Estoque com a Cris", () => {
   it("o formulário oferece materiais, obras, despesas e os dois tipos", () => {

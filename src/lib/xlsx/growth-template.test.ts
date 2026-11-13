@@ -27,7 +27,7 @@ function filledWorkbook(): Buffer {
 
   const vH = headers(tmpl, SHEETS.vendas);
   const unit = rowFor(vH, {
-    Unidade: "BLA 999", "Valor R$": 500000, Status: "Vendido",
+    Unidade: "UNID 999", "Valor R$": 500000, Status: "Vendido",
     "Usar AS?": "Sim", "AS Valor": 5000, "AS Venc": "02/27/2026", "AS Nr": 1, "AS->S1?": "Nao",
   });
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([vH, unit]), SHEETS.vendas);
@@ -42,7 +42,7 @@ function filledWorkbook(): Buffer {
   const pH = headers(tmpl, SHEETS.permuta);
   XLSX.utils.book_append_sheet(
     wb,
-    XLSX.utils.aoa_to_sheet([pH, rowFor(pH, { Unidade: "BLA 999", Tipo: "Carro", "Valor Estimado R$": 40000, Status: "Vendido", "Valor Venda R$": 35000 })]),
+    XLSX.utils.aoa_to_sheet([pH, rowFor(pH, { Unidade: "UNID 999", Tipo: "Carro", "Valor Estimado R$": 40000, Status: "Vendido", "Valor Venda R$": 35000 })]),
     SHEETS.permuta,
   );
 
@@ -79,7 +79,7 @@ describe("growth-template", () => {
     const p = parseWorkbook(filledWorkbook());
     expect(p.units).toHaveLength(1);
     const u = p.units[0];
-    expect(u.code).toBe("BLA 999");
+    expect(u.code).toBe("UNID 999");
     expect(u.status).toBe("Vendido");
     expect(u.valor).toBe(500000);
     expect(u.plan.usarAS).toBe(true);
@@ -91,7 +91,7 @@ describe("growth-template", () => {
     expect(p.reembolsos).toHaveLength(1);
     expect(p.reembolsos[0].valor).toBe(50000);
     expect(p.permutas).toHaveLength(1);
-    expect(p.permutas[0]).toMatchObject({ unitCode: "BLA 999", status: "Vendido", valorVenda: 35000 });
+    expect(p.permutas[0]).toMatchObject({ unitCode: "UNID 999", status: "Vendido", valorVenda: 35000 });
     expect(p.incc).toHaveLength(2);
     expect(p.incc[0]).toMatchObject({ mes: "05/2025", accumulated: 0.26 });
   });
@@ -121,7 +121,7 @@ describe("buildExportBuffer (round-trip export → import)", () => {
       ],
       units: [
         {
-          code: "BLA 401", bloco: "A", tipo: "2Q", m2: 60, andar: 4,
+          code: "UNID 401", bloco: "A", tipo: "2Q", m2: 60, andar: 4,
           valor: 500000, status: "Vendido", mesVenda: "01/05/2026", plan,
         },
       ],
@@ -130,7 +130,7 @@ describe("buildExportBuffer (round-trip export → import)", () => {
       ],
       permutas: [
         {
-          unitCode: "BLA 402", cliente: "Fulano", dataRecebimento: "01/10/2026",
+          unitCode: "UNID 402", cliente: "Fulano", dataRecebimento: "01/10/2026",
           tipo: "Imóvel", descricao: "Apto", estimado: 100000, status: "Disponivel",
           dataVenda: "", valorVenda: 0, tipoPermuta: "", obs: "",
         },
@@ -142,7 +142,7 @@ describe("buildExportBuffer (round-trip export → import)", () => {
     const parsed = parseWorkbook(buf);
 
     expect(parsed.units).toHaveLength(1);
-    expect(parsed.units[0].code).toBe("BLA 401");
+    expect(parsed.units[0].code).toBe("UNID 401");
     expect(parsed.units[0].valor).toBe(500000);
     expect(parsed.units[0].status).toBe("Vendido");
     expect(parsed.units[0].plan.AS.val).toBe(20000);

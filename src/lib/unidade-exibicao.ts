@@ -19,7 +19,7 @@ export function saldoFecha(saldo: number): boolean {
 
 /**
  * VGV conforme a ordem de grandeza: valor cheio abaixo de um milhão
- * ("R$ 375.000"), abreviado a partir de um milhão ("R$ 40,19 mi"). Sempre
+ * ("R$ 375.000"), abreviado a partir de um milhão ("R$ 12,50 mi"). Sempre
  * formatar em milhões transformava R$ 375.000 em "R$ 0,38M".
  */
 export function vgvFormatado(valor: number): string {

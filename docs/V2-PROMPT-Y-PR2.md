@@ -51,8 +51,8 @@ Nenhuma despesa, permuta ou lançamento alterado.
   sem relação; passou sozinho e na rodada seguinte da suíte.)
 
 ## Teste de navegador (local, admin)
-Entrada de 10 m³ (R$ 800) na despesa da SIGNATURE SUARÃO e saída de 4 m³
-para a mesma obra → "Consumo por obra: SIGNATURE SUARÃO · R$ 320 · Areia
+Entrada de 10 m³ (R$ 800) na despesa da EMPREENDIMENTO PILOTO e saída de 4 m³
+para a mesma obra → "Consumo por obra: EMPREENDIMENTO PILOTO · R$ 320 · Areia
 4 m³"; "Compra × consumo: comprou R$ 800 · consumiu R$ 320 · diferença
 R$ 480". Painel de documentos abre na linha; sem R2 local, avisa. Seeds
 apagados; despesas 75 antes e depois.

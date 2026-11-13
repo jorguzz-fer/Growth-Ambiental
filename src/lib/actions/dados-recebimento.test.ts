@@ -35,17 +35,17 @@ describe.skipIf(!HAS_DB)("Dados de recebimento do pagador (Prompt T, BT-2)", asy
   });
 
   it("12c — a chave PIX e a conta ficam gravadas, mas o audit_log registra só que mudaram", async () => {
-    const r = await addStakeholder(fd({ nome: "Pagador PIX", tipo: "PF", doc: "332.641.358-09", papeis: "Pagador por Terceiro", pixTipo: "CPF", pixChave: "33264135809", bancoNome: "Banco X", bancoConta: "12345-6" }));
+    const r = await addStakeholder(fd({ nome: "Pagador PIX", tipo: "PF", doc: "000.000.001-91", papeis: "Pagador por Terceiro", pixTipo: "CPF", pixChave: "00000000191", bancoNome: "Banco X", bancoConta: "12345-6" }));
     expect(r.ok).toBe(true);
     const id = (r as { id: string }).id;
     const [s] = await db.select().from(schema.stakeholders).where(eq(schema.stakeholders.id, id));
-    expect(s.pixChave).toBe("33264135809");
+    expect(s.pixChave).toBe("00000000191");
     expect(s.bancoConta).toBe("12345-6");
     const logs = () => db.select().from(schema.auditLog).where(eq(schema.auditLog.entityId, id)).then((l) => JSON.stringify(l.map((x) => x.meta)));
-    expect(await logs()).not.toContain("33264135809");
+    expect(await logs()).not.toContain("00000000191");
     expect(await logs()).not.toContain("12345-6");
     expect(await logs()).toContain("comDadosDeRecebimento");
-    const u = await updateStakeholder(fd({ id, nome: "Pagador PIX", tipo: "PF", doc: "332.641.358-09", pixTipo: "E-mail", pixChave: "pagador@exemplo.com", bancoConta: "99999-0" }));
+    const u = await updateStakeholder(fd({ id, nome: "Pagador PIX", tipo: "PF", doc: "000.000.001-91", pixTipo: "E-mail", pixChave: "pagador@exemplo.com", bancoConta: "99999-0" }));
     expect(u.ok).toBe(true);
     const texto = await logs();
     expect(texto).toContain("pixChave");

@@ -25,7 +25,7 @@ describe.skipIf(!HAS_DB)("Cartões de crédito — cadastro (Prompt U, 1)", asyn
     for (const [k, v] of Object.entries(campos)) f.set(k, v);
     return f;
   };
-  const base = { apelido: "Itaú Empresa", bandeira: "Visa", titular: "RMV", limite: "15000", diaFechamento: "28", diaVencimento: "5" };
+  const base = { apelido: "Itaú Empresa", bandeira: "Visa", titular: "Empresa Exemplo", limite: "15000", diaFechamento: "28", diaVencimento: "5" };
   beforeAll(async () => {
     const [t] = await db.insert(schema.tenants).values({ name: "cartoes-U1" }).returning();
     tenantId = t.id;

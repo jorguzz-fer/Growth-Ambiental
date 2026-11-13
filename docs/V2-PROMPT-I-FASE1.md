@@ -13,7 +13,7 @@ tamanho encontrado decide se isto é uma PR ou seis" (§50). Este é o inventár
 | §9 · auditoria de gravações | **Feito** no inventário do Prompt A (`V2-PROMPT-A-INVENTARIO.md`) |
 | §22 · id externo sem tenant (`updateProject`, `deleteProject`) | **Feito** no Prompt A: as duas gravam com `tenantId` na cláusula |
 | BI-3 · versão por cópia e importação | **Feito** (PR #102) |
-| §43 · diagnóstico | **Feito** para A–K, N–S, V, X, Y (`V2-DIAGNOSTICO-PRODUCAO.md`). Faltam L, M, T, U, W |
+| §43 · diagnóstico | **Feito** para A–K, N–S, V, X, Y (diagnóstico de produção do cliente anterior, removido). Faltam L, M, T, U, W |
 | B4 · chave por empresa | **Feito** (PR #103) |
 | Idempotência em terceiro, restituição, lote, compensação, acerto, repasse | **Feito** nos Prompts anteriores (`idempotency_key` + índice) |
 
@@ -25,8 +25,8 @@ tamanho encontrado decide se isto é uma PR ou seis" (§50). Este é o inventár
 `version.kind = 'atual'`**. Alimenta Contas a Pagar, Dashboard, Fechamento e a
 conciliação do extrato (`caixa.ts`).
 
-**Muda número:** em produção há 5 despesas da BMV na Previsão (R$ 13.710,98) e
-2 da RMV com R$ 0 (diagnóstico A). Hoje elas aparecem como obrigação. Entra
+**Muda número:** em produção há despesas na Previsão, em mais de uma empresa
+([dado de produção removido]). Hoje elas aparecem como obrigação. Entra
 **atrás de chave**, com a prévia mostrando exatamente essas linhas.
 
 ### §11 · Despesas — o que falta
@@ -35,7 +35,7 @@ conciliação do extrato (`caixa.ts`).
 |---|---|
 | 11.1 valor | `addDespesa` barra zero, `NaN` e infinito, **não barra negativo**. `updateDespesa` não valida nada (`patch.valor || "0"`) |
 | 11.2 criação atômica | **Não há transação**: despesa, parcelas, documento fiscal, anexos, obrigação com terceiro e réplicas recorrentes são inserts separados. Falha no meio deixa despesa pela metade |
-| 11.3 soma das parcelas | Parcelas vindas do painel são gravadas **sem conferir** com o valor quando os dois vêm preenchidos. Produção tem 6 casos (diagnóstico I) |
+| 11.3 soma das parcelas | Parcelas vindas do painel são gravadas **sem conferir** com o valor quando os dois vêm preenchidos. Produção tem casos ([dado de produção removido]) |
 | 11.4 status da parcela | `txt(p.status) ?? "Pendente"` — vem do formulário **sem lista fechada** no servidor; `STATUS_PARCELA` existe em `calc/parcelas.ts` e não é usada aqui |
 | 11.5 recorrência | As réplicas copiam o `core` inteiro: **status e `pagoPorTerceiro` vão junto**. Confirmar no código da PR e não copiar |
 | 11.6 edição com dependência | `updateDespesa` aceita mudar valor, status e competência **mesmo com parcelas, pagamentos ou acerto** vinculados. Só recusa despesa cancelada |
@@ -126,7 +126,7 @@ efeito contábil, pelo mapa). `updateProject` já registra de → para (Prompt A
 | **I-2** | Pagamentos: transação, idempotência, status acumulado, despesa-mãe, valor do servidor | 13, 14 | Não | `pagamento.idempotency_key` (aditiva) |
 | **I-3** | Exclusões: travas em `deleteDespesa` e `deleteUnit`, plano de contas inativa em vez de apagar, restituição cancelada em vez de apagada | 12, 24 | Não | `restituicao.cancelada…` (aditiva) |
 | **I-4** | Acerto: saldo real com abatimentos anteriores e `FOR UPDATE`; conferência do rateio | 17, 18 | Não | Não |
-| **I-5** | Contas a Pagar: só Atual **atrás de chave**; helper de saldo a pagar; "Vencida" única | 10, 15, 16 | **Sim** (R$ 13.710,98 na BMV), só com a chave ligada | Não |
+| **I-5** | Contas a Pagar: só Atual **atrás de chave**; helper de saldo a pagar; "Vencida" única | 10, 15, 16 | **Sim** ([valor removido]), só com a chave ligada | Não |
 | **I-6** | Datas em texto: as 7 ordenações normalizadas | 25, 37 | Não (ordem) | Não |
 | **I-7** | Terceiros, restituições e compensação: inventário próprio e correções | 20, 21, 23, 26 | a definir | a definir |
 | **I-8** | Camada analítica e relatórios | 28–41 | Sim | — |
@@ -134,7 +134,7 @@ efeito contábil, pelo mapa). `updateProject` já registra de → para (Prompt A
 
 **I-1 a I-6 não dependem de nenhuma decisão pendente** e não alteram dado
 gravado. **I-8 e I-9 esperam** BI-1, BI-2, BQ-2 (o valor nominal ou corrigido)
-e as 19 obras com datas preenchidas.
+e as obras sem início e fim com datas preenchidas.
 
 Ordem: I-1 → I-2 → I-3 → I-4 → I-5 → I-6. Depois, o Prompt J (Unidades), que
 já está destravado.

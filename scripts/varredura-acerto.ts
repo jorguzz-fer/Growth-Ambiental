@@ -70,9 +70,9 @@ async function main() {
   const obra5 = await criarObra("OBRA 5");
   const obra26 = await criarObra("OBRA 26");
   const obra28 = await criarObra("OBRA 28");
-  const [casarao] = await db
+  const [deposito] = await db
     .insert(schema.stakeholders)
-    .values({ tenantId: tenant.id, nome: "Casarão Materiais", tipo: "PJ" })
+    .values({ tenantId: tenant.id, nome: "Depósito Exemplo Materiais", tipo: "PJ" })
     .returning();
   const [socio] = await db
     .insert(schema.stakeholders)
@@ -82,10 +82,10 @@ async function main() {
   // ── CASO CASARÃO (CA-24) ────────────────────────────────────────────────
   // 8 PEDs somando R$ 67.000, em três obras, pagos com uma única transferência
   // de R$ 70.000. A diferença de R$ 3.000 é juros de atraso.
-  const valoresCasarao = [12000, 8000, 9500, 7000, 11000, 6500, 8000, 5000]; // = 67.000
+  const valoresDeposito = [12000, 8000, 9500, 7000, 11000, 6500, 8000, 5000]; // = 67.000
   const obrasCiclo = [obra5, obra26, obra28];
-  const pedsCasarao: string[] = [];
-  for (let i = 0; i < valoresCasarao.length; i++) {
+  const pedsDeposito: string[] = [];
+  for (let i = 0; i < valoresDeposito.length; i++) {
     const alvo = obrasCiclo[i % 3];
     const [d] = await db
       .insert(schema.despesas)
@@ -93,17 +93,17 @@ async function main() {
         versionId: alvo.versao.id,
         tenantId: tenant.id,
         numDoc: `PED-CAS-${String(i + 1).padStart(3, "0")}`,
-        fornecedorId: casarao.id,
-        valor: String(valoresCasarao[i]),
+        fornecedorId: deposito.id,
+        valor: String(valoresDeposito[i]),
         competencia: "03/2026",
         vencimento: "03/20/2026",
         categoriaDre: "Custo Variável",
         status: "A pagar",
       })
       .returning();
-    pedsCasarao.push(d.id);
+    pedsDeposito.push(d.id);
   }
-  const totalVinculado = valoresCasarao.reduce((a, v) => a + v, 0);
+  const totalVinculado = valoresDeposito.reduce((a, v) => a + v, 0);
   check(
     "8 PEDs de três obras somam R$ 67.000",
     totalVinculado === 67000,
@@ -126,23 +126,23 @@ async function main() {
       numDoc: "PED-ACERTO-001",
       dataPagamento: "04/15/2026",
       valorTransferido: String(VALOR_TRANSFERIDO),
-      favorecidoId: casarao.id,
+      favorecidoId: deposito.id,
       diferencaValor: String(diferenca.valor),
       diferencaTipo: diferenca.tipo,
     })
     .returning();
-  for (let i = 0; i < pedsCasarao.length; i++) {
+  for (let i = 0; i < pedsDeposito.length; i++) {
     await db.insert(schema.acertoItens).values({
       tenantId: tenant.id,
       acertoId: acerto.id,
-      despesaId: pedsCasarao[i],
-      valorAbatido: String(valoresCasarao[i]),
+      despesaId: pedsDeposito[i],
+      valorAbatido: String(valoresDeposito[i]),
       statusAnterior: "A pagar",
     });
     await db
       .update(schema.despesas)
       .set({ status: "Pago", dataCaixa: "04/15/2026" })
-      .where(eq(schema.despesas.id, pedsCasarao[i]));
+      .where(eq(schema.despesas.id, pedsDeposito[i]));
   }
   // A diferença vira despesa FINANCEIRA própria, na competência do pagamento.
   const [despJuros] = await db
@@ -173,7 +173,7 @@ async function main() {
   const quitadas = await db
     .select()
     .from(schema.despesas)
-    .where(inArray(schema.despesas.id, pedsCasarao));
+    .where(inArray(schema.despesas.id, pedsDeposito));
   check(
     "CA-24 — todos os 8 PEDs passam para Pago",
     quitadas.every((d) => d.status === "Pago"),
@@ -203,7 +203,7 @@ async function main() {
   const custo5 = await custoPorObra(obra5.versao.id);
   const custo26 = await custoPorObra(obra26.versao.id);
   const custo28 = await custoPorObra(obra28.versao.id);
-  const esperado5 = valoresCasarao.filter((_, i) => i % 3 === 0).reduce((a, v) => a + v, 0);
+  const esperado5 = valoresDeposito.filter((_, i) => i % 3 === 0).reduce((a, v) => a + v, 0);
   check(
     "CA-24 / RG-07 — os juros NÃO alteram o custo de nenhuma obra",
     custo5 === esperado5 && custo5 + custo26 + custo28 === 67000,
@@ -248,7 +248,7 @@ async function main() {
   const reabertas = await db
     .select()
     .from(schema.despesas)
-    .where(inArray(schema.despesas.id, pedsCasarao));
+    .where(inArray(schema.despesas.id, pedsDeposito));
   const caixaPos = (
     await db.select().from(schema.cashEntries).where(eq(schema.cashEntries.tenantId, tenant.id))
   ).reduce((a, c) => a + Number(c.valor), 0);

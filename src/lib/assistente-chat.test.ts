@@ -29,10 +29,10 @@ describe("chat (Prompt E, Etapa 2) — catálogo e privacidade", () => {
 
 describe("chat — intenção", () => {
   it("normaliza a saída do modelo; o que é estranho vira vazio", () => {
-    expect(normalizarIntencao({ metrica: "custo", cenario: "budget", obra: " Signature ", todas: false, de: "1/2026", ate: "12/2026" })).toEqual({
+    expect(normalizarIntencao({ metrica: "custo", cenario: "budget", obra: " Litoral ", todas: false, de: "1/2026", ate: "12/2026" })).toEqual({
       metrica: "custo",
       cenario: "budget",
-      obra: "Signature",
+      obra: "Litoral",
       todas: false,
       de: "01/2026",
       ate: "12/2026",
@@ -49,7 +49,7 @@ describe("chat — intenção", () => {
     expect(interpretarLocalmente("Qual o desvio de custo contra o orçado?", hoje).metrica).toBe("desvio");
     expect(interpretarLocalmente("Qual a receita orçada de todas as obras?", hoje)).toMatchObject({ metrica: "receita", cenario: "budget", todas: true });
     expect(interpretarLocalmente("saldo das contas hoje", hoje).metrica).toBe("saldo");
-    expect(interpretarLocalmente("custo da obra Signature em março", hoje)).toMatchObject({ metrica: "custo", obra: "Signature em março", de: "03/2026", ate: "03/2026" });
+    expect(interpretarLocalmente("custo da obra Litoral em março", hoje)).toMatchObject({ metrica: "custo", obra: "Litoral em março", de: "03/2026", ate: "03/2026" });
     expect(interpretarLocalmente("qual o telefone do cliente?", hoje).metrica).toBeNull();
   });
 
@@ -62,15 +62,15 @@ describe("chat — intenção", () => {
 
 describe("chat — obra citada (casamento local, só entre as que o usuário vê)", () => {
   const ps = [
-    { id: "1", name: "SIGNATURE SUARÃO" },
+    { id: "1", name: "MONITORAMENTO LITORAL" },
     { id: "2", name: "OBRA 7 TESTE" },
     { id: "3", name: "OBRA 8 TESTE" },
   ];
   it("exato, sem acento e sem caixa", () => {
-    expect(resolverObra("signature suarao", ps)).toMatchObject({ tipo: "uma", projeto: { id: "1" } });
+    expect(resolverObra("monitoramento litoral", ps)).toMatchObject({ tipo: "uma", projeto: { id: "1" } });
   });
   it("por palavra", () => {
-    expect(resolverObra("Signature em março", ps)).toMatchObject({ tipo: "uma", projeto: { id: "1" } });
+    expect(resolverObra("Litoral em março", ps)).toMatchObject({ tipo: "uma", projeto: { id: "1" } });
   });
   it("ambígua pede escolha; desconhecida diz que não achou", () => {
     expect(resolverObra("obra", ps)).toMatchObject({ tipo: "varias" });

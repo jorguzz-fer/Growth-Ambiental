@@ -78,7 +78,7 @@ Base: código do commit `d6daf16` (09/11/2026). Coloque este arquivo em
 - Entraram no `main` depois do dia 27/10, e o revisor deve considerar
   na base: **#276 e #277 (desempenho da DRE)**. A DRE passou a somar as
   despesas e os encargos no banco, cada versão é lida uma vez por
-  requisição (comparação antes × depois: 14.795 valores, zero divergências),
+  requisição (comparação antes × depois de todos os valores: zero divergências),
   e a migração **0071** criou índices em `despesa.version_id`,
   `pagamento.despesa_id`, `conta_receber.project_id`, `permuta.version_id` e
   `reembolso.version_id`. Docs: `docs/V3-DRE-DESEMPENHO-PR1.md` e `-PR2.md`.
@@ -370,7 +370,7 @@ O que se discutiu, para a decisão do dono (BIA-1 a BIA-6):
 - **Gerador de landing page por segmento** (ideia do dono): a pessoa pede "a
   landing do Growth Construction para feirantes" e a ferramenta gera. O
   Thiago prefere ter antes algumas páginas de segmento feitas com cuidado
-  (consultoria ambiental; veterinários, com revisão do Dr. Kleber), "para
+  (consultoria ambiental; veterinários, com revisão de um especialista do segmento), "para
   falar a língua de cada um". O gerador fica para os consultores
   credenciados que queiram uma página própria.
 - **Acesso do Thiago à plataforma:** mandar o e-mail de validação. É

@@ -1,12 +1,12 @@
 import type { CalcUnit } from "./types";
 
 /**
- * Unidade BLA 401 do protótipo (vendida, plano de pagamento completo).
+ * Unidade UNID 401 do protótipo (vendida, plano de pagamento completo).
  * Usada nos testes de paridade com o cálculo original.
  */
 export function bla401(): CalcUnit {
   return {
-    code: "BLA 401",
+    code: "UNID 401",
     status: "Vendido",
     valor: 537027,
     usarAS: true,
@@ -35,7 +35,7 @@ export function bla401(): CalcUnit {
 }
 
 /** Unidade disponível com a cascata zerada/desligada. */
-export function emptyUnit(code = "BLA X", valor = 420000): CalcUnit {
+export function emptyUnit(code = "UNID X", valor = 420000): CalcUnit {
   const off = { val: 0, venc: "", n: 0 };
   return {
     code,

@@ -9,7 +9,7 @@ e a leitura fazem daqui para a frente.
 formulário** (delete + insert por chave, na transação). Linha ausente — a
 legada "Receita", um grupo fora da seleção — fica intacta. Conta enviada
 zerada é apagada (o usuário a zerou). O log ganha `chaves: [...]`. Teste: salvar
-receitas sem mandar a legada mantém os R$ 204.140,40 (cenário do prompt).
+receitas sem mandar a legada mantém o valor dela intacto (cenário do prompt).
 
 ## BD-1 / 3.1 — "Receitas do Projeto"
 Linha **fixa** (`RECEITAS_PROJETO_KEY`, chave própria, diferente da legada

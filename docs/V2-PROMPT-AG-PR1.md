@@ -6,7 +6,7 @@ Prompt AG (42 de 42). Primeiro de quatro PRs:
 - **PR 3:** emissão, consulta e cancelamento no Focus NFe.
 - **PR 4:** o assistente e o relatório final.
 
-**O que é:** a RMV **emite** NFS-e de **serviço** para os clientes dela, pelo
+**O que é:** a Cliente Piloto **emite** NFS-e de **serviço** para os clientes dela, pelo
 Focus NFe, que já está integrado. **Não é** a nota recebida de fornecedor:
 essa continua em Despesas (`documento_fiscal`), sem mudança.
 
@@ -87,7 +87,7 @@ o prompt pede (6.4).
 
 ## O que fica para o servidor (Coolify)
 
-- `NFSE_TENANT_ID`: o id da RMV. Sem ele, ninguém emite, e a tela vai dizer
+- `NFSE_TENANT_ID`: o id da Cliente Piloto. Sem ele, ninguém emite, e a tela vai dizer
   isso.
 - `FOCUS_NFE_TOKEN_HOMOLOGACAO` e `FOCUS_NFE_TOKEN_PRODUCAO`: os tokens do
   Focus.

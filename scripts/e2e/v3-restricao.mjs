@@ -5,10 +5,17 @@
 import { chromium } from "playwright";
 import { execSync } from "node:child_process";
 import { readdirSync } from "node:fs";
+// Credenciais do ambiente de teste (nada fixo no código):
+//   E2E_EMAIL, E2E_PASSWORD (owner/admin) · E2E_EMAIL_ADMIN (2º admin, opcional) ·
+//   E2E_EMAIL_CONTADOR (usuário criado pelo teste de restrição).
+const E2E_EMAIL = process.env.E2E_EMAIL ?? "";
+const E2E_PASSWORD = process.env.E2E_PASSWORD ?? "";
+if (!E2E_EMAIL || !E2E_PASSWORD) throw new Error("Defina E2E_EMAIL e E2E_PASSWORD.");
+
 
 const BASE = process.env.BASE ?? "http://localhost:3400";
 const DB = process.env.APP_DB ?? "postgres://postgres@localhost:5433/gc_app";
-const EMAIL = "e2e-contador@rmv.com.br";
+const EMAIL = process.env.E2E_EMAIL_CONTADOR ?? "e2e-contador@exemplo.com";
 let ok = 0;
 let falha = 0;
 const check = (n, c, d = "") => { console.log(`[${c ? "  OK  " : " FALHA"}] ${n}${d ? " — " + d : ""}`); c ? ok++ : falha++; };
@@ -19,7 +26,7 @@ async function entrar(email) {
   const page = await ctx.newPage();
   await page.goto(`${BASE}/login`);
   await page.fill('input[type="email"]', email);
-  await page.fill('input[type="password"]', "Trocar@2026");
+  await page.fill('input[type="password"]', E2E_PASSWORD);
   await page.click('button[type="submit"]');
   await page.waitForURL((u) => !u.pathname.includes("/login"), { timeout: 60000 });
   return page;
@@ -32,11 +39,11 @@ const abrir = async (page, url) => {
 
 // 1) O owner cria o contador, com a sugestão de telas do papel, sem a DRE.
 {
-  const page = await entrar("admin@rmv.com.br");
+  const page = await entrar(E2E_EMAIL);
   await abrir(page, "/usuarios");
   await page.fill('input[name="name"]', "E2E Contador");
   await page.fill('input[name="email"]', EMAIL);
-  await page.fill('input[name="password"]', "Trocar@2026");
+  await page.fill('input[name="password"]', E2E_PASSWORD);
   await page.selectOption('select[name="role"]', "contador");
   const sugeridas = await page.locator("[data-telas-sugeridas] input[type=checkbox]:checked").evaluateAll((els) => els.map((e) => e.getAttribute("data-tela")));
   check("AI2: o papel contador sugere as telas dele", sugeridas.includes("dre") && sugeridas.includes("despesas") && !sugeridas.includes("caixa"), sugeridas.join(","));

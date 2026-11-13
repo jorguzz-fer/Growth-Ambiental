@@ -12,7 +12,7 @@ formulário de baixa e nos cards de consumo (BY-1).
 
 ## 2. BY-2 — despesas de material por projeto
 Base local: 75 despesas sintéticas, 25 por obra (ESCRITÓRIO CENTRAL, OBRA 7
-TESTE, SIGNATURE SUARÃO), **nenhuma** com fornecedor ou histórico de
+TESTE, EMPREENDIMENTO PILOTO), **nenhuma** com fornecedor ou histórico de
 material. A consulta por projeto (heurística por nome do fornecedor) e a
 lista de candidatas no projeto "guarda-chuva" estão no SQL para rodar em
 produção. Não muda a implementação.

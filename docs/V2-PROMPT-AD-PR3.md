@@ -72,7 +72,7 @@ continua com o mesmo total de previsto: −R$ 39.381.
     caixa dele não entra;
   - com o tenant errado, nada é lido;
   - as contagens antes e depois são iguais.
-- Navegador, com SIGNATURE, OBRA 7 TESTE e Empresa toda:
+- Navegador, com EMPREENDIMENTO PILOTO, OBRA 7 TESTE e Empresa toda:
   - a frase aparece;
   - as ações desabilitadas mostram o motivo;
   - o recolhido persiste.

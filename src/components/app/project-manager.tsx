@@ -239,7 +239,7 @@ function NewProjectForm({ clientes, tenantName, onFechar }: { clientes: ClienteO
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
           <div className="sm:col-span-2">
             <Label>Nome da obra</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Bloco A — RMV" disabled={pending} aria-label="Nome da obra" />
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Monitoramento — Área Norte" disabled={pending} aria-label="Nome da obra" />
           </div>
           <div>
             <Label>Data de início</Label>

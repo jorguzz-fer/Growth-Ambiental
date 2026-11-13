@@ -54,7 +54,7 @@ visíveis na tela). Nenhum dado existente foi alterado.
   local tem 0 compensações) e aging sem obrigações em aberto (0 registros).
 
 ## Dados
-- Hash de `stakeholder` igual antes e depois (tenant RMV). As tabelas
+- Hash de `stakeholder` igual antes e depois (tenant Cliente Piloto). As tabelas
   `despesa_terceiro`, `restituicao` e `compensacao` continuam com 0 linhas na
   base local.
 - A migração 0052 precisa subir em produção junto com as 0046–0051 ainda não

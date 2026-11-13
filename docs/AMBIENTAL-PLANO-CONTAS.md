@@ -134,5 +134,5 @@ Gasto que só existe porque o projeto existe. Gravado com `kind = "cef"`.
   Parâmetros/INCC, Medição CEF) seguem no menu, por decisão do dono, até a
   avaliação de cada um. A Medição CEF ainda usa os grupos de obra do plano
   antigo (`PLANO_CONTAS` em constants.ts).
-- O seed de demonstração continua com o projeto da RMV (construção); só o
+- O seed de demonstração continua com o projeto da Cliente Piloto (construção); só o
   plano de contas dele passou a ser o ambiental.

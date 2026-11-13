@@ -159,7 +159,7 @@ export function resolverObra<T extends { id: string; name: string }>(texto: stri
   const contem = projetos.filter((p) => sem(p.name).includes(alvo) || alvo.includes(sem(p.name).trim()));
   if (contem.length === 1) return { tipo: "uma", projeto: contem[0] };
   if (contem.length > 1) return { tipo: "varias", candidatos: contem };
-  // Palavra a palavra (ex.: "signature" → "SIGNATURE SUARÃO").
+  // Palavra a palavra (ex.: "litoral" → "MONITORAMENTO LITORAL").
   const palavras = alvo.split(/\s+/).filter((w) => w.length >= 3);
   const porPalavra = projetos.filter((p) => palavras.some((w) => sem(p.name).split(/\s+/).includes(w)));
   if (porPalavra.length === 1) return { tipo: "uma", projeto: porPalavra[0] };

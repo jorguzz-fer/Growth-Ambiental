@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { analisarContas, type ContaParaAnalise } from "./contas-analise";
 
 const HOJE = "2026-09-30";
-const conta = (p: Partial<ContaParaAnalise> & { id: string }): ContaParaAnalise => ({ banco: "Itaú", ag: "0039", cc: "99155-9", tipo: "Imobiliária", saldo: 0, saldoSource: "manual", openFinanceId: null, lastSync: null, ativo: true, ...p });
+const conta = (p: Partial<ContaParaAnalise> & { id: string }): ContaParaAnalise => ({ banco: "Banco Exemplo", ag: "0001", cc: "12345-6", tipo: "Imobiliária", saldo: 0, saldoSource: "manual", openFinanceId: null, lastSync: null, ativo: true, ...p });
 
 describe("assistente de Contas Correntes (Prompt X, 7) — puro, somente leitura", () => {
   it("aponta cadastros que não parecem conta, sem movimento, saldo parado e auto não conectada", () => {
@@ -26,6 +26,6 @@ describe("assistente de Contas Correntes (Prompt X, 7) — puro, somente leitura
   });
   it("nunca atualizado conta como parado, com dias nulos", () => {
     const a = analisarContas([conta({ id: "n" })], [], HOJE);
-    expect(a.saldoParado).toEqual([{ id: "n", banco: "Itaú · 99155-9", saldo: 0, lastSync: null, dias: null }]);
+    expect(a.saldoParado).toEqual([{ id: "n", banco: "Banco Exemplo · 12345-6", saldo: 0, lastSync: null, dias: null }]);
   });
 });

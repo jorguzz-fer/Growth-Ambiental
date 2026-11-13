@@ -11,7 +11,7 @@ Primeira PR de código do Prompt J, conforme
 | **3.1 · cabeçalho** | `PageHeader` recebia `eyebrow` e `subtitle` e não mostrava nenhum dos dois (ocultos desde o commit `0601609`, "visual mais clean"). Em Unidades, "OBRA · Atual" e "N unidades · VGV" nunca apareciam | volta a exibir os dois: eyebrow em mono maiúsculo acima do título, subtítulo abaixo. **Vale para todas as telas** que já passavam esses textos (30 com eyebrow, 40 com subtítulo). Só apresentação; os textos foram lidos e são os da obra · versão |
 | **2.5 · nome** | "Unidades do Empreendimento" | **"Unidades"**, como o menu (Prompt C) e o mockup |
 | **3.2 · data da venda** (BJ-1) | `mesVenda` cru na lista: `01/27/2026` (mês/dia), rótulo "Mês venda" | `dateBR` → `27/01/2026`, rótulo **"Data da venda"**. O formulário já usava `DateField`. Nenhum valor gravado muda |
-| **3.3 · VGV** | sempre em milhões: R$ 375.000 → "R$ 0,38M" | `vgvFormatado`: valor cheio abaixo de um milhão ("R$ 375.000"), abreviado a partir dele ("R$ 40,19 mi") |
+| **3.3 · VGV** | sempre em milhões: R$ 375.000 → "R$ 0,38M" | `vgvFormatado`: valor cheio abaixo de um milhão ("R$ 375.000"), abreviado a partir dele (ex.: "R$ 12,50 mi") |
 | **3.4 · plural** | "1 unidades" | `contagemDeUnidades`: "1 unidade" |
 | **3.4 · tolerância** | `Math.abs(saldo) < 1` na lista **e** no formulário (duas cópias) | `saldoFecha`: **R$ 0,01** (RG-08), num helper só; a coluna Saldo e o selo do formulário passam a mostrar centavos, senão "R$ 0" em vermelho não explicaria nada |
 | **5.3 · tenant** | `getUnits(versionId)` só por versão | `getUnits(tenantId, versionId)`; os 13 chamadores passam a empresa (das telas, `ctx.tenant.id` ou `version.tenantId`; nas leituras internas de relatório, `versaoKindETenant` lê tipo e empresa da versão de uma vez). Sem efeito observável |
@@ -39,8 +39,8 @@ R$ 0,99 saem de verde para vermelho. Quantas em produção: consulta 3 de
 - **Teste do dia 25 (BJ-1), na base local:** unidade `TESTE-J1-DIA25` criada
   pelo formulário com venda em 25/09/2026; a lista mostrou **25/09/2026**
   (antes mostraria 09/25/2026). Removida ao fim; `unit` voltou a 2 registros e
-  R$ 1.076.607,00, os mesmos de antes.
-- Navegador: Unidades com eyebrow "SIGNATURE SUARÃO · ATUAL", título, "1
+  [valor removido], os mesmos de antes.
+- Navegador: Unidades com eyebrow "EMPREENDIMENTO PILOTO · ATUAL", título, "1
   unidade · VGV R$ 100.000", coluna "Data da venda"; Resumo Executivo com
   eyebrow e subtítulo de volta.
 - Suíte inteira, `typecheck`, `lint` e `next build`: ver PR.
