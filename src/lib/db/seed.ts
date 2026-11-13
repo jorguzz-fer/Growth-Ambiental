@@ -23,6 +23,7 @@ import { DEFAULT_INCC } from "@/lib/calc/constants";
 import { hashPassword } from "@/lib/password";
 import { PLANO_CONTAS_PADRAO, linhasDoPlano } from "@/lib/calc/plano-ambiental";
 import { garantirModalidades } from "@/lib/contrato-modalidades";
+import { garantirBiblioteca } from "@/lib/plano-biblioteca";
 
 /** Nome da empresa de demonstração — fictícia e identificada como tal. */
 export const EMPRESA_DEMO = "Consultoria Ambiental Exemplo (DEMONSTRAÇÃO)";
@@ -99,6 +100,7 @@ async function seedDemoData(tenantId: string) {
   const chartRows = linhasDoPlano(PLANO_CONTAS_PADRAO, tenantId);
   await db.insert(schema.chartAccounts).values(chartRows);
   await garantirModalidades(tenantId);
+  await garantirBiblioteca(tenantId);
   console.log(`  ${chartRows.length} contas.`);
 
   console.log("Índice de reajuste (série padrão)...");

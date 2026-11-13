@@ -10,7 +10,7 @@ import { MAX_ANEXO_BYTES, MAX_MENSAGEM, TIPOS_DE_ANEXO } from "@/lib/cris";
 
 /** As mesmas mensagens do botão 📎 (um caminho, uma regra). */
 export const ERRO_ANEXO_GRANDE = "Arquivo maior que 4 MB.";
-export const ERRO_ANEXO_TIPO = "Envie PDF, imagem (PNG, JPG, WEBP) ou planilha de extrato (XLSX, CSV).";
+export const ERRO_ANEXO_TIPO = "Envie PDF, Word (DOCX), imagem (PNG, JPG, WEBP) ou planilha de extrato (XLSX, CSV).";
 
 /** Valida um arquivo para virar anexo, como o 📎: tipo aceito e até 4 MB. */
 export function validarAnexo(arquivo: { type: string; size: number }): string | null {

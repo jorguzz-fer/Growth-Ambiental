@@ -3,6 +3,7 @@ import { db, schema } from "@/lib/db";
 import { DEFAULT_INCC } from "@/lib/calc/constants";
 import { PLANO_CONTAS_PADRAO, linhasDoPlano } from "@/lib/calc/plano-ambiental";
 import { garantirModalidades } from "@/lib/contrato-modalidades";
+import { garantirBiblioteca } from "@/lib/plano-biblioteca";
 import { hashPassword } from "@/lib/password";
 
 /**
@@ -131,6 +132,8 @@ export async function provisionTenant(
 
       // Modalidades de serviço iniciais do módulo de Contratos (configuráveis).
       await garantirModalidades(tenant.id, tx);
+      // Biblioteca padrão de fases e atividades (sugestões; configurável).
+      await garantirBiblioteca(tenant.id, tx);
 
       // Tabela INCC padrão.
       await tx.insert(schema.inccRates).values(

@@ -13,6 +13,7 @@ import { totalDoContrato } from "@/lib/calc/receita-rateio";
 import { receitaValida, urlDaReceita } from "@/lib/relatorio-custom";
 import { detalheDoContrato, listarContratos } from "@/lib/contratos-queries";
 import { hojeMDY, venceEm } from "@/lib/contrato-regras";
+import { atrasado, consolidar, desvioEmDias, progressoDaFase, ROTULO_STATUS_ENTREGA, ROTULO_STATUS_ITEM } from "@/lib/plano-regras";
 
 export { FERRAMENTAS_DE_DADOS, NOMES_DAS_FERRAMENTAS_DE_DADOS } from "@/lib/cris-dados-ferramentas";
 
@@ -348,6 +349,65 @@ export async function executarFerramentaDeDados(ctx: TenantContext, nome: string
         ...extra,
         ...(todos.length > escolhidos.length && !pedidos.length ? { outros: todos.length - escolhidos.length } : {}),
       });
+    }
+
+    case "plano_de_trabalho": {
+      if (!pode(ctx, "plano")) return semPermissao("Plano de Trabalho");
+      const assunto = texto(o, "assunto") || "resumo";
+      const hoje = hojeMDY();
+      const alvo = obras.slice(0, 10);
+      const ids = alvo.map((p) => p.id);
+      if (!ids.length) return JSON.stringify({ erro: "nenhum projeto encontrado", ...aviso });
+      const [fases, atividades, entregas] = await Promise.all([
+        db.select().from(schema.projetoFases).where(and(eq(schema.projetoFases.tenantId, tenantId), inArray(schema.projetoFases.projectId, ids))),
+        db.select().from(schema.projetoAtividades).where(and(eq(schema.projetoAtividades.tenantId, tenantId), inArray(schema.projetoAtividades.projectId, ids))),
+        db.select().from(schema.projetoEntregas).where(and(eq(schema.projetoEntregas.tenantId, tenantId), inArray(schema.projetoEntregas.projectId, ids))),
+      ]);
+      const st = (s: string) => ROTULO_STATUS_ITEM[s as keyof typeof ROTULO_STATUS_ITEM] ?? s;
+      // Sem nome de pessoa (responsável e profissional ficam de fora).
+      const projetos = alvo.map((p) => {
+        const fs = fases.filter((f) => f.projectId === p.id).sort((a, b) => a.ordem - b.ordem);
+        const as = atividades.filter((a) => a.projectId === p.id);
+        const es = entregas.filter((e) => e.projectId === p.id);
+        const progFases = fs.map((f) => ({ f, prog: progressoDaFase(f, as.filter((a) => a.faseId === f.id)) }));
+        const geral = consolidar(progFases.map(({ f, prog }) => ({ id: f.id, status: f.status, percentual: prog.percentual, peso: f.peso })));
+        const atrasos = [...fs.map((f) => ({ tipo: "fase", nome: f.nome, i: f })), ...as.map((a) => ({ tipo: a.parentId ? "subatividade" : "atividade", nome: a.nome, i: a }))]
+          .filter((x) => atrasado(x.i, hoje))
+          .slice(0, MAX_GRUPOS)
+          .map((x) => ({ tipo: x.tipo, nome: x.nome, terminoPlanejado: x.i.terminoPrevisto, terminoLinhaDeBase: x.i.terminoOriginal, situacao: st(x.i.status) }));
+        const base = {
+          projeto: p.name,
+          temPlano: fs.length > 0,
+          fases: fs.length,
+          atividades: as.filter((a) => !a.parentId).length,
+          subatividades: as.filter((a) => a.parentId).length,
+          entregas: es.length,
+          progressoFisico: geral.percentual,
+          ...(geral.percentual == null ? { semProgressoPorque: geral.motivo } : {}),
+          itensAtrasados: atrasos.length,
+        };
+        if (assunto === "atrasos") return { ...base, atrasos };
+        if (assunto === "entregas")
+          return {
+            ...base,
+            entregas: es.slice(0, MAX_GRUPOS).map((e) => ({ tipo: e.tipo, nome: e.nome, prevista: e.dataPrevista, linhaDeBase: e.dataOriginal, efetiva: e.dataEfetiva, situacao: ROTULO_STATUS_ENTREGA[e.status as keyof typeof ROTULO_STATUS_ENTREGA] ?? e.status, atrasada: !["entregue", "aceita", "cancelada"].includes(e.status) && atrasado({ terminoPrevisto: e.dataPrevista, terminoReal: e.dataEfetiva, status: e.status }, hoje) })),
+          };
+        if (assunto === "fases")
+          return {
+            ...base,
+            fases: progFases.slice(0, MAX_GRUPOS).map(({ f, prog }) => ({
+              nome: f.nome,
+              situacao: st(f.status),
+              inicio: f.inicioPrevisto,
+              termino: f.terminoPrevisto,
+              desvioDias: desvioEmDias(f.terminoOriginal, f.terminoPrevisto),
+              progresso: prog.percentual,
+              atividades: as.filter((a) => a.faseId === f.id && !a.parentId).slice(0, MAX_GRUPOS).map((a) => ({ nome: a.nome, situacao: st(a.status), termino: a.terminoPrevisto, percentual: a.percentual == null ? null : Number(a.percentual) })),
+            })),
+          };
+        return base;
+      });
+      return JSON.stringify({ fonte: "Plano de Trabalho dos projetos (progresso físico pelo andamento informado; separado do financeiro)", hoje, projetos, ...aviso });
     }
 
     case "montar_relatorio": {

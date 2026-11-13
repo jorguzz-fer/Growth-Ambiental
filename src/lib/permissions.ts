@@ -98,6 +98,11 @@ export const SCREENS: Screen[] = [
   // HERDA_DE. Quem alcançava a tela por `despesas` continua alcançando.
   { id: "conferencia", label: "Conferência de lançamentos", modulo: "Despesas" },
   { id: "planocontas", label: "Plano de Contas", modulo: "Planejamento" },
+  // Growth Ambiental — Planejamento de projetos (0078). "plano" é a rota do
+  // Plano de Trabalho (ver, criar, editar, excluir fases/atividades/entregas);
+  // "modelos" é a biblioteca da empresa (Config: nasce só com owner/admin).
+  { id: "plano", label: "Plano de Trabalho (fases, atividades e entregas)", modulo: "Planejamento" },
+  { id: "modelos", label: "Modelos de Fases e Atividades", modulo: "Config" },
   // Prompt X, 6 — conta corrente é instrumento de caixa, não de despesa.
   { id: "contas", label: "Contas Correntes", modulo: "Conciliação de Caixa" },
   // Prompt L, 4.2.2 e 5.1 — permissões PRÓPRIAS do Caixa, distintas de editar:

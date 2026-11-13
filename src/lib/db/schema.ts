@@ -652,6 +652,9 @@ export const despesas = pgTable("despesa", {
   }),
   /** subitem CEF/plano de contas (ex.: "1.1"). */
   contaCef: text("conta_cef"),
+  /** Planejamento (0078): custo apropriado a uma fase/atividade do plano. Opcional: a despesa pode ficar só no projeto. */
+  projetoFaseId: uuid("projeto_fase_id").references((): AnyPgColumn => projetoFases.id, { onDelete: "set null" }),
+  projetoAtividadeId: uuid("projeto_atividade_id").references((): AnyPgColumn => projetoAtividades.id, { onDelete: "set null" }),
   /** Contratos (0077): custo apropriado a um contrato. Nula = só do projeto, como sempre. */
   contratoId: uuid("contrato_id").references((): AnyPgColumn => contratos.id, { onDelete: "set null" }),
   categoriaDre: dreCategoryEnum("categoria_dre"),
@@ -1331,6 +1334,10 @@ export const documents = pgTable("document", {
   folhaId: uuid("folha_id").references((): AnyPgColumn => folhasCompetencia.id, { onDelete: "set null" }),
   /** Prompt V, 5.2 (0064): laudo, relatório fotográfico, PLS ou ART/RRT de uma medição. */
   medicaoId: uuid("medicao_id").references((): AnyPgColumn => medicoes.id, { onDelete: "set null" }),
+  /** Planejamento (0078): documento de uma fase, atividade ou entrega do plano. */
+  projetoFaseId: uuid("projeto_fase_id").references((): AnyPgColumn => projetoFases.id, { onDelete: "set null" }),
+  projetoAtividadeId: uuid("projeto_atividade_id").references((): AnyPgColumn => projetoAtividades.id, { onDelete: "set null" }),
+  projetoEntregaId: uuid("projeto_entrega_id").references((): AnyPgColumn => projetoEntregas.id, { onDelete: "set null" }),
   /** Contratos (0077): documento do contrato, do aditivo ou da medição de contrato. */
   contratoId: uuid("contrato_id").references((): AnyPgColumn => contratos.id, { onDelete: "set null" }),
   contratoAditivoId: uuid("contrato_aditivo_id").references((): AnyPgColumn => contratoAditivos.id, { onDelete: "set null" }),
@@ -2685,4 +2692,210 @@ export const contratoReembolsos = pgTable(
     index("contrato_reembolso_contrato_idx").on(t.contratoId),
     uniqueIndex("contrato_reembolso_despesa_ativa_uq").on(t.despesaId).where(sql`${t.cancelado} = false`),
   ],
+);
+
+// ──────────────────── Planejamento de projetos (0078) ────────────────────
+// Growth Ambiental — "o sistema sugere, a consultoria decide". Biblioteca e
+// modelos (sugestões por empresa) são estruturas INDEPENDENTES do plano de
+// cada projeto: usar uma sugestão COPIA o texto para o projeto; mudar ou
+// apagar o modelo nunca altera projeto existente. Ver
+// docs/MODULO_PLANEJAMENTO_PROJETOS.md.
+
+/** Modelo de fases e atividades. `biblioteca = true` é a biblioteca padrão da empresa (uma só). */
+export const planoModelos = pgTable(
+  "plano_modelo",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    nome: text("nome").notNull(),
+    descricao: text("descricao"),
+    biblioteca: boolean("biblioteca").notNull().default(false),
+    modalidadeId: uuid("modalidade_id").references(() => contratoModalidades.id, { onDelete: "set null" }),
+    ativo: boolean("ativo").notNull().default(true),
+    ordem: integer("ordem").notNull().default(0),
+    createdBy: text("created_by"),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("plano_modelo_tenant_idx").on(t.tenantId),
+    uniqueIndex("plano_modelo_biblioteca_uq").on(t.tenantId).where(sql`${t.biblioteca} = true`),
+  ],
+);
+
+/** Fase sugerida de um modelo. `sugerida` = aparece marcada na seleção. */
+export const planoModeloFases = pgTable(
+  "plano_modelo_fase",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    modeloId: uuid("modelo_id")
+      .notNull()
+      .references(() => planoModelos.id, { onDelete: "cascade" }),
+    nome: text("nome").notNull(),
+    descricao: text("descricao"),
+    ordem: integer("ordem").notNull().default(0),
+    ativo: boolean("ativo").notNull().default(true),
+    sugerida: boolean("sugerida").notNull().default(true),
+  },
+  (t) => [index("plano_modelo_fase_modelo_idx").on(t.modeloId)],
+);
+
+/** Atividade (ou subatividade, com `parentId`) ou entrega sugerida de uma fase de modelo. */
+export const planoModeloAtividades = pgTable(
+  "plano_modelo_atividade",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    faseId: uuid("fase_id")
+      .notNull()
+      .references(() => planoModeloFases.id, { onDelete: "cascade" }),
+    parentId: uuid("parent_id").references((): AnyPgColumn => planoModeloAtividades.id, { onDelete: "cascade" }),
+    /** "atividade" | "entrega". */
+    tipo: text("tipo").notNull().default("atividade"),
+    nome: text("nome").notNull(),
+    descricao: text("descricao"),
+    ordem: integer("ordem").notNull().default(0),
+    ativo: boolean("ativo").notNull().default(true),
+    sugerida: boolean("sugerida").notNull().default(true),
+  },
+  (t) => [index("plano_modelo_atividade_fase_idx").on(t.faseId)],
+);
+
+/**
+ * Fase do plano de trabalho de um projeto. Datas "MM/DD/YYYY". `*Original` é
+ * a linha de base: fixada na primeira vez que a data planejada é definida;
+ * reprogramar muda só a data atual (o histórico fica na auditoria).
+ */
+export const projetoFases = pgTable(
+  "projeto_fase",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    codigo: text("codigo"),
+    nome: text("nome").notNull(),
+    descricao: text("descricao"),
+    ordem: integer("ordem").notNull().default(0),
+    responsavel: text("responsavel"),
+    inicioPrevisto: text("inicio_previsto"),
+    terminoPrevisto: text("termino_previsto"),
+    inicioOriginal: text("inicio_original"),
+    terminoOriginal: text("termino_original"),
+    inicioReal: text("inicio_real"),
+    terminoReal: text("termino_real"),
+    status: text("status").notNull().default("planejada"),
+    /** % informado; nulo = calcular das atividades (só quando há base para isso). */
+    percentual: numeric("percentual", { precision: 5, scale: 2 }),
+    peso: numeric("peso", { precision: 8, scale: 2 }),
+    obs: text("obs"),
+    origemModeloFaseId: uuid("origem_modelo_fase_id").references(() => planoModeloFases.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+  },
+  (t) => [index("projeto_fase_project_idx").on(t.projectId)],
+);
+
+/** Atividade (ou subatividade, com `parentId`) do plano de trabalho. */
+export const projetoAtividades = pgTable(
+  "projeto_atividade",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    faseId: uuid("fase_id")
+      .notNull()
+      .references(() => projetoFases.id, { onDelete: "cascade" }),
+    parentId: uuid("parent_id").references((): AnyPgColumn => projetoAtividades.id, { onDelete: "cascade" }),
+    codigo: text("codigo"),
+    nome: text("nome").notNull(),
+    descricao: text("descricao"),
+    ordem: integer("ordem").notNull().default(0),
+    responsavel: text("responsavel"),
+    funcionarioId: uuid("funcionario_id").references(() => funcionarios.id, { onDelete: "set null" }),
+    funcaoId: uuid("funcao_id").references(() => funcoesEquipe.id, { onDelete: "set null" }),
+    inicioPrevisto: text("inicio_previsto"),
+    terminoPrevisto: text("termino_previsto"),
+    inicioOriginal: text("inicio_original"),
+    terminoOriginal: text("termino_original"),
+    inicioReal: text("inicio_real"),
+    terminoReal: text("termino_real"),
+    status: text("status").notNull().default("planejada"),
+    percentual: numeric("percentual", { precision: 5, scale: 2 }),
+    peso: numeric("peso", { precision: 8, scale: 2 }),
+    horasPrevistas: numeric("horas_previstas", { precision: 10, scale: 2 }),
+    horasRealizadas: numeric("horas_realizadas", { precision: 10, scale: 2 }),
+    contratoItemId: uuid("contrato_item_id").references(() => contratoItens.id, { onDelete: "set null" }),
+    obs: text("obs"),
+    origemModeloAtividadeId: uuid("origem_modelo_atividade_id").references(() => planoModeloAtividades.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+  },
+  (t) => [index("projeto_atividade_fase_idx").on(t.faseId), index("projeto_atividade_project_idx").on(t.projectId)],
+);
+
+/** Entrega técnica ou marco do plano. Concluir não gera medição, fatura nem receita. */
+export const projetoEntregas = pgTable(
+  "projeto_entrega",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    faseId: uuid("fase_id").references(() => projetoFases.id, { onDelete: "set null" }),
+    atividadeId: uuid("atividade_id").references(() => projetoAtividades.id, { onDelete: "set null" }),
+    /** "entrega" | "marco". */
+    tipo: text("tipo").notNull().default("entrega"),
+    nome: text("nome").notNull(),
+    descricao: text("descricao"),
+    responsavel: text("responsavel"),
+    dataPrevista: text("data_prevista"),
+    dataOriginal: text("data_original"),
+    dataEfetiva: text("data_efetiva"),
+    /** STATUS_ENTREGA em plano-regras.ts. */
+    status: text("status").notNull().default("prevista"),
+    contratoId: uuid("contrato_id").references(() => contratos.id, { onDelete: "set null" }),
+    contratoItemId: uuid("contrato_item_id").references(() => contratoItens.id, { onDelete: "set null" }),
+    valor: numeric("valor", { precision: 15, scale: 2 }),
+    ordem: integer("ordem").notNull().default(0),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  },
+  (t) => [index("projeto_entrega_project_idx").on(t.projectId)],
+);
+
+/** Cada criação de plano (em branco, biblioteca ou Cris): a mesma confirmação enviada duas vezes grava uma vez. */
+export const projetoPlanoImportacoes = pgTable(
+  "projeto_plano_importacao",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    chave: text("chave").notNull(),
+    /** "branco" | "biblioteca" | "cris". */
+    origem: text("origem").notNull(),
+    resumo: jsonb("resumo"),
+    createdBy: text("created_by"),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  },
+  (t) => [unique("projeto_plano_importacao_chave_uq").on(t.tenantId, t.chave)],
 );

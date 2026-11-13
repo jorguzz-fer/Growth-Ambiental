@@ -31,7 +31,7 @@ export const MAX_HISTORICO_CRIS = 12;
 /** Teto do resumo da tela em caracteres de JSON (o que a tela manda além disso é cortado). */
 export const MAX_DADOS_DA_TELA = 12_000;
 export const MAX_CAMPOS = 60;
-/** Anexo: PDF ou imagem, até 4 MB (base64 ≈ 5,4 MB). */
+/** Anexo: PDF, DOCX ou imagem, até 4 MB (base64 ≈ 5,4 MB). */
 export const MAX_ANEXO_BYTES = 4 * 1024 * 1024;
 /**
  * Prompt AT §8.3.1 — planilha de extrato (XLSX ou CSV): aceita como anexo, mas
@@ -39,7 +39,9 @@ export const MAX_ANEXO_BYTES = 4 * 1024 * 1024;
  * servidor, com o mesmo leitor do diálogo de importação.
  */
 export const TIPOS_DE_PLANILHA = ["text/csv", "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"] as const;
-export const TIPOS_DE_ANEXO = ["application/pdf", "image/png", "image/jpeg", "image/webp", "image/gif", ...TIPOS_DE_PLANILHA] as const;
+/** DOCX (Word): o servidor extrai o texto e manda ao modelo como documento de texto. */
+export const TIPO_DOCX_ANEXO = "application/vnd.openxmlformats-officedocument.wordprocessingml.document" as const;
+export const TIPOS_DE_ANEXO = ["application/pdf", TIPO_DOCX_ANEXO, "image/png", "image/jpeg", "image/webp", "image/gif", ...TIPOS_DE_PLANILHA] as const;
 export function ehPlanilha(tipo: string): boolean {
   return (TIPOS_DE_PLANILHA as readonly string[]).includes(tipo);
 }
