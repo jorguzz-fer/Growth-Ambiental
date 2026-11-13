@@ -1,5 +1,7 @@
 /**
- * Relatório CEF — orçado × medido por grupo de obra (Prompt V, seção 3).
+ * Relatório CEF — orçado × medido por grupo de custo direto (Prompt V, seção 3).
+ * As linhas são os grupos de custo direto do Plano de Contas DA EMPRESA (os
+ * mesmos que a Medição oferece) — não mais o plano fixo de obra.
  * Módulo PURO: recebe linhas de orçamento e medições já carregadas.
  *
  * O que ele diz, e só isso:
@@ -16,8 +18,8 @@
  *  - Acumulado desde o início da obra por padrão (3.9); recorte por
  *    competência só quando os DOIS limites vêm informados, e rotulado.
  */
-import { PLANO_CONTAS } from "@/lib/calc/constants";
 import { monthKeyIndex } from "@/lib/planning";
+import { grupoDaChave } from "@/lib/planocontas-regras";
 
 export const LIMITE_RETENCAO_PCT = 95;
 
@@ -74,12 +76,19 @@ function dentro(mes: string | null, recorte: { ativo: boolean; de: string | null
 
 const r2 = (n: number) => Math.round(n * 100) / 100;
 
-export function montarRelatorioCef(args: { orcamento: readonly LinhaOrcada[]; medicoes: readonly MedicaoDoRelatorio[]; recorte?: { ativo: boolean; de: string | null; ate: string | null } }): RelatorioCef {
+/** Grupo do relatório: código e nome, na ordem do plano. */
+export interface GrupoDoRelatorio {
+  codigo: string;
+  nome: string;
+}
+
+export function montarRelatorioCef(args: { grupos: readonly GrupoDoRelatorio[]; orcamento: readonly LinhaOrcada[]; medicoes: readonly MedicaoDoRelatorio[]; recorte?: { ativo: boolean; de: string | null; ate: string | null } }): RelatorioCef {
   const recorte = args.recorte ?? { ativo: false, de: null, ate: null };
+  const codigos = new Set(args.grupos.map((g) => g.codigo));
   const orcadoPorGrupo = new Map<string, number>();
   for (const l of args.orcamento) {
     if (l.kind !== "despesa" || !dentro(l.mes, recorte)) continue;
-    const grp = (l.rowKey ?? "").split(".")[0];
+    const grp = grupoDaChave(l.rowKey, codigos);
     orcadoPorGrupo.set(grp, (orcadoPorGrupo.get(grp) || 0) + Number(l.valor ?? 0));
   }
   const realizadoPorGrupo = new Map<string, number>();
@@ -87,12 +96,14 @@ export function montarRelatorioCef(args: { orcamento: readonly LinhaOrcada[]; me
     if (!dentro(m.competencia, recorte)) continue;
     realizadoPorGrupo.set(m.grupoCode, (realizadoPorGrupo.get(m.grupoCode) || 0) + Number(m.valor ?? 0));
   }
-  const linhas: LinhaCef[] = PLANO_CONTAS.obra.map((g) => {
-    const orcado = orcadoPorGrupo.has(g.id) && (orcadoPorGrupo.get(g.id) || 0) > 0 ? r2(orcadoPorGrupo.get(g.id)!) : null;
-    const realizado = realizadoPorGrupo.has(g.id) && (realizadoPorGrupo.get(g.id) || 0) > 0 ? r2(realizadoPorGrupo.get(g.id)!) : null;
+  // Medição num grupo que saiu do plano não some do relatório: ganha linha própria.
+  const extras = [...realizadoPorGrupo.keys()].filter((c) => !codigos.has(c)).map((c) => ({ codigo: c, nome: "Grupo fora do plano" }));
+  const linhas: LinhaCef[] = [...args.grupos, ...extras].map((g) => {
+    const orcado = orcadoPorGrupo.has(g.codigo) && (orcadoPorGrupo.get(g.codigo) || 0) > 0 ? r2(orcadoPorGrupo.get(g.codigo)!) : null;
+    const realizado = realizadoPorGrupo.has(g.codigo) && (realizadoPorGrupo.get(g.codigo) || 0) > 0 ? r2(realizadoPorGrupo.get(g.codigo)!) : null;
     const pct = orcado != null && realizado != null ? r2((realizado / orcado) * 100) : null;
     const estado: LinhaCef["estado"] = orcado == null && realizado == null ? "vazio" : orcado == null ? "sem_orcado" : realizado == null ? "sem_medicao" : "ok";
-    return { codigo: g.id, nome: g.nome, orcado, realizado, pct, estado, excedeu: pct != null && pct > 100 };
+    return { codigo: g.codigo, nome: g.nome, orcado, realizado, pct, estado, excedeu: pct != null && pct > 100 };
   });
   const totalOrcado = r2(linhas.reduce((a, l) => a + (l.orcado ?? 0), 0));
   const totalRealizado = r2(linhas.reduce((a, l) => a + (l.realizado ?? 0), 0));
@@ -146,3 +157,10 @@ export const LEGENDA_ESTADO: Record<LinhaCef["estado"], string> = {
   sem_medicao: "sem medição lançada",
   vazio: "sem orçado e sem medição",
 };
+
+/** Grupos de custo direto (bloco "cef") do plano da empresa, na ordem do código. */
+export function gruposDoRelatorioCef(contas: readonly { kind: string; groupCode: string; groupName: string }[]): GrupoDoRelatorio[] {
+  return [...new Map(contas.filter((c) => c.kind === "cef").map((c) => [c.groupCode, { codigo: c.groupCode, nome: c.groupName }])).values()].sort((a, b) =>
+    a.codigo.localeCompare(b.codigo, undefined, { numeric: true }),
+  );
+}

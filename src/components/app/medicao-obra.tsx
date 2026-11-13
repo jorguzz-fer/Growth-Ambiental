@@ -8,7 +8,7 @@ import { isAiConfigured } from "@/lib/ai/client";
 import { legivelPelaIa } from "@/lib/ai/campos";
 import { hojeISO } from "@/lib/despesa-status";
 import { projectPeriodMonthsFromDates } from "@/lib/planning";
-import { escolherOrcamento, montarRelatorioCef } from "@/lib/medicao-cef";
+import { escolherOrcamento, gruposDoRelatorioCef, montarRelatorioCef } from "@/lib/medicao-cef";
 import { analisarMedicoes } from "@/lib/medicao-analise";
 import { TIPO_LAUDO, type DocDaMedicao } from "@/lib/medicao-docs-regras";
 import { AssistenteMedicao, type LaudoDisponivel } from "@/components/app/assistente-medicao";
@@ -104,14 +104,15 @@ export async function MedicaoDeObra({ ctx, sp, aba }: { ctx: TenantContext; sp: 
  */
 async function AssistenteDoRelatorio({ ctx, projectId, startDate, endDate, versions, atual }: { ctx: TenantContext; projectId: string; startDate: string | null; endDate: string | null; versions: Version[]; atual: Version }) {
   const budgetV = escolherOrcamento(versions, null).escolhido;
-  const [medicoes, liberacoes, budgetLines, planning, docs] = await Promise.all([
+  const [medicoes, liberacoes, budgetLines, planning, docs, contas] = await Promise.all([
     getMedicoes(ctx.tenant.id, atual.id),
     getReembolsos(ctx.tenant.id, atual.id),
     budgetV ? getBudgetLines(budgetV.id, { respeitarSituacao: true }) : Promise.resolve([]),
     budgetV ? getBudgetPlanning(ctx.tenant.id, projectId, "budget", budgetV.id) : Promise.resolve(null),
     getDocumentosDasMedicoes(ctx.tenant.id, atual.id),
+    getChartAccounts(ctx.tenant.id),
   ]);
-  const rel = montarRelatorioCef({ orcamento: budgetLines, medicoes });
+  const rel = montarRelatorioCef({ grupos: gruposDoRelatorioCef(contas), orcamento: budgetLines, medicoes });
   const [y, m] = hojeISO().split("-");
   const analise = analisarMedicoes({
     months: projectPeriodMonthsFromDates(startDate, endDate),

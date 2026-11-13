@@ -15,7 +15,12 @@ import {
 } from "@/lib/actions/planocontas-estrutura";
 import type { LinhaImportada, PreviaDeImportacao } from "@/lib/planocontas-regras";
 import { Mensagem, useAcao, brl } from "@/components/app/contratos/comum";
-import type { PermissoesDoPlano } from "./plano-arvore";
+export interface PermissoesDoPlano {
+  criar: boolean;
+  editar: boolean;
+  excluir: boolean;
+  reclassificar: boolean;
+}
 
 type Aberto = "importar" | "padrao" | "reclassificar" | null;
 

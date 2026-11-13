@@ -10,6 +10,7 @@
  */
 import { CATEGORIAS_DRE, type CategoriaDRE } from "@/lib/calc/constants";
 import { categoriaValidaParaDespesa } from "@/lib/calc/natureza-dre";
+import { PLANO_AMBIENTAL } from "@/lib/calc/plano-ambiental";
 
 export interface ContaDoPlano {
   code: string;
@@ -21,38 +22,36 @@ export interface ContaDoPlano {
 }
 
 /**
- * Padrão de boa prática por conta do plano de contas padrão (constants.ts).
- * Regra do Thiago: gasto de obra é custo variável, nunca despesa. O que é da
- * venda (comissão, marketing) é despesa variável; a estrutura (escritório,
- * TI, contabilidade) é despesa fixa; tarifa, juro e multa são despesa
- * financeira. Conta que não está aqui cai na regra do grupo e, por fim, na
- * do tipo (`cef` → Custo Variável; complementar → Despesa Fixa), a mesma de
- * `defaultDreCategory`.
+ * Padrão de boa prática quando a conta não tem categoria gravada. Primeiro, a
+ * categoria que a própria conta tem no plano padrão de consultoria ambiental
+ * (plano-ambiental.ts); depois, as regras do plano ambiental anterior
+ * (códigos por letra), por conta e por grupo; por fim, o tipo (`cef` → Custo
+ * Variável; complementar → Despesa Fixa), a mesma de `defaultDreCategory`.
+ * Custo direto dos projetos é custo variável; o que acompanha a venda e o
+ * faturamento (comercial, marketing, impostos) é despesa variável; a
+ * estrutura é despesa fixa; tarifa, juro e multa são despesa financeira.
  */
+const PADRAO_DO_PLANO_AMBIENTAL: ReadonlyMap<string, CategoriaDRE> = new Map(
+  PLANO_AMBIENTAL.flatMap((g) => g.subgrupos.flatMap((s) => s.contas.map((c) => [c.code, s.categoria] as const))),
+);
+
 const PADRAO_POR_CONTA: Readonly<Record<string, CategoriaDRE>> = {
-  "T.6": "Despesa Fixa", // Jurídico: estrutura, não a obra
   "F.2": "Despesas Financeiras",
   "F.4": "Despesas Financeiras",
   "F.6": "Despesas Financeiras",
   "F.7": "Despesas Financeiras", // desconto obtido: entra negativo na mesma linha dos encargos
-  "RH.4": "Custo Variável", // EPI e uniforme vão para a obra
-  "TR.3": "Despesa Variável", // IRPJ/CSLL acompanham a receita
+  "RH.4": "Custo Variável", // EPI e uniforme de campo vão para os projetos
 };
 
 const PADRAO_POR_GRUPO: Readonly<Record<string, CategoriaDRE>> = {
-  T: "Custo Variável", // projetos, licenças e RT do empreendimento
   C: "Despesa Variável",
   M: "Despesa Variável",
+  IMP: "Despesa Variável", // imposto sobre o faturamento acompanha a receita
   TI: "Despesa Fixa",
   A: "Despesa Fixa",
   F: "Despesa Fixa",
-  RH: "Custo Fixo",
-  P: "Custo Variável", // pós-obra é custo da obra entregue
-  TR: "Custo Variável", // INSS de obra, ISS, taxas e ITBI do empreendimento
-  // Plano da Growth Ambiental (plano-ambiental.ts). Códigos que o plano de
-  // construção não usa — não mudam a DRE de quem está nele.
-  IMP: "Despesa Variável", // imposto sobre o faturamento acompanha a receita
   J: "Despesa Fixa", // jurídico e registros da empresa: estrutura
+  RH: "Custo Fixo",
 };
 
 export const ehCategoria = (v: unknown): v is CategoriaDRE =>
@@ -61,7 +60,7 @@ export const ehCategoria = (v: unknown): v is CategoriaDRE =>
 /** O padrão de boa prática para uma conta (sem olhar o que foi escolhido). */
 export function categoriaPadraoDaConta(c: Omit<ContaDoPlano, "dreCategory">): CategoriaDRE {
   if (c.natureza === "receita") return "Receita";
-  return PADRAO_POR_CONTA[c.code] ?? PADRAO_POR_GRUPO[c.groupCode] ?? (c.kind === "cef" ? "Custo Variável" : "Despesa Fixa");
+  return PADRAO_DO_PLANO_AMBIENTAL.get(c.code) ?? PADRAO_POR_CONTA[c.code] ?? PADRAO_POR_GRUPO[c.groupCode] ?? (c.kind === "cef" ? "Custo Variável" : "Despesa Fixa");
 }
 
 /** A categoria que vale para a conta: a escolhida, ou o padrão. */

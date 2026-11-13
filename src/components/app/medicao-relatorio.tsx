@@ -1,7 +1,7 @@
 import type { Version } from "@/lib/context";
-import { getBudgetLines, getMedicoes } from "@/lib/queries";
+import { getBudgetLines, getChartAccounts, getMedicoes } from "@/lib/queries";
 import { brl0 } from "@/lib/utils";
-import { escolherOrcamento, LEGENDA_ESTADO, montarRelatorioCef, recorteDeCompetencia, textoDaEscolha, type LinhaCef } from "@/lib/medicao-cef";
+import { escolherOrcamento, gruposDoRelatorioCef, LEGENDA_ESTADO, montarRelatorioCef, recorteDeCompetencia, textoDaEscolha, type LinhaCef } from "@/lib/medicao-cef";
 import { PrintButton } from "@/components/app/print-button";
 import { OrcamentoPicker, RecorteDeCompetencia } from "@/components/app/medicao-cef-controls";
 import { Badge } from "@/components/ui/badge";
@@ -18,13 +18,14 @@ export async function RelatorioCef({ tenantId, versions, atual, sp }: { tenantId
   const recorte = recorteDeCompetencia(sp.de, sp.ate);
   const orcamento = escolherOrcamento(versions, sp.orc);
   const budgetV = orcamento.escolhido;
-  const [budgetLines, medicoes] = await Promise.all([
+  const [budgetLines, medicoes, contas] = await Promise.all([
     // Prompt H: o orçado respeita a situação da versão. 3.7: sem Budget não há
     // orçado — e a tela DIZ isso em vez de mostrar zeros.
     budgetV ? getBudgetLines(budgetV.id, { respeitarSituacao: true }) : Promise.resolve([]),
     getMedicoes(tenantId, atual.id),
+    getChartAccounts(tenantId),
   ]);
-  const rel = montarRelatorioCef({ orcamento: budgetLines, medicoes, recorte });
+  const rel = montarRelatorioCef({ grupos: gruposDoRelatorioCef(contas), orcamento: budgetLines, medicoes, recorte });
   const estadosUsados = [...new Set(rel.linhas.map((l) => l.estado).filter((e) => e !== "ok"))] as LinhaCef["estado"][];
   const celula = (v: number | null) => (v == null ? "—" : brl0(v));
 
