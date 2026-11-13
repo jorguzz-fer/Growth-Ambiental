@@ -7,6 +7,8 @@ produção para deploy em **VPS + Coolify**.
 
 - Módulo de Contratos e Aditivos: [`docs/MODULO_CONTRATOS_ADITIVOS.md`](./docs/MODULO_CONTRATOS_ADITIVOS.md)
 - Auditoria de dados herdados: [`docs/AUDITORIA_SANITIZACAO.md`](./docs/AUDITORIA_SANITIZACAO.md)
+- Adequação funcional ao setor ambiental (módulos removidos, adaptados e preservados): [`docs/ADEQUACAO_FUNCIONAL_GROWTH_AMBIENTAL.md`](./docs/ADEQUACAO_FUNCIONAL_GROWTH_AMBIENTAL.md)
+- Auditoria de terminologia (varredura, classes e exceções): [`docs/AUDITORIA_TERMINOLOGIA_AMBIENTAL.md`](./docs/AUDITORIA_TERMINOLOGIA_AMBIENTAL.md). Os documentos `docs/V2-*` e `docs/SPEC.md` são histórico do produto anterior.
 
 - Especificação funcional: [`docs/SPEC.md`](./docs/SPEC.md)
 - Stack e roadmap de produção: [`docs/STACK.md`](./docs/STACK.md)
