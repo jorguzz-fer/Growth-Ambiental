@@ -82,9 +82,9 @@ export function AjusteCaixaForm({
           </div>
           {projetos && (
             <div>
-              <Label>Obra (opcional)</Label>
-              <Select value={obra} onChange={(e) => setObra(e.target.value)} aria-label="Obra do ajuste">
-                <option value="">Empresa (sem obra)</option>
+              <Label>Projeto (opcional)</Label>
+              <Select value={obra} onChange={(e) => setObra(e.target.value)} aria-label="Projeto do ajuste">
+                <option value="">Empresa (sem projeto)</option>
                 {projetos.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.nome}

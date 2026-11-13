@@ -72,7 +72,7 @@ export function ConciliacaoReview({ pendentes, pendentesEntrada, conciliados, ca
       // Prompt AT §5.4 — há parcela de venda compatível: mostra a parcela e pede
       // a confirmação explícita de que a entrada NÃO é ela.
       if (!r.ok && r.parcelas?.length) {
-        const lista = r.parcelas.map((p) => `• ${p.unidade} · ${p.rotulo} · ${p.comprador ?? "sem comprador"} · ${brl0(p.saldo)} (venc. ${dateBR(p.vencimento)})`).join("\n");
+        const lista = r.parcelas.map((p) => `• ${p.unidade} · ${p.rotulo} · ${p.comprador ?? "sem cliente contratante"} · ${brl0(p.saldo)} (venc. ${dateBR(p.vencimento)})`).join("\n");
         const naoE = window.confirm(`${r.error}\n\n${lista}\n\nConfirmo que esta entrada NÃO é nenhuma dessas parcelas?`);
         if (!naoE) {
           setMsg("Nada foi criado. Concilie a entrada com a parcela na lista acima.");
@@ -95,9 +95,9 @@ export function ConciliacaoReview({ pendentes, pendentesEntrada, conciliados, ca
         value={obraDaConta[cashEntryId] ?? ""}
         onChange={(e) => setObraDaConta((s) => ({ ...s, [cashEntryId]: e.target.value }))}
         className="h-8 rounded-[8px] border border-[var(--color-line)] bg-white px-2 text-xs"
-        aria-label="Obra da conta criada"
+        aria-label="Projeto da conta criada"
       >
-        <option value="">Obra da conta…</option>
+        <option value="">Projeto da conta…</option>
         {projetos.map((p) => (
           <option key={p.id} value={p.id}>
             {p.nome}
@@ -249,7 +249,7 @@ export function ConciliacaoReview({ pendentes, pendentesEntrada, conciliados, ca
                     <div key={`${p.unitId}|${p.chave}`} className="flex flex-wrap items-center gap-2 px-3 py-2">
                       <Badge tone={grauTone(p.grau)}>{grauLabel(p.grau)}</Badge>
                       <span className="text-[13px] text-[var(--color-ink)]">Parcela de venda · {p.rotulo}</span>
-                      <span className="text-[12px] text-[var(--color-ink3)]">{p.comprador ?? "sem comprador"} · {p.projectName} · venc. {dateBR(p.vencimento)}</span>
+                      <span className="text-[12px] text-[var(--color-ink3)]">{p.comprador ?? "sem cliente contratante"} · {p.projectName} · venc. {dateBR(p.vencimento)}</span>
                       <span className="font-[family-name:var(--font-mono)] text-[12px] text-[var(--color-ink2)]">{brl0(p.saldo)}</span>
                       <Button size="sm" className="ml-auto" onClick={() => conciliarParcela(m.cashEntryId, p)} disabled={pending}>
                         Conciliar com a parcela

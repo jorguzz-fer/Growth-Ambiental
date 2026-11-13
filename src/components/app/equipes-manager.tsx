@@ -146,7 +146,7 @@ export function EquipesManager({ projectId, projectName, equipe, alocaveis, func
           </div>
           {mostrarFuncoes && canEditar && (
             <div className="rounded-[8px] border border-[var(--color-line)] p-3 text-[12.5px]" data-funcoes>
-              <p className="mb-2 text-[11.5px] text-[var(--color-ink3)]">A função diz o que a pessoa faz naquela obra (não confundir com o papel do cadastro). Lista fechada, editável aqui.</p>
+              <p className="mb-2 text-[11.5px] text-[var(--color-ink3)]">A função diz o que a pessoa faz naquele projeto (não confundir com o papel do cadastro). Lista fechada, editável aqui.</p>
               <ul className="mb-2 flex flex-wrap gap-2">
                 {funcoes.map((f) => (
                   <li key={f.id} className={`flex items-center gap-1 rounded-full border border-[var(--color-line)] px-2 py-0.5 ${f.ativo ? "" : "opacity-50"}`}>
@@ -216,7 +216,7 @@ export function EquipesManager({ projectId, projectName, equipe, alocaveis, func
                     )}
                   </TR>
                 ))}
-                {equipe.length === 0 && <TR><TD colSpan={8} className="py-6 text-center text-[var(--color-ink4)]">Ninguém alocado nesta obra.</TD></TR>}
+                {equipe.length === 0 && <TR><TD colSpan={8} className="py-6 text-center text-[var(--color-ink4)]">Ninguém alocado neste projeto.</TD></TR>}
               </tbody>
             </Table>
           </div>
@@ -228,7 +228,7 @@ export function EquipesManager({ projectId, projectName, equipe, alocaveis, func
       {canCriar && ativos.length > 0 && (
         <Card>
           <CardContent className="space-y-3 p-5">
-            <h3 className="text-sm font-semibold text-[var(--color-ink)]">Registrar o dia <span className="font-normal text-[var(--color-ink3)]">· marque quem trabalhou e confirme (sem geolocalização: é declaração de quem coordena a obra)</span></h3>
+            <h3 className="text-sm font-semibold text-[var(--color-ink)]">Registrar o dia <span className="font-normal text-[var(--color-ink3)]">· marque quem trabalhou e confirme (sem geolocalização: é declaração de quem coordena o projeto)</span></h3>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-6 sm:items-end">
               <div><Label>Data</Label><DateField value={dataDia} onChange={setDataDia} /></div>
               <div className="sm:col-span-3"><Label>Observação do dia</Label><Input value={obsDia} onChange={(e) => setObsDia(e.target.value)} /></div>

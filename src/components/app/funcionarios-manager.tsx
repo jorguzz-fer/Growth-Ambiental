@@ -61,7 +61,7 @@ export function FuncionariosManager({ funcionarios, projetos, canCriar, podeDado
         <Card>
           <CardContent className="space-y-3 p-5">
             <h3 className="text-sm font-semibold text-[var(--color-ink)]">Novo funcionário (CLT)</h3>
-            <p className="text-[12px] text-[var(--color-ink3)]">Autônomo, engenheiro e mestre de obra que emitem nota ou recibo ficam em Fornecedores. Aqui entra quem tem vínculo CLT.</p>
+            <p className="text-[12px] text-[var(--color-ink3)]">Autônomo, engenheiro e técnico de campo que emitem nota ou recibo ficam em Fornecedores. Aqui entra quem tem vínculo CLT.</p>
             {crisMsg && (
               <p data-cris-preencheu role="status" className="text-[12.5px] text-[var(--color-accent)]">
                 {crisMsg}
@@ -84,7 +84,7 @@ export function FuncionariosManager({ funcionarios, projetos, canCriar, podeDado
                   <TH>Nome</TH>
                   <TH>CPF</TH>
                   <TH>Cargo</TH>
-                  <TH>Setor / Obra</TH>
+                  <TH>Setor / Projeto</TH>
                   <TH>Admissão</TH>
                   <TH>Contrato</TH>
                   <TH>Situação</TH>

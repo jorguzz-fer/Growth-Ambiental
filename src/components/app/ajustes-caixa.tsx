@@ -57,7 +57,7 @@ export function AjustesCaixa({ ajustes, contas, contaFiltro, projectId = "", pro
             <THead>
               <tr>
                 <TH>Data</TH>
-                <TH>Obra</TH>
+                <TH>Projeto</TH>
                 <TH>Conta</TH>
                 <TH className="text-right">Valor</TH>
                 <TH>Motivo</TH>

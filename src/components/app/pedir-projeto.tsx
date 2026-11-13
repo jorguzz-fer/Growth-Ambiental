@@ -40,7 +40,7 @@ export function PedirProjeto({
         <Card>
           <CardContent className="p-8 text-center text-[var(--color-ink3)]">
             {projetos.length === 0
-              ? "Nenhum projeto cadastrado. Cadastre a obra em Projetos."
+              ? "Nenhum projeto cadastrado. Cadastre o projeto em Projetos."
               : `Selecione um projeto para ${oQue}.`}
           </CardContent>
         </Card>

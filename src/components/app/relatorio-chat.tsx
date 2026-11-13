@@ -47,7 +47,7 @@ export function RelatorioChat({ iaConfigurada }: { iaConfigurada: boolean }) {
     <div className="flex h-full flex-col" data-relatorio-chat>
       <h2 className="text-sm font-semibold text-[var(--color-ink)]">Peça o relatório</h2>
       <p className="mb-3 text-[12px] text-[var(--color-ink3)]">
-        Ex.: &ldquo;DRE da obra X com análise vertical, mês a mês neste ano&rdquo; ou &ldquo;fluxo de caixa por obra, Orçamento&rdquo;.
+        Ex.: &ldquo;DRE do projeto X com análise vertical, mês a mês neste ano&rdquo; ou &ldquo;fluxo de caixa por projeto, Orçamento&rdquo;.
       </p>
       <div className="mb-3 flex-1 space-y-2 overflow-y-auto" aria-live="polite">
         {falas.map((f, i) => (

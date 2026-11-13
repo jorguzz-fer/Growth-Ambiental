@@ -32,14 +32,14 @@ export function UnidadePorObra({
   const aviso = !foraDaObra
     ? null
     : ondeEsta.length
-      ? `A unidade vinculada (${vinculada}) é de ${ondeEsta.join(", ")}, não da obra escolhida.`
-      : `A unidade vinculada (${vinculada}) não existe em nenhuma obra cadastrada.`;
+      ? `A unidade vinculada (${vinculada}) é de ${ondeEsta.join(", ")}, não do projeto escolhido.`
+      : `A unidade vinculada (${vinculada}) não existe em nenhum projeto cadastrado.`;
 
   return (
     <>
       <div>
-        <Label>Obra da unidade</Label>
-        <Select value={obra} onChange={(e) => setObra(e.target.value)} aria-label="Obra da unidade">
+        <Label>Projeto da unidade</Label>
+        <Select value={obra} onChange={(e) => setObra(e.target.value)} aria-label="Projeto da unidade">
           {obras.map((o) => (
             <option key={o.id} value={o.id}>
               {o.name}
@@ -54,7 +54,7 @@ export function UnidadePorObra({
           <option value="">—</option>
           {foraDaObra && (
             <option value={vinculada!}>
-              {vinculada} · vinculada, {ondeEsta.length ? "de outra obra" : "sem obra"}
+              {vinculada} · vinculada, {ondeEsta.length ? "de outro projeto" : "sem projeto"}
             </option>
           )}
           {daObra.map((c) => (

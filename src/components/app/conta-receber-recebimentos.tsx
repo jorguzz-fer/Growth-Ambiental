@@ -140,7 +140,7 @@ export function ContaReceberRecebimentos({
       )}
       {canEdit && forma === "Extrato bancário" && entradas.length === 0 && !estado.quitada && (
         <p className="mb-2 text-[11.5px] text-[var(--color-ink3)]">
-          Nenhuma entrada do extrato com valor livre nesta obra. Importe o extrato no Caixa, ou registre a baixa por outra forma (fica &quot;recebida, não conciliada&quot;).
+          Nenhuma entrada do extrato com valor livre neste projeto. Importe o extrato no Caixa, ou registre a baixa por outra forma (fica &quot;recebida, não conciliada&quot;).
         </p>
       )}
       {aviso && (

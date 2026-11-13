@@ -113,7 +113,7 @@ export function NotaServicoForm({
           </p>
           <div className="grid gap-3 sm:grid-cols-3">
             <div>
-              <Label>Obra / escritório *</Label>
+              <Label>Projeto / escritório *</Label>
               <Select name="projectId" value={v.projectId} onChange={(e) => (set("projectId", e.target.value), set("contaReceberId", ""))}>
                 <option value="">Escolha…</option>
                 {projetos.map((p) => (

@@ -76,7 +76,7 @@ export function ProjectPicker({
         )}
         {projects.some((p) => p.kind) ? (
           <>
-            <optgroup label="Obras">
+            <optgroup label="Projetos">
               {projects.filter((p) => p.kind !== "office").map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.label}
