@@ -3,14 +3,14 @@ export const TEXTO = `# Base de conhecimento — Business Intelligence, Planejam
 
 Regras gerais:
 
-- **Obra na URL.** Cada tela guarda a obra escolhida no endereço. Sem obra, a aba reabre a última usada nela; sem memória, os relatórios consolidáveis abrem em "Todos" e as demais telas pedem a escolha. Nunca se escolhe "a primeira obra".
-- **Todos / Ativos / Finalizados** seguem o Status do projeto (em Projetos). A obra sem status fica fora desses filtros, e a tela avisa.
+- **Projeto na URL.** Cada tela guarda o projeto escolhido no endereço. Sem projeto, a aba reabre o último usado nela; sem memória, os relatórios consolidáveis abrem em "Todos" e as demais telas pedem a escolha. Nunca se escolhe "o primeiro projeto".
+- **Todos / Ativos / Finalizados** seguem o Status do projeto (em Projetos). O projeto sem status fica fora desses filtros, e a tela avisa.
 - **Versões:** Atual (movimento real), Orçamento e Previsão Atualizada. O projeto novo nasce com uma de cada.
 - **Permissões padrão:**
   - Owner e admin têm tudo, sempre.
   - O membro, com a chave "Padrão novo do membro" desligada, vê, cria e edita toda tela fora do grupo Config, mas não exclui. Com a chave ligada, fica só com lançamento e receita.
-  - O contador é só leitura. Por padrão, vê DRE, Fluxo, Medição, Resumo, Plano de Contas, Despesas/Conferência e Auditoria.
-  - O engenheiro só lança medição.
+  - O contador é só leitura. Por padrão, vê DRE, Fluxo, Resumo, Plano de Contas, Despesas/Conferência, Notas Fiscais e Auditoria.
+  - O engenheiro (técnico de campo) lança a medição de serviço no contrato e vê os contratos, sem o financeiro.
   - Ajustes por pessoa são feitos em Gestão de Acessos.
 - **Assistente:** várias telas têm um painel à direita que só lê os números da tela. As exceções estão indicadas abaixo.
 
@@ -18,30 +18,29 @@ Regras gerais:
 
 ## Dashboard (/dashboard) — módulo Business Intelligence
 
-**Para que serve:** visão geral de uma obra ou de várias somadas.
+**Para que serve:** visão geral de um projeto ou de vários somados.
 
 **O que se faz:**
 - Seletor de projeto (com Todos, Ativos e Finalizados) e período De/Até.
-- Com uma obra, até 3 versões. O padrão é a Atual + o Orçamento e a Previsão mais recentes que não sejam cópia. Ao tentar marcar a quarta, a tela avisa e não troca.
-- **Dois gráficos**, da versão Atual das obras da tela: o **fluxo de caixa em linhas** (entradas e saídas previstas por mês, pelo vencimento, como no Fluxo de Caixa) e a **DRE em barras empilhadas** (em cada mês, a receita dividida em Custo Variável, Despesa Variável, Custo Fixo, Despesa Fixa, demais itens e Resultado; prejuízo fica abaixo do zero). Sem período, mostram os cinco meses anteriores, o atual e os seis seguintes; com período, os meses dele.
+- Com um projeto, até 3 versões. O padrão é a Atual + o Orçamento e a Previsão mais recentes que não sejam cópia. Ao tentar marcar a quarta, a tela avisa e não troca.
+- **Dois gráficos**, da versão Atual dos projetos da tela: o **fluxo de caixa em linhas** (entradas e saídas previstas por mês, pelo vencimento, como no Fluxo de Caixa) e a **DRE em barras empilhadas** (em cada mês, a receita dividida em Custo Variável, Despesa Variável, Custo Fixo, Despesa Fixa, demais itens e Resultado; prejuízo fica abaixo do zero). Sem período, mostram os cinco meses anteriores, o atual e os seis seguintes; com período, os meses dele.
 - **Exportar PDF**: o Dashboard sai em PDF pela impressão do navegador, com a faixa da empresa e a data.
-- Com várias obras, uma coluna por tipo de versão ("soma de N obra(s)").
-- Quatro cartões no topo: VGV total, Realizado acum., A receber e A pagar. Abaixo: Status atual, Margem e produtividade e Indicadores da obra (financiamento, BDI, custo referencial).
-- Assistente: explicar indicador, o que mudou desde a última visita, divergências e obras que merecem atenção.
+- Com vários projetos, uma coluna por tipo de versão (a soma dos projetos daquele tipo).
+- Quatro cartões no topo: o valor total do projeto (a receita prevista no cadastro), Realizado acum., A receber e A pagar. Abaixo: Status atual, Margem e produtividade e os indicadores que vêm do cadastro do projeto.
+- Assistente: explicar indicador, o que mudou desde a última visita, divergências e projetos que merecem atenção.
 
 **O que confunde:**
-- Só os **quatro de cima** seguem a versão e o período. Status e margem somam do começo da obra até hoje. Os Indicadores da obra vêm do cadastro.
+- Só os **quatro de cima** seguem a versão e o período. Status e margem somam do começo do projeto até hoje. Os indicadores do cadastro vêm da tela Projetos.
 - **A receber** no planejamento é receita planejada − realizado, nunca negativo. É saldo a realizar, não recebível.
-- **A pagar** só existe na Atual: é o saldo das contas em aberto de todas as versões da obra.
+- **A pagar** só existe na Atual: é o saldo das contas em aberto de todas as versões do projeto.
 - **Entradas de caixa** somam toda entrada, de todas as versões.
 - **% executado** = despesas da Atual ÷ **soma de todos** os Orçamentos.
-- Os percentuais de entradas e de margem usam a receita do cadastro (construção + terreno).
-- Evolução física e liberação por medição estão desligadas até a PLS de cada obra ser cadastrada.
+- Os percentuais de entradas e de margem usam a receita do cadastro do projeto (a soma dos campos de valor da tela Projetos).
 
 **Não faz:** não calcula o caixa projetado (isso fica no Fluxo de Caixa) e não edita nada.
 
 **Chaves:**
-- "Dashboard pela definição nova" ligada: entradas só da Atual, Executado dividido por um único Orçamento, VGV da Atual em toda coluna, "A receber" pode ficar negativo e Status/margem passam a seguir o período.
+- "Dashboard pela definição nova" ligada: entradas só da Atual, Executado dividido por um único Orçamento, valor total da Atual em toda coluna, "A receber" pode ficar negativo e Status/margem passam a seguir o período.
 - "Contas a Pagar só com a Atual" ligada: o planejamento sai de A pagar.
 - "Rascunho fora dos relatórios" ligada: planejamento não Aprovado sai.
 
@@ -51,7 +50,7 @@ Regras gerais:
 
 ## DRE (/dre) — módulo Business Intelligence
 
-**Para que serve:** resultado em cascata, de Receita até Resultado Final, de uma obra, de um escritório ou da empresa.
+**Para que serve:** resultado em cascata, de Receita até Resultado Final, de um projeto, de um escritório ou da empresa.
 
 **O que se faz:**
 - Escopo: projeto (inclusive Matriz/Filial), Empresa toda, Ativos ou Finalizados.
@@ -63,8 +62,8 @@ Regras gerais:
 - "—" significa nenhum lançamento. "R$ 0" é uma soma que deu zero.
 - Regime de cada bloco:
   - despesas pela competência;
-  - receita de venda e contas a receber pelo vencimento;
-  - liberações e permutas pela liquidação;
+  - contas a receber (inclusive as faturas dos contratos) pelo vencimento;
+  - em dados antigos de construção: receita de venda de unidades pelo vencimento, liberações e permutas pela liquidação;
   - multa e juros pelo pagamento.
 - O **rodapé amarelo** conta o que ficou fora da cascata (sem categoria, sem competência, categoria fora da lista) e traz um link para a Conferência. Lançamento sem competência só aparece no Acumulado.
 - Retiradas, Investimentos e Empréstimos estão na cascata. A tela diz que a classificação delas aguarda decisão. Para uma leitura contábil formal, confirme com a sua contabilidade.
@@ -85,9 +84,9 @@ Regras gerais:
 **Para que serve:** a mesma DRE de um cenário, aberta em **categoria → grupo do plano de contas → conta**, com a análise vertical (% da receita).
 
 **O que se faz:**
-- Escolher a obra ou a empresa toda, o período e o cenário (Atual, Previsão Atualizada ou Orçamento), um de cada vez.
+- Escolher o projeto ou a empresa toda, o período e o cenário (Atual, Previsão Atualizada ou Orçamento), um de cada vez.
 - Clicar numa categoria para abrir os grupos, e num grupo para abrir as contas. "Abrir até a conta" abre tudo.
-- A Receita abre no que a compõe: unidades e liberações, revenda de permuta e o que foi lançado como despesa na categoria Receita.
+- A Receita abre no que a compõe: as contas a receber do projeto (com, em dados antigos, unidades vendidas e liberações de obra), a revenda de permuta (só em dados antigos) e o que foi lançado como despesa na categoria Receita.
 - As Despesas Financeiras mostram à parte os encargos dos pagamentos (juros e multas, menos descontos).
 
 **O que confunde:**
@@ -107,12 +106,12 @@ Regras gerais:
 
 **O que se faz:**
 - Projeto (com Todos, Ativos e Finalizados), período e ano. O período tem prioridade sobre o ano. O ano padrão é o atual, se tiver movimento; senão, o primeiro que tiver.
-- Com uma obra, até 3 versões. A primeira é a referência, e o padrão é a Atual. Com várias obras, aparece uma coluna "Atual" somada.
+- Com um projeto, até 3 versões. A primeira é a referência, e o padrão é a Atual. Com vários projetos, aparece uma coluna "Atual" somada.
 - Tabela: entradas, saídas, saldo do mês, Realizado ↑/↓, Desvio, Desvio % e Saldo acumulado.
 
 **O que confunde:**
 - **Saldo do período** não inclui o saldo inicial.
-- **Saldo acumulado** parte do saldo das **contas correntes da empresa** (todas as obras), não do caixa da obra, e corre pelo previsto.
+- **Saldo acumulado** parte do saldo das **contas correntes da empresa** (todos os projetos), não do caixa do projeto, e corre pelo previsto.
 - **Realizado** é o da **primeira versão selecionada**.
 - **Desvio** só aparece nos meses com os dois lados.
 - Despesa paga por terceiro só sai na restituição.
@@ -120,7 +119,7 @@ Regras gerais:
 **Não faz:** não lança nem concilia (isso é no Caixa) e não mostra a competência (isso é na DRE).
 
 **Chaves:**
-- "Fluxo pela definição nova" ligada: realizado sempre da Atual, permuta fora do planejamento e saldo partindo do caixa da obra, pelo realizado nos meses fechados.
+- "Fluxo pela definição nova" ligada: realizado sempre da Atual, permuta (dados antigos) fora do planejamento e saldo partindo do caixa do projeto, pelo realizado nos meses fechados.
 - Rascunho ligada: planejamento não Aprovado sai.
 
 **Quem acessa:** owner e admin, o membro (chave desligada) e o contador (leitura).
@@ -132,9 +131,9 @@ Regras gerais:
 **Para que serve:** o previsto do Fluxo de Caixa (pelo mês do vencimento) de um cenário, com as saídas abertas em **bloco → grupo → conta** do plano de contas e a análise vertical (% das entradas).
 
 **O que se faz:**
-- Escolher a obra ou a empresa toda, o período e o cenário (Atual, Previsão Atualizada ou Orçamento) e clicar em "Aplicar".
-- As saídas abrem em Obra (grupos CEF), Complementares, Ressarcimentos a terceiros e Sem conta do plano. Clique para abrir os grupos e as contas.
-- As entradas abrem em unidades e liberações, e revenda de permuta. No fim, o saldo do período.
+- Escolher o projeto ou a empresa toda, o período e o cenário (Atual, Previsão Atualizada ou Orçamento) e clicar em "Aplicar".
+- As saídas abrem nos blocos da tela (os grupos do plano de contas, os complementares, Ressarcimentos a terceiros e Sem conta do plano). Clique para abrir os grupos e as contas.
+- As entradas abrem nas receitas do projeto (contas a receber e, em dados antigos, unidades, liberações e revenda de permuta). No fim, o saldo do período.
 
 **O que confunde:**
 - São as mesmas parcelas, despesas e ressarcimentos do Fluxo de Caixa: a despesa parcelada entra pelas parcelas, e a paga por terceiro sai no ressarcimento.
@@ -152,14 +151,14 @@ Regras gerais:
 **Para que serve:** montar um relatório da DRE ou do Fluxo de Caixa do jeito que a pessoa pedir, com chat próprio.
 
 **O que se faz:**
-- No chat ao lado, descrever o relatório ("DRE da obra X com análise vertical, mês a mês neste ano"). O chat monta e a tela mostra a tabela. Também dá para ditar.
-- Ou escolher nos campos: fonte (DRE, DRE por categoria e grupo, ou Fluxo de Caixa previsto), colunas (por cenário, mês a mês ou por obra), cenários, obra, período De/Até e análise vertical. Clicar em Montar.
+- No chat ao lado, descrever o relatório ("DRE do projeto Monitoramento Arqueológico com análise vertical, mês a mês neste ano"). O chat monta e a tela mostra a tabela. Também dá para ditar.
+- Ou escolher nos campos: fonte (DRE, DRE por categoria e grupo, ou Fluxo de Caixa previsto), colunas (por cenário, mês a mês ou por projeto), cenários, projeto, período De/Até e análise vertical. Clicar em Montar.
 - Baixar CSV ou exportar PDF.
 - O endereço da página guarda o relatório: copiar o link abre o mesmo relatório de novo.
 
 **O que confunde:**
 - Os números são os da DRE e do Fluxo de Caixa, com as mesmas regras e chaves.
-- Por mês ou por obra vale um cenário só (o primeiro marcado); por cenário, até três lado a lado.
+- Por mês ou por projeto vale um cenário só (o primeiro marcado); por cenário, até três lado a lado.
 - Mês a mês sem período mostra os cinco meses anteriores, o atual e os seis seguintes; até 24 colunas.
 - Quem abre o link vê só o que o acesso dele permite: sem acesso à DRE, um relatório de DRE não abre.
 
@@ -171,41 +170,40 @@ Regras gerais:
 
 ## Resumo Executivo (/resumo) — módulo Business Intelligence
 
-**Para que serve:** indicadores de vendas e fontes de recurso: VGV, sinais, parcelas, FGTS, subsídio, permuta e liberações.
+**Para que serve:** indicadores acumulados de cada versão: receita, recebimentos, custo realizado × orçado, desvio de custo e margem.
 
 **O que se faz:**
-- **Uma obra**: tabela Indicadores Gerais e os cartões Unidades (Disponíveis/Reservadas/Vendidas/Total) e Financiamento Banco. Com um período informado, aparece também "Recebimentos previstos no período".
+- **Um projeto**: tabela Indicadores Gerais. Com um período informado, aparece também "Recebimentos previstos no período".
 - **2–3 versões**: tabela comparativa, sem o filtro de período.
-- **Todos/Ativos/Finalizados**: uma coluna por tipo de versão, com a cobertura. Com mais de uma obra, aparece o comparativo entre projetos. Custo realizado × orçado só para quem vê Despesas.
-- **Indicadores de negócio**, no topo: marque os que quer ver, entre VGV, VGV vendido, % vendido, unidades vendidas, preço médio vendido por m², VGV por m², custo realizado, custo realizado por m², custo orçado por m², desvio de custo e margem orçada. A escolha fica no endereço da página, então o link e o PDF levam os mesmos. Com várias obras, há uma coluna por obra e o Total. Os de custo só aparecem para quem vê Despesas.
-- O custo por m² usa a **área construída** do cadastro do projeto (campo "Área construída (m²)", em Projetos → Custos do projeto). Sem ela, o indicador diz "sem área construída no cadastro". O preço por m² usa o m² de cada unidade.
+- **Todos/Ativos/Finalizados**: uma coluna por tipo de versão, com a cobertura. Com mais de um projeto, aparece o comparativo entre projetos. Custo realizado × orçado só para quem vê Despesas.
+- **Indicadores de negócio**, no topo: marque os que quer ver (custo realizado, custo orçado, desvio de custo, margem orçada e outros). A escolha fica no endereço da página, então o link e o PDF levam os mesmos. Com vários projetos, há uma coluna por projeto e o Total. Os de custo só aparecem para quem vê Despesas.
+- Os indicadores herdados da venda de imóveis (VGV, unidades vendidas, sinais, FGTS, subsídio, permuta, liberações, valores por m²) só têm número em dados antigos do módulo de unidades, que saiu. A receita dos serviços por contrato está no Painel de Contratos.
 - **Exportar PDF** do Resumo.
 
 **O que confunde:**
 - Os indicadores são **acumulados da versão**. O período só afeta o cartão de recebimentos.
-- O VGV conta todas as unidades. Sinais e parcelas contam só as **Vendidas**.
-- Os valores são nominais, sem INCC. O Financiamento Banco não entra nos totais.
+- Os valores são nominais, sem reajuste.
 - Se a versão não é a Atual, a tela avisa que aquilo é planejamento, não o contratado.
 
-**Não faz:** não edita unidades nem planos de pagamento (isso fica em Receitas → Unidades).
+**Não faz:** não edita nada.
 
 **Chaves:**
-- "Resumo pela definição nova" ligada: sinais × quantidade, permuta e liberação canceladas fora dos totais, linha "Permuta de outros tipos" e os blocos Vendas, Exposição e Atenção. Os limites do bloco Atenção ficam em Configurações → Empresa.
+- "Resumo pela definição nova" ligada: muda a forma de somar alguns indicadores e acrescenta os blocos de leitura, entre eles o de Atenção. Os limites do bloco Atenção ficam em Configurações → Empresa.
 - Rascunho ligada: planejamento não Aprovado fica fora no consolidado.
 
 **Quem acessa:** owner e admin, o membro (chave desligada) e o contador (leitura).
 
 ---
 
-## Consolidado — saiu
+## Consolidado e Projeção de Receitas — saíram
 
-A tela Consolidado saiu. O endereço /consolidado leva à **Projeção de Receitas**, que mostra a receita da obra por fonte: escolha duas ou três versões para ver os totais por fonte (AS/Sinais, Mensais, Semestrais, Anuais, FGTS, Subsídio, Permuta, Liberações de Obra). Pergunta livre sobre os números vai para a Cris.
+A tela Consolidado saiu, e a Projeção de Receitas (por unidade imobiliária) também. Os endereços /consolidado e /projecao levam ao **Painel de Contratos**, que mostra a receita por contrato (contratado, medido, faturado, recebido e a receber); a comparação entre versões fica na DRE. Pergunta livre sobre os números vai para a Cris.
 
 ---
 
 ## Cadastro de Projetos (/projeto) — módulo Projetos
 
-**Para que serve:** cadastro das obras e das unidades/escritórios, que alimenta datas, valores, financiamento e metragem dos relatórios.
+**Para que serve:** cadastro dos projetos e dos escritórios/filiais, que alimenta datas, valores, cliente e localização dos relatórios.
 
 **O que se faz:**
 - **Todos**: cards, busca, Novo projeto e Nova unidade / escritório. O menu "…" tem Abrir e Copiar link.
@@ -217,9 +215,9 @@ A tela Consolidado saiu. O endereço /consolidado leva à **Projeção de Receit
   - versões, com o botão de travar e destravar;
   - planilha da Atual (modelo, exportar, importar).
 - O Status grava na hora. Projeto novo nasce Ativo.
-- **Excluir** fica numa zona separada e exige digitar o nome. A exclusão apaga junto versões, unidades, despesas, caixa, medições, orçamentos e recebíveis, sem como desfazer.
+- **Excluir** fica numa zona separada e exige digitar o nome. A exclusão apaga junto as versões e o que foi lançado nelas (despesas, caixa, medições, orçamentos, recebíveis e dados antigos), sem como desfazer.
 - Assistente: cadastro incompleto, inconsistências, funding e documentos. Com IA configurada, ele lê um documento e **propõe** o preenchimento, sem gravar.
-- **Mudar por comando com a Cris**: com o projeto aberto, diga ou dite o que mudar ("a obra termina em 31/12/2027", "valor da construção 2,5 milhões") ou anexe um documento. A Cris preenche os campos do cadastro e a tela mostra quais; nada é gravado até clicar em Salvar, e o log marca que veio do assistente. O cliente, a situação e a trava continuam nos campos e botões da tela.
+- **Mudar por comando com a Cris**: com o projeto aberto, diga ou dite o que mudar ("o projeto termina em 31/12/2027", "o município é Ouro Preto") ou anexe um documento (contrato, ordem de serviço, proposta técnica). A Cris preenche os campos do cadastro e a tela mostra quais; nada é gravado até clicar em Salvar, e o log marca que veio do assistente. O cliente, a situação e a trava continuam nos campos e botões da tela.
 - **Alterações não salvas**: com algo mudado no cartão e não salvo, sair por um link ou fechar a aba pede confirmação.
 
 **O que confunde:**
@@ -246,7 +244,7 @@ A tela Consolidado saiu. O endereço /consolidado leva à **Projeção de Receit
   - cartões Receitas, Despesas, Resultado e Recursos próprios.
 - **Receitas**: o total vem do cadastro. Só a distribuição mensal se edita.
 - **Despesas**: total da linha + % por mês. O valor mensal é calculado, e a soma não pode passar de 100%.
-- **Preencher com a Cris**: diga, dite ou anexe o que planejar (ex.: "fundação 500 mil de 03/2026 a 08/2026"). A Cris preenche o total e a distribuição das linhas — igual entre os meses de um intervalo, ou com o % de cada mês — e a tela mostra o que ela preencheu. Nada é gravado: confira e clique em Salvar receitas ou Salvar despesas. Na Previsão Atualizada, ela só mexe na distribuição.
+- **Preencher com a Cris**: diga, dite ou anexe o que planejar (ex.: "campanhas de campo 500 mil de 03/2026 a 08/2026"). A Cris preenche o total e a distribuição das linhas — igual entre os meses de um intervalo, ou com o % de cada mês — e a tela mostra o que ela preencheu. Nada é gravado: confira e clique em Salvar receitas ou Salvar despesas. Na Previsão Atualizada, ela só mexe na distribuição.
 - **Alterações não salvas**: com algo mudado e não salvo, a tela mostra o aviso, e sair por um link ou fechar a aba pede confirmação.
 - Ações:
   - incluir linha do Plano de Contas;
@@ -391,7 +389,7 @@ A tela Consolidado saiu. O endereço /consolidado leva à **Projeção de Receit
 
 **Filtro:** usuário (ou "sistema"), entidade, trecho da ação e período. **Com a Cris**: peça, por exemplo, "só o que o Messias lançou este mês"; ela preenche o filtro, e quem filtra é o botão "Filtrar".
 
-**O que confunde:** quem não é owner nem admin vê os dados pessoais de compradores apenas como "alterado".
+**O que confunde:** quem não é owner nem admin vê os dados pessoais de clientes apenas como "alterado".
 
 **Não faz:** não busca no texto dos detalhes, não exporta e não mostra eventos além dos 200.
 
@@ -454,7 +452,7 @@ A tela Consolidado saiu. O endereço /consolidado leva à **Projeção de Receit
 
 **Não faz:** não apaga, não arquiva e **não restaura**. O backup do banco de dados e dos arquivos é outro, feito pela infraestrutura.
 
-**Dado pessoal:** o pacote completo leva CPF, endereço e telefone de clientes, fornecedores e funcionários. Os dados sensíveis ficam fora (renda, FGTS, score e estado civil do comprador; salário, endereço e banco do funcionário; ASO). O leia-me dentro do pacote diz isso e que a guarda é de quem baixou.
+**Dado pessoal:** o pacote completo leva CPF, endereço e telefone de clientes, fornecedores e funcionários. Os dados sensíveis ficam fora (dados financeiros e de perfil do cliente; salário, endereço e banco do funcionário; ASO). O leia-me dentro do pacote diz isso e que a guarda é de quem baixou.
 
 **Quem acessa:** proprietário e administrador; outra pessoa só se receber a permissão "Backup de dados" na Gestão de Acessos. Para analisar dados em outro lugar, use as exportações das telas de relatório.
 
@@ -466,7 +464,7 @@ A tela Consolidado saiu. O endereço /consolidado leva à **Projeção de Receit
 
 **O que se faz:**
 - Filtros por projeto, competência e fornecedor.
-- Nova categoria linha a linha, ou em lote, quando os marcados são do mesmo fornecedor ou da mesma conta CEF.
+- Nova categoria linha a linha, ou em lote, quando os marcados são do mesmo fornecedor ou da mesma conta do plano de contas.
 - Prévia "Conferir antes de aplicar".
 - **Só a categoria muda**: valor, competência, vencimento, status e PED ficam.
 
@@ -482,18 +480,18 @@ A tela Consolidado saiu. O endereço /consolidado leva à **Projeção de Receit
 
 - **Orçamentos × Previsão Atualizada:** o Orçamento define linhas e totais. A Previsão nasce dele, herda tudo e só redistribui os % mensais (até 12 por projeto).
 - **DRE × Fluxo de Caixa:** a DRE é resultado (competência e vencimento) até o Resultado Final. O Fluxo é dinheiro: previsto pelo vencimento, realizado pela liquidação e saldo a partir das contas correntes.
-- **Dashboard × Resumo Executivo × Projeção de Receitas:**
-  - o Dashboard é o painel geral (VGV, realizado, a receber, a pagar, margem);
-  - o Resumo detalha vendas e fontes de recurso e as unidades por status;
-  - a Projeção é a receita de **uma** obra mês a mês e, comparando versões, por fonte.
+- **Dashboard × Resumo Executivo × Painel de Contratos:**
+  - o Dashboard é o painel geral (valor total, realizado, a receber, a pagar, margem);
+  - o Resumo traz os indicadores acumulados por versão e o comparativo entre projetos;
+  - o Painel de Contratos é a receita dos serviços por contrato e cliente (contratado, medido, faturado e a receber).
 - **Usuários × Gestão de Acessos:** papel × ajuste fino por tela.
 - **Situação × Trava:** a situação documenta a etapa e, com a chave de Rascunho, decide se a versão entra nos relatórios. A trava impede editar.
 - **Rodapé da DRE × Conferência:** o rodapé conta o que ficou fora. A Conferência lista e corrige a categoria.
 
 ## Caminhos comuns
 
-- Para cadastrar uma obra, vá em **Planejamento → Projetos → Novo projeto**.
-- Para habilitar o Orçamento de uma obra, vá em **Planejamento → Projetos**, abra a obra e preencha as datas de início e fim.
+- Para cadastrar um projeto, vá em **Projetos → Cadastro de Projetos → Novo projeto**.
+- Para habilitar o Orçamento de um projeto, vá em **Projetos → Cadastro de Projetos**, abra o projeto e preencha as datas de início e fim.
 - Para criar uma revisão, vá em **Planejamento → Previsão Atualizada**, escolha a base, dê um nome e clique em Criar Previsão.
 - Para aprovar uma versão, vá em **Planejamento → Orçamentos** (ou Previsão) e mude a Situação para Concluído e depois Aprovado.
 - Para comparar orçado e real, vá em **Business Intelligence → DRE** e marque as versões. Também dá para usar o cartão Orçado x Realizado em Projetos.

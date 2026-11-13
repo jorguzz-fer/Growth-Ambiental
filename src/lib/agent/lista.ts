@@ -33,7 +33,7 @@ export function limiteDe(url: URL, padrao = 50, teto = 200): number {
   return Math.min(Math.floor(n), teto);
 }
 
-/** Comparação de nome de projeto tolerante a acento/caixa ("obra 28" ↔ "OBRA 28"). */
+/** Comparação de nome de projeto tolerante a acento/caixa ("monitoramento são joão" ↔ "MONITORAMENTO SAO JOAO"). */
 export function casaNome(valor: string | null | undefined, busca: string | null): boolean {
   if (!busca) return true;
   const norm = (s: string) =>

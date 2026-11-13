@@ -69,7 +69,7 @@ const FERRAMENTA_PENDENTES: Anthropic.Tool = {
 };
 const FERRAMENTA_CANDIDATOS: Anthropic.Tool = {
   name: "candidatos_de_conciliacao",
-  description: "Os candidatos que o SERVIDOR calculou para um movimento (despesas, contas a receber, parcelas de venda, pagamentos de fatura), com o grau e a referência (ref). Só estes podem ser propostos.",
+  description: "Os candidatos que o SERVIDOR calculou para um movimento (despesas, contas a receber, parcelas de venda de dados antigos de unidades, pagamentos de fatura), com o grau e a referência (ref). Só estes podem ser propostos.",
   input_schema: { type: "object", additionalProperties: false, properties: { movimento: { type: "string", description: "id do movimento" } }, required: ["movimento"] },
 };
 const FERRAMENTA_PROPOR: Anthropic.Tool = {
@@ -99,15 +99,15 @@ const FERRAMENTA_CONSULTA: Anthropic.Tool = {
   description:
     "Calcula, com os dados da empresa e o acesso da pessoa, um número do catálogo: " +
     CATALOGO.map((m) => `${m.id} (${m.definicao})`).join("; ") +
-    ". Use para números que não estão no bloco <tela> ou de outras obras e cenários.",
+    ". Use para números que não estão no bloco <tela> ou de outros projetos e cenários.",
   input_schema: {
     type: "object",
     additionalProperties: false,
     properties: {
       metrica: { type: "string", enum: CATALOGO.map((m) => m.id) },
       cenario: { type: "string", enum: ["", "atual", "budget", "forecast"], description: '"" = Atual (o movimento real).' },
-      obra: { type: "string", description: 'Nome da obra como a pessoa escreveu; "" para a obra da tela ou todas.' },
-      todas: { type: "boolean", description: "true para todas as obras / a empresa toda." },
+      obra: { type: "string", description: 'Nome do projeto como a pessoa escreveu; "" para o projeto da tela ou todos.' },
+      todas: { type: "boolean", description: "true para todos os projetos / a empresa toda." },
       de: { type: "string", description: 'Competência inicial MM/AAAA, ou "".' },
       ate: { type: "string", description: 'Competência final MM/AAAA, ou "".' },
     },

@@ -4,8 +4,8 @@
  * anexa. Módulo PURO. Só preenche: quem grava é o Salvar do cartão, que leva
  * "origem: assistente" ao log, como a leitura de documento do Prompt B.
  *
- * BB2-1 em aberto: os campos que o comando pode mudar são os do cadastro da
- * obra, sem o cliente (o nome do cliente não vai ao modelo) e sem a situação
+ * BB2-1 em aberto: os campos que o comando pode mudar são os do cadastro do
+ * projeto, sem o cliente (o nome do cliente não vai ao modelo) e sem a situação
  * e a trava, que têm botão próprio.
  */
 import type { CampoDoFormulario, FormularioDaTela } from "@/lib/cris";
@@ -20,7 +20,7 @@ export interface CampoDoCadastro {
 }
 
 export const CAMPOS_DO_CADASTRO: readonly CampoDoCadastro[] = [
-  { chave: "name", rotulo: "Nome da obra", tipo: "texto" },
+  { chave: "name", rotulo: "Nome do projeto", tipo: "texto" },
   { chave: "startDate", rotulo: "Data de início", tipo: "data", dica: "MM/DD/YYYY" },
   { chave: "endDate", rotulo: "Data de fim", tipo: "data", dica: "MM/DD/YYYY" },
   { chave: "valorConstrucao", rotulo: "Valor da construção", tipo: "numero", dica: "em reais" },
@@ -36,8 +36,8 @@ export const CAMPOS_DO_CADASTRO: readonly CampoDoCadastro[] = [
   { chave: "terrenoForaCaixa", rotulo: "Terreno fora do caixa", tipo: "booleano", dica: "sim ou não" },
   { chave: "endereco", rotulo: "Endereço", tipo: "texto", soDetalhado: true },
   { chave: "cep", rotulo: "CEP", tipo: "texto", dica: "8 dígitos", soDetalhado: true },
-  { chave: "municipioObra", rotulo: "Município da obra", tipo: "texto", soDetalhado: true },
-  { chave: "ufObra", rotulo: "UF da obra", tipo: "texto", dica: "2 letras", soDetalhado: true },
+  { chave: "municipioObra", rotulo: "Município do projeto", tipo: "texto", soDetalhado: true },
+  { chave: "ufObra", rotulo: "UF do projeto", tipo: "texto", dica: "2 letras", soDetalhado: true },
   { chave: "codigoMunicipioObra", rotulo: "Código IBGE do município", tipo: "texto", dica: "7 dígitos", soDetalhado: true },
   { chave: "latitude", rotulo: "Latitude", tipo: "numero", soDetalhado: true },
   { chave: "longitude", rotulo: "Longitude", tipo: "numero", soDetalhado: true },

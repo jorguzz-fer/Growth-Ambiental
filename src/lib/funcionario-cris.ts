@@ -4,7 +4,7 @@
  *
  * Regra de privacidade (BE-2, mantida pelo E2): dado pessoal do funcionário
  * não vai ao modelo. Por isso o formulário que a tela oferece à Cris tem SÓ o
- * vínculo de trabalho — cargo, setor, obra, tipo e prazo do contrato,
+ * vínculo de trabalho — cargo, setor, projeto, tipo e prazo do contrato,
  * admissão e observação. Nome, documentos, nascimento, filiação, endereço,
  * jornada, salário e dados bancários são preenchidos à mão. Quem cadastra é o
  * botão "Cadastrar".
@@ -22,7 +22,7 @@ export function formularioDoFuncionario(obras: readonly { id: string; nome: stri
     campos: [
       { nome: "cargo", rotulo: "Cargo / função", tipo: "texto" },
       { nome: "setor", rotulo: "Setor", tipo: "texto" },
-      { nome: "obra", rotulo: "Obra", tipo: "opcao", opcoes: obras.map((o) => o.nome) },
+      { nome: "obra", rotulo: "Projeto", tipo: "opcao", opcoes: obras.map((o) => o.nome) },
       { nome: "tipoContrato", rotulo: "Tipo de contrato", tipo: "opcao", opcoes: [...TIPOS_CONTRATO] },
       { nome: "prazoContrato", rotulo: "Prazo (se determinado)", tipo: "texto" },
       { nome: "admissao", rotulo: "Admissão", tipo: "data", dica: "MM/DD/YYYY" },

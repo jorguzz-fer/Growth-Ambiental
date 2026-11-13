@@ -1,8 +1,8 @@
 /**
- * Prompt Y2 (Fase 3 · revisão V5): no Estoque, a Cris preenche a entrada ou a
- * baixa (saída) que a pessoa diz ou dita. Módulo PURO. Ela só preenche; quem
- * registra é o botão da tela, com as validações do servidor (saldo, lastro da
- * entrada, obra de destino da baixa).
+ * Prompt Y2 (Fase 3 · revisão V5): em Materiais e Equipamentos (/estoque), a
+ * Cris preenche a entrada ou a baixa (saída) que a pessoa diz ou dita. Módulo
+ * PURO. Ela só preenche; quem registra é o botão da tela, com as validações do
+ * servidor (saldo, lastro da entrada, projeto de destino da baixa).
  */
 import type { FormularioDaTela } from "@/lib/cris";
 import { ENTRADA_ORIGENS, SAIDA_MOTIVOS } from "@/lib/estoque-regras";
@@ -25,13 +25,13 @@ const rotuloDoMaterial = (m: MaterialCris) => `${m.nome}${m.sku ? ` (${m.sku})` 
 export function formularioDoMovimento(materiais: readonly MaterialCris[], obras: readonly OpcaoCris[], despesas: readonly OpcaoCris[]): FormularioDaTela {
   return {
     id: "estoque-movimento",
-    titulo: "Movimento de estoque: entrada ou baixa (saída), um material por vez",
+    titulo: "Movimento de materiais e equipamentos: entrada ou baixa (saída), um item por vez",
     campos: [
       { nome: "tipo", rotulo: "Tipo", tipo: "opcao", opcoes: ["entrada", "baixa"] },
       { nome: "material", rotulo: "Material", tipo: "opcao", opcoes: materiais.slice(0, LIMITE).map(rotuloDoMaterial) },
       { nome: "quantidade", rotulo: "Quantidade (na unidade do material)", tipo: "numero" },
       { nome: "motivo", rotulo: "Origem da entrada ou motivo da baixa", tipo: "opcao", opcoes: [...new Set([...ENTRADA_ORIGENS, ...SAIDA_MOTIVOS])] },
-      { nome: "obra", rotulo: "Obra (destino da baixa; opcional na entrada)", tipo: "opcao", opcoes: obras.slice(0, LIMITE).map((o) => o.rotulo) },
+      { nome: "obra", rotulo: "Projeto (destino da baixa; opcional na entrada)", tipo: "opcao", opcoes: obras.slice(0, LIMITE).map((o) => o.rotulo) },
       { nome: "despesa", rotulo: "Despesa de compra (só na entrada)", tipo: "opcao", opcoes: despesas.slice(0, LIMITE).map((d) => d.rotulo) },
       { nome: "data", rotulo: "Data", tipo: "data", dica: "MM/DD/YYYY" },
       { nome: "doc", rotulo: "Documento (NF / requisição)", tipo: "texto" },

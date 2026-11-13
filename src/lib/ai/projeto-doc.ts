@@ -3,7 +3,7 @@
  *
  * O que a IA devolve (`DadosProjetoLidos`) e a regra que transforma isso numa
  * PROPOSTA campo a campo, comparada com o que já está no cadastro. Nada aqui
- * grava: a proposta entra no formulário da obra e o Salvar do usuário é que
+ * grava: a proposta entra no formulário do projeto e o Salvar do usuário é que
  * grava, pela mesma `updateProject`, com `origem: "assistente"` no log.
  */
 import { isoParaDataInterna } from "@/lib/ai/campos";
@@ -44,7 +44,7 @@ export type CampoProjeto =
   | "formaPagamentoTerreno";
 
 export const ROTULO_CAMPO_PROJETO: Record<CampoProjeto, string> = {
-  name: "Nome da obra",
+  name: "Nome do projeto",
   endereco: "Endereço",
   cep: "CEP",
   municipioObra: "Município",
@@ -114,7 +114,7 @@ export function montarPropostaDeProjeto(lido: DadosProjetoLidos, atual: ValoresA
   return { campos, observacoes: (lido.observacoes ?? []).filter(Boolean) };
 }
 
-/** sessionStorage: a proposta aceita vai daqui para o formulário da obra. */
+/** sessionStorage: a proposta aceita vai daqui para o formulário do projeto. */
 export const CHAVE_PROPOSTA_PROJETO = "gt:proposta-projeto";
 /** Evento disparado no `window` quando uma proposta é guardada. */
 export const EVENTO_PROPOSTA_PROJETO = "gt:proposta-projeto";

@@ -7,7 +7,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * Obras/projetos do tenant. É a rota de tradução: a pessoa fala "OBRA 28" e
+ * Projetos do tenant. É a rota de tradução: a pessoa fala "PROJETO 28" e
  * as demais consultas precisam do nome exato (ou do id). Sem ela a Cris
  * chutaria nomes.
  */

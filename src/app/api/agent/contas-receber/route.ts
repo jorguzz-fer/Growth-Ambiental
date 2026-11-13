@@ -15,7 +15,12 @@ export const dynamic = "force-dynamic";
  * versão "atual" em parcelas datadas. É PREVISÃO, não extrato: mostra o que
  * está contratado a receber, não o que caiu na conta.
  *
- * `?projeto=OBRA 28` responde "quanto tem a receber da OBRA 28".
+ * Growth Ambiental: o módulo de unidades saiu; esta rota só devolve as
+ * parcelas de unidades de dados antigos. As faturas dos contratos (contas a
+ * receber) ainda NÃO entram aqui — pendência de lógica, fora da revisão de
+ * terminologia. O campo `unidade` da resposta é contrato da API (não renomear).
+ *
+ * `?projeto=PROJETO 28` responde "quanto tem a receber do PROJETO 28".
  */
 export async function GET(req: Request) {
   return handleAgent(req, { rota: "contas-receber" }, async (id, url) => {

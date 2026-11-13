@@ -10,7 +10,7 @@
  *   usuário conferir antes de gravar.
  *
  * Nada aqui bloqueia o lançamento — alerta é sinal, não trava. O documento
- * que chega da obra é foto amassada, cupom sem valor fiscal e comprovante com
+ * que chega do campo é foto amassada, cupom sem valor fiscal e comprovante com
  * CPF mascarado; exigir certeza impediria o uso real.
  *
  * Módulo PURO (sem `server-only`, sem React): é importado tanto pelo servidor
