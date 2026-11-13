@@ -276,13 +276,21 @@ _Fora da operação: não operacional, investimentos, empréstimos e retiradas. 
 
 - Cada empresa tem a sua cópia (grupos e contas com o `tenant_id` dela). Mudar
   o padrão no código **não** altera empresas existentes.
-- Tela **Planejamento → Plano de Contas**: busca (código, nome, descrição);
-  filtros por grupo, natureza, categoria DRE, classe gerencial e situação;
-  expandir/recolher; criar grupo, subgrupo e conta (formulário simples; classe
-  e custo em "Opções avançadas", com o efeito na DRE explicado); editar;
-  reordenar; mover conta ou grupo; duplicar subgrupo com contas; inativar;
-  excluir (só sem uso); "Onde a conta é usada" (lançamentos, Orçamento,
-  Medição; por botão, valores por projeto, contrato, fase e direto/indireto).
+- Tela **Planejamento → Plano de Contas** (layout de grupos e subitens,
+  restaurado a pedido): dois blocos — "Custos diretos dos projetos" e
+  "Receitas, despesas da empresa, tributos e resultado" — com um cartão por
+  grupo (subgrupo do plano) mostrando as contas e a categoria da DRE de cada
+  uma. Em "Editar": renomear o grupo, editar código (só sem uso), nome,
+  natureza e categoria da DRE de cada conta, inativar e excluir (só sem uso).
+  **Nova conta** e **+ Novo grupo** já pedem a categoria da DRE (a conta nova
+  sugere a categoria das outras contas do grupo). Mudar a natureza ou a
+  categoria de uma conta já usada mostra quantos lançamentos são afetados e
+  só grava com a confirmação.
+- Na lateral: assistente (somente leitura), Categorias DRE, ferramentas
+  (exportar, importar, adotar o plano padrão, reclassificar lançamentos) e a
+  prévia da chave de categoria do Orçamento. As ações de estrutura em árvore
+  (`planocontas-estrutura.ts`: mover, reordenar, duplicar, classe gerencial e
+  tipo de custo) seguem no servidor, sem tela própria por enquanto.
 - Aviso de conta parecida ao criar ("Hospedagem em viagem" ≈ "Hospedagens"),
   sem bloquear.
 - **Exportar** XLSX/CSV (`/planocontas/exportar`) e **importar** planilha com
@@ -426,6 +434,14 @@ importada herda a categoria da conta; desligada, segue Custo Variável como
 antes. A exportação deixa de levar despesas canceladas e mantém, numa linha
 "Fora do plano ativo", a despesa de conta que saiu do plano.
 
+### Plano de construção removido
+
+O plano de contas de construção (grupos de obra, `PLANO_CONTAS` em
+`constants.ts`) saiu do código. O Relatório CEF usava esse plano fixo; agora
+usa os grupos de custo direto do plano da empresa. As categorias padrão (só
+para conta sem categoria gravada) vêm do plano ambiental e das regras do plano
+ambiental anterior; as regras dos grupos de obra (`T`, `P`, `TR`) saíram.
+
 ## 14. Decisões que dependem de validação contábil
 
 1. **Pessoal técnico como Custo Variável** (custo direto dos projetos). A
@@ -457,7 +473,9 @@ antes. A exportação deixa de levar despesas canceladas e mantém, numa linha
   conta do plano: entra como "Receita de contratos e vendas (sem conta)".
 - Sem contas patrimoniais, depreciação e amortização (o sistema não faz
   partidas dobradas).
-- Relatório Medição CEF continua no plano de construção (módulo de obra).
+- O módulo de Medição (aba Relatório CEF) já lista os grupos de custo direto
+  do plano da empresa, mas os textos ainda falam em obra, engenheiro e
+  liberação da Caixa (conceito de financiamento imobiliário).
 - Código de conta usada não muda (seria preciso migrar as referências em
   despesas e Orçamento); o caminho é criar a conta nova e reclassificar.
 - Empresa sem nenhuma conta cadastrada não tem a validação de conta no

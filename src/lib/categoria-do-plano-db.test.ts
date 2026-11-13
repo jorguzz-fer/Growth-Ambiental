@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeAll, afterAll } from "vitest";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 
 /**
  * Prompt DP — a chave "despesa_categoria_do_plano". Desligada: os relatórios
@@ -25,7 +25,7 @@ describe.skipIf(!HAS_DB)("Prompt DP — despesa herda a categoria do Plano de Co
   const { defaultPermissions } = await import("@/lib/permissions");
   const { getExpenseRows } = await import("@/lib/queries");
   const { addDespesa, updateDespesa } = await import("./actions/despesas");
-  const { updateChartItem } = await import("./actions/planocontas");
+  const { updateChartItem, addChartItem, addChartGroup } = await import("./actions/planocontas");
   const { previaCategoriaDoPlano } = await import("./categoria-do-plano-servidor");
   let tenantId = "";
   let projectId = "";
@@ -112,14 +112,29 @@ describe.skipIf(!HAS_DB)("Prompt DP — despesa herda a categoria do Plano de Co
   it("a categoria escolhida na conta vale para o relatório; receita é recusada em conta de despesa; vazio volta ao padrão", async () => {
     await ligar(true);
     await expect(updateChartItem(contaId, { dreCategory: "Receita" })).rejects.toThrow(/Receita/);
-    await updateChartItem(contaId, { dreCategory: "Custo Fixo" });
+    // conta já usada: mudar a categoria muda a DRE dos lançamentos — pede confirmação e não grava sem ela
+    expect(await addDespesa(fd({ projectId, contaCef: "A.1", categoriaDre: "Despesa Fixa", valor: "1", competencia: "09/2026", vencimento: "09/30/2026" }))).toMatchObject({ ok: true });
+    expect(await updateChartItem(contaId, { dreCategory: "Custo Fixo" })).toMatchObject({ ok: false, precisaConfirmar: true });
+    const [antes] = await db.select().from(schema.chartAccounts).where(eq(schema.chartAccounts.id, contaId));
+    expect(antes.dreCategory).toBeNull();
+    expect(await updateChartItem(contaId, { dreCategory: "Custo Fixo", confirmar: true })).toEqual({ ok: true });
     const [c] = await db.select().from(schema.chartAccounts).where(and(eq(schema.chartAccounts.tenantId, tenantId), eq(schema.chartAccounts.code, "A.1")));
     expect(c.dreCategory).toBe("Custo Fixo");
     const r = (await addDespesa(fd({ projectId, contaCef: "A.1", categoriaDre: "Despesa Fixa", valor: "5", competencia: "09/2026", vencimento: "09/30/2026" }))) as { ok: boolean; id: string };
     expect(await categoriaGravada(r.id)).toBe("Custo Fixo");
-    await updateChartItem(contaId, { dreCategory: "" });
+    await updateChartItem(contaId, { dreCategory: "", confirmar: true });
     const [c2] = await db.select().from(schema.chartAccounts).where(eq(schema.chartAccounts.id, contaId));
     expect(c2.dreCategory).toBeNull();
     await ligar(false);
+  });
+
+  it("criar conta e grupo já escolhendo a categoria da DRE; categoria que não serve à natureza é recusada", async () => {
+    await addChartItem({ kind: "complementar", groupCode: "A", groupName: "Administrativo", code: "A.90", name: "Coworking", natureza: "despesa", dreCategory: "Despesa Fixa" });
+    await addChartGroup({ kind: "cef", groupCode: "PS", groupName: "Programas socioambientais", code: "PS.1", name: "Oficinas comunitárias", natureza: "despesa", dreCategory: "Custo Variável" });
+    await expect(addChartItem({ kind: "complementar", groupCode: "A", groupName: "Administrativo", code: "A.91", name: "X", natureza: "despesa", dreCategory: "Receita" })).rejects.toThrow(/Receita/);
+    const criadas = await db.select().from(schema.chartAccounts).where(and(eq(schema.chartAccounts.tenantId, tenantId), inArray(schema.chartAccounts.code, ["A.90", "PS.1", "A.91"])));
+    expect(Object.fromEntries(criadas.map((c) => [c.code, c.dreCategory]))).toEqual({ "A.90": "Despesa Fixa", "PS.1": "Custo Variável" });
+    const [grupo] = await db.select().from(schema.chartGroups).where(and(eq(schema.chartGroups.tenantId, tenantId), eq(schema.chartGroups.code, "PS")));
+    expect(grupo).toMatchObject({ name: "Programas socioambientais", kind: "cef" });
   });
 });

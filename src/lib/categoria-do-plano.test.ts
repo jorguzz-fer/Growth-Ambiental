@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { PLANO_CONTAS } from "@/lib/calc/constants";
+import { linhasDoPlano } from "@/lib/calc/plano-ambiental";
 import {
   categoriaDaConta,
   categoriaHerdada,
@@ -14,10 +14,11 @@ import {
 const conta = (code: string, groupCode: string, kind: "cef" | "complementar", natureza = "despesa", dreCategory: string | null = null) => ({ code, groupCode, kind, natureza, dreCategory });
 
 describe("Prompt DP — categoria da DRE no Plano de Contas", () => {
-  it("todo o plano padrão tem categoria, e gasto de obra é custo variável, nunca despesa", () => {
-    for (const g of PLANO_CONTAS.obra) for (const s of g.sub) expect(categoriaPadraoDaConta(conta(s.id, g.id, "cef")), s.id).toBe("Custo Variável");
-    for (const g of PLANO_CONTAS.complementar)
-      for (const s of g.sub) expect(categoriaPadraoDaConta(conta(s.id, g.id, "complementar")), s.id).not.toBe("Receita");
+  it("o padrão de cada conta do plano ambiental é a categoria dela; custo direto dos projetos é custo variável", () => {
+    for (const c of linhasDoPlano("t")) {
+      expect(categoriaPadraoDaConta({ ...conta(c.code, c.groupCode, c.kind, c.natureza) }), c.code).toBe(c.dreCategory);
+      if (c.kind === "cef") expect(c.dreCategory, c.code).toBe("Custo Variável");
+    }
   });
 
   it("boa prática: venda é despesa variável, estrutura é despesa fixa, juro e tarifa são despesa financeira", () => {
@@ -26,8 +27,6 @@ describe("Prompt DP — categoria da DRE no Plano de Contas", () => {
     expect(categoriaPadraoDaConta(conta("A.1", "A", "complementar"))).toBe("Despesa Fixa");
     expect(categoriaPadraoDaConta(conta("F.1", "F", "complementar"))).toBe("Despesa Fixa");
     expect(categoriaPadraoDaConta(conta("F.4", "F", "complementar"))).toBe("Despesas Financeiras");
-    expect(categoriaPadraoDaConta(conta("T.1", "T", "complementar"))).toBe("Custo Variável");
-    expect(categoriaPadraoDaConta(conta("T.6", "T", "complementar"))).toBe("Despesa Fixa");
   });
 
   it("conta fora do plano padrão cai no tipo; conta de receita é Receita", () => {

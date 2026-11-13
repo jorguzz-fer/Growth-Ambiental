@@ -21,6 +21,15 @@ function normNatureza(v: unknown): Natureza {
   return v === "receita" ? "receita" : "despesa";
 }
 
+/** Categoria da DRE escolhida na criação: vazia = padrão; inválida para a natureza = erro. */
+function categoriaNaCriacao(natureza: Natureza, categoria: string | null | undefined): CategoriaDRE | null {
+  const c = (categoria ?? "").trim();
+  if (!c) return null;
+  const recusa = recusaDeCategoriaDaConta(natureza, c);
+  if (recusa) throw new Error(recusa);
+  return c as CategoriaDRE;
+}
+
 async function codeExists(tenantId: string, code: string): Promise<boolean> {
   // 0079 — código único entre contas E grupos (o Orçamento usa o código do grupo como chave).
   const [g] = await db.select({ id: schema.chartGroups.id }).from(schema.chartGroups).where(and(eq(schema.chartGroups.tenantId, tenantId), eq(schema.chartGroups.code, code))).limit(1);
@@ -46,6 +55,8 @@ export async function addChartGroup(input: {
   code: string;
   name: string;
   natureza?: string;
+  /** categoria da DRE do 1º subitem; vazia = padrão. */
+  dreCategory?: string | null;
 }) {
   const ctx = await getTenantContext();
   if (!ctx || !can(ctx.perms, "planocontas", "criar")) {
@@ -60,6 +71,7 @@ export async function addChartGroup(input: {
   if (!groupCode || !groupName || !code || !name) {
     throw new Error("Informe o grupo e o primeiro subitem.");
   }
+  const dreCategory = categoriaNaCriacao(natureza, input.dreCategory);
   if (await codeExists(ctx.tenant.id, code)) {
     throw new Error(`O código "${code}" já existe.`);
   }
@@ -75,13 +87,14 @@ export async function addChartGroup(input: {
     groupName,
     kind,
     natureza,
+    dreCategory,
   });
   await logAudit({
     tenantId: ctx.tenant.id,
     userId: ctx.userId,
     action: "chart.group.create",
     entity: "chart_account",
-    meta: { groupCode, groupName, kind, natureza },
+    meta: { groupCode, groupName, kind, natureza, code, dreCategory },
   });
   revalidatePath("/planocontas");
 }
@@ -94,6 +107,8 @@ export async function addChartItem(input: {
   code: string;
   name: string;
   natureza?: string;
+  /** categoria da DRE; vazia = padrão. */
+  dreCategory?: string | null;
 }) {
   const ctx = await getTenantContext();
   if (!ctx || !can(ctx.perms, "planocontas", "criar")) {
@@ -104,6 +119,7 @@ export async function addChartItem(input: {
   const code = input.code.trim();
   const name = input.name.trim();
   if (!code || !name) throw new Error("Informe o código e o nome do subitem.");
+  const dreCategory = categoriaNaCriacao(natureza, input.dreCategory);
   if (await codeExists(ctx.tenant.id, code)) {
     throw new Error(`O código "${code}" já existe.`);
   }
@@ -115,13 +131,14 @@ export async function addChartItem(input: {
     groupName: input.groupName.trim(),
     kind,
     natureza,
+    dreCategory,
   });
   await logAudit({
     tenantId: ctx.tenant.id,
     userId: ctx.userId,
     action: "chart.item.create",
     entity: "chart_account",
-    meta: { code, name },
+    meta: { code, name, dreCategory },
   });
   revalidatePath("/planocontas");
 }
@@ -129,8 +146,8 @@ export async function addChartItem(input: {
 /** Edita o código/nome de um subitem. */
 export async function updateChartItem(
   id: string,
-  patch: { code?: string; name?: string; natureza?: string; dreCategory?: string | null },
-) {
+  patch: { code?: string; name?: string; natureza?: string; dreCategory?: string | null; confirmar?: boolean },
+): Promise<{ ok: true } | { ok: false; error: string; precisaConfirmar?: boolean } | void> {
   const ctx = await getTenantContext();
   if (!ctx || !can(ctx.perms, "planocontas", "editar")) return;
   const [current] = await db
@@ -171,6 +188,23 @@ export async function updateChartItem(
     set.dreCategory = null;
   }
   if (Object.keys(set).length === 0) return;
+  // Conta já usada que muda de natureza ou categoria muda a DRE dos lançamentos
+  // dela: a tela mostra o impacto e só grava com a confirmação.
+  if ((set.natureza !== undefined && set.natureza !== current.natureza) || set.dreCategory !== undefined) {
+    const u = (await usoDosCodigos(ctx.tenant.id, [current.code])).get(current.code);
+    if (usado(u) && !patch.confirmar) {
+      const partes = [
+        u!.despesas ? `${u!.despesas} despesa(s)` : null,
+        u!.orcamento ? `${u!.orcamento} linha(s) de Orçamento/Previsão` : null,
+        u!.versoesCongeladas ? `${u!.versoesCongeladas} versão(ões) congelada(s)` : null,
+      ].filter(Boolean);
+      return {
+        ok: false,
+        precisaConfirmar: true,
+        error: `A conta ${current.code} já é usada (${partes.join(", ") || "lançamentos"}). Mudar a categoria muda a DRE desses lançamentos. Confirmar?`,
+      };
+    }
+  }
   await db
     .update(schema.chartAccounts)
     .set(set)
@@ -184,6 +218,7 @@ export async function updateChartItem(
     meta: set,
   });
   revalidatePath("/planocontas");
+  return { ok: true };
 }
 
 /** Ativa/inativa um subitem (exclusão lógica: some de novos lançamentos, fica no histórico). */

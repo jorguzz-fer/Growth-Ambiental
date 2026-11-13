@@ -3,10 +3,12 @@ import { escolherOrcamento, montarRelatorioCef, recorteDeCompetencia } from "./m
 
 const orc = (rowKey: string, mes: string, valor: number) => ({ kind: "despesa", rowKey, mes, valor });
 const med = (grupoCode: string, competencia: string, valor: number) => ({ grupoCode, competencia, valor });
+/** Grupos de custo direto do plano da empresa (fixture). */
+const grupos = ["1", "2", "3", "4"].map((codigo) => ({ codigo, nome: `Grupo ${codigo}` }));
 
 describe("Prompt V · Relatório CEF (seção 3)", () => {
   it("3.2/3.3/3.10 — % do orçado medido; sem orçado ou sem medição é estado vazio, não 0%", () => {
-    const r = montarRelatorioCef({ orcamento: [orc("1.1", "01/2026", 1000), orc("3.2", "01/2026", 500)], medicoes: [med("1", "01/2026", 250), med("2", "02/2026", 40)] });
+    const r = montarRelatorioCef({ grupos, orcamento: [orc("1.1", "01/2026", 1000), orc("3.2", "01/2026", 500)], medicoes: [med("1", "01/2026", 250), med("2", "02/2026", 40)] });
     const l1 = r.linhas.find((l) => l.codigo === "1")!;
     expect(l1).toMatchObject({ orcado: 1000, realizado: 250, pct: 25, estado: "ok", excedeu: false });
     const l2 = r.linhas.find((l) => l.codigo === "2")!;
@@ -15,13 +17,13 @@ describe("Prompt V · Relatório CEF (seção 3)", () => {
     expect(l3).toMatchObject({ orcado: 500, realizado: null, pct: null, estado: "sem_medicao" });
     expect(r.linhas.find((l) => l.codigo === "4")).toMatchObject({ orcado: null, realizado: null, pct: null, estado: "vazio" });
     // receita no orçamento não entra
-    const r2 = montarRelatorioCef({ orcamento: [{ kind: "receita", rowKey: "1", mes: "01/2026", valor: 999 }], medicoes: [] });
+    const r2 = montarRelatorioCef({ grupos, orcamento: [{ kind: "receita", rowKey: "1", mes: "01/2026", valor: 999 }], medicoes: [] });
     expect(r2.totalOrcado).toBe(0);
     expect(r2.totalPct).toBeNull();
   });
 
   it("3.4 — linha e total acima de 100% são sinalizados, não truncados; excedente em R$", () => {
-    const r = montarRelatorioCef({ orcamento: [orc("1", "01/2026", 100), orc("2", "01/2026", 100)], medicoes: [med("1", "01/2026", 150), med("2", "01/2026", 86)] });
+    const r = montarRelatorioCef({ grupos, orcamento: [orc("1", "01/2026", 100), orc("2", "01/2026", 100)], medicoes: [med("1", "01/2026", 150), med("2", "01/2026", 86)] });
     expect(r.linhas.find((l) => l.codigo === "1")).toMatchObject({ pct: 150, excedeu: true });
     expect(r.totalPct).toBe(118);
     expect(r.totalExcedeu).toBe(true);
@@ -29,9 +31,9 @@ describe("Prompt V · Relatório CEF (seção 3)", () => {
   });
 
   it("3.6 — retenção: total ≥ 95% avisa", () => {
-    const ok = montarRelatorioCef({ orcamento: [orc("1", "01/2026", 100)], medicoes: [med("1", "01/2026", 94.99)] });
+    const ok = montarRelatorioCef({ grupos, orcamento: [orc("1", "01/2026", 100)], medicoes: [med("1", "01/2026", 94.99)] });
     expect(ok.retencao.atingida).toBe(false);
-    const ret = montarRelatorioCef({ orcamento: [orc("1", "01/2026", 100)], medicoes: [med("1", "01/2026", 95)] });
+    const ret = montarRelatorioCef({ grupos, orcamento: [orc("1", "01/2026", 100)], medicoes: [med("1", "01/2026", 95)] });
     expect(ret.retencao).toEqual({ atingida: true, limite: 95 });
   });
 
@@ -41,14 +43,30 @@ describe("Prompt V · Relatório CEF (seção 3)", () => {
     expect(recorteDeCompetencia("01/2026", "02/2026")).toEqual({ ativo: true, de: "01/2026", ate: "02/2026" });
     const orcamento = [orc("1", "01/2026", 100), orc("1", "03/2026", 100)];
     const medicoes = [med("1", "01/2026", 50), med("1", "03/2026", 50)];
-    expect(montarRelatorioCef({ orcamento, medicoes }).linhas[0]).toMatchObject({ orcado: 200, realizado: 100 });
-    expect(montarRelatorioCef({ orcamento, medicoes, recorte: recorteDeCompetencia("01/2026", "02/2026") }).linhas[0]).toMatchObject({ orcado: 100, realizado: 50 });
+    expect(montarRelatorioCef({ grupos, orcamento, medicoes }).linhas[0]).toMatchObject({ orcado: 200, realizado: 100 });
+    expect(montarRelatorioCef({ grupos, orcamento, medicoes, recorte: recorteDeCompetencia("01/2026", "02/2026") }).linhas[0]).toMatchObject({ orcado: 100, realizado: 50 });
   });
 
   it("3.5 — não há coluna de referência: as linhas não carregam percentual fixo", () => {
-    const r = montarRelatorioCef({ orcamento: [], medicoes: [] });
-    expect(r.linhas).toHaveLength(10);
+    const r = montarRelatorioCef({ grupos, orcamento: [], medicoes: [] });
+    expect(r.linhas).toHaveLength(grupos.length);
     expect(Object.keys(r.linhas[0]).sort()).toEqual(["codigo", "estado", "excedeu", "nome", "orcado", "pct", "realizado"]);
+  });
+
+  it("linhas = grupos de custo direto do plano da empresa; medição em grupo fora do plano não some", async () => {
+    const { gruposDoRelatorioCef } = await import("./medicao-cef");
+    const doPlano = gruposDoRelatorioCef([
+      { kind: "cef", groupCode: "2.10", groupName: "Dez" },
+      { kind: "cef", groupCode: "2.2", groupName: "Terceiros" },
+      { kind: "cef", groupCode: "2.2", groupName: "Terceiros" },
+      { kind: "complementar", groupCode: "3.1", groupName: "Administração" },
+    ]);
+    expect(doPlano).toEqual([{ codigo: "2.2", nome: "Terceiros" }, { codigo: "2.10", nome: "Dez" }]);
+    const r = montarRelatorioCef({ grupos: doPlano, orcamento: [orc("2.2", "01/2026", 100), orc("3.1", "01/2026", 999)], medicoes: [med("2.2", "01/2026", 40), med("X", "01/2026", 5)] });
+    expect(r.linhas.map((l) => l.codigo)).toEqual(["2.2", "2.10", "X"]);
+    expect(r.linhas[0]).toMatchObject({ orcado: 100, realizado: 40 });
+    expect(r.linhas[2]).toMatchObject({ nome: "Grupo fora do plano", realizado: 5 });
+    expect(r.totalOrcado).toBe(100); // despesa administrativa (3.1) não é custo direto
   });
 
   it("3.8 — escolha do Orçamento: pedido > padrão > mais recente; declara o motivo", () => {
