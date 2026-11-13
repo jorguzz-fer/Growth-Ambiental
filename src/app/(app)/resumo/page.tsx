@@ -73,6 +73,8 @@ import { IndicadoresNegocio } from "@/components/app/indicadores-negocio";
 import { ExportarPdf } from "@/components/app/pdf";
 import { CabecalhoDeImpressao } from "@/components/app/cabecalho-impressao";
 import { CrisDaTela } from "@/components/app/cris-contexto";
+import { listarContratos } from "@/lib/contratos-queries";
+import { resumoDosContratos, type ResumoDosContratos } from "@/lib/valor-contratado";
 
 export const dynamic = "force-dynamic";
 
@@ -216,15 +218,27 @@ export default async function ResumoPage({
         />
         <div className="mb-4">{versionSelect}</div>
         {aviso}
-        <p className="mb-3 text-[12px] text-[var(--color-ink3)]" data-criterios>
-          O VGV conta {TEXTO_DA_BASE.todas_unidades}; Sinais, Mensais, Semestrais, Anuais, FGTS e Subsídio contam {TEXTO_DA_BASE.vendidas};
-          valores nominais, sem INCC. O período não se aplica à comparação.
-        </p>
-        <VersionCompareTable
-          firstColLabel="Indicador"
-          columns={compareVersions.map((v) => ({ label: v.label, color: v.color }))}
-          rows={rows}
-        />
+        {/* Growth Ambiental: esta comparação é dos indicadores de venda de unidades
+            (dados antigos de incorporação). Sem esses dados, a tela aponta a DRE. */}
+        {rows.some((r) => r.values.some((v) => v !== 0)) ? (
+          <>
+            <p className="mb-3 text-[12px] text-[var(--color-ink3)]" data-criterios>
+              Dados antigos de incorporação. O VGV conta {TEXTO_DA_BASE.todas_unidades}; Sinais, Mensais, Semestrais, Anuais, FGTS e Subsídio
+              contam {TEXTO_DA_BASE.vendidas}; valores nominais. O período não se aplica à comparação.
+            </p>
+            <VersionCompareTable
+              firstColLabel="Indicador"
+              columns={compareVersions.map((v) => ({ label: v.label, color: v.color }))}
+              rows={rows}
+            />
+          </>
+        ) : (
+          <p className="text-[13px] text-[var(--color-ink2)]" data-sem-legado>
+            Estas versões não têm dados de venda de unidades. Para comparar receitas e custos entre versões, use a{" "}
+            <Link href="/dre" className="text-[var(--color-accent2)] hover:underline">DRE</Link>; os números dos contratos de serviço não
+            variam por versão e ficam no <Link href="/contratos/painel" className="text-[var(--color-accent2)] hover:underline">Painel de Contratos</Link>.
+          </p>
+        )}
       </>
     );
   }
@@ -259,6 +273,11 @@ export default async function ResumoPage({
   const totalUnidades = totals.vend + totals.res + totals.disp;
 
   const indicadores = indicadoresDoResumo({ totals, unidades: unitRows, permutas: permRows, liberacoes: reembRows.length, definicaoNova: resumoNovo });
+  // Growth Ambiental: unidades, permutas e liberações de obra são dados
+  // ANTIGOS (incorporação). Os blocos que dependem deles só aparecem quando a
+  // versão os tem; senão a tela mostra os números dos contratos de serviço.
+  const temLegado = unitRows.length > 0 || permRows.length > 0 || reembRows.length > 0;
+  const servicos = resumoDosContratos(await listarContratos(ctx.tenant.id), new Set([obra.id]));
 
   // ── Prompt AE, Parte 1 (chave): os blocos por pergunta ────────────────────
   const blocos = resumoNovo
@@ -317,12 +336,17 @@ export default async function ResumoPage({
         dados={{
           obra: obra.name,
           versao: `${rotuloDaVersao(version).titulo} “${version.label}”`,
-          indicadoresGerais: indicadores.map((i) => ({ item: i.label, valor: i.value })),
-          unidades: { disponiveis: totals.disp, reservadas: totals.res, vendidas: totals.vend, total: totalUnidades },
+          contratosDeServico: servicos,
+          ...(temLegado
+            ? {
+                indicadoresGeraisHistoricos: indicadores.map((i) => ({ item: i.label, valor: i.value })),
+                unidadesHistoricas: { disponiveis: totals.disp, reservadas: totals.res, vendidas: totals.vend, total: totalUnidades },
+              }
+            : {}),
           recebimentosNoPeriodo: hasRange ? recebimentosPeriodo : null,
           indicadoresDeNegocio: Object.fromEntries(Object.entries(painel.valores).map(([id, v]) => [id, v[0]?.valor ?? null])),
         }}
-        sugestoes={["Como está o custo por m²?"]}
+        sugestoes={["Quanto falta medir e faturar neste projeto?", "Como está a margem do projeto?"]}
       />
 
       <div className="flex flex-col gap-6 min-[1180px]:flex-row min-[1180px]:items-start">
@@ -337,8 +361,8 @@ export default async function ResumoPage({
               </div>
               <div className="text-[12px] text-[var(--color-ink3)]">
                 {dateBR(de) !== "—" ? dateBR(de) : "início"} até{" "}
-                {dateBR(ate) !== "—" ? dateBR(ate) : "fim"} · receita das unidades
-                + reembolso + revenda de permuta
+                {dateBR(ate) !== "—" ? dateBR(ate) : "fim"} · receita prevista da versão
+                {temLegado ? " (inclui unidades, liberações e revenda de permuta dos dados antigos)" : ""}
               </div>
             </div>
             <div className="font-[family-name:var(--font-mono)] text-2xl font-semibold text-[var(--color-success)]">
@@ -348,10 +372,16 @@ export default async function ResumoPage({
         </Card>
       )}
 
+      <ServicosDoProjeto s={servicos} />
+
       {/* 4.1 (chave): os blocos por pergunta substituem a tabela por fonte de recurso. */}
       {blocos ? (
         <BlocosDoResumo b={blocos} />
-      ) : (
+      ) : !temLegado ? null : (
+      <>
+      <p className="mb-2 text-[12px] text-[var(--color-ink3)]" data-legado-incorporacao>
+        Esta versão tem dados antigos de incorporação (unidades, permutas ou liberações de obra). Eles continuam aqui, só para consulta.
+      </p>
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
         {/* Indicadores gerais */}
         <Card>
@@ -449,11 +479,59 @@ export default async function ResumoPage({
           </Card>
         </div>
       </div>
+      </>
       )}
       </div>
       <AssistenteResumo usuario={ctx.userId ?? "anon"} analise={analise} />
       </div>
     </>
+  );
+}
+
+/** Números de serviço do projeto: contratos, medições, faturamento e recebimento. */
+function ServicosDoProjeto({ s }: { s: ResumoDosContratos }) {
+  const linhas: [string, number, string][] = [
+    ["Valor contratado", s.contratado, "valor atualizado (original + aditivos eficazes), sem rascunho e cancelado"],
+    ["Medido (aprovado)", s.medido, "medições aprovadas"],
+    ["Saldo a medir", s.aMedir, "contratado menos o medido"],
+    ["Medido não faturado", s.medidoNaoFaturado, "medições aprovadas ainda sem fatura"],
+    ["Faturado", s.faturado, "contas a receber dos contratos, sem canceladas"],
+    ["Recebido", s.recebido, "recebimentos das faturas dos contratos"],
+    ["Faturado a receber", s.aReceber, "faturado menos o recebido"],
+  ];
+  return (
+    <Card className="mb-6" data-servicos-do-projeto>
+      <CardContent className="p-5">
+        <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="text-sm font-semibold text-[var(--color-ink)]">Contratos de serviço do projeto</h2>
+          <Link href="/contratos/painel" className="text-[12px] text-[var(--color-accent2)] hover:underline">
+            Painel de Contratos
+          </Link>
+        </div>
+        {s.contratos === 0 ? (
+          <p className="text-[13px] text-[var(--color-ink4)]">
+            Nenhum contrato de serviço ligado a este projeto. Cadastre em <Link href="/contratos" className="text-[var(--color-accent2)] hover:underline">Contratos</Link>.
+          </p>
+        ) : (
+          <>
+            <p className="mb-3 text-[11px] text-[var(--color-ink3)]">
+              {s.contratos} contrato(s). Valores acumulados, não variam por período nem por versão. Contrato que atende vários projetos entra
+              pela parte alocada a este (ou dividido igualmente, se a alocação não foi informada).
+            </p>
+            <Table>
+              <tbody>
+                {linhas.map(([rotulo, valor, dica]) => (
+                  <TR key={rotulo}>
+                    <TD className="text-[var(--color-ink2)]" title={dica}>{rotulo}</TD>
+                    <TD className="text-right font-[family-name:var(--font-mono)] font-medium text-[var(--color-ink)]">{brl0(valor)}</TD>
+                  </TR>
+                ))}
+              </tbody>
+            </Table>
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -612,7 +690,9 @@ function BlocosDoResumo({ b }: { b: Blocos }) {
   return (
     <div className="mb-6 space-y-4" data-blocos-resumo>
       <div className="grid gap-4 lg:grid-cols-3">
-        <Bloco titulo="Vendas" regime="Valores contratados · cadastro das unidades da versão" href={`/unidades${q}`}>
+        {/* Growth Ambiental: Vendas é de unidades (dados antigos de incorporação); só aparece quando a versão as tem. */}
+        {v.total > 0 && (
+        <Bloco titulo="Vendas (dados antigos)" regime="Cadastro das unidades da versão — histórico de incorporação" href={`/contasreceber${q}`}>
           <dl>
             <Linha rotulo="VGV total" valor={brl0(v.vgvTotal)} dica="todas as unidades, em qualquer status" />
             <Linha rotulo="VGV vendido" valor={brl0(v.vgvVendido)} dica="só as unidades Vendidas" />
@@ -624,7 +704,8 @@ function BlocosDoResumo({ b }: { b: Blocos }) {
           </dl>
           {v.vso.estado !== "ok" && <p className="mt-1 text-[11px] text-[var(--color-ink3)]">VSO: {vsoDica}.</p>}
         </Bloco>
-        <Bloco titulo="Exposição" regime="Saldos em aberto, não o valor cheio. A receber e a pagar são as contas do projeto (versão Atual), qualquer que seja a versão escolhida; financiamento e permuta, da versão.">
+        )}
+        <Bloco titulo="Exposição" regime="Saldos em aberto, não o valor cheio. A receber e a pagar são as contas do projeto (versão Atual), qualquer que seja a versão escolhida.">
           <dl>
             {e.aReceber ? (
               <Linha rotulo="A receber em aberto" valor={`${brl0(e.aReceber.porVencer + e.aReceber.vencido)}`} dica={`${brl0(e.aReceber.vencido)} já vencido · ${e.aReceber.contas} conta(s)`} />
@@ -636,9 +717,10 @@ function BlocosDoResumo({ b }: { b: Blocos }) {
             ) : (
               <Linha rotulo="A pagar em aberto" valor="—" dica="sua permissão não alcança Contas a Pagar" />
             )}
-            <Linha rotulo="Financiamento aprovado" valor={brl0(e.financiamento.aprovado)} dica="soma do financiamento das unidades vendidas" />
-            <Linha rotulo="Financiamento liberado" valor={brl0(e.financiamento.liberado)} dica="Liberações de Obra da versão" />
-            <Linha rotulo="Permuta em estoque" valor={brl0(e.permutaEmEstoque)} dica="recebida e ainda não vendida, pelo valor de entrada" />
+            {/* Dados antigos de incorporação: só quando existem. */}
+            {e.financiamento.aprovado !== 0 && <Linha rotulo="Financiamento aprovado (dados antigos)" valor={brl0(e.financiamento.aprovado)} dica="soma do financiamento das unidades vendidas" />}
+            {e.financiamento.liberado !== 0 && <Linha rotulo="Financiamento liberado (dados antigos)" valor={brl0(e.financiamento.liberado)} dica="liberações de financiamento da versão" />}
+            {e.permutaEmEstoque !== 0 && <Linha rotulo="Permuta em estoque (dados antigos)" valor={brl0(e.permutaEmEstoque)} dica="recebida e ainda não vendida, pelo valor de entrada" />}
           </dl>
           <p className="mt-1 text-[11px] text-[var(--color-ink3)]">
             {e.aReceber ? `Vencido a receber: ${brl0(e.aReceber.vencido)}. ` : ""}
@@ -770,6 +852,12 @@ async function ResumoConsolidado({
     };
   });
   const total = totalDoComparativo(comparativo);
+  // Growth Ambiental: unidades/VGV/financiamento são dados antigos; só aparecem quando existem.
+  const legadoConsolidado = visiveis.some((c) => c.unidades.total > 0 || c.banco !== 0 || c.indicadores.some((i) => !i.vazio));
+  const vendasNoComparativo = !!total.unidades;
+  const contratosDaEmpresa = await listarContratos(ctx.tenant.id);
+  const servicosPorObra = new Map(obras.map((o) => [o.id, resumoDosContratos(contratosDaEmpresa, new Set([o.id]))]));
+  const servicosTotal = resumoDosContratos(contratosDaEmpresa, new Set(obras.map((o) => o.id)));
   const pctTxt = (n: number | null) => (n == null ? "—" : pct1(n));
   const desvioTxt = (real: number | null, orc: number | null) => (real == null || orc == null ? "—" : `${real - orc > 0 ? "+" : real - orc < 0 ? "−" : ""}${brl0(Math.abs(real - orc))}`);
 
@@ -809,7 +897,13 @@ async function ResumoConsolidado({
           escopo: titulo,
           obras: obras.length,
           porTipoDeVersao: visiveis.map((c) => ({ tipo: c.tipo, obras: c.obras, indicadores: c.indicadores.map((i) => ({ item: i.label, valor: i.value })), unidades: c.unidades })),
-          porObra: comparativo.map((l) => ({ obra: l.obra, vgv: l.vgv, vgvVendido: l.vgvVendido, vendidas: l.vendidas, unidades: l.unidades, custoRealizado: l.custoRealizado, custoOrcado: l.custoOrcado })),
+          porObra: comparativo.map((l) => ({
+            obra: l.obra,
+            contratosDeServico: servicosPorObra.get(l.projectId) ?? null,
+            ...(vendasNoComparativo ? { vgvHistorico: l.vgv, vendidasHistorico: l.vendidas, unidadesHistorico: l.unidades } : {}),
+            custoRealizado: l.custoRealizado,
+            custoOrcado: l.custoOrcado,
+          })),
           indicadoresDeNegocio: { colunas: painel.colunas, valores: Object.fromEntries(Object.entries(painel.valores).map(([id, v]) => [id, v.map((x) => x.valor)])) },
         }}
         sugestoes={["Qual projeto tem o maior desvio de custo?"]}
@@ -825,9 +919,9 @@ async function ResumoConsolidado({
             {" "}Projeto sem a versão fica fora da coluna, não entra como zero.
           </p>
           <p className="mb-4 text-[12px] text-[var(--color-ink3)]" data-criterios>
-            Cada coluna soma a versão daquele tipo de cada projeto (a mais antiga do tipo, como no Dashboard). O VGV conta{" "}
-            {TEXTO_DA_BASE.todas_unidades}; Sinais a Subsídio contam {TEXTO_DA_BASE.vendidas}; valores nominais, sem INCC.
-            {resumoNovo ? " Os blocos Vendas, Exposição e Atenção são por projeto: escolha um projeto para vê-los." : ""}
+            Cada coluna soma a versão daquele tipo de cada projeto (a mais antiga do tipo, como no Dashboard).
+            {legadoConsolidado ? <> Linhas de dados antigos de incorporação: o VGV conta {TEXTO_DA_BASE.todas_unidades}; Sinais a Subsídio contam {TEXTO_DA_BASE.vendidas}; valores nominais.</> : null}
+            {resumoNovo ? " Os blocos Exposição e Atenção são por projeto: escolha um projeto para vê-los." : ""}
           </p>
           <Card className="mb-6">
             <CardContent className="p-5">
@@ -857,7 +951,7 @@ async function ResumoConsolidado({
                         ))}
                       </TR>
                     )}
-                    {(visiveis[0]?.indicadores ?? []).map((ind) => (
+                    {(legadoConsolidado ? visiveis[0]?.indicadores ?? [] : []).map((ind) => (
                       <TR key={ind.label}>
                         <TD className="text-[var(--color-ink2)]" title={`Base: ${TEXTO_DA_BASE[ind.base]}`}>{ind.label}</TD>
                         {visiveis.map((c) => {
@@ -870,13 +964,12 @@ async function ResumoConsolidado({
                         })}
                       </TR>
                     ))}
-                    {(
-                      [
+                    {(legadoConsolidado ? [
                         ["Unidades disponíveis", (c: (typeof visiveis)[number]) => c.unidades.disp],
                         ["Unidades reservadas", (c: (typeof visiveis)[number]) => c.unidades.res],
                         ["Unidades vendidas", (c: (typeof visiveis)[number]) => c.unidades.vend],
                         [resumoNovo ? "Total de unidades (todas)" : "Total de unidades (disp. + res. + vend.)", (c: (typeof visiveis)[number]) => c.unidades.total],
-                      ] as const
+                      ] as const : []
                     ).map(([rotulo, f]) => (
                       <TR key={rotulo}>
                         <TD className="text-[var(--color-ink2)]">{rotulo}</TD>
@@ -885,12 +978,22 @@ async function ResumoConsolidado({
                         ))}
                       </TR>
                     ))}
+                    {legadoConsolidado && (
                     <TR>
-                      <TD className="text-[var(--color-ink2)]">Financiamento aprovado (não entra nos totais)</TD>
+                      <TD className="text-[var(--color-ink2)]">Financiamento aprovado (dados antigos; não entra nos totais)</TD>
                       {visiveis.map((c) => (
                         <TD key={c.tipo} className="text-right font-[family-name:var(--font-mono)]">{brl0(c.banco)}</TD>
                       ))}
                     </TR>
+                    )}
+                    {!legadoConsolidado && !hasRange && (
+                      <TR>
+                        <TD colSpan={visiveis.length + 1} className="text-[12px] text-[var(--color-ink3)]">
+                          Os números de serviço (contratado, medido, faturado, recebido) estão no comparativo entre projetos e no Painel de Contratos;
+                          a comparação entre versões fica na DRE.
+                        </TD>
+                      </TR>
+                    )}
                   </tbody>
                 </Table>
               </div>
@@ -913,10 +1016,11 @@ async function ResumoConsolidado({
                     <THead>
                       <tr>
                         <TH>Projeto</TH>
-                        <TH className="text-right">VGV total</TH>
-                        <TH className="text-right">VGV vendido</TH>
-                        <TH className="text-right">Vendidas</TH>
-                        <TH className="text-right">% vendidas</TH>
+                        <TH className="text-right">Valor contratado</TH>
+                        <TH className="text-right">Medido</TH>
+                        <TH className="text-right">Faturado a receber</TH>
+                        {vendasNoComparativo && <TH className="text-right">VGV (dados antigos)</TH>}
+                        {vendasNoComparativo && <TH className="text-right">Unidades vendidas</TH>}
                         {verCusto && <TH className="text-right">Custo realizado</TH>}
                         {verCusto && <TH className="text-right">Custo orçado</TH>}
                         {verCusto && <TH className="text-right">Desvio</TH>}
@@ -932,11 +1036,21 @@ async function ResumoConsolidado({
                             </Link>
                             {l.vgv == null && <span className="ml-1 text-[11px] text-[var(--color-warning)]">sem versão Atual</span>}
                           </TD>
-                          {/* Ausência não é zero: sem unidade cadastrada, "—". */}
-                          <TD className="text-right font-[family-name:var(--font-mono)]">{l.vgv == null || !l.unidades ? "—" : brl0(l.vgv)}</TD>
-                          <TD className="text-right font-[family-name:var(--font-mono)]">{l.vgvVendido == null || !l.unidades ? "—" : brl0(l.vgvVendido)}</TD>
-                          <TD className="text-right font-[family-name:var(--font-mono)]">{l.vendidas == null ? "—" : l.unidades ? `${l.vendidas} de ${l.unidades}` : "sem unidades"}</TD>
-                          <TD className="text-right font-[family-name:var(--font-mono)]">{pctTxt(l.vendidas == null || l.unidades == null ? null : percentual(l.vendidas, l.unidades))}</TD>
+                          {(() => {
+                            const sv = servicosPorObra.get(l.projectId);
+                            return sv && sv.contratos > 0 ? (
+                              <>
+                                <TD className="text-right font-[family-name:var(--font-mono)]">{brl0(sv.contratado)}</TD>
+                                <TD className="text-right font-[family-name:var(--font-mono)]">{brl0(sv.medido)}</TD>
+                                <TD className="text-right font-[family-name:var(--font-mono)]">{brl0(sv.aReceber)}</TD>
+                              </>
+                            ) : (
+                              <TD colSpan={3} className="text-right text-[12px] text-[var(--color-ink4)]">sem contrato</TD>
+                            );
+                          })()}
+                          {/* Dados antigos de incorporação. Ausência não é zero: sem unidade, "—". */}
+                          {vendasNoComparativo && <TD className="text-right font-[family-name:var(--font-mono)]">{l.vgv == null || !l.unidades ? "—" : brl0(l.vgv)}</TD>}
+                          {vendasNoComparativo && <TD className="text-right font-[family-name:var(--font-mono)]">{l.vendidas == null ? "—" : l.unidades ? `${l.vendidas} de ${l.unidades}` : "—"}</TD>}
                           {verCusto && <TD className="text-right font-[family-name:var(--font-mono)]">{l.custoRealizado == null ? "—" : brl0(l.custoRealizado)}</TD>}
                           {verCusto && <TD className="text-right font-[family-name:var(--font-mono)]">{l.custoOrcado == null ? "sem Orçamento" : brl0(l.custoOrcado)}</TD>}
                           {verCusto && <TD className="text-right font-[family-name:var(--font-mono)]">{desvioTxt(l.custoRealizado, l.custoOrcado)}</TD>}
@@ -949,10 +1063,11 @@ async function ResumoConsolidado({
                       ))}
                       <TR className="bg-[var(--color-surface2)] font-semibold" data-total-comparativo>
                         <TD>Total ({total.obrasComAtual} com Atual)</TD>
-                        <TD className="text-right font-[family-name:var(--font-mono)]">{total.unidades ? brl0(total.vgv) : "—"}</TD>
-                        <TD className="text-right font-[family-name:var(--font-mono)]">{total.unidades ? brl0(total.vgvVendido) : "—"}</TD>
-                        <TD className="text-right font-[family-name:var(--font-mono)]">{total.unidades ? `${total.vendidas} de ${total.unidades}` : "sem unidades"}</TD>
-                        <TD className="text-right font-[family-name:var(--font-mono)]">{pctTxt(total.pctVendidas)}</TD>
+                        <TD className="text-right font-[family-name:var(--font-mono)]">{brl0(servicosTotal.contratado)}</TD>
+                        <TD className="text-right font-[family-name:var(--font-mono)]">{brl0(servicosTotal.medido)}</TD>
+                        <TD className="text-right font-[family-name:var(--font-mono)]">{brl0(servicosTotal.aReceber)}</TD>
+                        {vendasNoComparativo && <TD className="text-right font-[family-name:var(--font-mono)]">{brl0(total.vgv)}</TD>}
+                        {vendasNoComparativo && <TD className="text-right font-[family-name:var(--font-mono)]">{`${total.vendidas} de ${total.unidades}`}</TD>}
                         {verCusto && <TD className="text-right font-[family-name:var(--font-mono)]">{total.obrasComOrcamento ? brl0(total.custoRealizadoComOrcamento) : "—"}</TD>}
                         {verCusto && <TD className="text-right font-[family-name:var(--font-mono)]">{total.obrasComOrcamento ? brl0(total.custoOrcado) : "—"}</TD>}
                         {verCusto && <TD className="text-right font-[family-name:var(--font-mono)]">{total.desvio == null ? "—" : desvioTxt(total.custoRealizadoComOrcamento, total.custoOrcado)}</TD>}
