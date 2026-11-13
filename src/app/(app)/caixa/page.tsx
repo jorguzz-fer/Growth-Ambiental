@@ -160,7 +160,7 @@ export default async function CaixaPage({
             <Card>
               <CardContent className="p-8 text-center text-[var(--color-ink3)]">
                 {ctx.projects.length === 0
-                  ? "Nenhum projeto cadastrado. Cadastre a obra em Projetos."
+                  ? "Nenhum projeto cadastrado. Cadastre o projeto em Projetos."
                   : "Selecione um projeto para ver e lançar o caixa."}
               </CardContent>
             </Card>

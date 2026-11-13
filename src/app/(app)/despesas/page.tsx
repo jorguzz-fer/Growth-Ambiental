@@ -105,7 +105,7 @@ export default async function DespesasPage({
           <Card>
             <CardContent className="p-8 text-center text-[var(--color-ink3)]">
               {ctx.projects.length === 0
-                ? "Nenhum projeto cadastrado. Cadastre a obra em Projetos para lançar despesas."
+                ? "Nenhum projeto cadastrado. Cadastre o projeto em Projetos para lançar despesas."
                 : "Selecione um projeto — ou “Todos os projetos / filiais” — para ver e lançar despesas."}
             </CardContent>
           </Card>

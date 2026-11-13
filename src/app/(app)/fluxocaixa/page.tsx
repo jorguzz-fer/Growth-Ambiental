@@ -123,8 +123,8 @@ export default async function FluxoCaixaPage({
         />
         <Card>
           <CardContent className="p-8 text-center text-[var(--color-ink3)]">
-            Nenhuma obra classificada como {escopo.tipo === "ativos" ? "Ativo" : "Finalizado"}.
-            Classifique as obras em Projetos.
+            Nenhum projeto classificado como {escopo.tipo === "ativos" ? "Ativo" : "Finalizado"}.
+            Classifique os projetos em Projetos.
           </CardContent>
         </Card>
       </>
@@ -288,7 +288,7 @@ export default async function FluxoCaixaPage({
   const totRealE = linhas.reduce((a, l) => a + l.realE, 0);
   const totRealS = linhas.reduce((a, l) => a + l.realS, 0);
   const versaoDoRealizado = isAll
-    ? "da Atual de cada obra"
+    ? "da Atual de cada projeto"
     : fluxoNovo
       ? `da versão Atual${atualReal ? ` (“${atualReal.label}”)` : ""}, qualquer que seja a seleção`
       : `da versão “${compareVersions[0].label}”`;
@@ -331,7 +331,7 @@ export default async function FluxoCaixaPage({
       }
       realizadoAtual = soma;
       const sem = porProjeto.filter((m) => !m).length;
-      if (sem) avisoDoRealizado = `${sem} obra(s) sem versão Atual ficam fora do realizado que o assistente lê.`;
+      if (sem) avisoDoRealizado = `${sem} projeto(s) sem versão Atual ficam fora do realizado que o assistente lê.`;
     }
   }
   // `de`/`ate` vêm do filtro no formato interno MM/DD/YYYY.
@@ -424,7 +424,7 @@ export default async function FluxoCaixaPage({
           {rotuloDoEscopo(escopo.tipo as "todos" | "ativos" | "finalizados")} ·{" "}
           {projetosConsolidados.length} projeto(s) somado(s)
           {doEscopo.semSituacao > 0 &&
-            ` · ${doEscopo.semSituacao} obra(s) sem status ficaram fora — classifique-as em Projetos`}
+            ` · ${doEscopo.semSituacao} projeto(s) sem status ficaram fora — classifique-os em Projetos`}
         </p>
       )}
 
@@ -521,9 +521,9 @@ export default async function FluxoCaixaPage({
         <p>
           <strong className="text-[var(--color-ink2)]">Saldo acumulado</strong>{" "}
           {partidaPelaObra ? (
-            <>parte de {brl0(saldoInicial)} — o caixa realizado da Atual antes do primeiro mês, ou seja, o fluxo da obra, não o saldo das contas da empresa</>
+            <>parte de {brl0(saldoInicial)} — o caixa realizado da Atual antes do primeiro mês, ou seja, o fluxo do projeto, não o saldo das contas da empresa</>
           ) : (
-            <>parte do saldo inicial de {brl0(saldoInicial)} — a soma das contas correntes da empresa (todas as obras), não o caixa da obra</>
+            <>parte do saldo inicial de {brl0(saldoInicial)} — a soma das contas correntes da empresa (todos os projetos), não o caixa do projeto</>
           )}{" "}
           — e corre {fluxoNovo ? <>pelo <strong>realizado</strong> nos meses fechados e pelo <strong>previsto</strong> do mês corrente em diante</> : "pelo previsto"}.
         </p>

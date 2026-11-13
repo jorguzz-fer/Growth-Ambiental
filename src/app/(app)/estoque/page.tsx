@@ -56,7 +56,7 @@ export default async function EstoquePage({ searchParams }: { searchParams: Prom
     if (!d.stockMovementId) continue;
     (docsPorMov[d.stockMovementId] ??= []).push({ id: d.id, filename: d.filename, tipo: d.tipo, versao: d.versao, contentType: d.contentType, uploadedAt: d.uploadedAt ? d.uploadedAt.toISOString() : null, url: r2 ? await readUrl(d.storageKey) : null });
   }
-  const nomeDaObra = (id: string) => ctx.projects.find((p) => p.id === id)?.name ?? "obra fora da lista";
+  const nomeDaObra = (id: string) => ctx.projects.find((p) => p.id === id)?.name ?? "projeto fora da lista";
   const consumo = consumoPorObra(paraObra).map((c) => ({ ...c, projectName: nomeDaObra(c.projectId) }));
   const confronto = confrontoCompraConsumo(paraObra).map((c) => ({ ...c, projectName: nomeDaObra(c.projectId) }));
 
@@ -78,22 +78,22 @@ export default async function EstoquePage({ searchParams }: { searchParams: Prom
     <>
       <PageHeader
         eyebrow={ctx.tenant.name}
-        title="Controle de Estoques"
-        subtitle="Almoxarifado da empresa: a entrada aponta a compra (despesa) ou a permuta; a saída diz para qual obra o material foi. Sem efeito contábil — o custo já é da despesa."
+        title="Materiais e Equipamentos"
+        subtitle="Almoxarifado da empresa: a entrada aponta a compra (despesa); a saída diz para qual projeto o material foi. Sem efeito contábil — o custo já é da despesa."
       />
       {/* Abaixo de 1180px o painel desce para baixo do conteúdo (Prompt E, 6.2). */}
       <div className="flex flex-col gap-6 min-[1180px]:flex-row min-[1180px]:items-start">
       <div className="min-w-0 flex-1">
       <CrisDaTela
-        titulo="Controle de Estoques"
+        titulo="Materiais e Equipamentos"
         dados={{
           itens: itemViews.filter((i) => i.ativo).slice(0, 150).map((i) => ({ material: i.nome, unidade: i.unidade, saldo: i.saldo, minimo: i.minimo, custoUnit: i.custoUnit, valorEstoque: i.valorEstoque })),
           aba: filtros.tab === "mov" ? "Entradas & Saídas" : "Itens & Saldo",
         }}
         sugestoes={
           filtros.tab === "mov"
-            ? ["Dar baixa de 10 sacos de cimento para a obra", "Dar entrada da nota da última compra", "Quanto cada obra consumiu?"]
-            : ["Quais itens estão abaixo do mínimo?", "Como dou baixa de material para uma obra?", "Qual o valor em estoque?"]
+            ? ["Dar baixa de 10 frascos de coleta para o projeto", "Dar entrada da nota da última compra", "Quanto cada projeto consumiu?"]
+            : ["Quais itens estão abaixo do mínimo?", "Como dou baixa de material para um projeto?", "Qual o valor em estoque?"]
         }
       />
       <EstoqueManager

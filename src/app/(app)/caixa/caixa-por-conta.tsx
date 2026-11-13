@@ -168,7 +168,7 @@ export async function CaixaPorConta({ ctx, sp, avisoRemovida, diasFechados }: { 
     return {
       id: c.id,
       data: c.data,
-      obra: c.projectId ? nomeDaObra.get(c.projectId) ?? null : "Empresa (sem obra)",
+      obra: c.projectId ? nomeDaObra.get(c.projectId) ?? null : "Empresa (sem projeto)",
       conta: conta ? `${conta.banco}${conta.cc ? " · " + conta.cc : ""}` : null,
       valor: Number(c.valor),
       motivo: c.descricao,
@@ -308,7 +308,7 @@ export async function CaixaPorConta({ ctx, sp, avisoRemovida, diasFechados }: { 
                 vazio={<VazioDaConciliacao openFinance={estadoOF} contas={opcoesContas} cartoes={opcoesCartoes} />}
                 obraDe={(c) => {
                   const projectId = "projectId" in c ? (c as { projectId: string | null }).projectId : null;
-                  return projectId ? nomeDaObra.get(projectId) ?? "—" : "sem obra (da conta)";
+                  return projectId ? nomeDaObra.get(projectId) ?? "—" : "sem projeto (da conta)";
                 }}
               />
             ))}

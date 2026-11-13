@@ -322,7 +322,7 @@ export default async function ResumoPage({
           recebimentosNoPeriodo: hasRange ? recebimentosPeriodo : null,
           indicadoresDeNegocio: Object.fromEntries(Object.entries(painel.valores).map(([id, v]) => [id, v[0]?.valor ?? null])),
         }}
-        sugestoes={["Quanto falta vender do VGV?", "E se as unidades disponíveis forem vendidas com 5% de desconto?", "Como está o custo por m²?"]}
+        sugestoes={["Como está o custo por m²?"]}
       />
 
       <div className="flex flex-col gap-6 min-[1180px]:flex-row min-[1180px]:items-start">
@@ -624,7 +624,7 @@ function BlocosDoResumo({ b }: { b: Blocos }) {
           </dl>
           {v.vso.estado !== "ok" && <p className="mt-1 text-[11px] text-[var(--color-ink3)]">VSO: {vsoDica}.</p>}
         </Bloco>
-        <Bloco titulo="Exposição" regime="Saldos em aberto, não o valor cheio. A receber e a pagar são as contas da obra (versão Atual), qualquer que seja a versão escolhida; financiamento e permuta, da versão.">
+        <Bloco titulo="Exposição" regime="Saldos em aberto, não o valor cheio. A receber e a pagar são as contas do projeto (versão Atual), qualquer que seja a versão escolhida; financiamento e permuta, da versão.">
           <dl>
             {e.aReceber ? (
               <Linha rotulo="A receber em aberto" valor={`${brl0(e.aReceber.porVencer + e.aReceber.vencido)}`} dica={`${brl0(e.aReceber.vencido)} já vencido · ${e.aReceber.contas} conta(s)`} />
@@ -647,7 +647,7 @@ function BlocosDoResumo({ b }: { b: Blocos }) {
         </Bloco>
         <Bloco titulo="Atenção" regime={textoDosLimites(b.parametros)}>
           {b.atencao.length === 0 ? (
-            <p className="text-[12.5px] text-[var(--color-ink2)]">Nenhuma exceção nesta obra.</p>
+            <p className="text-[12.5px] text-[var(--color-ink2)]">Nenhuma exceção neste projeto.</p>
           ) : (
             <ul className="space-y-1.5 text-[12.5px] text-[var(--color-ink2)]">
               {b.atencao.map((a) => (
@@ -798,7 +798,7 @@ async function ResumoConsolidado({
       />
       {doEscopo.semSituacao > 0 && (
         <p className="mb-4 rounded-[8px] bg-[var(--color-surface3)] px-3 py-2 text-[13px] text-[var(--color-ink2)]">
-          {doEscopo.semSituacao} obra(s) sem status ficaram fora deste filtro. Classifique-as como Ativo ou Finalizado em Projetos.
+          {doEscopo.semSituacao} projeto(s) sem status ficaram fora deste filtro. Classifique-os como Ativo ou Finalizado em Projetos.
         </p>
       )}
       {obras.length > 0 && <IndicadoresNegocio {...painel} escolhidos={indicadoresEscolhidos(ind, verCusto)} />}
@@ -812,7 +812,7 @@ async function ResumoConsolidado({
           porObra: comparativo.map((l) => ({ obra: l.obra, vgv: l.vgv, vgvVendido: l.vgvVendido, vendidas: l.vendidas, unidades: l.unidades, custoRealizado: l.custoRealizado, custoOrcado: l.custoOrcado })),
           indicadoresDeNegocio: { colunas: painel.colunas, valores: Object.fromEntries(Object.entries(painel.valores).map(([id, v]) => [id, v.map((x) => x.valor)])) },
         }}
-        sugestoes={["Qual obra vendeu proporcionalmente mais?", "Qual obra tem o maior desvio de custo?", "E se todas as obras venderem mais 10% do VGV?"]}
+        sugestoes={["Qual projeto tem o maior desvio de custo?"]}
       />
       {obras.length === 0 ? (
         <Card>
@@ -827,7 +827,7 @@ async function ResumoConsolidado({
           <p className="mb-4 text-[12px] text-[var(--color-ink3)]" data-criterios>
             Cada coluna soma a versão daquele tipo de cada projeto (a mais antiga do tipo, como no Dashboard). O VGV conta{" "}
             {TEXTO_DA_BASE.todas_unidades}; Sinais a Subsídio contam {TEXTO_DA_BASE.vendidas}; valores nominais, sem INCC.
-            {resumoNovo ? " Os blocos Vendas, Exposição e Atenção são por obra: escolha uma obra para vê-los." : ""}
+            {resumoNovo ? " Os blocos Vendas, Exposição e Atenção são por projeto: escolha um projeto para vê-los." : ""}
           </p>
           <Card className="mb-6">
             <CardContent className="p-5">

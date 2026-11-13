@@ -27,8 +27,8 @@ export default async function EquipesPage({ searchParams }: { searchParams: Prom
   if (!project) {
     return (
       <>
-        <PageHeader title="Equipes de Projetos" subtitle="Escolha a obra para ver a equipe e registrar as diárias" actions={<ProjectPicker projects={pickerProjetos} selected="" />} />
-        <p className="text-[12.5px] text-[var(--color-ink3)]">Selecione uma obra.</p>
+        <PageHeader title="Equipes e Presença de Campo" subtitle="Escolha o projeto para ver a equipe e registrar as diárias" actions={<ProjectPicker projects={pickerProjetos} selected="" />} />
+        <p className="text-[12.5px] text-[var(--color-ink3)]">Selecione um projeto.</p>
       </>
     );
   }
@@ -60,8 +60,8 @@ export default async function EquipesPage({ searchParams }: { searchParams: Prom
     <>
       <PageHeader
         eyebrow={ctx.tenant.name}
-        title="Equipes de Projetos"
-        subtitle="Quem trabalha em cada obra, com a função, e as diárias executadas · a diária não gera despesa: o lançamento é proposto e acontece em Despesas"
+        title="Equipes e Presença de Campo"
+        subtitle="Quem trabalha em cada projeto, com a função, e as diárias executadas · a diária não gera despesa: o lançamento é proposto e acontece em Despesas"
         actions={<ProjectPicker projects={pickerProjetos} selected={project.id} />}
       />
       <LembrarProjeto projectId={project.id} />
