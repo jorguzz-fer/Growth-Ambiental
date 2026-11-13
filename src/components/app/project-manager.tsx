@@ -81,7 +81,7 @@ const Resultado = ({ msg }: { msg: Msg }) =>
 function ClienteSelect({ clientes, tenantName, value, onChange, disabled }: { clientes: ClienteOpt[]; tenantName: string; value: string; onChange: (v: string) => void; disabled?: boolean }) {
   return (
     <Select value={value} onChange={(e) => onChange(e.target.value)} disabled={disabled} aria-label="Cliente">
-      <option value="">Empreendimento próprio — {tenantName}</option>
+      <option value="">Projeto próprio (sem cliente) — {tenantName}</option>
       {clientes.map((c) => (
         <option key={c.id} value={c.id}>
           {c.nome}

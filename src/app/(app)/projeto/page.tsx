@@ -95,8 +95,8 @@ export default async function ProjetoPage({
         title={projetoSel ? `Projeto ${projetoSel.name}` : "Projetos"}
         subtitle={
           projetoSel
-            ? `Projetos — empreendimentos imobiliários — ${projetoSel.name}`
-            : "Projetos — empreendimentos imobiliários · unidades e escritórios"
+            ? `Projetos — ${projetoSel.name}`
+            : "Projetos · sedes e filiais"
         }
         actions={
           <ProjectPicker

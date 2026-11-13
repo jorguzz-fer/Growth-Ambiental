@@ -96,10 +96,10 @@ describe("filtrarContasPagar (Prompt R, seção 5)", () => {
   it("13 — fornecedor A ou B E projeto X: interseção, não união", () => {
     expect(filtrarContasPagar(rows, f({ fornecedores: ["A", "B"], projetos: ["X"] }), (r: Linha) => r.st, iso).map((r) => r.id)).toEqual(["1", "2"]);
   });
-  it("14 — nenhum marcado equivale a todos; status usa o exibido; cliente nulo é 'Empreendimento próprio'; datas são intervalo", () => {
+  it("14 — nenhum marcado equivale a todos; status usa o exibido; cliente nulo é 'Projeto próprio (sem cliente)'; datas são intervalo", () => {
     expect(filtrarContasPagar(rows, f({}), (r: Linha) => r.st, iso)).toHaveLength(3);
     expect(filtrarContasPagar(rows, f({ status: ["Vencida"] }), (r: Linha) => r.st, iso).map((r) => r.id)).toEqual(["1"]);
-    expect(filtrarContasPagar(rows, f({ clientes: ["Empreendimento próprio"] }), (r: Linha) => r.st, iso).map((r) => r.id)).toEqual(["1", "3"]);
+    expect(filtrarContasPagar(rows, f({ clientes: ["Projeto próprio (sem cliente)"] }), (r: Linha) => r.st, iso).map((r) => r.id)).toEqual(["1", "3"]);
     expect(filtrarContasPagar(rows, f({ de: "2026-02-01", ate: "2026-04-01" }), (r: Linha) => r.st, iso).map((r) => r.id)).toEqual(["2"]);
   });
 });

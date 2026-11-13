@@ -380,7 +380,7 @@ export default async function ResumoPage({
       ) : !temLegado ? null : (
       <>
       <p className="mb-2 text-[12px] text-[var(--color-ink3)]" data-legado-incorporacao>
-        Esta versão tem dados antigos de incorporação (unidades, permutas ou liberações de obra). Eles continuam aqui, só para consulta.
+        Esta versão tem dados antigos de incorporação (unidades, permutas ou liberações de financiamento). Eles continuam aqui, só para consulta.
       </p>
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
         {/* Indicadores gerais */}
