@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { avisoDeFaixa, diffDeIncc, mesesEncerradosSemOficial, mesesFuturosOficiais, mesesNaMedia, ordDoMes } from "./incc-regras";
+import { avisoDeFaixa, diffDeIncc, ehIndiceDeReajuste, INDICES_DE_REAJUSTE, publicadorDoIndice, mesesEncerradosSemOficial, mesesFuturosOficiais, mesesNaMedia, ordDoMes } from "./incc-regras";
 import { projectIncc } from "@/lib/calc/incc";
 
 describe("Parâmetros / INCC — regras puras (Prompt Q)", () => {
@@ -54,5 +54,21 @@ describe("Parâmetros / INCC — regras puras (Prompt Q)", () => {
     ];
     expect(diffDeIncc(antes, depois)).toEqual([{ mes: "02/2026", mensal: { de: 0.3, para: 0.4 }, acumulado: { de: 0.8015, para: 0.902 } }]);
     expect(diffDeIncc(antes, antes.map((r) => ({ ...r, ac: r.ac + 0.00001 })))).toEqual([]);
+  });
+});
+
+describe("Growth Ambiental — Índices de Reajuste", () => {
+  it("aceita os índices de contrato de serviço e as três variantes do INCC; recusa o resto", () => {
+    expect(INDICES_DE_REAJUSTE).toEqual(["IPCA", "IGP-M", "INPC", "INCC-DI", "INCC-M", "INCC-10"]);
+    for (const v of INDICES_DE_REAJUSTE) expect(ehIndiceDeReajuste(v), v).toBe(true);
+    for (const v of ["INCC-X", "ipca", "", null, 3]) expect(ehIndiceDeReajuste(v), String(v)).toBe(false);
+  });
+
+  it("quem publica: IBGE (IPCA, INPC) e FGV (IGP-M, INCC); a confirmar = ninguém", () => {
+    expect(publicadorDoIndice("IPCA")).toBe("IBGE");
+    expect(publicadorDoIndice("INPC")).toBe("IBGE");
+    expect(publicadorDoIndice("IGP-M")).toBe("FGV");
+    expect(publicadorDoIndice("INCC-DI")).toBe("FGV");
+    expect(publicadorDoIndice(null)).toBeNull();
   });
 });

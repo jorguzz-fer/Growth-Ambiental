@@ -150,7 +150,7 @@ export const NAV_MENU: NavModule[] = [
       // permissão de lançamento é levado à aba dele pela própria página.
       { href: "/medicao", label: "Medição de Projeto", permAlt: "medicaolanc", hrefAlt: "/medicaolanc", tambem: ["/medicaolanc"] },
       { href: "/estoque", label: "Estoque" },
-      { href: "/parametros", label: "Parâmetros / INCC" },
+      { href: "/parametros", label: "Índices de Reajuste" },
     ],
   },
   {

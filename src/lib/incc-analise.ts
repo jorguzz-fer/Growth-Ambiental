@@ -1,5 +1,5 @@
 /**
- * Análises do assistente de Parâmetros / INCC (Prompt Q, 6.3) — código puro,
+ * Análises do assistente de Índices de Reajuste (antiga Parâmetros / INCC) (Prompt Q, 6.3) — código puro,
  * sem modelo de IA. Nada grava, nada sai do sistema, nada é inventado (regra
  * global 3): o assistente identifica meses faltantes e PEDE que o usuário
  * informe; não estima, não interpola, não usa a média móvel como oficial.

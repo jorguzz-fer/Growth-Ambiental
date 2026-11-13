@@ -1,5 +1,5 @@
 /**
- * Regras puras da tela de Parâmetros / INCC (Prompt Q). Sem banco.
+ * Regras puras da tela de Índices de Reajuste (antiga Parâmetros / INCC, Prompt Q). Sem banco.
  *
  * Índice não se inventa (regra global 3): nada aqui gera ou completa índice
  * oficial. O que há é faixa de plausibilidade (aviso, não bloqueio), ordem
@@ -10,12 +10,29 @@ import type { InccRow } from "@/lib/calc/types";
 /** Faixa plausível da variação mensal (%). Fora dela avisa; só o impossível (não finito) é recusado (4.3). */
 export const FAIXA_PLAUSIVEL = { min: -5, max: 5 } as const;
 
-/** BQ-1 · as três variantes que a FGV publica. Nulo na tabela = "a confirmar". */
-export const VARIANTES_DO_INCC = ["INCC-DI", "INCC-M", "INCC-10"] as const;
-export type VarianteDoIncc = (typeof VARIANTES_DO_INCC)[number];
-export function ehVarianteDoIncc(v: unknown): v is VarianteDoIncc {
-  return typeof v === "string" && (VARIANTES_DO_INCC as readonly string[]).includes(v);
+/**
+ * Growth Ambiental — a tela virou "Índices de Reajuste": a série declara qual
+ * índice guarda. Contrato de serviço reajusta por IPCA, IGP-M ou INPC; as três
+ * variantes do INCC (BQ-1) continuam aceitas. Nulo na tabela = "a confirmar".
+ * A coluna no banco segue `incc_rate.variante` (texto): nada muda no schema.
+ */
+export const INDICES_DE_REAJUSTE = ["IPCA", "IGP-M", "INPC", "INCC-DI", "INCC-M", "INCC-10"] as const;
+export type IndiceDeReajuste = (typeof INDICES_DE_REAJUSTE)[number];
+export function ehIndiceDeReajuste(v: unknown): v is IndiceDeReajuste {
+  return typeof v === "string" && (INDICES_DE_REAJUSTE as readonly string[]).includes(v);
 }
+
+/** Quem publica o índice — para a dica da fonte. */
+export function publicadorDoIndice(v: string | null | undefined): "IBGE" | "FGV" | null {
+  if (v === "IPCA" || v === "INPC") return "IBGE";
+  if (v === "IGP-M" || (v ?? "").startsWith("INCC")) return "FGV";
+  return null;
+}
+
+/** Nomes antigos (Prompt Q), mantidos para o código que já os usa. */
+export const VARIANTES_DO_INCC = INDICES_DE_REAJUSTE;
+export type VarianteDoIncc = IndiceDeReajuste;
+export const ehVarianteDoIncc = ehIndiceDeReajuste;
 
 /** Tamanho da janela da média móvel (meses). */
 export const JANELA_DA_MEDIA = 12;

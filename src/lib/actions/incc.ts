@@ -69,7 +69,7 @@ type Contexto =
 async function contexto(projectId: string): Promise<Contexto> {
   const ctx = await getTenantContext();
   if (!ctx) return { ok: false, error: "Sessão expirada. Entre de novo." };
-  if (!can(ctx.perms, "parametros", "editar")) return { ok: false, error: "Sem permissão para editar o INCC." };
+  if (!can(ctx.perms, "parametros", "editar")) return { ok: false, error: "Sem permissão para editar os índices de reajuste." };
   // Prompt Q2 — com o INCC da empresa em uso, a série editada é a da empresa;
   // editar a série guardada de uma obra não mudaria nenhum número.
   const daEmpresa = await inccDaEmpresaAtivo(ctx.tenant.id);
@@ -198,13 +198,13 @@ export async function marcarComoProjecao(projectId: string, meses: string[]): Pr
 export async function definirVarianteIncc(projectId: string, variante: string): Promise<ResultadoIncc> {
   const c = await contexto(projectId);
   if (!c.ok) return c;
-  if (!ehVarianteDoIncc(variante)) return { ok: false, error: `Variante inválida. Use ${VARIANTES_DO_INCC.join(", ")}.` };
+  if (!ehVarianteDoIncc(variante)) return { ok: false, error: `Índice inválido. Use ${VARIANTES_DO_INCC.join(", ")}.` };
   const [atual] = await db
     .select({ variante: schema.inccRates.variante })
     .from(schema.inccRates)
     .where(daSerie(c.ctx.tenant.id, projectId))
     .limit(1);
-  if (!atual) return { ok: false, error: "Esta obra ainda não tem tabela INCC." };
+  if (!atual) return { ok: false, error: "Este projeto ainda não tem série de índice." };
   await db.transaction(async (tx) => {
     await tx
       .update(schema.inccRates)

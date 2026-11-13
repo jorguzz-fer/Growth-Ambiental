@@ -78,7 +78,7 @@ export const SCREENS: Screen[] = [
   { id: "notasfiscais", label: "Notas Fiscais (emitidas)", modulo: "Receitas" },
   { id: "notaemitir", label: "Emitir nota fiscal (NFS-e)", modulo: "Receitas" },
   { id: "notacancelar", label: "Cancelar nota fiscal (NFS-e)", modulo: "Receitas" },
-  { id: "parametros", label: "Parâmetros / INCC", modulo: "Receitas" },
+  { id: "parametros", label: "Índices de Reajuste", modulo: "Receitas" },
   { id: "despesas", label: "Lançamentos de Despesas", modulo: "Despesas" },
   { id: "contaspagar", label: "Contas a Pagar", modulo: "Despesas" },
   { id: "restituicoes", label: "Ressarcimentos (pago por terceiro)", modulo: "Despesas" },
