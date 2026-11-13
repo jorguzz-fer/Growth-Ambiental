@@ -26,7 +26,8 @@ describe("Prompt B · assistente de Projetos (24–29)", () => {
     expect(camposFaltando(p)).toEqual(["endereço"]);
     const inc = inconsistenciasDe(p);
     expect(inc.some((t) => t.includes("6 meses") && t.includes("8 competências"))).toBe(true);
-    expect(inc.some((t) => t.startsWith("As fontes somam"))).toBe(true);
+    // Growth Ambiental: funding não é mais inconsistência; o financiamento gravado (dado antigo) aparece à parte
+    expect(inc.some((t) => t.startsWith("As fontes somam"))).toBe(false);
     expect(inc).toContain("município informado sem código ibge");
     expect(inc.some((t) => t.includes("período de planejamento"))).toBe(true);
     const a = analisarProjetos([p]);
@@ -39,9 +40,9 @@ describe("Prompt B · assistente de Projetos (24–29)", () => {
   it("fim antes do início e funding nunca informado", () => {
     const p = { ...base, startDate: "12/25/2026", endDate: "12/24/2026", financiamentoConstrucao: null, financiamentoTerreno: null };
     expect(inconsistenciasDe(p)).toContain("data de fim anterior à de início");
-    // funding não informado não é inconsistência (é "completar"), mas aparece em Analisar funding
+    // funding nunca informado não é inconsistência nem aviso: o cadastro ambiental não pede fontes de financiamento
     expect(inconsistenciasDe(p).some((t) => t.startsWith("As fontes"))).toBe(false);
-    expect(analisarProjetos([p]).funding[0].itens[0]).toMatch(/não informadas/);
+    expect(analisarProjetos([p]).funding).toEqual([]);
   });
 
   it("lê o card orçado x realizado com a semântica da cor", () => {

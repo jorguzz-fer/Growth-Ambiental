@@ -83,12 +83,22 @@ export function inconsistenciasDe(p: ProjetoParaAnalise): string[] {
   if (datas) i.push("data de fim anterior à de início");
   const dur = avisoDeDuracao(p.durationMonths, p.startDate, p.endDate);
   if (dur && !dur.includes("sem as duas datas")) i.push(dur.replace(" Quem decide é você, ajustando as datas.", ""));
-  const fund = avisoDeFunding(p);
-  if (fund && !fund.startsWith("Fontes de recursos não informadas")) i.push(fund);
+  // Growth Ambiental: fontes de financiamento (funding) eram da incorporação
+  // e saíram do cadastro; não são mais inconsistência (ver fundingAntigo).
   const mun = avisoDeMunicipio(p.municipioObra, p.ufObra, p.codigoMunicipioObra);
   if (mun) i.push(mun.split(":")[0].toLowerCase());
   if (vazio(p.mesInicial) || vazio(p.mesFinal)) i.push("período de planejamento (mês inicial/final) não preenchido — pendência registrada, nenhuma tela grava esses campos ainda");
   return i;
+}
+
+/**
+ * Growth Ambiental: o aviso de funding só vale para projeto com fonte de
+ * financiamento JÁ GRAVADA (dado antigo de incorporação). "Não informadas"
+ * não é mais aviso: o cadastro não pede essas fontes.
+ */
+export function fundingAntigo(p: ProjetoParaAnalise): string | null {
+  const a = avisoDeFunding(p);
+  return a && !a.startsWith("Fontes de recursos não informadas") ? a : null;
 }
 
 export function analisarProjetos(projetos: ProjetoParaAnalise[]): AnaliseDeProjetos {
@@ -98,7 +108,7 @@ export function analisarProjetos(projetos: ProjetoParaAnalise[]): AnaliseDeProje
   const cadastroIncompleto = porProjeto(camposFaltando);
   const inconsistencias = porProjeto(inconsistenciasDe);
   const funding = porProjeto((p) => {
-    const a = avisoDeFunding(p);
+    const a = fundingAntigo(p);
     return a ? [a] : [];
   });
   const semDocumentos = obras.filter((p) => p.documentos === 0).map((p) => ({ id: p.id, nome: p.name }));
@@ -107,12 +117,12 @@ export function analisarProjetos(projetos: ProjetoParaAnalise[]): AnaliseDeProje
 }
 
 function dicaDaIa(a: { obras: number; cadastroIncompleto: ItemPorProjeto[]; inconsistencias: ItemPorProjeto[]; semClassificacao: { id: string }[]; semDocumentos: { id: string }[] }): string {
-  if (a.obras === 0) return "Cadastre a primeira obra com nome, datas e cliente; o Orçamento e a Previsão nascem junto.";
+  if (a.obras === 0) return "Cadastre o primeiro projeto com nome, datas e cliente; o Orçamento e a Previsão nascem junto.";
   if (a.semClassificacao.length > 0) return `${a.semClassificacao.length} projeto(s) ainda sem Ativo/Finalizado: classifique no campo Status de cada card — só esse campo muda.`;
-  if (a.inconsistencias.length > 0) return `${a.inconsistencias.length} obra(s) com inconsistência no cadastro (datas, funding ou município). Abra "Revisar inconsistências".`;
-  if (a.cadastroIncompleto.length > 0) return `${a.cadastroIncompleto.length} obra(s) com cadastro incompleto. Abra a obra para preencher; os documentos anexados ajudam a extrair os dados.`;
-  if (a.semDocumentos.length > 0) return `${a.semDocumentos.length} obra(s) sem documento anexado (contrato, proposta). O cadastro fica sem lastro.`;
-  return "Cadastros completos e consistentes. Use o seletor para abrir uma obra e comparar orçado x realizado.";
+  if (a.inconsistencias.length > 0) return `${a.inconsistencias.length} projeto(s) com inconsistência no cadastro (datas, município ou período de planejamento). Abra "Revisar inconsistências".`;
+  if (a.cadastroIncompleto.length > 0) return `${a.cadastroIncompleto.length} projeto(s) com cadastro incompleto. Abra o projeto para preencher; os documentos anexados ajudam a extrair os dados.`;
+  if (a.semDocumentos.length > 0) return `${a.semDocumentos.length} projeto(s) sem documento anexado (contrato, proposta). O cadastro fica sem lastro.`;
+  return "Cadastros completos e consistentes. Use o seletor para abrir um projeto e comparar orçado x realizado.";
 }
 
 /* ─── visão de um projeto (seção 29) ────────────────────────────────── */
@@ -152,7 +162,7 @@ export function analisarProjeto(p: ProjetoParaAnalise, card: CardOrcadoRealizado
   return {
     faltam: camposFaltando(p),
     inconsistencias: inconsistenciasDe(p),
-    funding: avisoDeFunding(p),
+    funding: fundingAntigo(p),
     semDocumentos: p.documentos === 0,
     semClassificacao: p.situacao == null,
     comparativo: lerComparativo(card),

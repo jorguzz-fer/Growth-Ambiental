@@ -100,12 +100,15 @@ function AcoesDeTodos({ analise, aberta, a, li, nome }: { analise: AnaliseDeProj
       <Acao cor="#FFF1DB" cor2="#B45309" d="M12 9v4m0 4h.01M10.3 3.9L2.6 17a2 2 0 001.7 3h15.4a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z" titulo="Completar cadastro" descricao="Projetos sem datas, valores, custos, endereço ou município" contador={analise.cadastroIncompleto.length} aberta={aberta === "incompleto"} onClick={() => a("incompleto")}>
         {analise.cadastroIncompleto.length === 0 ? <p className={li}>Todos os projetos têm o cadastro básico.</p> : <ul className="space-y-1">{analise.cadastroIncompleto.map((x) => <li key={x.id} className={li}><L id={x.id}>{x.nome}</L> · falta {x.itens.join(", ")}</li>)}</ul>}
       </Acao>
-      <Acao cor="#FDE6E9" cor2="#C0334A" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" titulo="Revisar inconsistências" descricao="Duração ≠ datas, fim antes do início, funding abaixo do global, município sem IBGE, período de planejamento" contador={analise.inconsistencias.length} aberta={aberta === "inconsistencias"} onClick={() => a("inconsistencias")}>
+      <Acao cor="#FDE6E9" cor2="#C0334A" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" titulo="Revisar inconsistências" descricao="Duração ≠ datas, fim antes do início, município sem IBGE, período de planejamento" contador={analise.inconsistencias.length} aberta={aberta === "inconsistencias"} onClick={() => a("inconsistencias")}>
         {analise.inconsistencias.length === 0 ? <p className={li}>Nenhuma inconsistência.</p> : <ul className="space-y-1.5">{analise.inconsistencias.map((x) => <li key={x.id} className={li}><L id={x.id}>{x.nome}</L><ul className="ml-3 list-disc">{x.itens.map((t) => <li key={t}>{t}</li>)}</ul></li>)}</ul>}
       </Acao>
-      <Acao cor="#E8F1FB" cor2="#2563EB" d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" titulo="Analisar funding" descricao="Fontes de recursos que não alcançam o valor global, ou não informadas" contador={analise.funding.length} aberta={aberta === "funding"} onClick={() => a("funding")}>
-        {analise.funding.length === 0 ? <p className={li}>Todo projeto com valor global tem funding que o cobre.</p> : <ul className="space-y-1">{analise.funding.map((x) => <li key={x.id} className={li}><L id={x.id}>{x.nome}</L> · {x.itens[0]}</li>)}</ul>}
+      {/* Growth Ambiental: fontes de financiamento só nos dados antigos de incorporação. */}
+      {analise.funding.length > 0 && (
+      <Acao cor="#E8F1FB" cor2="#2563EB" d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" titulo="Fontes de financiamento (dados antigos)" descricao="Financiamentos gravados que não alcançam a receita prevista" contador={analise.funding.length} aberta={aberta === "funding"} onClick={() => a("funding")}>
+        <ul className="space-y-1">{analise.funding.map((x) => <li key={x.id} className={li}><L id={x.id}>{x.nome}</L> · {x.itens[0]}</li>)}</ul>
       </Acao>
+      )}
       <Acao cor="#EAE6FB" cor2="#6D4BD1" d="M4 4h12l4 4v12H4zM8 12h8M8 16h8" titulo="Projetos sem documentos" descricao="Projetos sem contrato, proposta ou outro anexo" contador={analise.semDocumentos.length} aberta={aberta === "documentos"} onClick={() => a("documentos")}>
         {analise.semDocumentos.length === 0 ? <p className={li}>Todo projeto tem ao menos um documento.</p> : <ul className="space-y-1">{analise.semDocumentos.map((x) => <li key={x.id} className={li}><L id={x.id}>{x.nome}</L></li>)}</ul>}
       </Acao>
@@ -155,12 +158,14 @@ function AcoesDeProjeto({ projectId, analise, documentos, canEditar, aiConfigura
         {analise.faltam.length === 0 ? <p className={li}>Cadastro básico completo.</p> : <ul className="ml-3 list-disc space-y-0.5">{analise.faltam.map((t) => <li key={t} className={li}>{t}</li>)}</ul>}
         {analise.semClassificacao && <p className={`${li} mt-1`}>Sem Ativo/Finalizado: classifique no campo Status.</p>}
       </Acao>
-      <Acao cor="#FDE6E9" cor2="#C0334A" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" titulo="Revisar inconsistências" descricao="Duração ≠ datas, fim antes do início, funding, município sem IBGE, período de planejamento" contador={analise.inconsistencias.length} aberta={aberta === "inconsistencias"} onClick={() => a("inconsistencias")}>
+      <Acao cor="#FDE6E9" cor2="#C0334A" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" titulo="Revisar inconsistências" descricao="Duração ≠ datas, fim antes do início, município sem IBGE, período de planejamento" contador={analise.inconsistencias.length} aberta={aberta === "inconsistencias"} onClick={() => a("inconsistencias")}>
         {analise.inconsistencias.length === 0 ? <p className={li}>Nenhuma inconsistência.</p> : <ul className="ml-3 list-disc space-y-0.5">{analise.inconsistencias.map((t) => <li key={t} className={li}>{t}</li>)}</ul>}
       </Acao>
-      <Acao cor="#E8F1FB" cor2="#2563EB" d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" titulo="Analisar funding" descricao="Fontes de recursos × valor global" contador={analise.funding ? 1 : 0} aberta={aberta === "funding"} onClick={() => a("funding")}>
-        <p className={li}>{analise.funding ?? "As fontes de recursos cobrem o valor global (ou não há valor global para comparar)."}</p>
+      {analise.funding && (
+      <Acao cor="#E8F1FB" cor2="#2563EB" d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" titulo="Fontes de financiamento (dados antigos)" descricao="Financiamentos gravados × receita prevista" contador={1} aberta={aberta === "funding"} onClick={() => a("funding")}>
+        <p className={li}>{analise.funding}</p>
       </Acao>
+      )}
       <Acao cor="#EAE6FB" cor2="#6D4BD1" d="M4 4h12l4 4v12H4zM8 12h8M8 16h8" titulo="Extrair dados de documentos" descricao="Lê um documento deste projeto e propõe o preenchimento — não grava" contador={proposta?.campos.length ?? 0} aberta={aberta === "extrair"} onClick={() => a("extrair")}>
         {!aiConfigurada ? <p className={li}>Leitura por IA não configurada (ANTHROPIC_API_KEY).</p> : !canEditar ? <p className={li}>Sem permissão de editar: a proposta não poderia ser aplicada.</p> : legiveis.length === 0 ? <p className={li}>{documentos.length === 0 ? "Nenhum documento anexado a este projeto." : "Nenhum documento legível (PDF ou imagem)."}</p> : (
           <>
