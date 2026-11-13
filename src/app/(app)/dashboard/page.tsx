@@ -22,8 +22,6 @@ import {
 import { LembrarProjeto, RecuperarProjeto } from "@/components/app/projeto-da-aba";
 import {
   getMonthlyRevenue,
-  getIndicadoresObra,
-  getIndicadoresObraConsolidado,
   getStatusProjeto,
   getVersionsDoProjeto,
   getContasPagar,
@@ -39,7 +37,7 @@ import { AssistenteDashboard } from "@/components/app/assistente-dashboard";
 import { PageHeader } from "@/components/app/page-header";
 import { ProjectPicker } from "@/components/app/project-picker";
 import { Card, CardContent } from "@/components/ui/card";
-import { IndicadoresObraPanel, StatusProjetoPanel } from "@/components/app/indicadores-obra";
+import { StatusProjetoPanel } from "@/components/app/indicadores-obra";
 import { VersionMultiSelect } from "@/components/app/version-multiselect";
 import { DateRangeFilter } from "@/components/app/date-range-filter";
 import { can } from "@/lib/permissions";
@@ -143,7 +141,6 @@ export default async function DashboardPage({
       />
     );
   }
-  const isAll = escopo.tipo !== "projeto";
   const project = escopo.tipo === "projeto" ? escopo.projeto : null;
   const doEscopo = escopo.tipo === "projeto" ? null : projetosDoEscopo(ctx.projects, escopo.tipo);
   const projetosDaTela = project ? [project] : doEscopo!.projetos;
@@ -189,13 +186,6 @@ export default async function DashboardPage({
     summaries = colunas.filter((c): c is Summary => c !== null);
   }
 
-  const indicadores = isAll
-    ? await getIndicadoresObraConsolidado(
-        ctx.tenant.id,
-        projetosDaTela.map((p) => p.id),
-        { definicaoNova: dashNovo },
-      )
-    : await getIndicadoresObra(ctx.tenant.id, project!.id, { definicaoNova: dashNovo });
   const statusProjeto = await getStatusProjeto(
     ctx.tenant.id,
     projetosDaTela.map((p) => p.id),
@@ -322,7 +312,6 @@ export default async function DashboardPage({
   }
   const analise = analisarDashboard({
     status: statusProjeto,
-    indicadores,
     colunas: summaries.map((s) => {
       const c = cabecalho(s);
       return { titulo: c.titulo, complemento: c.complemento, kind: s.version.kind, vgv: s.vgv, vgvAusente: !!s.vgvAusente, realizado: s.realizado, aReceber: s.aReceber, aPagar: s.aPagar };
@@ -483,9 +472,9 @@ export default async function DashboardPage({
         cinco meses anteriores, o atual e os seis seguintes.
       </p>
 
-      {/* Indicadores físico-financeiros da obra (BDI, evolução, liberação). */}
+      {/* Status e margem do projeto. Growth Ambiental: o painel de indicadores
+          físico-financeiros de obra (financiamento, BDI, CUB, PLS) saiu. */}
       <StatusProjetoPanel st={statusProjeto} />
-      <IndicadoresObraPanel ind={indicadores} />
       </div>
       <AssistenteDashboard usuario={ctx.userId ?? "anon"} analise={analise} />
       </div>

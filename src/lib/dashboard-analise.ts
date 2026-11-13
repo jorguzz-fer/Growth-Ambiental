@@ -75,8 +75,6 @@ export function explicar(o: { status: StatusProjeto; definicaoNova: boolean }): 
     { painel: "Status atual", cartao: "% executado", texto: `Executado ÷ despesa planejada em ${orc}.` },
     { painel: "Margem e produtividade", cartao: "Margem de contribuição", texto: `Receita da Atual (pelo vencimento) − custo e despesa variáveis da Atual; janela: ${janela}.` },
     { painel: "Margem e produtividade", cartao: "% margem de contribuição", texto: "Margem ÷ receita do cadastro do projeto — uma terceira base de receita, diferente das duas acima." },
-    { painel: "Margem e produtividade", cartao: "Custo e receita por m²", texto: "Executado e receita da Atual ÷ metragem do cadastro." },
-    { painel: "Indicadores da obra", cartao: "Indicadores da obra", texto: "Cadastro do projeto (financiamento, CUB, metragem, %BDI). Os indicadores de evolução física, liberação e saldo de financiamento estão desligados até o cadastro da PLS por obra. Não seguem versão nem período." },
   ];
 }
 
@@ -144,7 +142,8 @@ export function variacoes(antes: Instantaneo | null, agora: Instantaneo): Variac
 
 export function analisarDashboard(o: {
   status: StatusProjeto;
-  indicadores: IndicadoresObra;
+  /** Growth Ambiental: o painel de indicadores de obra saiu da tela; opcional. */
+  indicadores?: IndicadoresObra;
   colunas: readonly ColunaResumo[];
   definicaoNova: boolean;
   atencao: ObraEmAtencao[];
