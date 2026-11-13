@@ -52,20 +52,20 @@ export async function salvarRascunhoDeNota(formData: FormData): Promise<Resultad
   const r = lido.rascunho;
 
   // A obra precisa ser uma das que a pessoa vê, e ter versão Atual (1.3).
-  if (!ctx.projects.some((p) => p.id === r.projectId)) return { ok: false, error: "Obra não encontrada." };
+  if (!ctx.projects.some((p) => p.id === r.projectId)) return { ok: false, error: "Projeto não encontrado." };
   const [atual] = await db
     .select({ id: schema.versions.id })
     .from(schema.versions)
     .where(and(eq(schema.versions.tenantId, ctx.tenant.id), eq(schema.versions.projectId, r.projectId), eq(schema.versions.kind, "atual")))
     .limit(1);
-  if (!atual) return { ok: false, error: "Esta obra não tem versão Atual: a nota é fato real e só vive na Atual." };
+  if (!atual) return { ok: false, error: "Este projeto não tem versão Atual: a nota é fato real e só vive na Atual." };
   if (r.contaReceberId) {
     const [cr] = await db
       .select({ id: schema.contasReceber.id })
       .from(schema.contasReceber)
       .where(and(eq(schema.contasReceber.id, r.contaReceberId), eq(schema.contasReceber.tenantId, ctx.tenant.id), eq(schema.contasReceber.projectId, r.projectId)))
       .limit(1);
-    if (!cr) return { ok: false, error: "A conta a receber escolhida não é desta obra." };
+    if (!cr) return { ok: false, error: "A conta a receber escolhida não é deste projeto." };
   }
   const valores = valoresDoRascunho(r);
 

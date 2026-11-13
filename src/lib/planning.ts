@@ -131,7 +131,7 @@ export interface BudgetPlanningData {
     mesFinal: string | null;
     /** indicador "Recursos próprios" (valor do cadastro; 0 se não informado). */
     recursosProprios: number;
-    /** BD-1: entrada financeira da construtora (total de "Receitas do Projeto"); null = falta preencher. */
+    /** BD-1: entrada financeira da empresa (total de "Receitas do Projeto"); null = falta preencher. */
     receitaDoCadastro: number | null;
   };
   /** BD-6: há seleção de linhas gravada para cada bloco? (false = padrão) */

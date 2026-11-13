@@ -104,7 +104,7 @@ export async function colunasDoRelatorio(
   } else {
     const c = cenariosUsados[0];
     const obras = projetos.slice(0, MAX_COLUNAS);
-    if (projetos.length > MAX_COLUNAS) avisos.push(`São ${projetos.length} obras; a tabela mostra as ${MAX_COLUNAS} primeiras e o total de todas.`);
+    if (projetos.length > MAX_COLUNAS) avisos.push(`São ${projetos.length} projetos; a tabela mostra os ${MAX_COLUNAS} primeiros e o total de todos.`);
     for (const p of obras) colunas.push({ chave: p.id, titulo: p.name, ...somar([`${c}|${p.id}`], noPeriodo) });
     colunas.push({ chave: "total", titulo: "Total", ...somar(todas(c), noPeriodo) });
   }

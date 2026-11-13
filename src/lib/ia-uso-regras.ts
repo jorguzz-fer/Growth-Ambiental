@@ -17,7 +17,7 @@ export const ROTULO_DA_OPERACAO: Record<string, string> = {
   projeto: "Leitura de documento do projeto",
   venda: "Venda por texto",
   permuta: "Permuta por texto",
-  estoque: "Nota de estoque",
+  estoque: "Nota de materiais e equipamentos",
   folha: "Folha de ponto",
   medicao: "Laudo de medição",
   chat: "Chat com dados",

@@ -17,7 +17,7 @@ describe("Estoque — regras (Prompt Y)", () => {
     expect(recusaDoMovimento({ ...base, tipo: "entrada", despesaId: "d", permutaId: "p", projectId: null })).toMatch(/não as duas/);
     expect(recusaDoMovimento({ ...base, tipo: "entrada", despesaId: "d", permutaId: null, projectId: null })).toBeNull();
     expect(recusaDoMovimento({ ...base, tipo: "entrada", despesaId: null, permutaId: "p", projectId: null })).toBeNull();
-    expect(recusaDoMovimento({ ...base, tipo: "saida", despesaId: null, permutaId: null, projectId: null })).toMatch(/qual obra/);
+    expect(recusaDoMovimento({ ...base, tipo: "saida", despesaId: null, permutaId: null, projectId: null })).toMatch(/qual projeto/);
     expect(recusaDoMovimento({ ...base, tipo: "saida", despesaId: null, permutaId: null, projectId: "obra" })).toBeNull();
     expect(recusaDoMovimento({ itemId: "i", quantidade: 0, tipo: "saida", despesaId: null, permutaId: null, projectId: "obra" })).toMatch(/quantidade/);
   });

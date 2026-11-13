@@ -834,7 +834,7 @@ async function criarContaFromExtrato(
     ? (await db.select({ id: schema.versions.id, projectId: schema.versions.projectId }).from(schema.versions).where(eq(schema.versions.id, mov.versionId)).limit(1))[0]
     : await (async () => {
         const v = await versaoDoCaixa(ctx.tenant.id, projectId);
-        if (!v) throw new Error("Este movimento não tem obra: escolha a obra da conta que será criada.");
+        if (!v) throw new Error("Este movimento não tem projeto: escolha o projeto da conta que será criada.");
         if (v.locked) throw new Error("Versão congelada.");
         return { id: v.id, projectId: v.projectId };
       })();

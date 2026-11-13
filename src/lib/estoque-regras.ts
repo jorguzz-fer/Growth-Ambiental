@@ -70,7 +70,7 @@ export function recusaDoMovimento(m: MovimentoParaValidar): string | null {
     if (temDespesa && temPermuta) return "A entrada aponta para uma despesa OU para uma permuta — não as duas.";
     if (!temDespesa && !temPermuta) return "Entrada sem origem não tem lastro: vincule a despesa (compra) ou a permuta que trouxe o material.";
   } else if (!m.projectId) {
-    return "Informe para qual obra o material foi. A saída não gera custo — a despesa já é da obra dela —, mas registra onde o material foi parar.";
+    return "Informe para qual projeto o material foi. A saída não gera custo — a despesa já é do projeto dele —, mas registra onde o material foi parar.";
   }
   return null;
 }

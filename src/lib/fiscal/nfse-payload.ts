@@ -167,7 +167,7 @@ export function montarPayloadNfse(d: DadosEmissaoNfse): MontagemNfse {
     soDigitos(obra?.codigoMunicipio) || soDigitos(emitente.codigoMunicipio);
   if (!codigoMunicipioValido(municipioPrestacao)) {
     erros.push(
-      "Informe o código IBGE do município da obra (ou do prestador, se a obra não tiver município cadastrado).",
+      "Informe o código IBGE do município do projeto (ou do prestador, se o projeto não tiver município cadastrado).",
     );
   }
 

@@ -308,7 +308,7 @@ export async function registrarRepasse(input: RepasseInput): Promise<RepasseResu
         versaoDaEntrada = rec.projectId
           ? await getAtualVersion(ctx.tenant.id, rec.projectId)
           : await getWorkingVersion(ctx.tenant.id, input.projectId);
-        if (!versaoDaEntrada) throw new Error("A obra do recebimento não tem versão Atual.");
+        if (!versaoDaEntrada) throw new Error("O projeto do recebimento não tem versão Atual.");
         if (versaoDaEntrada.locked) throw new Error("Versão congelada — repasse bloqueado.");
       }
 

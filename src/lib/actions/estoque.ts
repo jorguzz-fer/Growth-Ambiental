@@ -144,7 +144,7 @@ export async function deleteStockItem(id: string): Promise<ResultadoEstoque> {
 export async function addStockMovement(formData: FormData): Promise<ResultadoEstoque> {
   const ctx = await getTenantContext();
   if (!ctx) return { ok: false, error: SEM_SESSAO };
-  if (!can(ctx.perms, "estoque", "criar")) return { ok: false, error: "Sem permissão para movimentar estoque." };
+  if (!can(ctx.perms, "estoque", "criar")) return { ok: false, error: "Sem permissão para movimentar materiais e equipamentos." };
   const tipo: "entrada" | "saida" = String(formData.get("tipo") ?? "entrada") === "saida" ? "saida" : "entrada";
   const itemId = str(formData.get("itemId"));
   const quantidade = numSimples(formData.get("quantidade"));
@@ -156,7 +156,7 @@ export async function addStockMovement(formData: FormData): Promise<ResultadoEst
   const item = await itemDoTenant(ctx.tenant.id, itemId!);
   if (!item) return { ok: false, error: "Material não encontrado." };
   if (!item.ativo) return { ok: false, error: "Material inativo: reative o cadastro antes de movimentar." };
-  if (projectId && !ctx.projects.some((p) => p.id === projectId)) return { ok: false, error: "Obra não encontrada nesta empresa." };
+  if (projectId && !ctx.projects.some((p) => p.id === projectId)) return { ok: false, error: "Projeto não encontrado nesta empresa." };
   let despesa: { id: string; valor: string; numDoc: string | null } | null = null;
   if (despesaId) {
     const [d] = await db.select({ id: schema.despesas.id, valor: schema.despesas.valor, numDoc: schema.despesas.numDoc }).from(schema.despesas).where(and(eq(schema.despesas.id, despesaId), eq(schema.despesas.tenantId, ctx.tenant.id))).limit(1);
@@ -319,7 +319,7 @@ export type ResultadoProposta = { ok: true; propostas: PropostaDeEntrada[]; obse
 export async function proporEntradasDaNota(despesaId: string): Promise<ResultadoProposta> {
   const ctx = await getTenantContext();
   if (!ctx) return { ok: false, error: SEM_SESSAO };
-  if (!can(ctx.perms, "estoque", "ver")) return { ok: false, error: "Sem permissão para ver o estoque." };
+  if (!can(ctx.perms, "estoque", "ver")) return { ok: false, error: "Sem permissão para ver Materiais e Equipamentos." };
   if (!isAiConfigured()) return { ok: false, error: "Leitura por IA não configurada (ANTHROPIC_API_KEY)." };
   if (!isR2Configured()) return { ok: false, error: "Storage (R2) não configurado — os documentos da despesa não podem ser lidos." };
   const [despesa] = await db.select({ id: schema.despesas.id, numDoc: schema.despesas.numDoc }).from(schema.despesas).where(and(eq(schema.despesas.id, despesaId), eq(schema.despesas.tenantId, ctx.tenant.id))).limit(1);

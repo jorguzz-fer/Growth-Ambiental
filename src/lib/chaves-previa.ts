@@ -98,21 +98,21 @@ export function tabelaDre(ps: readonly PreviaDreProjeto[]): TabelaDaPrevia {
 
 export function tabelaFluxo(ps: readonly PreviaFluxoObra[]): TabelaDaPrevia {
   return {
-    cabecalho: ["Obra", "Tem Atual", "Partida hoje", "Partida nova", "Acumulado hoje", "Acumulado novo", "Permuta no planejamento", "Caixa fora da Atual"],
+    cabecalho: ["Projeto", "Tem Atual", "Partida hoje", "Partida nova", "Acumulado hoje", "Acumulado novo", "Permuta no planejamento", "Caixa fora da Atual"],
     linhas: ps.map((p) => [p.projeto, p.temAtual ? "sim" : "não", p.partidaHoje, p.partidaNova, p.acumuladoHoje, p.acumuladoNovo, p.permutaNoPlanejamento, p.caixaForaDaAtual]),
   };
 }
 
 export function tabelaDashboard(os: readonly PreviaDashboardObra[]): TabelaDaPrevia {
   return {
-    cabecalho: ["Obra", "Cartão", "Unidade", "Hoje", "Definição nova", "Diferença"],
+    cabecalho: ["Projeto", "Cartão", "Unidade", "Hoje", "Definição nova", "Diferença"],
     linhas: os.flatMap((o) => o.linhas.map((l): Celula[] => [o.projeto, l.cartao, l.tipo === "pct" ? "%" : "R$", l.hoje, l.nova, dif(l.hoje, l.nova)])),
   };
 }
 
 export function tabelaResumo(os: readonly PreviaResumoObra[]): TabelaDaPrevia {
   return {
-    cabecalho: ["Obra", "Indicador", "Hoje", "Definição nova", "Diferença"],
+    cabecalho: ["Projeto", "Indicador", "Hoje", "Definição nova", "Diferença"],
     linhas: os.flatMap((o) =>
       o.temAtual ? o.linhas.map((l): Celula[] => [o.projeto, l.label, l.hoje, l.nova, dif(l.hoje, l.nova)]) : [[o.projeto, "sem versão Atual: nada a comparar", null, null, null]],
     ),

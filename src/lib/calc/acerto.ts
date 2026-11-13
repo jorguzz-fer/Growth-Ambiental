@@ -255,8 +255,8 @@ export function validarRateio(
   valorTotal: number,
   rateio: readonly RateioCalculado[],
 ): string | null {
-  if (rateio.length === 0) return "Informe ao menos uma obra no rateio.";
-  if (rateio.some((r) => r.valor < 0)) return "Nenhuma obra pode receber valor negativo.";
+  if (rateio.length === 0) return "Informe ao menos um projeto no rateio.";
+  if (rateio.some((r) => r.valor < 0)) return "Nenhum projeto pode receber valor negativo.";
   if (!rateioFecha(valorTotal, rateio)) {
     const soma = round2(rateio.reduce((a, r) => a + r.valor, 0));
     const dif = round2(soma - valorTotal);
