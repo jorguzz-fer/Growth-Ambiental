@@ -1,5 +1,6 @@
 "use client";
 
+import type { PlanoDosProjetos } from "@/lib/contratos-queries";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
@@ -654,6 +655,14 @@ export function AditivosPainel({ contratoId, aditivos, itens, podeRegistrar, pod
 
 export interface MedicaoDaTela {
   id: string;
+  /** 0081 — número sequencial no contrato. */
+  numero: number | null;
+  periodoInicio: string | null;
+  periodoFim: string | null;
+  aditivoId: string | null;
+  projetoFaseId: string | null;
+  projetoAtividadeId: string | null;
+  projetoEntregaId: string | null;
   itemId: string | null;
   projectId: string | null;
   marcoId: string | null;
@@ -670,9 +679,17 @@ export interface MedicaoDaTela {
   obs: string | null;
 }
 
-export function MedicoesPainel({ contratoId, medicoes, itens, projetos, marcos, podeLancar, podeAprovar, contratoAceita }: { contratoId: string; medicoes: MedicaoDaTela[]; itens: { id: string; codigo: string; descricao: string; criterioMedicao: string; limite: number; saldo: number; vigente: boolean }[]; projetos: { id: string; nome: string }[]; marcos: { id: string; etapa: string }[]; podeLancar: boolean; podeAprovar: boolean; contratoAceita: boolean }) {
+export function MedicoesPainel({ contratoId, medicoes, itens, projetos, marcos, aditivos, plano, podeLancar, podeAprovar, contratoAceita }: { contratoId: string; medicoes: MedicaoDaTela[]; itens: { id: string; codigo: string; descricao: string; criterioMedicao: string; limite: number; saldo: number; vigente: boolean }[]; projetos: { id: string; nome: string }[]; marcos: { id: string; etapa: string }[]; aditivos: { id: string; codigo: string }[]; plano: PlanoDosProjetos; podeLancar: boolean; podeAprovar: boolean; contratoAceita: boolean }) {
   const { rodar, pendente, msg } = useAcao();
-  const vazio = { itemId: "", projectId: "", marcoId: "", competencia: "", quantidade: "", percentual: "", valor: "", responsavel: "", obs: "" };
+  const vazio = { itemId: "", projectId: "", marcoId: "", competencia: "", quantidade: "", percentual: "", valor: "", responsavel: "", obs: "", periodoInicio: "", periodoFim: "", aditivoId: "", projetoFaseId: "", projetoAtividadeId: "", projetoEntregaId: "" };
+  const nomeDoPlano = (m: MedicaoDaTela) =>
+    [
+      plano.fases.find((f) => f.id === m.projetoFaseId)?.nome,
+      plano.atividades.find((a) => a.id === m.projetoAtividadeId)?.nome,
+      plano.entregas.find((e) => e.id === m.projetoEntregaId)?.nome,
+    ]
+      .filter(Boolean)
+      .join(" › ");
   const [novo, setNovo] = useState(vazio);
   const [chave, setChave] = useState(novaChave);
   const item = itens.find((i) => i.id === novo.itemId);
@@ -691,6 +708,7 @@ export function MedicoesPainel({ contratoId, medicoes, itens, projetos, marcos, 
         <table className="w-full text-[12.5px]">
           <thead>
             <tr>
+              <th className={th}>Nº</th>
               <th className={th}>Período</th>
               <th className={th}>Item</th>
               <th className={th}>Projeto · marco</th>
@@ -704,7 +722,7 @@ export function MedicoesPainel({ contratoId, medicoes, itens, projetos, marcos, 
           <tbody>
             {medicoes.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-2 py-4 text-center text-[var(--color-ink3)]">
+                <td colSpan={9} className="px-2 py-4 text-center text-[var(--color-ink3)]">
                   Nenhuma medição.
                 </td>
               </tr>
@@ -719,11 +737,19 @@ export function MedicoesPainel({ contratoId, medicoes, itens, projetos, marcos, 
               if (podeAprovar && m.status === "aprovada") acoes.push(["cancelada", "Cancelar (com motivo)"]);
               return (
                 <tr key={m.id} className="border-t border-[var(--color-line)]">
-                  <td className={`${td} ${mono}`}>{m.competencia}</td>
-                  <td className={td}>{it ? `${it.codigo} · ${it.descricao}` : "—"}</td>
+                  <td className={`${td} ${mono}`}>{m.numero ?? "—"}</td>
+                  <td className={`${td} ${mono}`}>
+                    {m.competencia}
+                    {(m.periodoInicio || m.periodoFim) && <div className="text-[11px] text-[var(--color-ink3)]">{m.periodoInicio ?? "…"} a {m.periodoFim ?? "…"}</div>}
+                  </td>
+                  <td className={td}>
+                    {it ? `${it.codigo} · ${it.descricao}` : "—"}
+                    {m.aditivoId && <div className="text-[11px] text-[var(--color-ink3)]">{aditivos.find((a) => a.id === m.aditivoId)?.codigo ?? "aditivo"}</div>}
+                  </td>
                   <td className={td}>
                     {projetos.find((p) => p.id === m.projectId)?.nome ?? "—"}
                     {m.marcoId ? ` · ${marcos.find((x) => x.id === m.marcoId)?.etapa ?? ""}` : ""}
+                    {nomeDoPlano(m) && <div className="text-[11px] text-[var(--color-ink3)]">{nomeDoPlano(m)}</div>}
                   </td>
                   <td className={`${td} text-right ${mono}`}>{m.percentual ? `${Number(m.percentual).toLocaleString("pt-BR")}%` : m.quantidade ? Number(m.quantidade).toLocaleString("pt-BR") : "—"}</td>
                   <td className={`${td} text-right ${mono}`}>{brl(m.valor)}</td>
@@ -786,6 +812,55 @@ export function MedicoesPainel({ contratoId, medicoes, itens, projetos, marcos, 
             </Select>
             <Input placeholder="Responsável" value={novo.responsavel} onChange={(e) => setNovo({ ...novo, responsavel: e.target.value })} aria-label="Responsável" />
             <Input placeholder="Observação" value={novo.obs} onChange={(e) => setNovo({ ...novo, obs: e.target.value })} aria-label="Observação" />
+            <Input placeholder="Início do período (MM/DD/AAAA)" value={novo.periodoInicio} onChange={(e) => setNovo({ ...novo, periodoInicio: e.target.value })} aria-label="Início do período executado" />
+            <Input placeholder="Fim do período (MM/DD/AAAA)" value={novo.periodoFim} onChange={(e) => setNovo({ ...novo, periodoFim: e.target.value })} aria-label="Fim do período executado" />
+            {aditivos.length > 0 && (
+              <Select value={novo.aditivoId} onChange={(e) => setNovo({ ...novo, aditivoId: e.target.value })} aria-label="Aditivo que autorizou">
+                <option value="">Aditivo (opcional)</option>
+                {aditivos.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.codigo}
+                  </option>
+                ))}
+              </Select>
+            )}
+            {(() => {
+              const proj = novo.projectId || null;
+              const fases = plano.fases.filter((f) => !proj || f.projectId === proj);
+              if (!fases.length) return null;
+              const atividades = plano.atividades.filter((a) => (!proj || a.projectId === proj) && (!novo.projetoFaseId || a.faseId === novo.projetoFaseId));
+              const entregas = plano.entregas.filter((e) => (!proj || e.projectId === proj) && (!novo.projetoFaseId || !e.faseId || e.faseId === novo.projetoFaseId));
+              return (
+                <>
+                  <Select value={novo.projetoFaseId} onChange={(e) => setNovo({ ...novo, projetoFaseId: e.target.value, projetoAtividadeId: "", projetoEntregaId: "" })} aria-label="Fase do plano">
+                    <option value="">Fase do plano (opcional)</option>
+                    {fases.map((f) => (
+                      <option key={f.id} value={f.id}>
+                        {f.codigo ? `${f.codigo} · ` : ""}
+                        {f.nome}
+                      </option>
+                    ))}
+                  </Select>
+                  <Select value={novo.projetoAtividadeId} onChange={(e) => setNovo({ ...novo, projetoAtividadeId: e.target.value })} aria-label="Atividade do plano">
+                    <option value="">Atividade (opcional)</option>
+                    {atividades.map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.codigo ? `${a.codigo} · ` : ""}
+                        {a.nome}
+                      </option>
+                    ))}
+                  </Select>
+                  <Select value={novo.projetoEntregaId} onChange={(e) => setNovo({ ...novo, projetoEntregaId: e.target.value })} aria-label="Entrega do plano">
+                    <option value="">Entrega (opcional)</option>
+                    {entregas.map((e) => (
+                      <option key={e.id} value={e.id}>
+                        {e.nome}
+                      </option>
+                    ))}
+                  </Select>
+                </>
+              );
+            })()}
           </div>
           <p className="mt-1 text-[11.5px] text-[var(--color-ink3)]">Critério do item: {ROTULO_CRITERIO[crit as keyof typeof ROTULO_CRITERIO] ?? crit}. O valor é calculado pelo critério (quantidade × unitário ou % do valor vigente).</p>
           <div className="mt-2 flex gap-2">
@@ -798,7 +873,21 @@ export function MedicoesPainel({ contratoId, medicoes, itens, projetos, marcos, 
                 disabled={pendente}
                 onClick={() =>
                   rodar(
-                    () => salvarMedicao({ contratoId, ...novo, itemId: novo.itemId || null, quantidade: lerNumero(novo.quantidade), percentual: lerNumero(novo.percentual), valor: Number(novo.valor || 0) || null, enviar, idempotencyKey: chave }),
+                    () =>
+                      salvarMedicao({
+                        contratoId,
+                        ...novo,
+                        itemId: novo.itemId || null,
+                        aditivoId: novo.aditivoId || null,
+                        projetoFaseId: novo.projetoFaseId || null,
+                        projetoAtividadeId: novo.projetoAtividadeId || null,
+                        projetoEntregaId: novo.projetoEntregaId || null,
+                        quantidade: lerNumero(novo.quantidade),
+                        percentual: lerNumero(novo.percentual),
+                        valor: Number(novo.valor || 0) || null,
+                        enviar,
+                        idempotencyKey: chave,
+                      }),
                     enviar ? "Medição enviada para aprovação." : "Medição salva em rascunho.",
                     () => {
                       setNovo(vazio);

@@ -68,6 +68,7 @@ const TELAS_NOVAS: Record<string, string> = {
   "/conferencia": "conferencia", // Prompt AN, Parte 5 (era /diagnostico/categorias-invertidas)
   "/notasfiscais": "notasfiscais", // Prompt AG: NFS-e emitida, última seção de Receitas
   "/dre/analitica": "dre", // Prompt AC3: mora sob /dre, mesma permissão
+  "/dre/contratos": "dre", // Implementação integrada: DRE por contrato e cliente (exige também contratos:ver)
   "/fluxocaixa/analitico": "fluxocaixa", // Prompt AD3: mora sob /fluxocaixa, mesma permissão
   "/relatorios": "relatorios", // Prompt RC: tela nova, chave própria
   // Growth Ambiental — módulo Contratos: tudo sob /contratos, uma chave de rota.
@@ -155,6 +156,7 @@ const EXIGE_DA_PAGINA: Record<string, [string, "ver" | "editar"][]> = {
   "/acerto": [["despesas", "editar"], ["caixa", "ver"]],
   "/contratos/reembolsos": [["contratosfinanceiro", "ver"]],
   "/contratos/modalidades": [["contratos", "editar"]],
+  "/dre/contratos": [["contratos", "ver"]],
 };
 
 /** Visibilidade pela regra de sempre, sobre a lista antiga mais as novas. */
@@ -247,7 +249,7 @@ describe("isItemActive — prefixo na fronteira de segmento", () => {
     const pares = todos.flatMap((x) => todos.filter((y) => y !== x && isItemActive(x.href, y.href)).map((y) => `${x.href}>${y.href}`));
     // Contratos: as telas do módulo moram sob /contratos (o mais específico vence).
     const doModulo = ["painel", "aditivos", "medicoes", "reembolsos", "modalidades"].map((t) => `/contratos/${t}>/contratos`);
-    expect(pares).toEqual(["/dre/analitica>/dre", "/fluxocaixa/analitico>/fluxocaixa", ...doModulo]);
+    expect(pares).toEqual(["/dre/analitica>/dre", "/dre/contratos>/dre", "/fluxocaixa/analitico>/fluxocaixa", ...doModulo]);
   });
 
   it("/perfil e rota nula não ativam nada", () => {

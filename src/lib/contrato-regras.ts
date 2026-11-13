@@ -102,7 +102,7 @@ export const STATUS_MEDICAO = ["rascunho", "enviada", "em_analise", "aprovada", 
 export type StatusMedicao = (typeof STATUS_MEDICAO)[number];
 export const ROTULO_STATUS_MEDICAO: Record<StatusMedicao, string> = {
   rascunho: "Rascunho",
-  enviada: "Enviada",
+  enviada: "Submetida",
   em_analise: "Em análise",
   aprovada: "Aprovada",
   rejeitada: "Rejeitada",

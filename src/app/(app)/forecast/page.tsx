@@ -13,6 +13,8 @@ import { analisarOrcamento } from "@/lib/orcamento-analise";
 import { AccessDenied } from "@/components/app/access-denied";
 import { BudgetPlanningScreen } from "@/components/app/budget-planning-screen";
 import { AssistenteOrcamento } from "@/components/app/assistente-orcamento";
+import { ProjecaoAoTermino } from "@/components/app/projecao-ao-termino";
+import { projecaoDoProjeto } from "@/lib/projecao-financeira-dados";
 
 export const dynamic = "force-dynamic";
 
@@ -37,9 +39,10 @@ export default async function ForecastPage({
     return <PedirProjeto titulo="Previsão Atualizada" projetos={alvos} oQue="lançar a previsão" />;
   }
   const projId = selecao.projeto.id;
-  const [data, budgetVersions] = await Promise.all([
+  const [data, budgetVersions, projecao] = await Promise.all([
     getBudgetPlanning(ctx.tenant.id, projId, "forecast", sp.v ?? null),
     getProjectVersionsByKind(ctx.tenant.id, projId, "budget"),
+    projecaoDoProjeto(ctx.tenant.id, projId),
   ]);
 
   const projects = alvos.map((p) => ({
@@ -71,6 +74,11 @@ export default async function ForecastPage({
             canCreateForecast={can(ctx.perms, "forecast", "criar")}
             comparacao={comparando ? cmp : null}
           />
+          {projecao && (
+            <div className="mt-6">
+              <ProjecaoAoTermino p={projecao} versoes={projecao.versoes} titulo={`Projeção ao término · ${selecao.projeto.name}`} />
+            </div>
+          )}
         </div>
         {data.hasPeriod && data.versionId && (
           <AssistenteOrcamento

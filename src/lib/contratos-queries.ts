@@ -315,6 +315,49 @@ export async function listarAditivos(tenantId: string) {
 }
 
 /** Medições de todos os contratos (listagem consolidada). */
+/**
+ * Relatório de medições (0081): filtro por contrato, situação e competência
+ * (MM/AAAA), com o acumulado aprovado e o saldo a medir de cada contrato.
+ */
+export async function relatorioDeMedicoes(tenantId: string, filtro: { contratoId?: string | null; status?: string | null; de?: string | null; ate?: string | null } = {}) {
+  const ym = (s: string | null | undefined) => {
+    const m = s ? /^(\d{2})\/(\d{4})$/.exec(s.trim()) : null;
+    return m ? Number(m[2]) * 100 + Number(m[1]) : null;
+  };
+  const de = ym(filtro.de);
+  const ate = ym(filtro.ate);
+  const todas = await listarMedicoes(tenantId);
+  const linhas = todas.filter(({ m }) => {
+    if (filtro.contratoId && m.contratoId !== filtro.contratoId) return false;
+    if (filtro.status === "pendentes" ? !(m.status === "enviada" || m.status === "em_analise") : filtro.status && m.status !== filtro.status) return false;
+    const v = ym(m.competencia);
+    return (de == null || (v != null && v >= de)) && (ate == null || (v != null && v <= ate));
+  });
+  const contratos = filtro.contratoId ? (await listarContratos(tenantId)).filter((c) => c.id === filtro.contratoId) : [];
+  const soma = (f: (x: (typeof linhas)[number]) => boolean) => Math.round(linhas.filter(f).reduce((s, x) => s + Number(x.m.valor), 0) * 100) / 100;
+  return {
+    linhas,
+    totais: {
+      quantidade: linhas.length,
+      aprovado: soma((x) => x.m.status === "aprovada"),
+      emAprovacao: soma((x) => x.m.status === "enviada" || x.m.status === "em_analise"),
+      rascunho: soma((x) => x.m.status === "rascunho"),
+    },
+    /** só com um contrato filtrado: contratado, aditivos, acumulado e saldo. */
+    contrato: contratos[0]
+      ? {
+          codigo: contratos[0].codigo,
+          titulo: contratos[0].titulo,
+          original: contratos[0].saldo.original,
+          aditivos: Math.round((contratos[0].saldo.acrescimos - contratos[0].saldo.reducoes) * 100) / 100,
+          atualizado: contratos[0].saldo.atualizado,
+          medidoAprovado: contratos[0].saldo.medidoAprovado,
+          saldoAMedir: contratos[0].saldo.saldoAMedir,
+        }
+      : null,
+  };
+}
+
 export async function listarMedicoes(tenantId: string) {
   return db
     .select({ m: schema.contratoMedicoes, codigoContrato: schema.contratos.codigo, tituloContrato: schema.contratos.titulo, item: schema.contratoItens.codigo, itemDescricao: schema.contratoItens.descricao, projeto: schema.projects.name })
@@ -369,6 +412,8 @@ export async function relatorioDeReembolsos(tenantId: string, filtro: { contrato
       const solicitado = Number(l.r.valorSolicitado);
       const aprovado = l.r.valorAprovado == null ? null : Number(l.r.valorAprovado);
       const recebido = l.r.status === "recebido" ? aprovado ?? solicitado : 0;
+      // Glosa: o que o cliente não aceitou reembolsar (rejeitado = tudo).
+      const glosa = l.r.status === "rejeitado" ? solicitado : aprovado != null ? Math.max(0, Math.round((solicitado - aprovado) * 100) / 100) : 0;
       return {
         id: l.r.id,
         contrato: l.codigoContrato,
@@ -384,6 +429,7 @@ export async function relatorioDeReembolsos(tenantId: string, filtro: { contrato
         solicitado,
         aprovado,
         recebido,
+        glosa,
         pendente: Math.round(((l.r.status === "rejeitado" ? 0 : aprovado ?? solicitado) - recebido) * 100) / 100,
         comprovantes: docs.filter((d) => d.despesaId === l.r.despesaId).map((d) => d.filename),
       };
@@ -450,3 +496,30 @@ export async function planejamentoDosProjetos(tenantId: string, projetos: readon
     }),
   );
 }
+
+/**
+ * 0081 — fases, atividades e entregas dos projetos do contrato, para ligar a
+ * medição ao que foi executado no plano de trabalho. Só os da empresa.
+ */
+export async function planoDosProjetos(tenantId: string, projectIds: readonly string[]) {
+  if (!projectIds.length) return { fases: [], atividades: [], entregas: [] };
+  const ids = [...projectIds];
+  const [fases, atividades, entregas] = await Promise.all([
+    db
+      .select({ id: schema.projetoFases.id, projectId: schema.projetoFases.projectId, nome: schema.projetoFases.nome, codigo: schema.projetoFases.codigo })
+      .from(schema.projetoFases)
+      .where(and(eq(schema.projetoFases.tenantId, tenantId), inArray(schema.projetoFases.projectId, ids)))
+      .orderBy(schema.projetoFases.ordem),
+    db
+      .select({ id: schema.projetoAtividades.id, projectId: schema.projetoAtividades.projectId, faseId: schema.projetoAtividades.faseId, nome: schema.projetoAtividades.nome, codigo: schema.projetoAtividades.codigo })
+      .from(schema.projetoAtividades)
+      .where(and(eq(schema.projetoAtividades.tenantId, tenantId), inArray(schema.projetoAtividades.projectId, ids)))
+      .orderBy(schema.projetoAtividades.ordem),
+    db
+      .select({ id: schema.projetoEntregas.id, projectId: schema.projetoEntregas.projectId, faseId: schema.projetoEntregas.faseId, nome: schema.projetoEntregas.nome })
+      .from(schema.projetoEntregas)
+      .where(and(eq(schema.projetoEntregas.tenantId, tenantId), inArray(schema.projetoEntregas.projectId, ids))),
+  ]);
+  return { fases, atividades, entregas };
+}
+export type PlanoDosProjetos = Awaited<ReturnType<typeof planoDosProjetos>>;

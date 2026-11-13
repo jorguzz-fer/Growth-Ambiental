@@ -77,6 +77,7 @@ export const NAV_MENU: NavModule[] = [
       { href: "/dre", label: "DRE" },
       // Prompt AC3: mora sob /dre — a permissão é a da DRE.
       { href: "/dre/analitica", label: "DRE Analítica" },
+      { href: "/dre/contratos", label: "DRE por Contrato e Cliente", exige: [{ tela: "contratos", acao: "ver" }] },
       { href: "/fluxocaixa", label: "Fluxo de Caixa" },
       // Prompt AD3: mora sob /fluxocaixa — a permissão é a do Fluxo.
       { href: "/fluxocaixa/analitico", label: "Fluxo de Caixa Analítico" },

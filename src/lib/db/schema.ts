@@ -2684,6 +2684,17 @@ export const contratoMedicoes = pgTable(
     itemId: uuid("item_id").references(() => contratoItens.id, { onDelete: "restrict" }),
     projectId: uuid("project_id").references(() => projects.id, { onDelete: "set null" }),
     marcoId: uuid("marco_id").references(() => contratoMarcos.id, { onDelete: "set null" }),
+    /** 0081 — número sequencial por contrato (1, 2, 3…). */
+    numero: integer("numero"),
+    /** 0081 — período executado (MM/DD/YYYY), além da competência. */
+    periodoInicio: text("periodo_inicio"),
+    periodoFim: text("periodo_fim"),
+    /** 0081 — aditivo que autorizou o serviço medido. */
+    aditivoId: uuid("aditivo_id").references((): AnyPgColumn => contratoAditivos.id, { onDelete: "set null" }),
+    /** 0081 — o que foi executado, no plano de trabalho do projeto. */
+    projetoFaseId: uuid("projeto_fase_id").references((): AnyPgColumn => projetoFases.id, { onDelete: "set null" }),
+    projetoAtividadeId: uuid("projeto_atividade_id").references((): AnyPgColumn => projetoAtividades.id, { onDelete: "set null" }),
+    projetoEntregaId: uuid("projeto_entrega_id").references((): AnyPgColumn => projetoEntregas.id, { onDelete: "set null" }),
     etapa: text("etapa"),
     /** período de referência "MM/YYYY". */
     competencia: text("competencia").notNull(),
@@ -2704,6 +2715,7 @@ export const contratoMedicoes = pgTable(
   (t) => [
     index("contrato_medicao_contrato_idx").on(t.contratoId),
     uniqueIndex("contrato_medicao_idem_uq").on(t.tenantId, t.idempotencyKey).where(sql`${t.idempotencyKey} is not null`),
+    uniqueIndex("contrato_medicao_numero_uq").on(t.contratoId, t.numero).where(sql`${t.numero} is not null`),
   ],
 );
 

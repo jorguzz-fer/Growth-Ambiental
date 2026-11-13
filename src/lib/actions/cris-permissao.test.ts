@@ -63,7 +63,7 @@ describe("permissaoDaRota (AQ §2)", () => {
     // Só mudam as telas cujo item de menu declara exigência além do "ver" da
     // chave (`exige`): o Acerto e, no Growth Ambiental, as telas de contrato
     // com o financeiro ou a edição (antes nenhum papel não-admin via contratos).
-    const comExige = ["/acerto ", "/contratos/reembolsos ", "/contratos/modalidades "];
+    const comExige = ["/acerto ", "/contratos/reembolsos ", "/contratos/modalidades ", "/dre/contratos "];
     expect(mudou.filter((m) => !comExige.some((p) => m.startsWith(p)))).toEqual([]);
   });
 
