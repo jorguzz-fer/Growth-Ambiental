@@ -7,7 +7,18 @@
  * estava vazia em produção em 30/09/2026): o domínio vale daqui em diante.
  */
 
-export const TIPOS_DE_RECEITA = ["Sinal", "Parcela mensal", "Outros", "Outras Receitas"] as const;
+export const TIPOS_DE_RECEITA = ["Fatura de serviço", "Reembolso de despesas", "Adiantamento", "Outros", "Outras Receitas", "Sinal", "Parcela mensal"] as const;
+/**
+ * Growth Ambiental: "Sinal" e "Parcela mensal" eram da venda de unidades.
+ * Continuam VÁLIDOS (registros antigos são editados sem conversão), mas não
+ * são oferecidos para lançamento novo.
+ */
+export const TIPOS_DE_RECEITA_ANTIGOS: readonly string[] = ["Sinal", "Parcela mensal"];
+/** O que o formulário oferece para lançamento novo; na edição, mais o tipo já gravado. */
+export function tiposDeReceitaOferecidos(atual?: string | null): string[] {
+  const novos = TIPOS_DE_RECEITA.filter((t) => !TIPOS_DE_RECEITA_ANTIGOS.includes(t)) as string[];
+  return atual && !novos.includes(atual) ? [...novos, atual] : novos;
+}
 export type TipoDeReceita = (typeof TIPOS_DE_RECEITA)[number];
 
 /**

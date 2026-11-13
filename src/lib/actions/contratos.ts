@@ -907,7 +907,7 @@ export async function faturarContrato(input: { contratoId: string; projectId: st
         clienteId: c.clienteId,
         contratoId: c.id,
         descricao: txt(input.descricao) ?? `Fatura do contrato ${c.codigo} — ${c.titulo}`,
-        tipo: "Outros",
+        tipo: "Fatura de serviço",
         valor: String(valor),
         vencimento: venc.v,
         status: "A receber",

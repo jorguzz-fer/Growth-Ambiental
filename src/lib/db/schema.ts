@@ -1612,7 +1612,7 @@ export const contasReceber = pgTable("conta_receber", {
     onDelete: "set null",
   }),
   descricao: text("descricao"),
-  /** Sinal | Parcela mensal | Outros | Outras Receitas. */
+  /** Ver TIPOS_DE_RECEITA em conta-receber-regras.ts ("Sinal" e "Parcela mensal" só nos dados antigos). */
   tipo: text("tipo").notNull().default("Outros"),
   valor: numeric("valor", { precision: 15, scale: 2 }).notNull().default("0"),
   /** data prevista "MM/DD/YYYY". */
