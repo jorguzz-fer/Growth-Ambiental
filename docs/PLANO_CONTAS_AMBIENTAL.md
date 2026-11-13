@@ -414,6 +414,18 @@ Auditoria: `chart.group.create/update/delete/duplicate`,
   reclassificação, impacto confirmado, Cris, reembolso, adoção do padrão,
   importação, migração e permissões.
 
+### Planilha de lançamentos da versão
+
+O modelo, a exportação e a importação da planilha (tela Projetos) usam o
+plano DA EMPRESA: contas ativas de despesa, por grupo, com a coluna `Codigo`.
+A importação casa pelo código; planilha antiga, sem a coluna, casa por grupo
++ nome e, por fim, pelo nome quando ele é único no plano. Linha com valor que
+não casa com conta ativa **recusa a importação inteira** (antes era descartada
+em silêncio). Com a chave `despesa_categoria_do_plano` ligada, a despesa
+importada herda a categoria da conta; desligada, segue Custo Variável como
+antes. A exportação deixa de levar despesas canceladas e mantém, numa linha
+"Fora do plano ativo", a despesa de conta que saiu do plano.
+
 ## 14. Decisões que dependem de validação contábil
 
 1. **Pessoal técnico como Custo Variável** (custo direto dos projetos). A
@@ -448,7 +460,5 @@ Auditoria: `chart.group.create/update/delete/duplicate`,
 - Relatório Medição CEF continua no plano de construção (módulo de obra).
 - Código de conta usada não muda (seria preciso migrar as referências em
   despesas e Orçamento); o caminho é criar a conta nova e reclassificar.
-- Modelo de planilha de lançamentos (`growth-template`) casa nomes com o plano
-  padrão, não com o plano da empresa.
 - Empresa sem nenhuma conta cadastrada não tem a validação de conta no
   lançamento (não há plano a seguir).

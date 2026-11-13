@@ -7,7 +7,10 @@ import { getTenantContext, getVersionContext } from "@/lib/context";
 import { can } from "@/lib/permissions";
 import { logAudit } from "@/lib/audit";
 import { parseWorkbook } from "@/lib/xlsx/growth-template";
+import type { CategoriaDRE } from "@/lib/calc/constants";
 import { recusaDaImportacao, type Contagem } from "@/lib/versao-importacao";
+import { planilhaDaEmpresa } from "@/lib/planocontas-servidor";
+import { categoriaParaGravar } from "@/lib/categoria-do-plano-servidor";
 
 export interface ImportResult {
   units: number;
@@ -49,9 +52,30 @@ export async function importVersionData(formData: FormData): Promise<ResultadoIm
 
   let parsed: ReturnType<typeof parseWorkbook>;
   try {
-    parsed = parseWorkbook(await file.arrayBuffer());
+    // 0079 — as contas da matriz de despesas são as do plano DESTA empresa.
+    parsed = parseWorkbook(await file.arrayBuffer(), await planilhaDaEmpresa(ctx.tenant.id));
   } catch {
     return { ok: false, error: "Não foi possível ler a planilha. Use o modelo da própria tela." };
+  }
+  // Linha com valor e sem conta do plano: antes era descartada em silêncio.
+  if (parsed.despesasSemConta.length) {
+    const lista = parsed.despesasSemConta
+      .slice(0, 5)
+      .map((d) => `"${d.subitem || d.codigo || "(sem nome)"}"${d.codigo ? ` (código ${d.codigo})` : ""}`)
+      .join(", ");
+    const mais = parsed.despesasSemConta.length > 5 ? ` e mais ${parsed.despesasSemConta.length - 5}` : "";
+    return {
+      ok: false,
+      error: `A aba de despesas tem valores em linhas que não são contas ativas do Plano de Contas da empresa: ${lista}${mais}. Corrija a linha (ou baixe o modelo de novo) e importe outra vez — nada foi gravado.`,
+    };
+  }
+  // Categoria da DRE de cada conta: herdada do plano com a chave
+  // `despesa_categoria_do_plano` ligada; desligada, segue a regra anterior.
+  const categoriaPorConta = new Map<string, string>();
+  for (const code of new Set(parsed.despesas.map((d) => d.contaCef))) {
+    const r = await categoriaParaGravar(ctx.tenant.id, code, "Custo Variável");
+    if (!r.ok) return { ok: false, error: r.error };
+    categoriaPorConta.set(code, r.categoria ?? "Custo Variável");
   }
   const vId = target.id;
   const tId = ctx.tenant.id;
@@ -116,7 +140,8 @@ export async function importVersionData(formData: FormData): Promise<ResultadoIm
     if (parsed.despesas.length) {
       await tx.insert(schema.despesas).values(
         parsed.despesas.map((d) => ({
-          versionId: vId, tenantId: tId, contaCef: d.contaCef, categoriaDre: "Custo Variável" as const,
+          versionId: vId, tenantId: tId, contaCef: d.contaCef,
+          categoriaDre: (categoriaPorConta.get(d.contaCef) ?? "Custo Variável") as CategoriaDRE,
           competencia: d.competencia, vencimento: d.vencimento, valor: String(d.valor), status: "A pagar",
         })),
       );

@@ -1,6 +1,7 @@
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { recusaDaContaDoLancamento, type ContaDoCadastro } from "@/lib/planocontas-regras";
+import { planilhaDoPlanoPadrao, type GrupoDaPlanilha } from "@/lib/xlsx/growth-template";
 
 type Exec = Pick<typeof db, "select">;
 
@@ -76,3 +77,26 @@ export async function usoDosCodigos(tenantId: string, codigos: readonly string[]
   return out;
 }
 export const usado = (u: UsoDoCodigo | undefined) => !!u && u.despesas + u.orcamento + u.medicoes > 0;
+
+/**
+ * 0079 — o plano DESTA empresa no formato da planilha de lançamentos: contas
+ * ativas de despesa, agrupadas pelo grupo, na ordem do cadastro. Empresa sem
+ * conta cadastrada recebe o plano padrão (o mesmo que a validação aceita).
+ */
+export async function planilhaDaEmpresa(tenantId: string, exec: Exec = db): Promise<GrupoDaPlanilha[]> {
+  const contas = await exec
+    .select({ code: schema.chartAccounts.code, name: schema.chartAccounts.name, groupCode: schema.chartAccounts.groupCode, groupName: schema.chartAccounts.groupName, ativo: schema.chartAccounts.ativo, natureza: schema.chartAccounts.natureza })
+    .from(schema.chartAccounts)
+    .where(eq(schema.chartAccounts.tenantId, tenantId))
+    .orderBy(schema.chartAccounts.groupCode, schema.chartAccounts.ordem, schema.chartAccounts.code);
+  if (contas.length === 0) return planilhaDoPlanoPadrao();
+  const porGrupo = new Map<string, GrupoDaPlanilha>();
+  for (const c of contas) {
+    if (!c.ativo || c.natureza === "receita") continue;
+    const g = porGrupo.get(c.groupCode) ?? { grupo: `${c.groupCode} ${c.groupName}`, contas: [] };
+    g.contas.push({ code: c.code, nome: c.name });
+    porGrupo.set(c.groupCode, g);
+  }
+  const ordem = new Intl.Collator("pt-BR", { numeric: true });
+  return [...porGrupo.entries()].sort(([a], [b]) => ordem.compare(a, b)).map(([, g]) => g);
+}
