@@ -5,6 +5,20 @@
 export const TIPOS_DE_CONTA = ["Construtora", "Imobiliária", "Terceiros"] as const;
 export type TipoDeConta = (typeof TIPOS_DE_CONTA)[number];
 
+/**
+ * Growth Ambiental: o tipo é só rótulo (não pesa em cálculo) e é enum no
+ * banco. O valor gravado "Construtora" é a conta da PRÓPRIA empresa e aparece
+ * como "Empresa (conta própria)"; "Imobiliária" fica só nas contas antigas.
+ */
+export const ROTULO_TIPO_DE_CONTA: Record<TipoDeConta, string> = {
+  Construtora: "Empresa (conta própria)",
+  Imobiliária: "Imobiliária (dados antigos)",
+  Terceiros: "Terceiros",
+};
+/** Tipos oferecidos na conta nova (o valor gravado não muda). */
+export const TIPOS_DE_CONTA_OFERECIDOS: readonly TipoDeConta[] = ["Construtora", "Terceiros"];
+export const rotuloTipoDeConta = (t: string) => ROTULO_TIPO_DE_CONTA[t as TipoDeConta] ?? t;
+
 /** 5.2 — banco obrigatório; saldo aceita negativo, mas não texto nem vazio. Devolve o motivo ou null. */
 export function recusaDaConta(c: { banco: string; saldo: string | null | undefined }): string | null {
   if (!c.banco.trim()) return "Informe o banco.";

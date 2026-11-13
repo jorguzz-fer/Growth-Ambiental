@@ -116,7 +116,7 @@ export default async function FluxoAnaliticoPage({
           linhas: linhas.filter((l) => l.nivel <= 2).map((l) => ({ item: l.label, nivel: l.nivel, valor: l.valor, pctDasEntradas: l.pct })),
           obrasSemOCenario: semCenario,
         }}
-        sugestoes={["Qual grupo mais consome caixa?", "Quanto das saídas é de obra e quanto é complementar?", "As entradas cobrem as saídas no período?"]}
+        sugestoes={["Qual grupo mais consome caixa?", "Quanto das saídas é custo direto dos serviços e quanto é complementar?", "As entradas cobrem as saídas no período?"]}
       />
       {semCenario > 0 && (
         <p className="mb-3 text-[12.5px] text-[var(--color-ink3)]" data-cobertura>

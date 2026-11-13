@@ -141,10 +141,10 @@ export function AssistenteDashboard({ usuario, analise }: { usuario: string; ana
           )}
         </Acao>
 
-        <Acao cor="#E3F6EC" cor2="#1F8A4C" d="M12 3l9 16H3L12 3zM12 10v4M12 17v.01" titulo="Obras que merecem atenção" descricao="Conta vencida; o que não dá para medir, com o motivo" contador={analise.atencao.length} aberta={aberta === "atencao"} onClick={() => toggle("atencao")}>
+        <Acao cor="#E3F6EC" cor2="#1F8A4C" d="M12 3l9 16H3L12 3zM12 10v4M12 17v.01" titulo="Projetos que merecem atenção" descricao="Conta vencida; o que não dá para medir, com o motivo" contador={analise.atencao.length} aberta={aberta === "atencao"} onClick={() => toggle("atencao")}>
           <div className="text-[12px] text-[var(--color-ink2)]">
             {analise.atencao.length === 0 ? (
-              nada("Nenhuma obra do recorte com conta a pagar vencida.")
+              nada("Nenhum projeto do recorte com conta a pagar vencida.")
             ) : (
               <ul className="space-y-0.5">
                 {analise.atencao.map((a) => (

@@ -290,7 +290,7 @@ export default async function DashboardPage({
   const cabecalho = (s: Summary) =>
     project
       ? rotuloDaVersao(s.version)
-      : { titulo: ROTULO_DA_NATUREZA[s.version.kind] ?? s.version.kind, complemento: `soma de ${obrasPorTipo[s.version.kind] ?? 0} obra(s)`, copia: false };
+      : { titulo: ROTULO_DA_NATUREZA[s.version.kind] ?? s.version.kind, complemento: `soma de ${obrasPorTipo[s.version.kind] ?? 0} projeto(s)`, copia: false };
   const recorte = textoDoRecorte({
     projetos: projetosDaTela.length,
     nomeDoProjeto: project?.name,
@@ -308,8 +308,8 @@ export default async function DashboardPage({
   // Contas a Pagar.
   const atencao: { obra: string; motivo: string }[] = [];
   const atencaoLimites: string[] = [
-    "Medição recente: a medição por serviço não está em uso, então não há data de medição por obra para comparar.",
-    "Caixa projetado negativo: o Dashboard não calcula saldo projetado por obra — o número está no Fluxo de Caixa.",
+    "Medição recente: a data da última medição de cada contrato está em Contratos › Medições; o Dashboard não a compara.",
+    "Caixa projetado negativo: o Dashboard não calcula saldo projetado por projeto — o número está no Fluxo de Caixa.",
   ];
   if (can(ctx.perms, "contaspagar", "ver")) {
     for (const p of projetosDaTela) {
@@ -376,7 +376,7 @@ export default async function DashboardPage({
           fluxoPorMes: graficoFluxo.meses.map((mm, i) => ({ mes: mm, entradas: graficoFluxo.entradas[i], saidas: graficoFluxo.saidas[i] })),
           drePorMes: graficoDre.meses.map((mm, i) => ({ mes: mm, receita: graficoDre.receita[i], resultado: graficoDre.partes.Resultado[i] })),
         }}
-        sugestoes={["Como está a obra em uma frase?", "E se a receita dos próximos meses cair 10%?", "Qual mês tem a maior saída prevista?"]}
+        sugestoes={["Como está o projeto em uma frase?", "E se a receita dos próximos meses cair 10%?", "Qual mês tem a maior saída prevista?"]}
       />
       {/* Prompt AA, 1.6 — o recorte escrito, e o seletor de versões logo abaixo do título. */}
       <div className="mb-4 space-y-2">
@@ -478,7 +478,7 @@ export default async function DashboardPage({
       />
       <p className="mt-2 text-[11.5px] text-[var(--color-ink3)]" data-recorte-painel="graficos">
         <strong className="text-[var(--color-ink2)]">Os dois gráficos</strong> mostram {mesesGrafico[0]} a {mesesGrafico[mesesGrafico.length - 1]} da versão Atual
-        {atuaisDaTela.length < projetosDaTela.length ? ` (${projetosDaTela.length - atuaisDaTela.length} obra(s) sem Atual ficaram fora)` : ""}; sem período, os
+        {atuaisDaTela.length < projetosDaTela.length ? ` (${projetosDaTela.length - atuaisDaTela.length} projeto(s) sem Atual ficaram fora)` : ""}; sem período, os
         cinco meses anteriores, o atual e os seis seguintes.
       </p>
 

@@ -14,9 +14,6 @@ const incc: InccRow[] = [
 function headers(tmpl: XLSX.WorkBook, sheet: string): string[] {
   return (XLSX.utils.sheet_to_json(tmpl.Sheets[sheet], { header: 1 })[0] as string[]);
 }
-function rowFor(hs: string[], obj: Record<string, unknown>): unknown[] {
-  return hs.map((h) => obj[h] ?? "");
-}
 
 /** Planilha no formato ANTIGO (incorporação): a exportação de uma versão com unidades, liberações e permutas. */
 function filledWorkbook(): Buffer {
