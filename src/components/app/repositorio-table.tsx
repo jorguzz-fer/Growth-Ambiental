@@ -92,9 +92,9 @@ export function RepositorioTable({ rows }: { rows: RepositorioItem[] }) {
             />
           </div>
           <div>
-            <Label>Obra</Label>
+            <Label>Projeto</Label>
             <Select value={obra} onChange={(e) => setObra(e.target.value)}>
-              <option value="">Todas</option>
+              <option value="">Todos</option>
               {opts.obras.map((o) => (
                 <option key={o.id} value={o.id}>
                   {o.nome}
@@ -157,7 +157,7 @@ export function RepositorioTable({ rows }: { rows: RepositorioItem[] }) {
                 <TH>Tipo</TH>
                 <TH>Nº doc. fiscal</TH>
                 <TH>PED</TH>
-                <TH>Projeto / Obra</TH>
+                <TH>Projeto</TH>
                 <TH>Fornecedor</TH>
                 <TH>Competência</TH>
                 <TH className="text-right">Valor</TH>

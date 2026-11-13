@@ -208,7 +208,7 @@ export function ReceitaProjetosMatrix({
               <thead>
                 <tr className="border-b border-[var(--color-accent2)]/12">
                   <th className="sticky left-0 z-10 min-w-[200px] bg-white px-3 py-2 text-left font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-wide text-[var(--color-ink3)]">
-                    Projeto (Obra)
+                    Projeto
                   </th>
                   {months.map((m) => (
                     <th key={m} className="min-w-[92px] px-2 py-2 text-right font-[family-name:var(--font-mono)] text-[10px] text-[var(--color-ink3)]">

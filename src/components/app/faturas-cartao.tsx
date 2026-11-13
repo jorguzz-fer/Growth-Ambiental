@@ -101,7 +101,7 @@ export function FaturasCartao({ faturas, hoje, aberta, compras, pagamentos, cont
                   <TH>PED</TH>
                   <TH>Descrição</TH>
                   <TH>Fornecedor</TH>
-                  <TH>Obra</TH>
+                  <TH>Projeto</TH>
                   <TH>Competência</TH>
                   <TH>Parcela</TH>
                   <TH className="text-right">Valor</TH>

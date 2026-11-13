@@ -116,7 +116,7 @@ export function EstoqueManager({ items, movimentos, filtros, projetos, despesas,
       {canCriar && ativos.length > 0 && (
         <>
           <Link href="/estoque?tab=mov&lancar=entrada" className="rounded-[8px] border border-[var(--color-success)]/40 px-3 py-1.5 text-xs font-semibold text-[var(--color-success)] hover:bg-[var(--color-success)]/10">↓ Dar entrada</Link>
-          <Link href="/estoque?tab=mov&lancar=saida" data-atalho-baixa className="rounded-[8px] border border-[var(--color-danger)]/40 px-3 py-1.5 text-xs font-semibold text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10">↑ Dar baixa (saída para obra)</Link>
+          <Link href="/estoque?tab=mov&lancar=saida" data-atalho-baixa className="rounded-[8px] border border-[var(--color-danger)]/40 px-3 py-1.5 text-xs font-semibold text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10">↑ Dar baixa (saída para projeto)</Link>
         </>
       )}
       </div>
@@ -412,7 +412,7 @@ function MovTab({ items, todosItens, movimentos, filtros, projetos, despesas, pe
             <p className="rounded-[8px] bg-[var(--color-surface2)] px-3 py-2 text-[12px] text-[var(--color-ink2)]">
               {tipo === "entrada"
                 ? "Toda entrada aponta a despesa (compra) ou a permuta que trouxe o material — é o lastro do valor. O custo é o do cadastro no momento e fica gravado no movimento."
-                : "A saída registra para qual obra o material foi. Sem efeito contábil: não cria despesa, não altera a DRE nem reclassifica custo — o custo já é da despesa de compra."}
+                : "A saída registra para qual projeto o material foi. Sem efeito contábil: não cria despesa, não altera a DRE nem reclassifica custo — o custo já é da despesa de compra."}
             </p>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-6">
               <div className="sm:col-span-2">
@@ -452,13 +452,13 @@ function MovTab({ items, todosItens, movimentos, filtros, projetos, despesas, pe
                   </div>
                   {despesa && (
                     <div className="rounded-[8px] border border-[var(--color-line)] bg-white px-3 py-2 text-[12px] text-[var(--color-ink2)] sm:col-span-6" data-despesa-resumo>
-                      <strong className="text-[var(--color-ink)]">{despesa.numDoc ?? "Despesa"}</strong> · {despesa.fornecedor ?? "sem fornecedor"} · competência {despesa.competencia ?? "—"} · {brl0(despesa.valor)} · obra {despesa.projectName ?? "—"}
+                      <strong className="text-[var(--color-ink)]">{despesa.numDoc ?? "Despesa"}</strong> · {despesa.fornecedor ?? "sem fornecedor"} · competência {despesa.competencia ?? "—"} · {brl0(despesa.valor)} · projeto {despesa.projectName ?? "—"}
                       {despesa.entradasSoma > 0 && <span> · já lançado em estoque: {brl0(despesa.entradasSoma)}</span>}
                       <span className="block text-[11px] text-[var(--color-ink3)]">Uma nota com vários itens vira várias entradas apontando a mesma despesa. A despesa não é alterada.</span>
                     </div>
                   )}
                   <div className="sm:col-span-2">
-                    <Label>Obra (opcional — vem da despesa)</Label>
+                    <Label>Projeto (opcional — vem da despesa)</Label>
                     <Select value={projectId} onChange={(e) => setProjectId(e.target.value)}>
                       <option value="">— almoxarifado —</option>
                       {projetos.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}
@@ -467,9 +467,9 @@ function MovTab({ items, todosItens, movimentos, filtros, projetos, despesas, pe
                 </>
               ) : (
                 <div className="sm:col-span-2">
-                  <Label>Obra de destino *</Label>
-                  <Select value={projectId} onChange={(e) => setProjectId(e.target.value)} aria-label="Obra de destino">
-                    <option value="">— escolha a obra —</option>
+                  <Label>Projeto de destino *</Label>
+                  <Select value={projectId} onChange={(e) => setProjectId(e.target.value)} aria-label="Projeto de destino">
+                    <option value="">— escolha o projeto —</option>
                     {projetos.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}
                   </Select>
                 </div>
@@ -498,8 +498,8 @@ function MovTab({ items, todosItens, movimentos, filtros, projetos, despesas, pe
               <Select name="f_item" defaultValue={filtros.itemId ?? ""}><option value="">Todos</option>{todosItens.map((i) => <option key={i.id} value={i.id}>{i.nome}</option>)}</Select>
             </div>
             <div>
-              <Label>Obra</Label>
-              <Select name="f_obra" defaultValue={filtros.projectId ?? ""}><option value="">Todas</option>{projetos.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}</Select>
+              <Label>Projeto</Label>
+              <Select name="f_obra" defaultValue={filtros.projectId ?? ""}><option value="">Todos</option>{projetos.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}</Select>
             </div>
             <div>
               <Label>Tipo</Label>
@@ -514,8 +514,8 @@ function MovTab({ items, todosItens, movimentos, filtros, projetos, despesas, pe
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card>
           <CardContent className="p-4">
-            <h3 className="text-sm font-semibold text-[var(--color-ink)]">Consumo por obra <span className="font-normal text-[var(--color-ink3)]">{filtros.de || filtros.ate ? "no período filtrado" : "desde o início"}</span></h3>
-            <p className="mb-2 text-[11.5px] text-[var(--color-ink3)]">Quanto cada obra retirou, a custo. Sem efeito contábil: o consumo não vira custo da obra — ele já é, pela despesa de compra.</p>
+            <h3 className="text-sm font-semibold text-[var(--color-ink)]">Consumo por projeto <span className="font-normal text-[var(--color-ink3)]">{filtros.de || filtros.ate ? "no período filtrado" : "desde o início"}</span></h3>
+            <p className="mb-2 text-[11.5px] text-[var(--color-ink3)]">Quanto cada projeto retirou, a custo. Sem efeito contábil: o consumo não vira custo do projeto — ele já é, pela despesa de compra.</p>
             {consumo.length === 0 ? <p className="text-[12px] text-[var(--color-ink4)]">Nenhuma saída de consumo.</p> : (
               <ul className="space-y-1.5" data-consumo>
                 {consumo.map((c) => (
@@ -530,11 +530,11 @@ function MovTab({ items, todosItens, movimentos, filtros, projetos, despesas, pe
         </Card>
         <Card>
           <CardContent className="p-4">
-            <h3 className="text-sm font-semibold text-[var(--color-ink)]">Compra × consumo por obra</h3>
-            <p className="mb-2 text-[11.5px] text-[var(--color-ink3)]">Comprou = entradas cuja despesa é da obra; consumiu = saídas com destino nela. Diferença positiva: comprou mais do que usou (foi para outra obra ou está no almoxarifado). É leitura — nada é corrigido automaticamente.</p>
+            <h3 className="text-sm font-semibold text-[var(--color-ink)]">Compra × consumo por projeto</h3>
+            <p className="mb-2 text-[11.5px] text-[var(--color-ink3)]">Comprou = entradas cuja despesa é do projeto; consumiu = saídas com destino nele. Diferença positiva: comprou mais do que usou (foi para outro projeto ou está no almoxarifado). É leitura — nada é corrigido automaticamente.</p>
             {confronto.length === 0 ? <p className="text-[12px] text-[var(--color-ink4)]">Sem compras nem consumo no período.</p> : (
               <table className="w-full text-[12px]" data-confronto>
-                <thead><tr className="text-[10px] uppercase tracking-wide text-[var(--color-ink4)]"><th className="text-left font-normal">Obra</th><th className="text-right font-normal">Comprou</th><th className="text-right font-normal">Consumiu</th><th className="text-right font-normal">Diferença</th></tr></thead>
+                <thead><tr className="text-[10px] uppercase tracking-wide text-[var(--color-ink4)]"><th className="text-left font-normal">Projeto</th><th className="text-right font-normal">Comprou</th><th className="text-right font-normal">Consumiu</th><th className="text-right font-normal">Diferença</th></tr></thead>
                 <tbody className="font-[family-name:var(--font-mono)]">
                   {confronto.map((c) => (
                     <tr key={c.projectId} className="border-t border-[var(--color-line)]">
@@ -564,7 +564,7 @@ function MovTab({ items, todosItens, movimentos, filtros, projetos, despesas, pe
                   <TH className="text-right">Qtd</TH>
                   <TH className="text-right">Custo unit.</TH>
                   <TH className="text-right">Valor</TH>
-                  <TH>Obra</TH>
+                  <TH>Projeto</TH>
                   <TH>Vínculo</TH>
                   <TH>Responsável</TH>
                   <TH>Docs</TH>

@@ -176,9 +176,9 @@ export function RestituicoesManager({
       )}
 
       <div className="flex flex-wrap items-center gap-2">
-        <Label className="mb-0">Obra:</Label>
-        <Select value={obra} onChange={(e) => setObra(e.target.value)} className="h-8 w-auto" aria-label="Filtrar por obra">
-          <option value="">Todas as obras</option>
+        <Label className="mb-0">Projeto:</Label>
+        <Select value={obra} onChange={(e) => setObra(e.target.value)} className="h-8 w-auto" aria-label="Filtrar por projeto">
+          <option value="">Todos os projetos</option>
           {projetos.map((p) => (
             <option key={p.id} value={p.id}>{p.nome}</option>
           ))}
@@ -199,7 +199,7 @@ export function RestituicoesManager({
           <tr>
             <TH>Documento</TH>
             <TH>Terceiro</TH>
-            <TH>Obra</TH>
+            <TH>Projeto</TH>
             <TH className="text-right">Valor</TH>
             <TH className="text-right">Ressarcido</TH>
             <TH className="text-right">Saldo</TH>

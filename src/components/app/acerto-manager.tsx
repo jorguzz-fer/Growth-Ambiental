@@ -59,7 +59,7 @@ export function AcertoManager({
         {(
           [
             ["vincular", "Vincular despesas"],
-            ["rateio", "Rateio entre obras"],
+            ["rateio", "Rateio entre projetos"],
             ["historico", "Acertos do período"],
           ] as [Aba, string][]
         ).map(([k, label]) => (
@@ -171,7 +171,7 @@ function VincularDespesas({
   useCrisFormulario(
     {
       id: "acerto-vincular",
-      titulo: "Acerto Contábil: pagamento e despesas a quitar",
+      titulo: "Acertos e Rateios: pagamento e despesas a quitar",
       campos: [
         { nome: "dataPagamento", rotulo: "Data do pagamento", tipo: "data", dica: "MM/DD/YYYY" },
         { nome: "banco", rotulo: "Banco / conta", tipo: "opcao", opcoes: bancos.map((b) => b.nome) },
@@ -316,7 +316,7 @@ function VincularDespesas({
             <Input
               value={filtro.busca}
               onChange={(e) => setFiltro({ ...filtro, busca: e.target.value })}
-              placeholder="PED, fornecedor, obra"
+              placeholder="PED, fornecedor, projeto"
             />
           </div>
           <div>
@@ -334,12 +334,12 @@ function VincularDespesas({
             </Select>
           </div>
           <div>
-            <Label>Obra</Label>
+            <Label>Projeto</Label>
             <Select
               value={filtro.obra}
               onChange={(e) => setFiltro({ ...filtro, obra: e.target.value })}
             >
-              <option value="">Todas</option>
+              <option value="">Todos</option>
               {opts.obras.map((o) => (
                 <option key={o.id} value={o.id}>
                   {o.nome}
@@ -357,7 +357,7 @@ function VincularDespesas({
               <tr>
                 <TH className="w-8"></TH>
                 <TH>PED</TH>
-                <TH>Obra</TH>
+                <TH>Projeto</TH>
                 <TH>Fornecedor</TH>
                 <TH>Competência</TH>
                 <TH>Vencimento</TH>
@@ -454,7 +454,7 @@ function VincularDespesas({
                 A diferença é lançada como{" "}
                 {diferenca.tipo === "JUROS" ? "despesa" : "receita"} financeira do
                 período, na competência do pagamento. <strong>Não é rateada no
-                custo de nenhuma obra</strong> — juros de mora são perda
+                custo de nenhum projeto</strong> — juros de mora são perda
                 operacional, não custo de obtenção de recursos (RG-07).
               </p>
             </div>
@@ -589,13 +589,13 @@ function RateioObras({
     <Card>
       <CardContent className="p-5">
         <h2 className="mb-1 text-sm font-semibold text-[var(--color-ink)]">
-          Rateio de mão de obra entre obras
+          Rateio de mão de obra entre projetos
         </h2>
         <p className="mb-4 text-[11.5px] leading-relaxed text-[var(--color-ink3)]">
-          Um pagamento único a um prestador que trabalhou em várias obras. Gera{" "}
-          <strong>um PED por obra</strong> (custo correto por centro de custo) e{" "}
+          Um pagamento único a um prestador que trabalhou em vários projetos. Gera{" "}
+          <strong>um PED por projeto</strong> (custo correto por centro de custo) e{" "}
           <strong>uma única saída de caixa</strong>. A memória de cálculo fica
-          gravada — é o documento que sustenta o custo por obra perante a
+          gravada — é o documento que sustenta o custo por projeto perante a
           contabilidade.
         </p>
 
@@ -688,13 +688,13 @@ function RateioObras({
         </div>
 
         <h3 className="mb-2 mt-5 text-[13px] font-semibold text-[var(--color-ink)]">
-          Distribuição entre obras
+          Distribuição entre projetos
         </h3>
         <div className="space-y-2">
           {linhas.map((l, i) => (
             <div key={i} className="flex flex-wrap items-end gap-2">
               <div className="min-w-[220px] flex-1">
-                <Label>Obra</Label>
+                <Label>Projeto</Label>
                 <Select
                   value={l.projectId}
                   onChange={(e) =>
@@ -742,7 +742,7 @@ function RateioObras({
           onClick={() => setLinhas((ls) => [...ls, { projectId: "", percentual: "" }])}
           className="mt-2 text-[12px] text-[var(--color-accent2)] hover:underline"
         >
-          + Adicionar obra
+          + Adicionar projeto
         </button>
 
         {/* CA-27 — rateio que não fecha é bloqueado com mensagem clara. */}
@@ -810,7 +810,7 @@ function Historico({
               <TH className="text-right">Transferido</TH>
               <TH className="text-right">Vinculado</TH>
               <TH className="text-right">Diferença</TH>
-              <TH>Obras</TH>
+              <TH>Projetos</TH>
               <TH>Status</TH>
               {canEstornar && <TH className="text-right">Ação</TH>}
             </tr>

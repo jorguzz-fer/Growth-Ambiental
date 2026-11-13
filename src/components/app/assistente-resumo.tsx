@@ -95,7 +95,7 @@ export function AssistenteResumo({ usuario, analise }: { usuario: string; analis
             ))}
           </ul>
         </Acao>
-        <Acao d="M4 19V9m6 10V5m6 14v-7" titulo="Comparar projetos" descricao="Escolha Todos, Ativos ou Finalizados no seletor de projeto: o Resumo soma as obras e mostra o Comparativo entre elas." desabilitada aberta={false} onClick={() => {}}>
+        <Acao d="M4 19V9m6 10V5m6 14v-7" titulo="Comparar projetos" descricao="Escolha Todos, Ativos ou Finalizados no seletor de projeto: o Resumo soma os projetos e mostra o Comparativo entre eles." desabilitada aberta={false} onClick={() => {}}>
           {null}
         </Acao>
         <Acao d="M12 8v4l3 2M3.5 12a8.5 8.5 0 1 0 17 0 8.5 8.5 0 0 0-17 0z" titulo="O que mudou desde o mês passado" descricao="Neste mesmo recorte; números guardados no seu navegador" contador={mudou?.length ?? 0} aberta={aberta === "mudou"} onClick={() => toggle("mudou")}>

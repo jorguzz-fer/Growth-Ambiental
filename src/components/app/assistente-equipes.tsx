@@ -76,12 +76,12 @@ export function AssistenteEquipes({ usuario, projectId, hojeInterno, analise, di
   const a = (x: Acao) => setAberta(aberta === x ? null : x);
   const itensDoDia = Object.entries(proposta).filter(([, q]) => q > 0).map(([equipeProjetoId, quantidade]) => ({ equipeProjetoId, quantidade }));
   return (
-    <aside aria-label="Assistente de Equipes" className="w-full shrink-0 rounded-[16px] border border-[var(--color-line)] bg-white p-4 shadow-sm min-[1180px]:sticky min-[1180px]:top-20 min-[1180px]:w-[320px]">
+    <aside aria-label="Assistente de Equipes e Presença de Campo" className="w-full shrink-0 rounded-[16px] border border-[var(--color-line)] bg-white p-4 shadow-sm min-[1180px]:sticky min-[1180px]:top-20 min-[1180px]:w-[320px]">
       <div className="mb-3 flex items-start gap-2.5">
         <Faisca />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-1.5 text-[15px] font-bold text-[var(--color-ink)]">Assistente IA <Badge tone="neutral">Propõe, você confirma</Badge></div>
-          <div className="text-[12px] text-[var(--color-ink2)]">Equipes · diárias do dia e folha de ponto</div>
+          <div className="text-[12px] text-[var(--color-ink2)]">Equipes e Presença de Campo · diárias do dia e folha de ponto</div>
         </div>
         <button type="button" onClick={alternar} aria-expanded={true} aria-label="Recolher o assistente" className="rounded-[8px] p-1 text-[var(--color-ink3)] hover:bg-[var(--color-surface2)]"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" aria-hidden><path d="M9 6l6 6-6 6" /></svg></button>
       </div>
@@ -125,14 +125,14 @@ export function AssistenteEquipes({ usuario, projectId, hojeInterno, analise, di
         <Acao cor="#FFF1DB" cor2="#B45309" d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" titulo="Diárias sem lançamento de pagamento" descricao="Membros com diárias registradas e sem despesa correspondente (BZ-1)" contador={diariasSemLancamento.length} aberta={aberta === "pagamento"} onClick={() => a("pagamento")}>
           {diariasSemLancamento.length === 0 ? <p className={li}>Toda diária de autônomo já tem despesa lançada.</p> : <ul className="space-y-1">{diariasSemLancamento.map((x) => <li key={x.equipeProjetoId} className={li}><span className={nome}>{x.nome}</span> · {qtd(x.quantidade)} diária(s) · {brl0(x.valor)} — use &quot;Lançar em Despesas&quot; no acumulado.</li>)}</ul>}
         </Acao>
-        <Acao cor="#FDE6E9" cor2="#C0334A" d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6" titulo="Obra sem equipe" descricao="Projetos sem ninguém alocado" contador={obrasSemEquipe.length} aberta={aberta === "semEquipe"} onClick={() => a("semEquipe")}>
-          {obrasSemEquipe.length === 0 ? <p className={li}>Toda obra tem equipe.</p> : <ul className="space-y-1">{obrasSemEquipe.map((o) => <li key={o.projectId} className={li}><span className={nome}>{o.projectName}</span></li>)}</ul>}
+        <Acao cor="#FDE6E9" cor2="#C0334A" d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6" titulo="Projeto sem equipe" descricao="Projetos sem ninguém alocado" contador={obrasSemEquipe.length} aberta={aberta === "semEquipe"} onClick={() => a("semEquipe")}>
+          {obrasSemEquipe.length === 0 ? <p className={li}>Todo projeto tem equipe.</p> : <ul className="space-y-1">{obrasSemEquipe.map((o) => <li key={o.projectId} className={li}><span className={nome}>{o.projectName}</span></li>)}</ul>}
         </Acao>
-        <Acao cor="#E8F1FB" cor2="#2563EB" d="M4 6h16M4 12h16M4 18h10" titulo="Alocação sem função" descricao="Membros ativos sem função nesta obra" contador={alocacaoSemFuncao.length} aberta={aberta === "semFuncao"} onClick={() => a("semFuncao")}>
+        <Acao cor="#E8F1FB" cor2="#2563EB" d="M4 6h16M4 12h16M4 18h10" titulo="Alocação sem função" descricao="Membros ativos sem função neste projeto" contador={alocacaoSemFuncao.length} aberta={aberta === "semFuncao"} onClick={() => a("semFuncao")}>
           {alocacaoSemFuncao.length === 0 ? <p className={li}>Todos têm função.</p> : <ul className="space-y-1">{alocacaoSemFuncao.map((x) => <li key={x.equipeProjetoId} className={li}><span className={nome}>{x.nome}</span></li>)}</ul>}
         </Acao>
-        <Acao cor="#EAE6FB" cor2="#6D4BD1" d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87" titulo="Alocações sobrepostas" descricao="A mesma pessoa ativa em obras diferentes — pode ser legítimo ou erro" contador={sobreposicoes.length} aberta={aberta === "sobreposicao"} onClick={() => a("sobreposicao")}>
-          {sobreposicoes.length === 0 ? <p className={li}>Ninguém está ativo em mais de uma obra.</p> : <ul className="space-y-1">{sobreposicoes.map((x) => <li key={x.nome} className={li}><span className={nome}>{x.nome}</span> · {x.obras.join(" e ")}</li>)}</ul>}
+        <Acao cor="#EAE6FB" cor2="#6D4BD1" d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87" titulo="Alocações sobrepostas" descricao="A mesma pessoa ativa em projetos diferentes — pode ser legítimo ou erro" contador={sobreposicoes.length} aberta={aberta === "sobreposicao"} onClick={() => a("sobreposicao")}>
+          {sobreposicoes.length === 0 ? <p className={li}>Ninguém está ativo em mais de um projeto.</p> : <ul className="space-y-1">{sobreposicoes.map((x) => <li key={x.nome} className={li}><span className={nome}>{x.nome}</span> · {x.obras.join(" e ")}</li>)}</ul>}
         </Acao>
       </div>
       <p className="mt-3 text-[11px] leading-snug text-[var(--color-ink3)]">Ele propõe, você confirma: a diária só é gravada pelo seu clique. Nunca aloca ou desaloca membro, nunca lança despesa, e nunca lê documento de funcionário — só a folha de ponto do dia.</p>

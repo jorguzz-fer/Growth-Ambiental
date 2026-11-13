@@ -216,7 +216,7 @@ export function ContasPagarTable({
                   <SortTH coluna="descricao" estado={estado} onSort={onSort}>Descrição</SortTH>
                   <SortTH coluna="parcela" estado={estado} onSort={onSort}>Parcela</SortTH>
                   <SortTH coluna="categoria" estado={estado} onSort={onSort}>Categoria</SortTH>
-                  <SortTH coluna="projeto" estado={estado} onSort={onSort}>Projeto (Obra)</SortTH>
+                  <SortTH coluna="projeto" estado={estado} onSort={onSort}>Projeto</SortTH>
                   <SortTH coluna="cliente" estado={estado} onSort={onSort}>Cliente</SortTH>
                   <SortTH coluna="valor" estado={estado} onSort={onSort} className="text-right">Valor</SortTH>
                   <SortTH coluna="saldo" estado={estado} onSort={onSort} className="text-right">Saldo</SortTH>

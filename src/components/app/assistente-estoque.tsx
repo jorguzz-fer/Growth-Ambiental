@@ -108,7 +108,7 @@ export function AssistenteEstoque({ usuario, analise, despesas, obras, aiConfigu
   const grauTone = (g: "alta" | "media" | "baixa") => (g === "alta" ? "success" : g === "media" ? "warning" : "neutral");
 
   return (
-    <aside aria-label="Assistente do Estoque" className="w-full shrink-0 rounded-[16px] border border-[var(--color-line)] bg-white p-4 shadow-sm min-[1180px]:sticky min-[1180px]:top-20 min-[1180px]:w-[320px]">
+    <aside aria-label="Assistente de Materiais e Equipamentos" className="w-full shrink-0 rounded-[16px] border border-[var(--color-line)] bg-white p-4 shadow-sm min-[1180px]:sticky min-[1180px]:top-20 min-[1180px]:w-[320px]">
       <div className="mb-3 flex items-start gap-2.5">
         <Faisca />
         <div className="min-w-0 flex-1">
@@ -116,7 +116,7 @@ export function AssistenteEstoque({ usuario, analise, despesas, obras, aiConfigu
             Assistente IA
             <Badge tone="neutral">Propõe, você confirma</Badge>
           </div>
-          <div className="text-[12px] text-[var(--color-ink2)]">Estoque · lê a nota e propõe as entradas</div>
+          <div className="text-[12px] text-[var(--color-ink2)]">Materiais e Equipamentos · lê a nota e propõe as entradas</div>
         </div>
         <button type="button" onClick={alternar} aria-expanded={true} aria-label="Recolher o assistente" title="Recolher" className="rounded-[8px] p-1 text-[var(--color-ink3)] hover:bg-[var(--color-surface2)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent2)]/40">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" aria-hidden><path d="M9 6l6 6-6 6" /></svg>
@@ -177,9 +177,9 @@ export function AssistenteEstoque({ usuario, analise, despesas, obras, aiConfigu
           )}
         </AcaoDoPainel>
 
-        <AcaoDoPainel cor="#E8F1FB" icone={<Icone cor="#2563EB" d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6" />} titulo="Consumo por obra" descricao="Quanto cada obra retirou — leitura; o custo já é da despesa" contador={consumoPorObra.length} aberta={aberta === "obra"} onClick={() => alternarAcao("obra")}>
+        <AcaoDoPainel cor="#E8F1FB" icone={<Icone cor="#2563EB" d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6" />} titulo="Consumo por projeto" descricao="Quanto cada projeto retirou — leitura; o custo já é da despesa" contador={consumoPorObra.length} aberta={aberta === "obra"} onClick={() => alternarAcao("obra")}>
           {consumoPorObra.length === 0 ? <p className={li}>Nenhuma saída de consumo.</p> : (
-            <ul className="space-y-1">{consumoPorObra.map((c) => <li key={c.projectId} className={li}><span className={nome}>{obras[c.projectId] ?? "obra"}</span> · {brl0(c.valor)} · {c.itens.slice(0, 3).map((i) => `${i.itemNome} ${qtd(i.quantidade, i.unidade)}`).join(", ")}{c.itens.length > 3 ? ", …" : ""}</li>)}</ul>
+            <ul className="space-y-1">{consumoPorObra.map((c) => <li key={c.projectId} className={li}><span className={nome}>{obras[c.projectId] ?? "projeto"}</span> · {brl0(c.valor)} · {c.itens.slice(0, 3).map((i) => `${i.itemNome} ${qtd(i.quantidade, i.unidade)}`).join(", ")}{c.itens.length > 3 ? ", …" : ""}</li>)}</ul>
           )}
         </AcaoDoPainel>
 

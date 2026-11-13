@@ -89,7 +89,7 @@ export function CashTable({
         <tr>
           <TH>Data</TH>
           <TH>Descrição</TH>
-          {obraDe && <TH>Obra</TH>}
+          {obraDe && <TH>Projeto</TH>}
           <TH>Categoria</TH>
           <TH className="text-right">Valor</TH>
           <TH>Conciliação</TH>

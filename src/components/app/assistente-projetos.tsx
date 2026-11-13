@@ -87,7 +87,7 @@ export function AssistenteProjetos(props: { usuario: string; aiConfigurada: bool
         {props.modo === "todos" ? <AcoesDeTodos analise={props.analise} aberta={aberta} a={a} li={li} nome={nome} /> : <AcoesDeProjeto {...props} aberta={aberta} a={a} li={li} nome={nome} />}
       </div>
       <p className="mt-3 text-[11px] leading-snug text-[var(--color-ink3)]">
-        {propoe ? "Ele propõe, você confirma: a proposta só entra no formulário; gravar é o seu Salvar, com a sua permissão. Nunca muda status, cliente, datas, valores ou documentos por conta própria." : "Só leitura: analisa os projetos desta empresa e aponta o que falta. Abra uma obra para extrair dados de documentos e comparar orçado x realizado."}
+        {propoe ? "Ele propõe, você confirma: a proposta só entra no formulário; gravar é o seu Salvar, com a sua permissão. Nunca muda status, cliente, datas, valores ou documentos por conta própria." : "Só leitura: analisa os projetos desta empresa e aponta o que falta. Abra um projeto para extrair dados de documentos e comparar orçado x realizado."}
       </p>
     </aside>
   );
@@ -97,17 +97,17 @@ function AcoesDeTodos({ analise, aberta, a, li, nome }: { analise: AnaliseDeProj
   const L = ({ id, children }: { id: string; children: React.ReactNode }) => <Link href={`/projeto?proj=${id}`} className={`${nome} hover:underline`}>{children}</Link>;
   return (
     <>
-      <Acao cor="#FFF1DB" cor2="#B45309" d="M12 9v4m0 4h.01M10.3 3.9L2.6 17a2 2 0 001.7 3h15.4a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z" titulo="Completar cadastro" descricao="Obras sem datas, valores, custos, endereço ou município" contador={analise.cadastroIncompleto.length} aberta={aberta === "incompleto"} onClick={() => a("incompleto")}>
-        {analise.cadastroIncompleto.length === 0 ? <p className={li}>Todas as obras têm o cadastro básico.</p> : <ul className="space-y-1">{analise.cadastroIncompleto.map((x) => <li key={x.id} className={li}><L id={x.id}>{x.nome}</L> · falta {x.itens.join(", ")}</li>)}</ul>}
+      <Acao cor="#FFF1DB" cor2="#B45309" d="M12 9v4m0 4h.01M10.3 3.9L2.6 17a2 2 0 001.7 3h15.4a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z" titulo="Completar cadastro" descricao="Projetos sem datas, valores, custos, endereço ou município" contador={analise.cadastroIncompleto.length} aberta={aberta === "incompleto"} onClick={() => a("incompleto")}>
+        {analise.cadastroIncompleto.length === 0 ? <p className={li}>Todos os projetos têm o cadastro básico.</p> : <ul className="space-y-1">{analise.cadastroIncompleto.map((x) => <li key={x.id} className={li}><L id={x.id}>{x.nome}</L> · falta {x.itens.join(", ")}</li>)}</ul>}
       </Acao>
       <Acao cor="#FDE6E9" cor2="#C0334A" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" titulo="Revisar inconsistências" descricao="Duração ≠ datas, fim antes do início, funding abaixo do global, município sem IBGE, período de planejamento" contador={analise.inconsistencias.length} aberta={aberta === "inconsistencias"} onClick={() => a("inconsistencias")}>
         {analise.inconsistencias.length === 0 ? <p className={li}>Nenhuma inconsistência.</p> : <ul className="space-y-1.5">{analise.inconsistencias.map((x) => <li key={x.id} className={li}><L id={x.id}>{x.nome}</L><ul className="ml-3 list-disc">{x.itens.map((t) => <li key={t}>{t}</li>)}</ul></li>)}</ul>}
       </Acao>
       <Acao cor="#E8F1FB" cor2="#2563EB" d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" titulo="Analisar funding" descricao="Fontes de recursos que não alcançam o valor global, ou não informadas" contador={analise.funding.length} aberta={aberta === "funding"} onClick={() => a("funding")}>
-        {analise.funding.length === 0 ? <p className={li}>Toda obra com valor global tem funding que o cobre.</p> : <ul className="space-y-1">{analise.funding.map((x) => <li key={x.id} className={li}><L id={x.id}>{x.nome}</L> · {x.itens[0]}</li>)}</ul>}
+        {analise.funding.length === 0 ? <p className={li}>Todo projeto com valor global tem funding que o cobre.</p> : <ul className="space-y-1">{analise.funding.map((x) => <li key={x.id} className={li}><L id={x.id}>{x.nome}</L> · {x.itens[0]}</li>)}</ul>}
       </Acao>
-      <Acao cor="#EAE6FB" cor2="#6D4BD1" d="M4 4h12l4 4v12H4zM8 12h8M8 16h8" titulo="Projetos sem documentos" descricao="Obras sem contrato, proposta ou outro anexo" contador={analise.semDocumentos.length} aberta={aberta === "documentos"} onClick={() => a("documentos")}>
-        {analise.semDocumentos.length === 0 ? <p className={li}>Toda obra tem ao menos um documento.</p> : <ul className="space-y-1">{analise.semDocumentos.map((x) => <li key={x.id} className={li}><L id={x.id}>{x.nome}</L></li>)}</ul>}
+      <Acao cor="#EAE6FB" cor2="#6D4BD1" d="M4 4h12l4 4v12H4zM8 12h8M8 16h8" titulo="Projetos sem documentos" descricao="Projetos sem contrato, proposta ou outro anexo" contador={analise.semDocumentos.length} aberta={aberta === "documentos"} onClick={() => a("documentos")}>
+        {analise.semDocumentos.length === 0 ? <p className={li}>Todo projeto tem ao menos um documento.</p> : <ul className="space-y-1">{analise.semDocumentos.map((x) => <li key={x.id} className={li}><L id={x.id}>{x.nome}</L></li>)}</ul>}
       </Acao>
       <Acao cor="#E6F4EA" cor2="#1E7A3C" d="M9 12l2 2 4-4M21 12a9 9 0 11-18 0 9 9 0 0118 0z" titulo="Sem classificação" descricao="Projetos ainda sem Ativo/Finalizado — classifique no card" contador={analise.semClassificacao.length} aberta={aberta === "classificacao"} onClick={() => a("classificacao")}>
         {analise.semClassificacao.length === 0 ? <p className={li}>Todos classificados.</p> : <ul className="space-y-1">{analise.semClassificacao.map((x) => <li key={x.id} className={li}><L id={x.id}>{x.nome}</L></li>)}</ul>}
@@ -151,7 +151,7 @@ function AcoesDeProjeto({ projectId, analise, documentos, canEditar, aiConfigura
   return (
     <>
       {msg && <p role={msg.ok ? "status" : "alert"} className={`rounded-[8px] px-2 py-1 text-[11.5px] ${msg.ok ? "bg-[var(--color-success)]/10 text-[var(--color-success)]" : "bg-[var(--color-danger)]/10 text-[var(--color-danger)]"}`}>{msg.texto}</p>}
-      <Acao cor="#FFF1DB" cor2="#B45309" d="M12 9v4m0 4h.01M10.3 3.9L2.6 17a2 2 0 001.7 3h15.4a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z" titulo="Completar cadastro" descricao="O que falta nesta obra" contador={analise.faltam.length} aberta={aberta === "incompleto"} onClick={() => a("incompleto")}>
+      <Acao cor="#FFF1DB" cor2="#B45309" d="M12 9v4m0 4h.01M10.3 3.9L2.6 17a2 2 0 001.7 3h15.4a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z" titulo="Completar cadastro" descricao="O que falta neste projeto" contador={analise.faltam.length} aberta={aberta === "incompleto"} onClick={() => a("incompleto")}>
         {analise.faltam.length === 0 ? <p className={li}>Cadastro básico completo.</p> : <ul className="ml-3 list-disc space-y-0.5">{analise.faltam.map((t) => <li key={t} className={li}>{t}</li>)}</ul>}
         {analise.semClassificacao && <p className={`${li} mt-1`}>Sem Ativo/Finalizado: classifique no campo Status.</p>}
       </Acao>
@@ -161,8 +161,8 @@ function AcoesDeProjeto({ projectId, analise, documentos, canEditar, aiConfigura
       <Acao cor="#E8F1FB" cor2="#2563EB" d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" titulo="Analisar funding" descricao="Fontes de recursos × valor global" contador={analise.funding ? 1 : 0} aberta={aberta === "funding"} onClick={() => a("funding")}>
         <p className={li}>{analise.funding ?? "As fontes de recursos cobrem o valor global (ou não há valor global para comparar)."}</p>
       </Acao>
-      <Acao cor="#EAE6FB" cor2="#6D4BD1" d="M4 4h12l4 4v12H4zM8 12h8M8 16h8" titulo="Extrair dados de documentos" descricao="Lê um documento desta obra e propõe o preenchimento — não grava" contador={proposta?.campos.length ?? 0} aberta={aberta === "extrair"} onClick={() => a("extrair")}>
-        {!aiConfigurada ? <p className={li}>Leitura por IA não configurada (ANTHROPIC_API_KEY).</p> : !canEditar ? <p className={li}>Sem permissão de editar: a proposta não poderia ser aplicada.</p> : legiveis.length === 0 ? <p className={li}>{documentos.length === 0 ? "Nenhum documento anexado a esta obra." : "Nenhum documento legível (PDF ou imagem)."}</p> : (
+      <Acao cor="#EAE6FB" cor2="#6D4BD1" d="M4 4h12l4 4v12H4zM8 12h8M8 16h8" titulo="Extrair dados de documentos" descricao="Lê um documento deste projeto e propõe o preenchimento — não grava" contador={proposta?.campos.length ?? 0} aberta={aberta === "extrair"} onClick={() => a("extrair")}>
+        {!aiConfigurada ? <p className={li}>Leitura por IA não configurada (ANTHROPIC_API_KEY).</p> : !canEditar ? <p className={li}>Sem permissão de editar: a proposta não poderia ser aplicada.</p> : legiveis.length === 0 ? <p className={li}>{documentos.length === 0 ? "Nenhum documento anexado a este projeto." : "Nenhum documento legível (PDF ou imagem)."}</p> : (
           <>
             <div className="flex gap-2">
               <Select value={docId} onChange={(e) => setDocId(e.target.value)} aria-label="Documento para ler"><option value="">— documento —</option>{legiveis.map((d) => <option key={d.id} value={d.id}>{d.tipo ? `${d.tipo} · ` : ""}{d.filename}</option>)}</Select>
@@ -190,7 +190,7 @@ function AcoesDeProjeto({ projectId, analise, documentos, canEditar, aiConfigura
       </Acao>
       <Acao cor="#E6F4EA" cor2="#1E7A3C" d="M3 3v18h18M7 14l4-4 4 4 5-6" titulo="Comparar orçado x realizado" descricao="Leitura do card: o que está acima ou abaixo do previsto" contador={0} aberta={aberta === "comparar"} onClick={() => a("comparar")}>
         {analise.comparativo.length === 0 ? <p className={li}>Sem card para ler.</p> : <ul className="ml-3 list-disc space-y-0.5">{analise.comparativo.map((t) => <li key={t} className={li}>{t}</li>)}</ul>}
-        {analise.semDocumentos && <p className={`${li} mt-1`}>Esta obra não tem documento anexado.</p>}
+        {analise.semDocumentos && <p className={`${li} mt-1`}>Este projeto não tem documento anexado.</p>}
       </Acao>
     </>
   );

@@ -58,7 +58,7 @@ export function IndicadoresObraPanel({ ind }: { ind: IndicadoresObra }) {
     <div className="mt-6 space-y-4">
       {/* Prompt AA, 2.3.3: o painel declara o próprio recorte. */}
       <p className="text-[11.5px] text-[var(--color-ink3)]" data-recorte-painel="obra">
-        <strong className="text-[var(--color-ink2)]">Indicadores da obra</strong>: cadastro do projeto e medição por serviço. Não seguem o
+        <strong className="text-[var(--color-ink2)]">Indicadores do projeto</strong>: cadastro do projeto e medição por serviço. Não seguem o
         seletor de versão nem o de período.
       </p>
       {/* Aquisição e financiamento */}
@@ -91,7 +91,7 @@ export function IndicadoresObraPanel({ ind }: { ind: IndicadoresObra }) {
       {/* Custo da obra e BDI */}
       <div>
         <h2 className="mb-2 text-sm font-semibold text-[var(--color-ink)]">
-          Custo da obra e BDI
+          Custo do projeto e BDI
           {ind.tipoExecutor && (
             <span className="ml-2 font-normal text-[var(--color-ink3)]">
               · executor: {ind.tipoExecutor}
@@ -123,10 +123,10 @@ export function IndicadoresObraPanel({ ind }: { ind: IndicadoresObra }) {
           acumulada e Saldo de financiamento saíram de vez: sem medição,
           mostravam o financiamento do cadastro como se já tivesse acontecido. */}
       <div>
-        <h2 className="mb-2 text-sm font-semibold text-[var(--color-ink)]">Referência da obra</h2>
+        <h2 className="mb-2 text-sm font-semibold text-[var(--color-ink)]">Referência do projeto</h2>
         <p className="mb-2 rounded-[8px] bg-[var(--color-surface2)] px-3 py-2 text-[12px] text-[var(--color-ink2)]" data-evolucao-desligada>
-          Evolução física, liberação e geração de caixa por medição estão desligadas até o cadastro da PLS de cada obra (medição por
-          percentual de cada serviço). A medição por grupo, em Medição de Projeto, continua valendo.
+          Evolução física, liberação e geração de caixa por medição estão desligadas até o cadastro da PLS de cada projeto (medição por
+          percentual de cada serviço). A medição de serviço dos contratos fica em Medições.
         </p>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <KPI
@@ -164,10 +164,10 @@ export function StatusProjetoPanel({ st }: { st: StatusProjeto }) {
   const { orcamentos, caixaForaDaAtual, definicaoNova, orcamentosUsados, janela } = st.composicao;
   const deOrcamento = definicaoNova
     ? orcamentos === 0
-      ? "nenhuma obra tem Orçamento (que não seja cópia)"
-      : `de ${brl0(st.despesaPrevista)} — um Orçamento por obra, o mais recente: ${orcamentosUsados.map((l) => `“${l}”`).join(", ")}`
+      ? "nenhum projeto tem Orçamento (que não seja cópia)"
+      : `de ${brl0(st.despesaPrevista)} — um Orçamento por projeto, o mais recente: ${orcamentosUsados.map((l) => `“${l}”`).join(", ")}`
     : orcamentos === 0
-      ? "a obra não tem Orçamento"
+      ? "o projeto não tem Orçamento"
       : orcamentos === 1
         ? `de ${brl0(st.despesaPrevista)} no Orçamento`
         : `de ${brl0(st.despesaPrevista)} — soma de ${orcamentos} Orçamentos`;
@@ -177,13 +177,13 @@ export function StatusProjetoPanel({ st }: { st: StatusProjeto }) {
       {definicaoNova ? (
         <p className="text-[11.5px] text-[var(--color-ink3)]" data-recorte-painel="status">
           <strong className="text-[var(--color-ink2)]">Status e margem</strong> (definição nova): não seguem o seletor de versão — leem a
-          Atual e um Orçamento por obra. Seguem o <strong>período</strong>: o caixa pela data, as despesas e o Orçamento pela competência.
+          Atual e um Orçamento por projeto. Seguem o <strong>período</strong>: o caixa pela data, as despesas e o Orçamento pela competência.
           A receita do <strong>cadastro</strong> (construção + terreno), base dos percentuais, não tem data e é sempre o total.
         </p>
       ) : (
         <p className="text-[11.5px] text-[var(--color-ink3)]" data-recorte-painel="status">
           <strong className="text-[var(--color-ink2)]">Status e margem</strong>: não seguem o seletor de versão nem o de período. Somam,
-          do começo da obra até hoje, as entradas de caixa de todas as versões, as despesas da Atual e o Orçamento; os percentuais
+          do começo do projeto até hoje, as entradas de caixa de todas as versões, as despesas da Atual e o Orçamento; os percentuais
           de entradas e de margem são sobre a receita do <strong>cadastro</strong> do projeto (construção + terreno).
         </p>
       )}
@@ -219,7 +219,7 @@ export function StatusProjetoPanel({ st }: { st: StatusProjeto }) {
                 : orcamentos > 1
                   ? `sobre a soma de ${orcamentos} Orçamentos`
                   : orcamentos === 0
-                    ? "a obra não tem Orçamento"
+                    ? "o projeto não tem Orçamento"
                     : st.despesaPrevista === 0
                       ? "o Orçamento não tem despesa planejada"
                       : "sobre a despesa planejada no Orçamento"

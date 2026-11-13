@@ -106,8 +106,8 @@ export function AssistenteCartoes({ usuario, analise }: { usuario: string; anali
           )}
         </AcaoDoPainel>
 
-        <AcaoDoPainel cor="#FFF1DB" icone={<Icone cor="#B45309" d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6" />} titulo="Compras sem obra" descricao="Lançamentos no cartão sem projeto vinculado" contador={semObra.length} aberta={aberta === "semObra"} onClick={() => alternarAcao("semObra")}>
-          {semObra.length === 0 ? nada("Toda compra no cartão tem obra.") : (
+        <AcaoDoPainel cor="#FFF1DB" icone={<Icone cor="#B45309" d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6" />} titulo="Compras sem projeto" descricao="Lançamentos no cartão sem projeto vinculado" contador={semObra.length} aberta={aberta === "semObra"} onClick={() => alternarAcao("semObra")}>
+          {semObra.length === 0 ? nada("Toda compra no cartão tem projeto.") : (
             <ul className="space-y-1">
               {semObra.map((c) => (
                 <li key={c.despesaId} className={li}>

@@ -568,7 +568,7 @@ export function ContasReceberManager({
 
       {/* Recebíveis originados em Unidades / Vendas (derivados do plano de pagamento). */}
       <h2 className="mb-2 font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-wide text-[var(--color-ink3)]">
-        Recebíveis das vendas (Unidades) · {brl0(totalVendas)}
+        Recebíveis das vendas de unidades · {brl0(totalVendas)}
       </h2>
       <Card>
         <CardContent className="p-0">
@@ -610,7 +610,7 @@ export function ContasReceberManager({
                 {recebOrd.rows.length === 0 && (
                   <TR>
                     <TD colSpan={unitReceb.some((r) => r.situacao) ? 7 : 6} className="py-6 text-center text-[var(--color-ink4)]">
-                      Sem recebíveis de vendas (unidades vendidas geram recebíveis pelo plano de pagamento).
+                      Sem recebíveis de vendas de unidades.
                     </TD>
                   </TR>
                 )}
