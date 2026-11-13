@@ -120,7 +120,7 @@ export default async function FluxoAnaliticoPage({
       />
       {semCenario > 0 && (
         <p className="mb-3 text-[12.5px] text-[var(--color-ink3)]" data-cobertura>
-          {semCenario} obra(s) sem {ROTULO_CENARIO[cenario]} ficaram fora.
+          {semCenario} projeto(s) sem {ROTULO_CENARIO[cenario]} ficaram fora.
         </p>
       )}
       <Card>

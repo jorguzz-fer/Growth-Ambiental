@@ -131,7 +131,7 @@ export default async function BackupPage() {
             </p>
             <p className="mt-1 text-[12.5px] leading-relaxed text-[var(--color-ink3)]" data-aviso-lgpd>
               <strong className="text-[var(--color-ink)]">Contém dado pessoal</strong> (CPF, endereço e telefone de clientes,
-              fornecedores e funcionários). Os dados sensíveis ficam fora — renda, FGTS, score e estado civil do comprador; salário,
+              fornecedores e funcionários). Os dados sensíveis ficam fora — renda, FGTS, score e estado civil do cliente contratante; salário,
               endereço e banco do funcionário; ASO. A guarda do arquivo é responsabilidade de quem baixou. É apenas uma cópia: nenhum
               dado é removido do sistema.
             </p>

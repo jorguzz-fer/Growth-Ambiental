@@ -99,7 +99,7 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: P
                   ))}
                 </fieldset>
                 <label>
-                  <span className={ROTULO}>Obra</span>
+                  <span className={ROTULO}>Projeto</span>
                   <select name="proj" defaultValue={receita.proj} className={CAMPO}>
                     <option value="all">Empresa toda</option>
                     <option value="ativos">Projetos ativos</option>

@@ -88,7 +88,7 @@ export default async function AcoesPage({ searchParams }: { searchParams?: Promi
             campos={[
               { nome: "usuario", rotulo: "Usuário", tipo: "opcao", opcoes: opcoesUsuario.map((o) => o.rotulo) },
               { nome: "entidade", rotulo: "Entidade", tipo: "opcao", opcoes: entidades },
-              { nome: "acao", rotulo: "Ação contém", tipo: "texto", dica: 'trecho da ação, ex.: "despesa", "incc", "membership"' },
+              { nome: "acao", rotulo: "Ação contém", tipo: "texto", dica: 'trecho da ação, ex.: "despesa", "contrato", "membership"' },
               { nome: "de", rotulo: "De", tipo: "texto", dica: "AAAA-MM-DD" },
               { nome: "ate", rotulo: "Até", tipo: "texto", dica: "AAAA-MM-DD" },
             ]}
@@ -141,7 +141,7 @@ export default async function AcoesPage({ searchParams }: { searchParams?: Promi
       </form>
       {!veDadoProtegido && (
         <p className="mb-3 text-xs text-[var(--color-ink3)]">
-          Dados pessoais de compradores (CPF, nascimento, renda, FGTS, score e
+          Dados pessoais de clientes contratantes (CPF, nascimento, renda, FGTS, score e
           restrições de crédito) aparecem só como “alterado”. O valor é visível
           apenas para dono e administrador.
         </p>

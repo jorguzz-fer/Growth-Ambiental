@@ -173,8 +173,8 @@ function PreviaSaidaSegueDespesa({ linhas, ligada, obraDaTela }: { linhas: Previ
           {linhas.length === 0
             ? "Não há obrigação pendente com terceiros. Ligar a chave não muda nenhum número hoje."
             : ligada
-              ? `As próximas restituições avulsas (${brl0(total)} pendentes) caem na obra de cada despesa, como abaixo. Nada já lançado muda.`
-              : `Hoje toda saída de restituição cai na obra aberta na tela (${obraDaTela}). Com a chave ligada, as próximas restituições avulsas (${brl0(total)} pendentes) caem na obra de cada despesa, como abaixo. Nada já lançado muda; o lote continua na obra da tela.`}{" "}
+              ? `As próximas restituições avulsas (${brl0(total)} pendentes) caem no projeto de cada despesa, como abaixo. Nada já lançado muda.`
+              : `Hoje toda saída de restituição cai no projeto aberto na tela (${obraDaTela}). Com a chave ligada, as próximas restituições avulsas (${brl0(total)} pendentes) caem no projeto de cada despesa, como abaixo. Nada já lançado muda; o lote continua no projeto da tela.`}{" "}
           <Link href="/chaves" className="text-[var(--color-accent2)] hover:underline">
             Chaves de mudança
           </Link>
@@ -183,7 +183,7 @@ function PreviaSaidaSegueDespesa({ linhas, ligada, obraDaTela }: { linhas: Previ
           <table className="mt-3 w-full max-w-xl border-collapse text-[13px]">
             <thead>
               <tr className="text-left font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-wide text-[var(--color-ink3)]">
-                <th className="px-2 py-1">Obra da despesa</th>
+                <th className="px-2 py-1">Projeto da despesa</th>
                 <th className="px-2 py-1 text-right">Obrigações</th>
                 <th className="px-2 py-1 text-right">Saldo a restituir</th>
               </tr>

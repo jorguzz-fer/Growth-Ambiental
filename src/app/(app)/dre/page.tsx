@@ -411,7 +411,7 @@ export default async function DREPage({
       />
       {doEscopo && doEscopo.semSituacao > 0 && (
         <p className="mb-4 rounded-[8px] bg-[var(--color-surface3)] px-3 py-2 text-[13px] text-[var(--color-ink2)]">
-          {doEscopo.semSituacao} obra(s) sem status ficaram fora deste filtro. Classifique-as
+          {doEscopo.semSituacao} projeto(s) sem status ficaram fora deste filtro. Classifique-os
           como Ativo ou Finalizado em Projetos.
         </p>
       )}
@@ -420,8 +420,8 @@ export default async function DREPage({
         // Escopo sem nenhuma obra: estado vazio, nunca uma DRE zerada.
         <Card>
           <CardContent className="p-8 text-center text-[var(--color-ink3)]">
-            Nenhuma obra classificada como{" "}
-            {escopo.tipo === "ativos" ? "Ativo" : "Finalizado"}. Classifique as obras em
+            Nenhum projeto classificado como{" "}
+            {escopo.tipo === "ativos" ? "Ativo" : "Finalizado"}. Classifique os projetos em
             Projetos.
           </CardContent>
         </Card>

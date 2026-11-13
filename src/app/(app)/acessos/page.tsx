@@ -69,8 +69,8 @@ export default async function AcessosPage() {
             </div>
             <p className="mt-1 text-[12.5px] text-[var(--color-ink3)]">
               No padrão novo, o membro alcança só Despesas, Contas a Pagar,
-              Fornecedores, Caixa, Contas Correntes, Medição, Clientes, Unidades,
-              Contas a Receber e Permuta (ver, criar e editar). Telas
+              Fornecedores, Caixa, Contas Correntes, Clientes e Contas a
+              Receber (ver, criar e editar). Telas
               personalizadas nesta matriz continuam como estão. Ao ligar, cada
               membro perde:
             </p>

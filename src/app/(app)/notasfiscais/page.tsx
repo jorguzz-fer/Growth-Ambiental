@@ -101,7 +101,7 @@ export default async function NotasFiscaisPage({
           <input type="hidden" name="amb" value={ambiente} />
           {status && <input type="hidden" name="st" value={status} />}
           <select name="proj" defaultValue={projectId ?? ""} className="h-8 rounded-[8px] border border-[var(--color-line)] bg-transparent px-2 text-[12.5px]">
-            <option value="">Todas as obras</option>
+            <option value="">Todos os projetos</option>
             {ctx.projects.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
@@ -130,7 +130,7 @@ export default async function NotasFiscaisPage({
                 <TH>Data</TH>
                 <TH>Número</TH>
                 <TH>Tomador</TH>
-                <TH>Obra</TH>
+                <TH>Projeto</TH>
                 <TH>Competência</TH>
                 <TH className="text-right">Valor do serviço</TH>
                 <TH className="text-right">Líquido</TH>

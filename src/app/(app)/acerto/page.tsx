@@ -38,8 +38,8 @@ export default async function AcertoPage() {
     <>
       <PageHeader
         eyebrow={ctx.tenant.name}
-        title="Acerto Contábil"
-        subtitle="Um pagamento único quitando várias despesas, inclusive de obras diferentes. A saída de caixa é uma só; a diferença vai para despesa/receita financeira, nunca para o custo da obra."
+        title="Acertos e Rateios"
+        subtitle="Um pagamento único quitando várias despesas, inclusive de projetos diferentes. A saída de caixa é uma só; a diferença vai para despesa/receita financeira, nunca para o custo do projeto."
       />
       <AcertoManager
         despesas={despesas}
