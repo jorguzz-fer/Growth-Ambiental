@@ -398,7 +398,19 @@ export function codigoDeExibicao(faseOrdem: number, atividadeOrdem?: number, sub
 
 // ───────────────────────────── Proposta da Cris ─────────────────────────────
 
-export const MAX_FASES_CRIS = 12;
+export const MAX_FASES_CRIS = 8;
+
+/**
+ * Rastreabilidade do que veio da Cris: grava no item de onde saiu (documento,
+ * biblioteca ou sugestão da IA) e o trecho que fundamenta. Fica na observação
+ * do item, editável como qualquer texto.
+ */
+export function notaDaCris(no: { origem?: OrigemProposta; trecho?: string | null }): string {
+  const trecho = no.trecho?.trim() ? ` Trecho: "${no.trecho.trim().slice(0, 400)}"` : "";
+  if (no.origem === "documento") return `Extraído do documento pela Cris.${trecho}`;
+  if (no.origem === "biblioteca") return `Proposto pela Cris a partir da biblioteca da empresa.${trecho}`;
+  return `Sugestão da Cris (não consta expressamente do documento).${trecho}`;
+}
 const normal = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ").trim();
 const origemDe = (s: string | undefined): OrigemProposta => {
   const t = normal(s ?? "");

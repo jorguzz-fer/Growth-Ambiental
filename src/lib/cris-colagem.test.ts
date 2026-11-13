@@ -25,7 +25,9 @@ describe("classificarColagem (AQ-T7)", () => {
   });
 
   it("tipo não aceito e imagem acima de 4 MB: recusa com a mesma mensagem do 📎", () => {
-    expect(classificarColagem([arquivo("application/vnd.openxmlformats-officedocument.wordprocessingml.document")])).toEqual({ tipo: "recusado", motivo: ERRO_ANEXO_TIPO });
+    expect(classificarColagem([arquivo("application/msword")])).toEqual({ tipo: "recusado", motivo: ERRO_ANEXO_TIPO });
+    // Planejamento: DOCX (Word) passou a ser aceito — o servidor extrai o texto.
+    expect(classificarColagem([arquivo("application/vnd.openxmlformats-officedocument.wordprocessingml.document")])).toEqual({ tipo: "anexo", indice: 0 });
     expect(classificarColagem([arquivo("image/png", MAX_ANEXO_BYTES + 1)])).toEqual({ tipo: "recusado", motivo: ERRO_ANEXO_GRANDE });
     expect(classificarColagem([arquivo("image/png", MAX_ANEXO_BYTES)])).toEqual({ tipo: "anexo", indice: 0 });
   });

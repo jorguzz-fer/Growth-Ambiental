@@ -268,7 +268,7 @@ export function ChatAssistente() {
                 if (f) anexar(f);
               }}
             />
-            <button type="button" onClick={() => arquivo.current?.click()} title="Anexar documento (PDF, imagem ou, no Caixa, planilha do extrato)" aria-label="Anexar documento" className="text-[16px] text-[var(--color-ink3)] hover:text-[var(--color-ink)]">
+            <button type="button" onClick={() => arquivo.current?.click()} title="Anexar documento (PDF, Word, imagem ou, no Caixa, planilha do extrato)" aria-label="Anexar documento" className="text-[16px] text-[var(--color-ink3)] hover:text-[var(--color-ink)]">
               📎
             </button>
             <BotaoDeVoz onTexto={(t) => setTexto((atual) => juntarDitado(atual, t))} onErro={(m) => setAviso(m ? { texto: m, tom: "erro" } : null)} />

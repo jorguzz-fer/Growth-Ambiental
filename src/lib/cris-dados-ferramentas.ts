@@ -101,6 +101,17 @@ export const FERRAMENTAS_DE_DADOS: Anthropic.Tool[] = [
     },
   },
   {
+    name: "plano_de_trabalho",
+    description:
+      "Plano de trabalho dos projetos (Projetos → Plano de Trabalho): fases, atividades, situação, prazos planejados e de linha de base, atrasos, reprogramações, entregas e marcos e progresso físico (só quando há base para consolidar; nunca presuma peso igual). Progresso físico é separado do financeiro. Não traz nome de pessoa.",
+    input_schema: {
+      type: "object",
+      additionalProperties: false,
+      properties: { ...OBRAS, assunto: { type: "string", enum: ["resumo", "atrasos", "entregas", "fases"] } },
+      required: ["obras", "assunto"],
+    },
+  },
+  {
     name: "montar_relatorio",
     description:
       "Monta um relatório exportável em Relatórios Customizados (CSV e PDF) com a DRE, a DRE por categoria e grupo, ou o Fluxo de Caixa previsto; por cenário, mês a mês ou por obra. Devolve o link para a pessoa abrir; escreva-o como link markdown.",

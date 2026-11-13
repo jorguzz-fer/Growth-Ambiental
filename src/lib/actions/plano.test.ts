@@ -197,6 +197,11 @@ describe.skipIf(!HAS_DB)("Planejamento de projetos — integração", async () =
     expect(pc.atividades.map((a) => a.nome).sort()).toEqual(["Mobilização da equipe de arqueologia", "Registro fotográfico", "Vistoria diária"]);
     expect(pc.fases[0].origemModeloFaseId).toBe(b.fases[0].id);
     expect(pc.entregas[0]).toMatchObject({ nome: "Relatório mensal", dataPrevista: "03/31/2027", dataOriginal: "03/31/2027" });
+    // rastreabilidade: origem e trecho ficam no item gravado
+    const fase2 = pc.fases.find((f) => f.nome === "Acompanhamento das frentes de obra")!;
+    expect(fase2.obs).toMatch(/Extraído do documento.*O monitoramento ocorrerá/);
+    expect(pc.atividades.find((a) => a.nome === "Registro fotográfico")!.obs).toMatch(/Sugestão da Cris/);
+    expect(pc.entregas[0].descricao).toMatch(/Extraído do documento/);
     const [imp] = await db.select().from(schema.projetoPlanoImportacoes).where(and(eq(schema.projetoPlanoImportacoes.tenantId, t.a), eq(schema.projetoPlanoImportacoes.chave, k)));
     expect(imp).toMatchObject({ origem: "cris", resumo: { fases: 2, atividades: 2, subatividades: 1, entregas: 1 } });
     // 27 — documento do plano no repositório de documentos, ligado ao item

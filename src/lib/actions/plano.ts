@@ -19,7 +19,9 @@ import {
   MODELOS_SUGERIDOS,
   recusaDaSelecao,
   recusaDeHierarquia,
+  notaDaCris,
   type FaseSelecionada,
+  type OrigemProposta,
 } from "@/lib/plano-regras";
 
 /**
@@ -334,25 +336,26 @@ export async function criarPlano(input: { projectId: string; origem: "branco" | 
     if (!imp) return { repetida: true as const };
     const [{ ordem }] = await tx.select({ ordem: max(schema.projetoFases.ordem) }).from(schema.projetoFases).where(eq(schema.projetoFases.projectId, projeto.id));
     let ordemFase = ordem ?? 0;
+    const nota = (no: { origem?: OrigemProposta; trecho?: string | null }) => (input.origem === "cris" ? notaDaCris(no) : null);
     for (const f of fases) {
       ordemFase++;
       const [fase] = await tx
         .insert(schema.projetoFases)
-        .values({ tenantId, projectId: projeto.id, nome: f.nome, descricao: f.descricao ?? null, ordem: ordemFase, responsavel: f.responsavel ?? null, inicioPrevisto: f.inicio ?? null, terminoPrevisto: f.termino ?? null, inicioOriginal: f.inicio ?? null, terminoOriginal: f.termino ?? null, origemModeloFaseId: origemFase(f.origemModeloId) })
+        .values({ tenantId, projectId: projeto.id, nome: f.nome, descricao: f.descricao ?? null, ordem: ordemFase, responsavel: f.responsavel ?? null, inicioPrevisto: f.inicio ?? null, terminoPrevisto: f.termino ?? null, inicioOriginal: f.inicio ?? null, terminoOriginal: f.termino ?? null, obs: nota(f), origemModeloFaseId: origemFase(f.origemModeloId) })
         .returning({ id: schema.projetoFases.id });
       for (const [i, a] of f.atividades.entries()) {
         const [at] = await tx
           .insert(schema.projetoAtividades)
-          .values({ tenantId, projectId: projeto.id, faseId: fase.id, nome: a.nome, descricao: a.descricao ?? null, ordem: i + 1, responsavel: a.responsavel ?? null, inicioPrevisto: a.inicio ?? null, terminoPrevisto: a.termino ?? null, inicioOriginal: a.inicio ?? null, terminoOriginal: a.termino ?? null, origemModeloAtividadeId: origemAtiv(a.origemModeloId) })
+          .values({ tenantId, projectId: projeto.id, faseId: fase.id, nome: a.nome, descricao: a.descricao ?? null, ordem: i + 1, responsavel: a.responsavel ?? null, inicioPrevisto: a.inicio ?? null, terminoPrevisto: a.termino ?? null, inicioOriginal: a.inicio ?? null, terminoOriginal: a.termino ?? null, obs: nota(a), origemModeloAtividadeId: origemAtiv(a.origemModeloId) })
           .returning({ id: schema.projetoAtividades.id });
         contagem.atividades++;
         for (const [j, sAt] of a.subatividades.entries()) {
-          await tx.insert(schema.projetoAtividades).values({ tenantId, projectId: projeto.id, faseId: fase.id, parentId: at.id, nome: sAt.nome, descricao: sAt.descricao ?? null, ordem: j + 1, origemModeloAtividadeId: origemAtiv(sAt.origemModeloId) });
+          await tx.insert(schema.projetoAtividades).values({ tenantId, projectId: projeto.id, faseId: fase.id, parentId: at.id, nome: sAt.nome, descricao: sAt.descricao ?? null, ordem: j + 1, obs: nota(sAt), origemModeloAtividadeId: origemAtiv(sAt.origemModeloId) });
           contagem.subatividades++;
         }
       }
       for (const [i, e] of f.entregas.entries()) {
-        await tx.insert(schema.projetoEntregas).values({ tenantId, projectId: projeto.id, faseId: fase.id, nome: e.nome, descricao: e.descricao ?? null, dataPrevista: (e as { data?: string | null }).data ?? null, dataOriginal: (e as { data?: string | null }).data ?? null, ordem: i + 1 });
+        await tx.insert(schema.projetoEntregas).values({ tenantId, projectId: projeto.id, faseId: fase.id, nome: e.nome, descricao: [e.descricao, nota(e)].filter(Boolean).join(" — ") || null, dataPrevista: (e as { data?: string | null }).data ?? null, dataOriginal: (e as { data?: string | null }).data ?? null, ordem: i + 1 });
         contagem.entregas++;
       }
     }

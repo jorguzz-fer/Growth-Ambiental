@@ -131,6 +131,8 @@ describe("Prompt AQ §4 — o que não muda", () => {
       // Etapa 7 — o catálogo de leitura (conferido abaixo).
       "@/lib/cris-dados",
       "@/lib/cris-dados-ferramentas",
+      // Planejamento — extração de texto de DOCX (só lê o arquivo anexado, sem banco).
+      "@/lib/docx-texto",
     ]);
     for (const arq of ["src/lib/ai/cris.ts", "src/lib/actions/cris.ts"]) {
       const imps = importsDe(arq);

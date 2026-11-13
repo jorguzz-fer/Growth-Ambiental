@@ -2,6 +2,7 @@ import "server-only";
 import type Anthropic from "@anthropic-ai/sdk";
 import { aiClient, createMessageWithFallback } from "@/lib/ai/client";
 import { BASE_DE_CONHECIMENTO } from "@/lib/assistente-base";
+import { TIPO_DOCX, textoDoDocx } from "@/lib/docx-texto";
 import { CATALOGO } from "@/lib/assistente-chat";
 import { FERRAMENTAS_DE_DADOS, NOMES_DAS_FERRAMENTAS_DE_DADOS } from "@/lib/cris-dados-ferramentas";
 import {
@@ -168,6 +169,14 @@ export async function responderComoCris(p: PedidoDaCris): Promise<RespostaDaCris
   if (p.anexo && ehPlanilha(p.anexo.tipo)) {
     // Planilha não vai ao modelo: só `ler_extrato` a lê, no servidor.
     conteudo.push({ type: "text", text: tools.some((t) => t.name === "ler_extrato") ? `[A pessoa anexou a planilha "${p.anexo.nome}". Para ler as linhas, use a ferramenta ler_extrato; não peça para transcrever.]` : `[A pessoa anexou a planilha "${p.anexo.nome}". Planilha de extrato só é lida na tela do Caixa; diga isso.]` });
+  } else if (p.anexo && p.anexo.tipo === TIPO_DOCX) {
+    // DOCX: o texto é extraído aqui e vai como documento de texto (dado, não instrução).
+    const lido = await textoDoDocx(Buffer.from(p.anexo.base64, "base64"));
+    conteudo.push(
+      lido.ok
+        ? { type: "document", source: { type: "text", media_type: "text/plain", data: lido.texto || "(documento sem texto)" }, title: p.anexo.nome, context: lido.cortado ? "Documento longo: só o começo foi enviado." : undefined }
+        : { type: "text", text: `[A pessoa anexou "${p.anexo.nome}", mas não foi possível ler: ${lido.erro}]` },
+    );
   } else if (p.anexo) {
     conteudo.push(
       p.anexo.tipo === "application/pdf"
@@ -193,7 +202,8 @@ export async function responderComoCris(p: PedidoDaCris): Promise<RespostaDaCris
   // A rodada de conciliação (pendentes → candidatos → proposta) pede mais voltas.
   const voltas = p.caixa?.propor || p.dados ? MAX_VOLTAS + 2 : MAX_VOLTAS;
   for (let volta = 0; volta < voltas; volta++) {
-    const msg = await createMessageWithFallback(client, { max_tokens: 2000, system, tools, messages });
+    // Proposta de formulário grande (plano de trabalho, contrato com itens) precisa de mais espaço.
+    const msg = await createMessageWithFallback(client, { max_tokens: p.tela?.formulario && p.tela.formulario.campos.length > 30 ? 6000 : 2000, system, tools, messages });
     if (msg.stop_reason === "refusal") return fim("Não posso ajudar com esse pedido.");
     const usos = msg.content.filter((b): b is Anthropic.ToolUseBlock => b.type === "tool_use");
     if (msg.stop_reason !== "tool_use" || usos.length === 0) {

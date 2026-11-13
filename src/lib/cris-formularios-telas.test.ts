@@ -25,6 +25,7 @@ const TELAS: [arquivo: string, id: string][] = [
   ["src/components/app/numeracao-form.tsx", '"numeracao-despesas"'],
   ["src/components/app/simulator-form.tsx", "formularioDoSimulador"],
   ["src/components/app/cris-no-formulario.tsx", "useCrisFormulario("],
+  ["src/components/app/plano/criar-plano.tsx", "formularioDoPlanoDeTrabalho"],
 ];
 
 import { TIPOS_DOC_PERMUTA } from "./permuta-regras";
