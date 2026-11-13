@@ -11,7 +11,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
   HandCoins,
-  HardHat,
+  FolderKanban,
   Users,
   Receipt,
   Settings,
@@ -33,7 +33,7 @@ const ICONS: Record<ModuleIcon, LucideIcon> = {
   receitas: HandCoins,
   despesas: Receipt,
   caixa: Wallet,
-  obra: HardHat,
+  obra: FolderKanban,
   pessoas: Users,
   config: Settings,
 };

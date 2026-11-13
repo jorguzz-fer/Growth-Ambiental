@@ -184,7 +184,7 @@ Quase toda tela pede a obra no seletor do topo; com a versão de trabalho congel
 
 ---
 
-## Medição de Projeto (/medicao e /medicaolanc) — módulo Obra
+## Medição de Projeto (/medicao e /medicaolanc) — módulo Projetos
 
 **Para que serve:** registra o valor medido por grupo de obra (grupos CEF do Plano de Contas) em cada competência e compara com o orçado no Relatório CEF. É informação auxiliar: **não entra na DRE**.
 
@@ -214,7 +214,7 @@ Quase toda tela pede a obra no seletor do topo; com a versão de trabalho congel
 
 ---
 
-## Estoque (/estoque) — módulo Obra
+## Estoque (/estoque) — módulo Projetos
 
 **Para que serve:** é o controle **físico** do almoxarifado: o que entrou, de onde veio e para qual obra saiu. **Não tem efeito contábil**, porque o custo já está na despesa de compra.
 
@@ -238,7 +238,7 @@ Quase toda tela pede a obra no seletor do topo; com a versão de trabalho congel
 
 ---
 
-## Parâmetros / INCC (/parametros) — módulo Obra
+## Parâmetros / INCC (/parametros) — módulo Projetos
 
 **Para que serve:** guarda a tabela do INCC, com a variação mensal e o acumulado. Essa tabela é usada para corrigir as parcelas a partir da 5ª.
 

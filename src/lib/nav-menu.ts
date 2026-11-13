@@ -137,8 +137,10 @@ export const NAV_MENU: NavModule[] = [
     ],
   },
   {
+    // Growth Ambiental: o módulo "Obra" passou a se chamar "Projetos". O id
+    // continua "obra" (chave interna, não aparece na tela).
     id: "obra",
-    label: "Obra",
+    label: "Projetos",
     icon: "obra",
     items: [
       // Prompt V, 0.2: UM item. /medicao (relatório) e /medicaolanc (lançar e

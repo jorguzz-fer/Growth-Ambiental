@@ -74,7 +74,7 @@ const TELAS_NOVAS: Record<string, string> = {
 /**
  * Prompt V, 0.2: /medicaolanc SAIU do menu (continua rota e aba da tela única
  * de Medição de Obra). O item /medicao aparece para quem tem `medicao` OU
- * `medicaolanc` — o engenheiro continua vendo o módulo Obra.
+ * `medicaolanc` — o engenheiro continua vendo o módulo Projetos (antigo Obra).
  */
 const FUNDIDAS_NO_ITEM: Record<string, string> = { "/medicao": "medicaolanc" };
 /** Prompt AL: /contabilidade saiu do sistema (virou redirecionamento para /usuarios). */
@@ -255,6 +255,10 @@ describe("Prompt REN (Fase 3) — mudanças de menu e rótulos", () => {
   it("Projeção de Receitas mora em Business Intelligence; Cartões, no Caixa", () => {
     expect(moduloDe("/projecao")).toBe("bi");
     expect(moduloDe("/cartoes")).toBe("caixa");
+  });
+
+  it("Growth Ambiental: o módulo Obra se chama Projetos", () => {
+    expect(NAV_MENU.find((m) => m.id === "obra")!.label).toBe("Projetos");
   });
 
   it("nada em inglês nem 'Obra' genérico nos rótulos renomeados", () => {
