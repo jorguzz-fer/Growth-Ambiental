@@ -1,7 +1,7 @@
 # Prompt AE · AE-1 — o Resumo diz o que cada número é
 
 Partes 2.1, 2.2 (opção 2), 2.8, 3.5, 3.7, 4.2, 4.3 e 4.4. **Nenhum número
-muda.** No navegador, antes e depois, na SIGNATURE (Atual, Previsão e as três
+muda.** No navegador, antes e depois, na EMPREENDIMENTO PILOTO (Atual, Previsão e as três
 comparadas), os valores e o cartão de unidades ficaram iguais. Só mudaram as
 células sem base, que passaram de "R$ 0" a "—".
 

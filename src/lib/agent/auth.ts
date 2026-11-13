@@ -68,7 +68,7 @@ export function phoneVariants(raw: string | null | undefined): string[] {
 /**
  * `AGENT_ALLOWED_PHONES` — allowlist telefone → e-mail do usuário.
  *
- *   +5511989940404=fer.jorge@gmail.com, +5511979546007=thiago@exemplo.com
+ *   +5511900000001=operador@exemplo.com, +5511900000002=gestor@exemplo.com
  *
  * Separadores aceitos entre pares: vírgula, ponto-e-vírgula ou quebra de
  * linha. Entre telefone e e-mail: "=" ou ":" (o PRIMEIRO que aparecer).

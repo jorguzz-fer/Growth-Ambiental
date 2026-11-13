@@ -70,8 +70,8 @@ declarados (teste 11). Nada toca `payment_plan`, `unit`, `conta_receber`,
 
 - 3.1: a obra já é explícita; a tela passa a dizer "Tabela INCC da obra X (N
   meses, variante …)".
-- 3.2 SM-07: `useState` com 537027, 30000, 3000×3, 13000, 91000, 90, 16000 e
-  "2026-06-20" — a tela abre com uma simulação que parece de alguém. Passa a
+- 3.2 SM-07: `useState` com valores fixos (preço, ato, sinais, mensais,
+  financiamento e uma data) [valores removidos] — a tela abre com uma simulação que parece de alguém. Passa a
   abrir **vazia** (zeros, data de hoje), sem seed nem default de banco.
 - 3.3: campos aceitam negativo e `NaN` (`Number("")` = 0, `Number("abc")` =
   NaN). Validação pura: sem negativo, sem `NaN`, parcelas inteiras > 0.

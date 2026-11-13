@@ -72,14 +72,14 @@ describe("normalizarCnpj / formatarCnpj", () => {
 
 describe("campos de endereço", () => {
   it("CEP exige 8 dígitos", () => {
-    expect(cepValido("11740-000")).toBe(true);
-    expect(cepValido("11740000")).toBe(true);
-    expect(cepValido("1174000")).toBe(false);
+    expect(cepValido("13010-000")).toBe(true);
+    expect(cepValido("13010000")).toBe(true);
+    expect(cepValido("1301000")).toBe(false);
     expect(cepValido(null)).toBe(false);
   });
 
   it("código IBGE exige 7 dígitos", () => {
-    expect(codigoMunicipioValido("3552502")).toBe(true);
+    expect(codigoMunicipioValido("3509502")).toBe(true);
     expect(codigoMunicipioValido("355250")).toBe(false);
     expect(codigoMunicipioValido("SP")).toBe(false);
   });
@@ -106,22 +106,22 @@ describe("aliquotaIssValida", () => {
 });
 
 const COMPLETO: EmitenteFiscal = {
-  razaoSocial: "BMV Construções Ltda",
+  razaoSocial: "Construtora Exemplo Ltda",
   cnpj: CNPJ_OK,
   inscricaoMunicipal: "123456",
   regimeTributario: "LUCRO_PRESUMIDO",
   itemListaServico: "7.02",
   aliquotaIss: 3,
   codigoTributarioMunicipio: "070201",
-  codigoMunicipio: "3552502",
+  codigoMunicipio: "3509502",
   municipio: "Suarão",
   uf: "SP",
   logradouro: "Av. Brasil",
   numero: "1000",
   bairro: "Centro",
-  cep: "11740000",
+  cep: "13010000",
   cnae: "4120400",
-  email: "fiscal@bmv.com.br",
+  email: "fiscal@exemplo.com.br",
 };
 
 describe("checarProntidaoFiscal", () => {

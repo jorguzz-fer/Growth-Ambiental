@@ -58,7 +58,7 @@ está no repositório. O inventário compara o prompt com o código de hoje.
 - **BAA-4:** as entradas da Atual são `extrato` (24) e um `ajuste`.
 - **BAA-5:** a receita do cadastro é zero nas três obras. Não há unidade
   vendida na Atual.
-- **4.5:** as 2 unidades da SIGNATURE (R$ 1.076.607) estão na **Previsão**,
+- **4.5:** as 2 unidades da EMPREENDIMENTO PILOTO ([valor removido]) estão na **Previsão**,
   não na Atual. Hoje o VGV da coluna Previsão mostra esse valor, e o da
   Atual, zero.
 - **4.4:** uma entrada conciliada (R$ 12,34), 24 não conciliadas.

@@ -2,7 +2,7 @@
 
 -- BAD-1 · o saldo inicial de hoje e do que ele é feito. A tela soma as contas
 -- ATIVAS que não são do tipo "Terceiros" (saldoDisponivel), do tenant inteiro.
--- Conferir se SOCIO MESSIAS, SOCIO VINICIUS e CHEQUE TERCEIRO (Prompt X)
+-- Conferir se SOCIO A, SOCIO B e CHEQUE TERCEIRO (Prompt X)
 -- entram: entram se o tipo não for "Terceiros" e a conta estiver ativa.
 SELECT t.name AS empresa, b.banco, b.tipo, b.ag, b.cc, b.saldo, b.saldo_source, b.ativo,
        (b.tipo <> 'Terceiros' AND b.ativo IS NOT FALSE) AS entra_no_saldo_inicial

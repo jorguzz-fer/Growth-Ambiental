@@ -311,17 +311,6 @@ export const PAPEIS_STAKEHOLDER = [
 ] as const;
 export type PapelStakeholder = (typeof PAPEIS_STAKEHOLDER)[number];
 
-/** Custo de edificações de referência (SIGNATURE SUARÃO). §1 */
-export const CUSTO_EDIFICACOES_REF = 46789988.9;
-
-/**
- * Percentuais de referência CEF por grupo de obra (alinhados a PLANO_CONTAS.obra,
- * grupos 1..10). Usados na Medição de Obra para o orçado. Ver docs/SPEC.md §9.7.
- */
-export const PCT_REF_CEF = [
-  11.79, 5.74, 32.21, 16.05, 1.09, 14.75, 0.33, 17.23, 0.46, 0.01,
-];
-
 /**
  * Tabela INCC padrão de 48 meses (05/2025 → 04/2029). Variação mensal (`mo`) e
  * acumulada (`ac`) em %. Editável por projeto na tela Parâmetros/INCC. §6

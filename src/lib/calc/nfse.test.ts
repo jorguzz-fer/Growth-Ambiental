@@ -146,15 +146,15 @@ describe("validarNfse", () => {
 
 describe("naturezaPorMunicipio", () => {
   it("mesmo município do prestador → tributação no município", () => {
-    expect(naturezaPorMunicipio("3552502", "3552502")).toBe("1");
+    expect(naturezaPorMunicipio("3509502", "3509502")).toBe("1");
   });
 
   it("obra em outro município → tributação fora do município (LC 116 art. 3º III)", () => {
-    expect(naturezaPorMunicipio("3552502", "3550308")).toBe("2");
+    expect(naturezaPorMunicipio("3509502", "3550308")).toBe("2");
   });
 
   it("sem o município da obra, não presume operação fora", () => {
-    expect(naturezaPorMunicipio("3552502", null)).toBe("1");
+    expect(naturezaPorMunicipio("3509502", null)).toBe("1");
     expect(naturezaPorMunicipio(null, "3550308")).toBe("1");
   });
 });

@@ -24,7 +24,7 @@ como conheceu, indicado por, interesse, observações). Lista em
 - **Não recebe os valores do servidor (5.4):** a consulta da ficha nem
   seleciona essas colunas; os dois blocos não existem na tela — nem vazios, nem
   desabilitados (5.4.1). Conferido no HTML: nenhum valor aparece.
-- **CPF mascarado** — `•••.748.618-••` na lista (para todos) e na ficha (5.1).
+- **CPF mascarado** — `•••.000.001-••` na lista (para todos) e na ficha (5.1).
   Na ficha, o campo fica vazio com o mascarado de dica: **vazio mantém** o
   cadastrado, **digitar substitui**.
 - **Salvar não apaga nada.** O formulário dele não tem os campos sensíveis, e

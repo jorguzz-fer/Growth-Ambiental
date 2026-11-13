@@ -14,7 +14,7 @@ Os formulários de Empresa e de Auditoria são montados no servidor, com campos 
 **AK2 · Auditoria**
 
 - **A tela ganha um filtro.** Os campos são usuário (ou "sistema"), entidade, trecho da ação e período, todos na URL. Antes não havia filtro.
-- **A Cris preenche o filtro.** Por exemplo: "só o que o Messias lançou este mês". Ela recebe a data de hoje e o intervalo do mês. Quem filtra é o botão "Filtrar".
+- **A Cris preenche o filtro.** Por exemplo: "só o que a Ana lançou este mês". Ela recebe a data de hoje e o intervalo do mês. Quem filtra é o botão "Filtrar".
 - O filtro roda no banco, sobre os 200 mais recentes do recorte.
 - O mascaramento dos dados pessoais de compradores continua o mesmo.
 

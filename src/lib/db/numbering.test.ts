@@ -67,7 +67,7 @@ describe.skipIf(!HAS_DB)("reserveDespesaNumber (integração / concorrência)", 
         .returning();
       await db.insert(schema.despesas).values([
         { versionId: v.id, tenantId: t.id, numDoc: "PED-000500", valor: "10" },
-        { versionId: v.id, tenantId: t.id, numDoc: "BMV-2026-000842", valor: "10" },
+        { versionId: v.id, tenantId: t.id, numDoc: "EXM-2026-000842", valor: "10" },
       ]);
       // primeira reserva deve continuar após 842 (o maior sufixo)
       const first = await reserveDespesaNumber(t.id);

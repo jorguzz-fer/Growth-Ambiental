@@ -7,8 +7,8 @@
  *    descrição, projeto, valor…), sem exigir que o termo esteja num campo
  *    específico;
  *  - aceita VÁRIOS termos: todos precisam aparecer em algum campo do registro,
- *    em qualquer ordem. Assim "casarao 880" encontra a despesa do fornecedor
- *    CASARÃO no valor de 880;
+ *    em qualquer ordem. Assim "portao 880" encontra a despesa do fornecedor
+ *    PORTÃO no valor de 880;
  *  - entende valores monetários digitados como "1.234,56", "1234.56" ou só os
  *    dígitos ("880" acha R$ 880,00).
  *

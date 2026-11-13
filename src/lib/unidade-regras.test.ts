@@ -14,10 +14,10 @@ describe("exclusão de unidade (Prompt I, §12)", () => {
     expect(bloqueiosDeExclusaoUnidade({ ...livre, documentos: 1, permutas: 1 })).toHaveLength(2);
   });
   it("confirmação pelo código, sem diferenciar caixa e espaços", () => {
-    expect(confirmacaoDeUnidadeConfere(" bla 401 ", "BLA 401")).toBe(true);
-    expect(confirmacaoDeUnidadeConfere("BLA 402", "BLA 401")).toBe(false);
-    expect(confirmacaoDeUnidadeConfere("", "BLA 401")).toBe(false);
-    expect(confirmacaoDeUnidadeConfere(undefined, "BLA 401")).toBe(false);
+    expect(confirmacaoDeUnidadeConfere(" unid 401 ", "UNID 401")).toBe(true);
+    expect(confirmacaoDeUnidadeConfere("UNID 402", "UNID 401")).toBe(false);
+    expect(confirmacaoDeUnidadeConfere("", "UNID 401")).toBe(false);
+    expect(confirmacaoDeUnidadeConfere(undefined, "UNID 401")).toBe(false);
   });
   it("vendida: por status ou por data de venda", () => {
     expect(unidadeVendida({ status: "Vendido", mesVenda: null })).toBe(true);

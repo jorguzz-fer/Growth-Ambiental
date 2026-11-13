@@ -425,7 +425,7 @@ Procedimento geral e snapshot em `docs/ROLLBACK.md` e `scripts/db-snapshot.sh`.
 
 ## 12. Pendências de validação
 
-**Com Messias**
+**Com o responsável do cliente**
 
 - Confirmar o termo "Despesas Gerais" (seção 6).
 - Confirmar que a obrigação aparecendo em Contas a Pagar como linha separada,

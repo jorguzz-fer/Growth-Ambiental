@@ -118,7 +118,7 @@ export async function extractDespesaFromDocument(
         resumo: {
           type: "string",
           description:
-            "Uma frase em português dizendo o que é a despesa (ex.: 'Compra de 1 saco de cimento na A F Andrade, NF-e 17547').",
+            "Uma frase em português dizendo o que é a despesa (ex.: 'Compra de 1 saco de cimento na Materiais Exemplo, NF-e 17547').",
         },
         observacoes: {
           type: "array",
@@ -130,7 +130,7 @@ export async function extractDespesaFromDocument(
           "Nome/razão social de QUEM RECEBE o dinheiro (emitente da nota, loja, prestador, recebedor do Pix). Vazio se não identificar.",
         ),
         fornecedorDoc: campoSchema(
-          "CNPJ ou CPF do fornecedor, como está escrito. Se estiver mascarado (ex.: ***.844.476-**), copie assim mesmo e use confianca=baixa.",
+          "CNPJ ou CPF do fornecedor, como está escrito. Se estiver mascarado (ex.: ***.123.456-**), copie assim mesmo e use confianca=baixa.",
         ),
         valor: campoSchema(
           "Valor total efetivamente devido, em reais, já com descontos (número puro, sem 'R$' nem separador de milhar). 0 se não identificar.",

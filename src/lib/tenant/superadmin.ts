@@ -1,29 +1,28 @@
 /**
- * Super-admins da plataforma — operadores da Growth Tools que podem criar e
- * gerenciar contas (tenants). NÃO é um papel do tenant (owner/admin/…), e sim
+ * Super-admins da plataforma — operadores que criam e gerenciam contas
+ * (tenants) em `/plataforma`. NÃO é um papel do tenant (owner/admin/…), e sim
  * um privilégio de plataforma, controlado por e-mail.
  *
- * Fonte: env `SUPERADMIN_EMAILS` (lista separada por vírgula). Se ausente, cai
- * no bootstrap com os operadores conhecidos (os mesmos admins do seed), para o
- * recurso já funcionar no deploy atual sem configuração extra.
+ * Fonte ÚNICA: a variável de ambiente `SUPERADMIN_EMAILS` (lista separada por
+ * vírgula), configurada no servidor. Nenhum e-mail fica no código. Sem a
+ * variável, ninguém é operador (falha fechada): o console da plataforma fica
+ * inacessível até a configuração — e um aviso sai no log uma vez.
  */
-const BOOTSTRAP_SUPERADMINS = [
-  "fer.jorge@gmail.com",
-  "thiago.liberman@gmail.com",
-];
+let avisou = false;
 
-export function superAdminEmails(): string[] {
-  const env = process.env.SUPERADMIN_EMAILS;
-  if (env && env.trim()) {
-    return env
-      .split(",")
-      .map((e) => e.trim().toLowerCase())
-      .filter(Boolean);
+export function superAdminEmails(env: string | undefined = process.env.SUPERADMIN_EMAILS): string[] {
+  const lista = (env ?? "")
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter((e) => e.includes("@"));
+  if (!lista.length && !avisou) {
+    avisou = true;
+    console.warn("[superadmin] SUPERADMIN_EMAILS não está definido: nenhum operador da plataforma tem acesso a /plataforma.");
   }
-  return BOOTSTRAP_SUPERADMINS;
+  return lista;
 }
 
-export function isSuperAdmin(email?: string | null): boolean {
+export function isSuperAdmin(email?: string | null, env?: string): boolean {
   if (!email) return false;
-  return superAdminEmails().includes(email.toLowerCase());
+  return superAdminEmails(env ?? process.env.SUPERADMIN_EMAILS).includes(email.trim().toLowerCase());
 }

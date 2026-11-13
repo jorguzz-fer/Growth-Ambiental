@@ -8,8 +8,8 @@ trabalho se divide. **Só leitura; nada foi alterado.**
 
 ## O fato que muda tudo: a tabela está vazia em produção
 
-O diagnóstico de 30/09 (`V2-DIAGNOSTICO-PRODUCAO.md`, consultas 2 e 2b)
-encontrou **zero linhas** em `conta_receber` nas três empresas. Ninguém lançou
+O diagnóstico de 30/09 (diagnóstico de produção do cliente anterior, removido; consultas 2 e 2b)
+encontrou **zero linhas** em `conta_receber`, em todas as empresas. Ninguém lançou
 conta a receber à mão; toda a receita de venda vive no plano de pagamento das
 unidades e é expandida na hora. Consequências:
 
@@ -26,7 +26,7 @@ unidades e é expandida na hora. Consequências:
 
 | | Situação | Fonte |
 |---|---|---|
-| **BK-0** · materialização só depois das §54/56/57 do Prompt I | **Em vigor.** Decisão: "(1) por enquanto" (BI-2); as seções 54, 56 e 57 são as PRs I-8/I-9, que esperam a variante do INCC (BQ-1) e as datas das 19 obras. **A seção 2 deste prompt não entra** até lá. O código confirma o risco: `getMonthlyRevenue` soma `expandUnitReceivables` **e** `conta_receber` do projeto (não canceladas, pelo mês do vencimento) — materializar hoje dobraria a receita de cada venda | `queries.ts` (`getMonthlyRevenue`), `V2-BLOCO2-DECISOES.md` |
+| **BK-0** · materialização só depois das §54/56/57 do Prompt I | **Em vigor.** Decisão: "(1) por enquanto" (BI-2); as seções 54, 56 e 57 são as PRs I-8/I-9, que esperam a variante do INCC (BQ-1) e as datas das obras sem início e fim. **A seção 2 deste prompt não entra** até lá. O código confirma o risco: `getMonthlyRevenue` soma `expandUnitReceivables` **e** `conta_receber` do projeto (não canceladas, pelo mês do vencimento) — materializar hoje dobraria a receita de cada venda | `queries.ts` (`getMonthlyRevenue`), `V2-BLOCO2-DECISOES.md` |
 | **BK-1** · modelo de vínculo com o Caixa | **Lido** (abaixo). Decidido: valor por linha; `origem_cash_entry_id` preservada | `caixa.ts` |
 | **BK-2** · INCC | **Decidido:** gravar nominal, corrigir na leitura (como a Projeção) | decisões 30/09 |
 | **BK-3** · centavos | **Decidido:** mesmo conceito do Acerto Contábil (tolerância declarada, resíduo registrado) | decisões 30/09 |
@@ -186,6 +186,6 @@ de `valor` e `valor_recebido` por empresa — consulta 2b do
    ou ajustar.
 2. **Boleto/comprovante para a IA (8.1):** a mesma A/B/C da J-5.
 3. **Sequência:** começo a K-1 assim que a fila de PRs (I-7b, J-1 a J-5)
-   estiver andando, ou espero as perguntas do Prompt I (INCC, 19 obras) para
+   estiver andando, ou espero as perguntas do Prompt I (INCC, datas das obras) para
    não abrir mais uma frente? Recomendo começar a K-1: é pequena, sem
    migração e não depende de nada.

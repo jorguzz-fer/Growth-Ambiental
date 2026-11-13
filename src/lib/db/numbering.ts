@@ -96,7 +96,7 @@ export interface OcupacaoFaixa {
  * exatamente `previewNumber(formato, n)`. É a mesma igualdade que o índice
  * único (0040) aplica — `202606` ou `8441-1` nunca colidem com `PED-000432`,
  * então não servem de régua. Medir pelo "maior sufixo de qualquer formato"
- * obrigaria a BMV, que tem um número digitado `202606`, a pular o contador
+ * obrigaria uma empresa que tenha um número digitado `202606`, a pular o contador
  * para 202607.
  */
 export function analisarOcupacao(

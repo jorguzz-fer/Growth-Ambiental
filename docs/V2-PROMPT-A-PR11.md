@@ -26,7 +26,7 @@ todos os percentuais e todas as células numéricas das tabelas:
 
 | Obra | Consolidado (mensal e anual) | Resumo | Projeção | Contabilidade |
 |---|---|---|---|---|
-| SIGNATURE | **igual** | **igual** | **igual** | **igual** |
+| EMPREENDIMENTO PILOTO | **igual** | **igual** | **igual** | **igual** |
 | OBRA 7 | **igual** | **igual** | **igual** | **igual** |
 
 ## O que resta do projeto ativo (PR final)

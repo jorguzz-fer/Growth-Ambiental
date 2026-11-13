@@ -4,7 +4,7 @@ import { norm, parseValorBusca, registroCasa, valorCasa } from "./busca";
 describe("norm", () => {
   it("ignora acentos e caixa", () => {
     expect(norm("JOSÉ Antônio")).toBe("jose antonio");
-    expect(norm("CASARÃO")).toBe("casarao");
+    expect(norm("PORTÃO")).toBe("portao");
   });
   it("colapsa espaços", () => {
     expect(norm("  a   b  ")).toBe("a b");
@@ -39,11 +39,11 @@ describe("valorCasa", () => {
 });
 
 describe("registroCasa — busca por similaridade em vários campos", () => {
-  const campos = ["PED-026180", "CASARÃO", "Cimento para a laje", "OBRA 28"];
+  const campos = ["PED-026180", "PORTÃO", "Cimento para a laje", "OBRA 28"];
   const valores = [880];
 
   it("acha por fornecedor, ignorando acento", () => {
-    expect(registroCasa("casarao", campos, valores)).toBe(true);
+    expect(registroCasa("portao", campos, valores)).toBe(true);
   });
   it("acha por número do pedido, inclusive parcial", () => {
     expect(registroCasa("026180", campos, valores)).toBe(true);
@@ -61,17 +61,17 @@ describe("registroCasa — busca por similaridade em vários campos", () => {
 
   it("combina termos de CAMPOS DIFERENTES (todos precisam casar)", () => {
     // fornecedor + valor
-    expect(registroCasa("casarao 880", campos, valores)).toBe(true);
+    expect(registroCasa("portao 880", campos, valores)).toBe(true);
     // fornecedor + projeto
-    expect(registroCasa("casarao obra", campos, valores)).toBe(true);
+    expect(registroCasa("portao obra", campos, valores)).toBe(true);
   });
 
   it("a ordem dos termos não importa", () => {
-    expect(registroCasa("880 casarao", campos, valores)).toBe(true);
+    expect(registroCasa("880 portao", campos, valores)).toBe(true);
   });
 
   it("não casa se UM dos termos não existir no registro", () => {
-    expect(registroCasa("casarao vergalhao", campos, valores)).toBe(false);
+    expect(registroCasa("portao vergalhao", campos, valores)).toBe(false);
   });
 
   it("consulta vazia não casa nada", () => {
@@ -80,14 +80,14 @@ describe("registroCasa — busca por similaridade em vários campos", () => {
   });
 
   it("tolera campos nulos", () => {
-    expect(registroCasa("casarao", [null, "CASARÃO", undefined])).toBe(true);
+    expect(registroCasa("portao", [null, "PORTÃO", undefined])).toBe(true);
   });
 
   it("é incremental: cada caractere a mais só restringe", () => {
-    const c = ["CASARÃO", "CASA GRANDE"];
+    const c = ["PORTÃO", "CASA GRANDE"];
     expect(registroCasa("c", c)).toBe(true);
     expect(registroCasa("cas", c)).toBe(true);
-    expect(registroCasa("casar", c)).toBe(true);
-    expect(registroCasa("casarx", c)).toBe(false);
+    expect(registroCasa("porta", c)).toBe(true);
+    expect(registroCasa("portax", c)).toBe(false);
   });
 });

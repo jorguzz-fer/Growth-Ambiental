@@ -13,8 +13,8 @@ describe("contas correntes — regras puras (Prompt X)", () => {
   });
   it("2 / 1.3 — sem agência e conta avisa (não bloqueia)", () => {
     expect(avisoDeCadastro({ ag: "", cc: "" })).toMatch(/Sem agência e sem número/);
-    expect(avisoDeCadastro({ ag: "0039", cc: "" })).toMatch(/Sem número/);
-    expect(avisoDeCadastro({ ag: "0039", cc: "99155-9" })).toBeNull();
+    expect(avisoDeCadastro({ ag: "0001", cc: "" })).toMatch(/Sem número/);
+    expect(avisoDeCadastro({ ag: "0001", cc: "12345-6" })).toBeNull();
   });
   it("7 / 4.1 — o rótulo não promete automático sem conexão", () => {
     expect(rotuloDaAtualizacao({ saldoSource: "manual", openFinanceId: null })).toEqual({ rotulo: "Manual", conectada: null });

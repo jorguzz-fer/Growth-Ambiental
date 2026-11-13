@@ -14,8 +14,8 @@ Quinta PR de código do Prompt I, conforme
 
 ## Muda número?
 
-- **§10:** só com a chave ligada. Em produção (diagnóstico A): 5 despesas da
-  BMV na Previsão, R$ 13.710,98; 2 da RMV com R$ 0. A prévia mostra exatamente
+- **§10:** só com a chave ligada. Em produção há despesas na Previsão
+  ([dado de produção removido]). A prévia mostra exatamente
   essas linhas antes de ligar.
 - **§15:** o "Pendente" (Contas a Pagar, Dashboard, Fechamento) passa a
   descontar o que já foi pago ou abatido. Só muda para despesa com pagamento

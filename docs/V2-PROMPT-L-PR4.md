@@ -92,7 +92,7 @@ Resumo em português simples. Migração **0059** (aditiva, reversível, com
 ## Teste de navegador (local, admin)
 - Menu sem "Fechamento de Caixa"; `/fechamento` → 404; Balanço do Dia segue.
 - Cartão de ontem: "Fechar o dia" → confirmação com os números e o aviso de
-  que não trava → selo "fechado", bloco "Gravado: … por RMV Admin em …";
+  que não trava → selo "fechado", bloco "Gravado: … por Cliente Piloto Admin em …";
   anteontem ganha "aberto antes de um fechado".
 - "Reabrir" com motivo → o botão "Fechar o dia" volta; Balanço do Dia mostra
   a linha com "reaberto em … · motivo". `carry_over` continua 0.

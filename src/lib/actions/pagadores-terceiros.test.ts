@@ -30,7 +30,7 @@ describe.skipIf(!HAS_DB)("Pagadores terceiros e busca por PED (Prompt T, PR T-1)
     const [p] = await db.insert(schema.projects).values({ tenantId, name: "OBRA T1" }).returning();
     const [v] = await db.insert(schema.versions).values({ projectId: p.id, tenantId, key: "atual", kind: "atual", label: "Atual", color: "#000" }).returning();
     versionId = v.id;
-    const [f] = await db.insert(schema.stakeholders).values({ tenantId, nome: "Mestre Fornecedor", tipo: "PF", doc: "332.641.358-09", papeis: ["Prestador de Serviço"] }).returning();
+    const [f] = await db.insert(schema.stakeholders).values({ tenantId, nome: "Mestre Fornecedor", tipo: "PF", doc: "000.000.001-91", papeis: ["Prestador de Serviço"] }).returning();
     fornecedorId = f.id;
     ctxRef.current = { tenant: t, projects: [p], userId: null, userEmail: "t1@teste", role: "owner", perms: defaultPermissions("owner") };
   });
@@ -47,8 +47,8 @@ describe.skipIf(!HAS_DB)("Pagadores terceiros e busca por PED (Prompt T, PR T-1)
     const [log] = (await db.select().from(schema.auditLog).where(eq(schema.auditLog.entityId, fornecedorId))).filter((l) => l.action === "stakeholder.papelPagador.conceder");
     const meta = JSON.stringify(log.meta);
     expect(meta).toContain("Mestre Fornecedor");
-    expect(meta).toContain("•••.641.358-••");
-    expect(meta).not.toContain("332.641.358-09");
+    expect(meta).toContain("•••.000.001-••");
+    expect(meta).not.toContain("000.000.001-91");
   });
 
   it("7 — retirar com obrigação vinculada é bloqueado com explicação; sem obrigação, sai", async () => {

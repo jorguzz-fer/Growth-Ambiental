@@ -57,7 +57,7 @@ describe("rateio da receita pela janela da obra", () => {
     const r = receitaPorRateio([linha(bla401()), semCaixinha], null);
     expect(r.porMes).toEqual({});
     expect(r.pendencias.map((p) => [p.unidade, p.valor])).toEqual([
-      ["BLA 401", 555000],
+      ["UNID 401", 555000],
       ["C", 0],
     ]);
     expect(r.pendencias[0].motivo).toMatch(/início e fim/);

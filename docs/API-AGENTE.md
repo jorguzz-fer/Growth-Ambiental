@@ -1,7 +1,7 @@
 # API de agente — Growth ↔ Cris (WhatsApp)
 
 Camada de leitura para a **Cris**, a assistente que responde no WhatsApp
-(plataforma fazer.ai agents, tenant `rmv-gc`, agente 9).
+(plataforma fazer.ai agents, tenant e agente configurados na plataforma).
 
 O app é todo Server Actions, presas ao cookie de sessão do Auth.js — não há por
 onde um cliente externo falar com ele. Estas rotas são essa porta, e só ela.
@@ -38,7 +38,7 @@ sem — comparar a string crua faria o dono legítimo levar 403.
 ## 2. ⚠️ Questão em aberto: a variável de contexto chega no header?
 
 `tool_create` documenta que `{{contact_phone}}` resolve em url, query, headers e
-corpo. **Em campo, no corpo não chega** — provado em 26/08 (cliente Alumine): o
+corpo. **Em campo, no corpo não chega** — provado em 26/08 (em outro cliente da plataforma): o
 mesmo JSON passava por curl e voltava 400 pela plataforma, e nem literal fixo
 sobrevivia. Esse teste nunca cobriu header nem query.
 
@@ -86,7 +86,7 @@ erro é escrita **para o agente ler e explicar** — nunca stack trace.
 ### Duas decisões que evitam resposta errada
 
 **Truncagem nunca é silenciosa.** `total`, `somaValor` e `truncado` são
-calculados **antes** do corte. Contas a Pagar já passa de 360 linhas: sem isso a
+calculados **antes** do corte. Contas a Pagar já passa do teto em uso real: sem isso a
 Cris diria "são estas 50" com a mesma confiança com que diria a lista inteira.
 
 **Hoje é hoje em Brasília.** A VPS roda em UTC. Depois das 21h o `new Date()` do

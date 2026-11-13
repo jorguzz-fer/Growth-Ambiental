@@ -39,8 +39,8 @@ R$ 0,99 saem de verde para vermelho. Quantas em produção: consulta 3 de
 - **Teste do dia 25 (BJ-1), na base local:** unidade `TESTE-J1-DIA25` criada
   pelo formulário com venda em 25/09/2026; a lista mostrou **25/09/2026**
   (antes mostraria 09/25/2026). Removida ao fim; `unit` voltou a 2 registros e
-  R$ 1.076.607,00, os mesmos de antes.
-- Navegador: Unidades com eyebrow "SIGNATURE SUARÃO · ATUAL", título, "1
+  [valor removido], os mesmos de antes.
+- Navegador: Unidades com eyebrow "EMPREENDIMENTO PILOTO · ATUAL", título, "1
   unidade · VGV R$ 100.000", coluna "Data da venda"; Resumo Executivo com
   eyebrow e subtítulo de volta.
 - Suíte inteira, `typecheck`, `lint` e `next build`: ver PR.

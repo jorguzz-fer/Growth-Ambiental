@@ -10,7 +10,7 @@ repositório; o inventário abaixo foi feito direto no código.)
 ## Bloqueios
 | | Situação | Decisão adotada |
 |---|---|---|
-| **BAH-1** | Base local: 1 tenant (RMV), **todos os campos fiscais vazios** (cep 0 dígitos, IBGE 0, uf nulo, ambiente `homologacao`). Nenhum cadastro fica com pendência nova aqui. Produção: rodar o 1º e o 2º relatório do SQL. | A validação vale só para o que for **gravado daqui em diante** e só para campo **preenchido**; vazio continua passando; valor antigo inválido vira pendência editável (já é: o checklist o marca) e **não é tocado**. |
+| **BAH-1** | Base local: 1 tenant (Cliente Piloto), **todos os campos fiscais vazios** (cep 0 dígitos, IBGE 0, uf nulo, ambiente `homologacao`). Nenhum cadastro fica com pendência nova aqui. Produção: rodar o 1º e o 2º relatório do SQL. | A validação vale só para o que for **gravado daqui em diante** e só para campo **preenchido**; vazio continua passando; valor antigo inválido vira pendência editável (já é: o checklist o marca) e **não é tocado**. |
 | **BAH-2** | Confirmado: `salvarDadosFiscais` e `checarProntidaoFiscal` são a pré-condição do Emissor (Prompt AG, 4.1 usa `emitentePronto`). O texto da tela diz "defina `FOCUS_NFE_TOKEN`…". | O texto passa a dizer o que acontece quando o cadastro fecha e aponta para **Receitas › Notas Fiscais** (tela do Prompt AG, ainda não existe: sem link quebrado — texto). |
 
 ## O que já está certo e não se toca (confirmado)
@@ -24,8 +24,8 @@ repositório; o inventário abaixo foi feito direto no código.)
 
 ## O que o código mostra, parte a parte
 - **Parte 1 · placeholders**: `page.tsx` tem `placeholder="7.02"` (LC 116),
-  `"4120400"` (CNAE), `"3"` (alíquota) e `"3552502"` (IBGE, Itanhaém/SP,
-  fixture de `nfse-payload.test.ts`). Nenhum `defaultValue` com esses
+  `"4120400"` (CNAE), `"3"` (alíquota) e o código IBGE da cidade-sede
+  (fixture de `nfse-payload.test.ts`). Nenhum `defaultValue` com esses
   valores (1.4 já vale). O mesmo campo aparece como "falta" no checklist.
 - **Parte 2 · validação**: a action recusa só CNPJ (`cnpjValido`) e alíquota
   (`aliquotaIssValida`), com `throw`. CEP, IBGE e UF só são normalizados

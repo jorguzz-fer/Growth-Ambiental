@@ -192,7 +192,7 @@ Companheiros deste arquivo: **`SPEC-GROWTH-CONSTRUCTION.md`** (o quadro geral) e
 | `B-2` | Qual é a fonte do "Orçado" no comparativo? | B |
 | `B-3` | RESOLVIDO — ver Prompt A | B |
 | `BD-1` | Qual número vai na célula somente-leitura? | D |
-| `BD-2` | O que acontece com os R$ 204.140,40 da linha legada? | D |
+| `BD-2` | O que acontece com o valor da linha legada? | D |
 | `BD-3` | O Assistente de IA é somente leitura ou não? | D |
 | `BD-4` | Budget e Forecast: uma tela ou duas? | D |
 | `BD-5` | Os grupos de receita existem no Plano de Contas? | D |
@@ -421,7 +421,7 @@ se a Parte 1 sozinha resolve.
 ## BAJ-2 · O que o `membro` precisa ver
 
 A Parte 1 deixa de conceder `EDIT` em tudo. **A pergunta que a substitui é de
-negócio:** que telas uma pessoa de operação — Renata, Islane — precisa alcançar
+negócio:** que telas uma pessoa de operação precisa alcançar
 para trabalhar?
 
 **Responder com a lista, tela a tela, e a ação de cada uma.** Três recortes
@@ -1750,7 +1750,7 @@ esperado, não como exceção.
 prefixo em 12 caracteres, dígitos entre 1 e 12, e `nextNumber` com piso 1.
 **Nenhuma verificação contra o que já foi emitido.**
 
-Salvar `1` num tenant que emitiu até `PED-001682` é aceito, e as próximas
+Salvar `1` num tenant que já emitiu outros PEDs é aceito, e as próximas
 despesas reemitem números usados.
 
 **2.2 · A action passa a recusar `nextNumber` menor ou igual ao maior sufixo já
@@ -1853,7 +1853,7 @@ Passa a resolver o tenant do contexto, como as demais, e a exigir
 JavaScript (`numbering.ts:5–16`). Vira `SELECT MAX` no banco, com o mesmo
 critério de extração.
 
-**Sem alterar o resultado:** o teste que afirma que `BMV-2026-000842` semeia 843
+**Sem alterar o resultado:** o teste que afirma que `EXM-2026-000842` semeia 843
 continua passando (`numbering.test.ts:52–78`).
 
 ---
@@ -2769,7 +2769,7 @@ existente seja modificado.
 
 - **Coluna anulável, sem default.** Nenhuma linha existente é escrita. Projeto
   não classificado exibe "—". Mais fiel à seção 0.
-- **Coluna com default `Ativo`.** Escreve nas 27 linhas existentes — o que a
+- **Coluna com default `Ativo`.** Escreve em todas as linhas existentes — o que a
   seção 40 autoriza como "adição do novo campo técnico" — mas afirma que toda
   obra está ativa, inclusive as que já terminaram. É uma afirmação sobre o mundo
   que ninguém verificou.
@@ -2913,7 +2913,7 @@ automaticamente.
 **ordenada de forma estável e previsível** — numérica pelo código da obra, com
 fallback alfabético — e com escritórios (`kind: "office"`) agrupados
 separadamente. Hoje a ordem chega como 28, 32, 29, 31, 21, 22, 25, sem critério
-visível, e com 27 projetos isso é fonte real de erro de contexto: escolher a
+visível, e com muitos projetos isso é fonte real de erro de contexto: escolher a
 obra errada num seletor embaralhado vira despesa na obra errada, que vira número
 errado na DRE.
 
@@ -3200,7 +3200,7 @@ Antes de aplicar Ativo/Finalizado a offices, verificar o comportamento atual e
 documentar. Não assumir automaticamente a mesma regra.
 
 **[NOTA]** A distinção é o enum `project.kind` (`proj` | `office`). Em produção
-existe ao menos um office — "DESPESAS GERAIS ITANHAÉM" — que aparece hoje no
+existe ao menos um office — "DESPESAS GERAIS MATRIZ" — que aparece hoje no
 meio da lista de obras no seletor. Um escritório não "finaliza" como uma obra
 finaliza; provavelmente o atributo não se aplica a ele. Documentar a decisão em
 vez de herdá-la.
@@ -3619,7 +3619,7 @@ Recomendação: a 1. Ícone que não faz nada ensina o usuário a ignorá-lo.
 
 ## B-C3 · O seletor de Empresa troca de tenant?
 
-O cabeçalho mostra `Empresa / BMV Construções` com um chevron, sugerindo troca
+O cabeçalho mostra `Empresa / Construtora Piloto` com um chevron, sugerindo troca
 de empresa pela interface.
 
 Isso pode ser legítimo: `membership` tem chave primária composta
@@ -3707,7 +3707,7 @@ Não utilizar o título "Comercial". O nome aprovado é **RECEITAS**.
 
 **[DECISÃO — "obra" é dado do cliente, "projeto" é o termo do produto]**
 
-A RMV nomeia os próprios cadastros como *Obra 21*, *Obra 22*. **Isso é conteúdo
+A Cliente Piloto nomeia os próprios cadastros como *Obra 21*, *Obra 22*. **Isso é conteúdo
 que o usuário digitou no campo nome**, e é assim que deve aparecer — tal como
 foi cadastrado.
 
@@ -4551,7 +4551,7 @@ equivalente ao da seção 2.
 # 5. PROTEÇÃO DE DADO PESSOAL
 
 **5.1 · CPF mascarado na listagem.** Exibir apenas os dígitos centrais, no padrão
-`•••.748.618-••`. O documento completo aparece na ficha, e só para quem tem a
+`•••.123.456-••`. O documento completo aparece na ficha, e só para quem tem a
 permissão de campo sensível.
 
 **5.2 · Validação de formato na entrada.** CPF e CNPJ validados ao gravar.
@@ -6594,8 +6594,8 @@ Nunca usar valores, metragens, datas, códigos de unidade, nomes de cliente ou
 contadores vindos de mockup. Nunca criar registro, seed, fixture, valor padrão ou
 dado de teste a partir deles.
 
-**Aplicação específica:** a unidade "OBRA 28 · CASA TÉRREA · 81,82 m² ·
-R$ 375.000,00 · 08/12/2025" do mockup é ilustração.
+**Aplicação específica:** a unidade "OBRA 28 · CASA TÉRREA · [metragem] ·
+[valor removido] · [data]" do mockup é ilustração.
 
 ---
 
@@ -6728,7 +6728,7 @@ Nenhum valor gravado é alterado. A correção é de leitura.
 
 ## 3.3 · VGV
 
-`vgvMi` formata sempre em milhões. Obra de R$ 375.000 vira "R$ 0,38M".
+`vgvMi` formata sempre em milhões. Obra de R$ 500.000 vira "R$ 0,50M".
 
 Formatar conforme a ordem de grandeza: valor cheio abaixo de um milhão,
 abreviado acima. Hoje o defeito é invisível por causa de 3.1.
@@ -8927,8 +8927,8 @@ testes. Continua pura, sem I/O, e os testes existentes continuam passando.
 ## 2.1 · SM-01 · O limite de renda compara a parcela errada
 
 `dentroLimite: parcMensal <= maxParcela` usa `parcMensal` — o saldo dividido
-pelo número de parcelas. No exemplo real: R$ 4.378 contra limite de R$ 4.800,
-resultado "dentro do limite". **A parcela do primeiro mês é R$ 8.318.**
+pelo número de parcelas. Num caso real (valores removidos), a média ficou abaixo do
+limite e o resultado foi "dentro do limite". **A parcela do primeiro mês era quase o dobro da média, acima do limite.**
 
 **Corrigir:** o veredito compara a **maior parcela do fluxo** com o limite. E a
 tela exibe as duas — maior parcela e limite —, não só o selo.
@@ -9328,7 +9328,7 @@ houver, recusa com a mensagem certa. Mas **seis tabelas** apontam para
 exclusão **não falha**. O banco zera o vínculo em silêncio.
 
 Excluir um pagador sem despesa direta apagaria o nome de todas as obrigações
-dele — e em produção há saldo de dezenas de milhares de reais nessa situação.
+dele — e em produção há saldo em aberto nessa situação [dado de produção removido].
 
 **2.3 · E o documento cai em cascata.** `document.stakeholder_id` é `cascade`:
 excluir apaga o registro do arquivo que a própria `addStakeholder` gravou "para
@@ -10100,7 +10100,7 @@ mudar o desenho das seções 1 e 3.
 `validarDocumentoAoPagar` recusa marcar como paga uma despesa cujo tipo de
 documento exige número e o número está em branco.
 
-Mas em produção há dezesseis lançamentos **pagos e sem NF**. Ou foram pagos
+Mas em produção há lançamentos **pagos e sem NF**. Ou foram pagos
 antes da validação existir, ou por um caminho que não a chama.
 
 **Verificar e reportar:** `pagarDespesa` chama a validação? E o pagamento por
@@ -10458,7 +10458,7 @@ formulário sinaliza no próprio campo quando o tipo escolhido exige número —
 Deixar a distinção visível: o clipe indica arquivo, o selo indica nota. Dois
 conceitos, dois lugares.
 
-**4.4** O contador exibe "16 lançamento(s)". Concordar o plural.
+**4.4** O contador exibe "N lançamento(s)". Concordar o plural.
 
 ---
 
@@ -10667,7 +10667,7 @@ que a operação já usa.
 | Acrescentar "Receitas Financeiras" às categorias credoras | pacote de controladoria, RG-07 |
 
 **[NOTA — rateio na observação]** Um lançamento em produção traz na descrição:
-*"R$ 330 obra 29 - R$ 830 obra 31 - R$ 500 obra 28 — acerto PED-000304"*. É um
+*"R$ [valor] obra A - R$ [valor] obra B - R$ [valor] obra C — acerto PED-[número]"*. É um
 rateio entre três obras escrito à mão num campo de texto, enquanto o sistema tem
 `rateio_obra` e `acerto_item` para isso.
 
@@ -10917,7 +10917,7 @@ criada antes de a segunda consulta vir vazia**.
 
 ## BR-2 · O projeto guarda-chuva é `office` ou `proj`?
 
-"DESPESAS GERAIS ITANHAÉM" aparece em dezenas de linhas com cliente "Próprio",
+"DESPESAS GERAIS MATRIZ" aparece em dezenas de linhas com cliente "Próprio",
 que é como a tela exibe `cliente_id` nulo.
 
 O código não responde. Se for `kind = "proj"`, ele **não recebe** nenhum dos
@@ -11028,7 +11028,7 @@ filtro" — ou separar em lançado e em aberto.
 Fatura aberta **soma** no total em aberto — é obrigação real, com data. Mas o
 usuário precisa saber que parte daquele número ainda vai crescer.
 
-Exibir no formato: *em aberto R$ 92.140, sendo R$ 9.980 em fatura ainda
+Exibir no formato: *em aberto R$ 90.000, sendo R$ 10.000 em fatura ainda
 aberta*. Assim o total serve para planejar caixa, e ninguém é surpreendido pelo
 crescimento.
 
@@ -11461,7 +11461,7 @@ dali, o número não existe em lugar nenhum.
 **2-A.2 · A correção.** As faixas passam a aparecer na **conta corrente**, por
 terceiro, ao lado do saldo devido. E o total do topo ganha a mesma quebra.
 
-Isso transforma *"devemos R$ 43.252 ao Vinicius"* em *"devemos R$ 43.252, e
+Isso transforma *"devemos R$ Y ao sócio B"* em *"devemos R$ Y, e
 R$ X estão abertos há mais de noventa dias"* — que é a informação que leva
 alguém a agir.
 
@@ -11536,15 +11536,15 @@ de dado histórico é decisão humana, item a item.
 colar só o número — mas `obs` é a descrição da compra.
 
 Digitar "100" traz toda despesa cuja observação contenha 100, inclusive valores.
-Há em produção um lançamento com `"R$ 330 obra 29 - R$ 830 obra 31 - R$ 500
-obra 28 — acerto PED-000304"` na observação: ele aparece em busca por qualquer
+Há em produção um lançamento com `"R$ [valor] obra A - R$ [valor] obra B - R$ [valor]
+obra C — acerto PED-[número]"` na observação: ele aparece em busca por qualquer
 um desses números.
 
 **O usuário escolhe o PED errado e a obrigação é amarrada ao lançamento
 errado.**
 
 **5.2 · A correção.** Buscar apenas em `numDoc`, normalizando a entrada: aceitar
-`"70"`, `"000070"` e `"PED-000070"` como a mesma busca, comparando o sufixo
+`"123"`, `"000123"` e `"PED-000123"` como a mesma busca, comparando o sufixo
 numérico. **Não buscar em `obs`.**
 
 ---
@@ -11658,7 +11658,7 @@ aditivas, com `IF NOT EXISTS` e `down`.
 2. Vincular lançamento existente por PED continua funcionando, sem sobrescrever
    nada do lançamento.
 3. Buscar "100" não traz despesa cuja observação contenha 100.
-4. Buscar "70", "000070" e "PED-000070" traz o mesmo lançamento.
+4. Buscar "123", "000123" e "PED-000123" traz o mesmo lançamento.
 5. O select de pagador oferece apenas quem tem o papel.
 6. Conceder papel a quem já é fornecedor não cria registro novo.
 7. Retirar papel de quem tem obrigação é bloqueado com explicação.
@@ -12258,7 +12258,7 @@ nelas.
 
 ## 3.1 · Quais
 
-`SOCIO MESSIAS`, `SOCIO VINICIUS` e `CHEQUE TERCEIRO` — sem agência, sem número,
+`SOCIO A`, `SOCIO B` e `CHEQUE TERCEIRO` — sem agência, sem número,
 saldo zero.
 
 As duas de sócio são o mesmo conceito da conta corrente de terceiros, que já
@@ -12293,8 +12293,8 @@ original, e só marca `pagoPorTerceiro`.
 2. despesas reclassificadas, uma a uma, pelo vínculo por PED;
 3. só então as contas saem do saldo.
 
-**[NOTA — verificar antes de reclassificar]** O Vinicius já tem saldo a
-ressarcir, e o Manoel também, vindos por outro caminho. Reclassificar **aumenta**
+**[NOTA — verificar antes de reclassificar]** Um dos sócios já tem saldo a
+ressarcir, e outro terceiro também, vindos por outro caminho. Reclassificar **aumenta**
 esses saldos — o que está certo se as despesas de fato foram pagas por eles e
 ainda não devolvidas.
 
@@ -12561,7 +12561,7 @@ Acertos** do Prompt S só entra depois que a seção 4 daqui estiver em produç�
 O mecanismo de exclusão do saldo **já existe**: `saldoDisponivel` ignora contas
 do tipo `"Terceiros"`.
 
-Em produção, `SOCIO MESSIAS`, `SOCIO VINICIUS` e `CHEQUE TERCEIRO` estão com
+Em produção, `SOCIO A`, `SOCIO B` e `CHEQUE TERCEIRO` estão com
 tipo **Construtora** — por isso entram no saldo total.
 
 **Isso muda a abordagem do Prompt X**, que previa inativar ou excluir. Trocar o
@@ -14486,11 +14486,9 @@ Todo número exibido em tela vem do banco. Onde não houver dado, a tela mostra
 estado vazio — **nunca zero, nunca placeholder numérico, nunca o valor do
 mockup**.
 
-**Aplicação específica a este prompt:** o endereço "Avenida das Nações Unidas,
-12.345", o município "São Paulo", o CEP "04794-000", as coordenadas
-"-23.6018 / -46.6981" e todos os valores do bloco Orçado × Realizado
-(R$ 375.000,00 · R$ 320.000,00 · R$ 213.199,19 · R$ 228.500,00 · R$ 161.800,81 ·
-R$ 91.500,00 · 85% · 107% · 57%) são **ilustração de mockup**. Nenhum deles entra
+**Aplicação específica a este prompt:** o endereço, o município, o CEP, as coordenadas e todos os valores
+do bloco Orçado × Realizado (valores monetários e percentuais) são
+**ilustração de mockup** [valores removidos]. Nenhum deles entra
 no código, em fixture, em valor padrão ou em teste.
 
 ---
@@ -14554,8 +14552,8 @@ Consequências para este prompt:
 
 Conferência dos números do mockup:
 
-- Receita orçada R$ 375.000,00 = `valor_construcao` + `valor_terreno`
-- Custo orçado R$ 213.199,19 = `custo_construcao`
+- Receita orçada [valor removido] = `valor_construcao` + `valor_terreno`
+- Custo orçado [valor removido] = `custo_construcao`
 
 Ou seja, o mockup usa **campos de cadastro desta própria tela** como orçamento.
 Isso viola a seção 20 do próprio prompt ("Não criar uma segunda fonte da
@@ -14659,10 +14657,10 @@ OBRA 32   [Finalizado]
 Não criar cards pequenos/resumidos que substituam os formulários. Na visão
 "Todos", os projetos continuam editáveis na própria página.
 
-**[NOTA]** Há 27 projetos em produção. Nesta visão, isso significa 27
-formulários completos, todos editáveis, empilhados. É uma escolha deliberada
+**[NOTA]** Há muitos projetos em produção. Nesta visão, isso significa um
+formulário completo por projeto, todos editáveis, empilhados. É uma escolha deliberada
 deste prompt e fica registrada como risco aceito: o usuário que entrar para
-consultar vai rolar por 27 formulários, e o risco de digitar por cima de um
+consultar vai rolar por todos esses formulários, e o risco de digitar por cima de um
 valor enquanto procura outra obra é real. Os acréscimos das seções 8 e 37
 existem para mitigar isso sem mudar o modelo.
 
@@ -14680,7 +14678,7 @@ alterar cookies de contexto; não definir projeto padrão no sistema.
 **[ACRÉSCIMO]** Ordenar a lista do seletor de forma estável e previsível
 (numérica pelo código da obra, com fallback alfabético) e permitir busca por
 digitação. Hoje a ordem é a que vem de `ctx.projects` — 28, 32, 29, 31, 21, 22,
-25 — sem critério visível. Com 27 itens, isso é fonte de erro de contexto.
+25 — sem critério visível. Com muitos itens, isso é fonte de erro de contexto.
 
 **[ACRÉSCIMO]** Escritórios (`kind: "office"`) continuam identificados no
 seletor com o sufixo `· Matriz/Filial` e agrupados separadamente das obras.
@@ -14851,7 +14849,7 @@ financeira da construtora", **sem alterar as regras de cálculo atuais**.
 **[ACRÉSCIMO — vazio deixa de parecer zero]** Hoje o campo nulo renderiza
 `0,00`, tornando indistinguíveis "é zero" e "nunca foi preenchido". Nas duas
 obras dos prints, os três campos de funding mostram `0,00` numa operação de
-R$ 375.000,00 com forma de pagamento do terreno = FINANCIAMENTO.
+[valor removido] com forma de pagamento do terreno = FINANCIAMENTO.
 
 Campo sem valor deve exibir placeholder vazio, não `0,00`. Nenhum valor gravado
 muda; é apresentação.
@@ -15283,7 +15281,7 @@ Auditoria.
 7. Badge Ativo · 8. Badge Finalizado · 9. Documentos corretos por projeto ·
 10. IA não confunde dados entre projetos.
 
-**[ACRÉSCIMO]** 11. Seletor ordenado e busca funcionando com 27 projetos.
+**[ACRÉSCIMO]** 11. Seletor ordenado e busca funcionando com muitos projetos.
 12. Campo de funding vazio exibe vazio, não `0,00`. 13. Escritórios continuam
 identificados e separados.
 
@@ -15307,7 +15305,7 @@ Ativo → Finalizado e Finalizado → Ativo, garantindo que **somente** o campo 
 situação muda e que permanecem idênticos valores, datas, cliente, documentos,
 Budget, Forecast, Atual, despesas, receitas, unidades e demais dados.
 
-**[ACRÉSCIMO]** Se B-3 resultar em coluna nova: verificar que os 27 projetos
+**[ACRÉSCIMO]** Se B-3 resultar em coluna nova: verificar que os projetos
 existentes continuam com o status antigo intacto e que a coluna nova permanece
 vazia até classificação manual.
 
@@ -15494,11 +15492,11 @@ Todo número exibido em tela vem do banco. Onde não houver dado, a tela mostra
 estado vazio — **nunca zero, nunca placeholder numérico, nunca o valor do
 mockup**.
 
-**Aplicação específica a este prompt:** o total "R$ 204.140,00", os percentuais
+**Aplicação específica a este prompt:** o total, os percentuais
 "20,00 · 15,00 · 15,00 · 15,00 · 15,00 · 10,00 · 10,00", os valores mensais
-(R$ 40.628,00 · R$ 30.621,00 · R$ 20.414,00) e os cards do topo são ilustração
-de mockup — e são inconsistentes entre si: 20% de R$ 204.140,00 daria
-R$ 40.828,00, não R$ 40.628,00. Nenhum desses números entra no código. O valor
+e os cards do topo são ilustração de mockup [valores removidos] — e são
+inconsistentes entre si: 20% do total exibido não dá o valor exibido no
+primeiro mês. Nenhum desses números entra no código. O valor
 que a célula somente-leitura exibirá vem do cadastro do projeto, conforme a
 decisão em BD-1, e o que já está gravado em `budget_account` permanece intocado
 até haver decisão humana registrada em BD-2.
@@ -15543,7 +15541,7 @@ reinserir**: remove todos os `budget_account` e `budget_line` daquele bloco na
 versão, e reinsere apenas o que veio no formulário.
 
 Consequência direta para este prompt: **no instante em que a linha legada
-"Receita" deixar de ser enviada pelo formulário, os R$ 204.140,40 são apagados
+"Receita" deixar de ser enviada pelo formulário, os valores dessa linha são apagados
 do banco** — em toda obra que tenha linha legada, no primeiro salvamento do
 bloco de receitas. Sem aviso, e o log de auditoria guarda apenas
 `{ bloco, contas: N }`, sem os meses nem os valores removidos.
@@ -15567,26 +15565,26 @@ produção e está proibida pela seção 0.
 
 ## BD-1 · Qual número vai na célula somente-leitura?
 
-O mockup mostra R$ 204.140,00 numa célula rotulada "Total vem do cadastro do
+O mockup mostra um valor numa célula rotulada "Total vem do cadastro do
 projeto". Esse número **não vem do cadastro** — é o valor atual da linha legada.
-O cadastro da OBRA 28 tem `valor_construcao` = 270.000 e `valor_terreno` =
-105.000.
+O cadastro do projeto tem `valor_construcao` e `valor_terreno` preenchidos
+[valores removidos].
 
 **Escolher uma:**
 
-1. **`valor_construcao` apenas** (R$ 270.000 na OBRA 28), quando
+1. **`valor_construcao` apenas**, quando
    `terreno_fora_caixa` estiver marcado. É o que a própria tela de Projetos já
    chama de "Entrada financeira da construtora". Mais fiel ao caixa da
    construtora.
-2. **`valor_construcao + valor_terreno`** (R$ 375.000). Valor global da
-   operação. Nesse caso, o Budget passa a orçar R$ 105.000 de receita que não
-   entram no caixa da construtora, e o Fluxo de Caixa previsto herda isso — a
+2. **`valor_construcao + valor_terreno`**. Valor global da
+   operação. Nesse caso, o Budget passa a orçar o valor do terreno como receita que não
+   entra no caixa da construtora, e o Fluxo de Caixa previsto herda isso — a
    contrapartida do terreno precisa existir em algum lugar do lado das despesas,
    ou o resultado fica inflado.
 
 Não implementar sem a resposta. Os números do mockup não servem de referência.
 
-## BD-2 · O que acontece com os R$ 204.140,40 da linha legada?
+## BD-2 · O que acontece com o valor da linha legada?
 
 A linha "Receita (legado)" não aparece no mockup. Ela existe em
 `budget_account` com `row_key = "Receita"`, `kind = "receita"`, sem grupo
@@ -16026,8 +16024,7 @@ continua vindo de `project.recursos_proprios`.
 horizontal dos meses, como hoje.
 
 **7.3 · Não copiar os números do mockup.** São ilustrativos e há inconsistência
-neles — o primeiro mês mostra R$ 40.628,00 para 20% de R$ 204.140,00, que daria
-R$ 40.828,00.
+neles — o valor do primeiro mês não corresponde a 20% do total exibido.
 
 ---
 
@@ -16256,8 +16253,8 @@ com a mesma fórmula — `Math.round(total * pct) / 100`. Não há divergência.
 
 Hoje o total por conta é somente-leitura nesta tela
 (`totalReadOnly = kind === "forecast"`), herdado do orçamento no momento da
-criação. Em produção, a OBRA 28 tem **R$ 70.000** aqui e **R$ 204.140,40** no
-orçamento — os dois divergem, e a interface não oferece caminho para corrigir.
+criação. Em produção, há obra com um total aqui e outro, bem diferente, no
+orçamento [dado de produção removido] — os dois divergem, e a interface não oferece caminho para corrigir.
 
 Depois do Prompt D, o total de "Receitas do Projeto" no orçamento passa a vir do
 cadastro do projeto. A pergunta é o que a previsão faz.
@@ -17431,7 +17428,7 @@ nenhuma ligação com a obra exibida**. Três fatos da coleta:
   Todos os projetos usam os mesmos dez percentuais, e mudá-los exige editar o
   arquivo e fazer deploy.
 - **Os números vieram do empreendimento-piloto.** A constante imediatamente
-  acima é `CUSTO_EDIFICACOES_REF`, rotulada *"(SIGNATURE SUARÃO)"*.
+  acima é `CUSTO_EDIFICACOES_REF`, rotulada *"(EMPREENDIMENTO PILOTO)"*.
 - **Eles somam 99,66, não 100.** A linha Total exibe `100%` porque o valor está
   escrito à mão no JSX — não é a soma da coluna.
 
@@ -17441,7 +17438,7 @@ sob o nome de outra, e o total afirma um fechamento que os números não fazem.
 **Decidir — a indexação por código não resolve isto:**
 
 1. **A PLS entra no cadastro do projeto**, e a coluna passa a ser da obra. É a
-   mesma estrutura que o **BV-1** discute para a medição por serviço: se a RMV
+   mesma estrutura que o **BV-1** discute para a medição por serviço: se a Cliente Piloto
    tem a PLS aprovada de cada obra, **uma tabela resolve as duas coisas** — os
    percentuais daqui e os dezesseis cartões do Dashboard.
 2. **A coluna sai do relatório**, enquanto não houver a PLS por obra.
@@ -17894,7 +17891,7 @@ O usuário vê um número no campo, vê a pendência, e não tem como saber que 
 número não é o valor.
 
 **1.2 · A origem do `3552502`.** Pelo comentário em `nfse-payload.test.ts:14`, é
-**Itanhaém/SP**, usado ali como "sede" de fixture. Um município de teste virou
+**cidade-sede/SP**, usado ali como "sede" de fixture. Um município de teste virou
 sugestão padrão para qualquer empresa do sistema. `4120400` é o CNAE de
 construção de edifícios e `7.02` é o item da LC 116 citado no texto da própria
 pendência.
@@ -18371,8 +18368,8 @@ ajuda. **Rota removida sem varredura vira link quebrado.**
 **1.7 · Os três números somem, e é preciso registrar por quê.** Receita
 projetada, Despesas lançadas e Resultado saem das mesmas fontes da DRE.
 
-**E há uma divergência que vale anotar antes de a tela sair:** o Resultado aqui é
-R$ 355.638; o Resultado Final da DRE, R$ 356.790. **R$ 1.152 de diferença**, que
+**E há uma divergência que vale anotar antes de a tela sair:** o Resultado aqui
+difere do Resultado Final da DRE [valores de produção removidos]. **A diferença**
 é exatamente a ordem de grandeza da linha Empréstimos — subtraída na cascata da
 DRE e provavelmente não subtraída aqui.
 
@@ -18403,7 +18400,7 @@ papel como os demais: default do papel, ajuste por membro.
 **A lista de oito não muda por esta tarefa.** Trocar uma lista fixa por outra
 adivinhada é o erro que o BAJ-2 do Prompt AJ evita para o `membro`.
 
-Se a RMV quiser que o contador veja mais ou menos, **isso passa a ser ajuste na
+Se a Cliente Piloto quiser que o contador veja mais ou menos, **isso passa a ser ajuste na
 tela** — que é exatamente o objetivo.
 
 ## 2.4 · Duas telas da lista merecem conversa
@@ -18488,7 +18485,7 @@ pendentes.
 
 | Item | Dono |
 |---|---|
-| A divergência de R$ 1.152 no resultado | **Prompt AC**, RC-D5 — ver 1.7 |
+| A divergência no resultado | **Prompt AC**, RC-D5 — ver 1.7 |
 | Convite por e-mail | **bloqueado por falta de domínio** — Prompt AI |
 | O default do `membro` | **Prompt AJ**, Parte 1 |
 | O que pode aparecer no `meta` do log | **Prompt AK**, BAK-2 |
@@ -18564,7 +18561,7 @@ comportamento fora do clamp da Parte 3.
 3. Decisão de **BAL-3** — 404 ou redirecionamento.
 4. Arquivos removidos, um a um, e componentes compartilhados encontrados.
 5. Resultado da varredura de 1.6.
-6. **O registro da divergência de R$ 1.152**, com as duas expressões lado a lado,
+6. **O registro da divergência no resultado**, com as duas expressões lado a lado,
    encaminhado ao Prompt AC.
 7. Como `CONTADOR_VE` passou a ser ponto de partida em vez de lista fixa.
 8. Como o teto foi implementado, e a confirmação de que roda depois do merge.
@@ -18748,9 +18745,9 @@ SELECT p.name AS projeto, d.num_doc, d.categoria_dre, d.valor,
 
 **É a decisão de desenho desta tela.**
 
-No print: dezesseis lançamentos, de **fornecedores que não têm nada a ver entre
-si** — Caixa Econômica, ABC Materiais, Pix Marketplace, Coratti Intermediações,
-Casa Grande. Um único `<Select>` de destino, e "Marcar todos".
+No print: vários lançamentos, de **fornecedores que não têm nada a ver entre
+si** — banco, loja de materiais, marketplace, intermediadora, loja de
+construção [nomes removidos]. Um único `<Select>` de destino, e "Marcar todos".
 
 **A validação impede categoria de natureza errada. Não impede mandar material e
 tarifa bancária para a mesma categoria.** O texto diz "sempre manual" — e manual
@@ -19638,7 +19635,7 @@ absorve na cadeia de saldo do Caixa junto com `/fechamento`.
 **Observação de apoio, não é justificativa por si só:** nas capturas enviadas, o
 Consolidado exibe traço em todas as oito fontes e em todos os doze meses, e o
 Balanço do Dia informa *"Nenhum fechamento registrado"*. A Projeção exibe número
-— R$ 336.000 em 01/2026 e R$ 375.000 no total —, então **ela não está vazia**, e
+— [valores removidos] —, então **ela não está vazia**, e
 a remoção dela tira um número que hoje está na tela de alguém.
 
 ---
@@ -20052,8 +20049,8 @@ SELECT d.num_doc, d.valor, d.categoria_dre, d.competencia, d.status, v.kind
  ORDER BY d.valor DESC;
 ```
 
-A terceira e a quarta juntas respondem por que a OBRA 28 exibe margem de
-contribuição de 95,9% com custo variável de R$ 1.261.
+A terceira e a quarta juntas respondem por que uma obra exibe margem de
+contribuição próxima de 100% com custo variável irrisório [dado de produção removido].
 
 ## BAC-2 · Quantas versões um projeto tem, e qual o teto de colunas
 
@@ -20641,8 +20638,8 @@ Hoje `saldoInicial = saldoDisponivel(getBankAccounts(ctx.tenant.id))` — a soma
 (`page.tsx:117`, `:130`). É o mesmo número para qualquer obra ou versão
 selecionada.
 
-Na OBRA 28 isso produz um acumulado que começa em R$ 344.707 com entradas de
-R$ 336.000 — os R$ 8.707 de diferença são o caixa da empresa, não da obra.
+Numa obra, isso produz um acumulado que começa acima das entradas da própria
+obra — a diferença é o caixa da empresa, não da obra [valores de produção removidos].
 
 **Escolher uma:**
 
@@ -20668,7 +20665,7 @@ SELECT nome, tipo, agencia, cc, saldo, saldo_source
 ```
 
 **Atenção:** `saldoDisponivel` exclui apenas o tipo `"Terceiros"`. Se
-`SOCIO MESSIAS`, `SOCIO VINICIUS` e `CHEQUE TERCEIRO` — as três contas que o
+`SOCIO A`, `SOCIO B` e `CHEQUE TERCEIRO` — as três contas que o
 **Prompt X** manda limpar — forem de outro tipo, **elas entram no saldo inicial
 desta tela**. O BX-2 daquele prompt ganha um consumidor que não estava mapeado, e
 a limpeza muda o acumulado de todas as obras.
@@ -20762,8 +20759,8 @@ qual é. A Parte 7 do **Prompt L** exige o conciliado.
 **Ver BAD-1.**
 
 **2.1 · O acumulado passa a considerar o realizado.** Hoje ele é previsto puro
-(`page.tsx:170–176`): em 07/2026 o previsto foi 5.076, o realizado 4.682, e o
-acumulado desceu 5.076. **A coluna mais à direita da tela é a projeção que teria
+(`page.tsx:170–176`): num mês fechado o previsto foi X, o realizado foi menor, e o
+acumulado desceu X. **A coluna mais à direita da tela é a projeção que teria
 acontecido se nada tivesse acontecido.**
 
 **A regra:** mês fechado entra no acumulado pelo **realizado**; mês futuro, pelo
@@ -20772,7 +20769,7 @@ aconteceu do que é projeção.
 
 **2.2 · Os dois saldos ganham nomes distintos.** O card "Saldo do período" é
 `totE − totS`, **sem** o saldo inicial; a coluna "Saldo acumulado" **inclui**. Na
-tela, R$ 321,4 mil contra R$ 344.707, sem explicação. Renomear e declarar a base
+tela, os dois aparecem com valores diferentes, sem explicação. Renomear e declarar a base
 de cada um.
 
 ---
@@ -24233,7 +24230,7 @@ ela emite nota indevida.
 | **Parcela de contrato de prestação de serviço** | o contratante | `conta_receber` |
 | **Serviço avulso** | qualquer | digitado |
 
-**Responder:** a BMV presta serviço de construção para quem? Há contrato de
+**Responder:** a Construtora Piloto presta serviço de construção para quem? Há contrato de
 empreitada ou administração? A nota acompanha a **medição** entregue à Caixa, ou
 o recebimento?
 

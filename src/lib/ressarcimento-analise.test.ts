@@ -4,7 +4,7 @@ import { agingDasObrigacoes } from "./calc/aging";
 
 const HOJE = "2026-09-30";
 const ob = (p: Partial<ObrigacaoParaAnalise> & { id: string }): ObrigacaoParaAnalise => ({
-  numDoc: `PED-${p.id}`, pagador: "Inácio", projectName: "Obra A", valorTotal: 100, valorRestituido: 0, saldoPendente: 100,
+  numDoc: `PED-${p.id}`, pagador: "Ivo", projectName: "Obra A", valorTotal: 100, valorRestituido: 0, saldoPendente: 100,
   dataPagamentoOriginal: "08/01/2026", dataPrevistaRestituicao: null, status: "Pendente", ...p,
 });
 
@@ -13,12 +13,12 @@ describe("assistente de Ressarcimentos (Prompt T, seção 10) — puro, somente 
     const lista = [
       ob({ id: "1", dataPrevistaRestituicao: "09/20/2026" }), // 10 d
       ob({ id: "2", saldoPendente: 50, valorRestituido: 50, dataPrevistaRestituicao: "07/15/2026" }), // 77 d
-      ob({ id: "3", pagador: "BMV", dataPagamentoOriginal: "05/01/2026" }), // 152 d
+      ob({ id: "3", pagador: "Construtora X", dataPagamentoOriginal: "05/01/2026" }), // 152 d
       ob({ id: "4", status: "Cancelado", dataPagamentoOriginal: "01/01/2026" }),
       ob({ id: "5", saldoPendente: 0, valorRestituido: 100, dataPagamentoOriginal: "01/01/2026" }),
     ];
     const a = agingPorTerceiro(lista, HOJE);
-    expect(a.map((x) => x.terceiro)).toEqual(["BMV", "Inácio"]); // quem tem mais acima de 30 primeiro
+    expect(a.map((x) => x.terceiro)).toEqual(["Construtora X", "Ivo"]); // quem tem mais acima de 30 primeiro
     const inacio = a[1];
     expect(inacio.faixas).toEqual(agingDasObrigacoes([lista[0], lista[1]].map((o) => ({ saldo: o.saldoPendente, dataPrevistaRestituicao: o.dataPrevistaRestituicao, dataPagamentoOriginal: o.dataPagamentoOriginal })), HOJE));
     expect(inacio.faixas).toEqual({ ate30: 100, de31a60: 0, de61a90: 50, acima90: 0 });
@@ -29,12 +29,12 @@ describe("assistente de Ressarcimentos (Prompt T, seção 10) — puro, somente 
 
   it("encontro de contas disponível só para quem tem saldo nos dois lados", () => {
     const e = encontrosDisponiveis([
-      { terceiro: "Inácio", saldoARestituir: 300, saldoARepassar: 120 },
-      { terceiro: "BMV", saldoARestituir: 500, saldoARepassar: 0 },
+      { terceiro: "Ivo", saldoARestituir: 300, saldoARepassar: 120 },
+      { terceiro: "Construtora X", saldoARestituir: 500, saldoARepassar: 0 },
       { terceiro: "Mix", saldoARestituir: 0, saldoARepassar: 80 },
       { terceiro: "Zé", saldoARestituir: 10, saldoARepassar: 40 },
     ]);
-    expect(e.map((x) => [x.terceiro, x.compensavel])).toEqual([["Inácio", 120], ["Zé", 10]]);
+    expect(e.map((x) => [x.terceiro, x.compensavel])).toEqual([["Ivo", 120], ["Zé", 10]]);
   });
 
   it("conferir: sem previsão, sem pagador e saldo negativo (restituído a mais)", () => {
@@ -69,7 +69,7 @@ describe("assistente de Ressarcimentos (Prompt T, seção 10) — puro, somente 
   });
 
   it("12d / 15 — a análise nunca vê nem devolve dados bancários ou PIX, e não grava nada", () => {
-    const a = analisarRessarcimentos([ob({ id: "1" })], [{ terceiro: "Inácio", saldoARestituir: 100, saldoARepassar: 0 }], HOJE);
+    const a = analisarRessarcimentos([ob({ id: "1" })], [{ terceiro: "Ivo", saldoARestituir: 100, saldoARepassar: 0 }], HOJE);
     const texto = JSON.stringify(a).toLowerCase();
     for (const proibido of ["pix", "banco", "agencia", "conta"]) expect(texto).not.toContain(proibido);
     expect(a.totalObrigacoes).toBe(1);

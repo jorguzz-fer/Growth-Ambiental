@@ -103,7 +103,7 @@ A coluna "No código" é o que o `main` faz em 18/10, verificado.
 |---|---|---|
 | Empresa | Chat ajuda a preencher. Logo ok. | — |
 | Usuários | Chat ajuda a cadastrar; ao escolher papel (ex.: contador) **sugerir as telas**, editável. **Verificar** a restrição de telas por papel: o cliente disse que não funcionava. | Matriz de acessos existe (Prompts AJ/AI). |
-| Auditoria | Ok. Chat filtra ("só o que o Messias lançou"). | — |
+| Auditoria | Ok. Chat filtra ("só o que fulano lançou"). | — |
 | Numeração | Ok. Chat sugere. | — |
 | Chaves de mudança | **Esconder do cliente.** Só a plataforma (Jorge e Thiago) vê. | `TELAS_SO_ADMIN`: owner e admin do cliente veem. |
 | Backup | **Tirar o aviso** da tela. **Não expor o download completo ao cliente**: só a plataforma; o dono pede. Risco de segurança. | Tela do tenant, módulo "Backup". |

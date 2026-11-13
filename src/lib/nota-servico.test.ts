@@ -201,7 +201,7 @@ describe("Prompt AG PR3 — regras do envio", async () => {
     const base = { status: "rascunho", podeEmitir: true, recusaDoTenant: null, focusConfigurado: true, ambiente: "homologacao" as const };
     const completo = {
       razaoSocial: "X", cnpj: "11222333000181", inscricaoMunicipal: "1", regimeTributario: "LUCRO_PRESUMIDO", itemListaServico: "7.02",
-      aliquotaIss: 3, codigoMunicipio: "3552502", municipio: "Itanhaém", uf: "SP", logradouro: "Av", numero: "1", bairro: "C", cep: "11740-000", email: "a@b.c",
+      aliquotaIss: 3, codigoMunicipio: "3509502", municipio: "Campinas", uf: "SP", logradouro: "Av", numero: "1", bairro: "C", cep: "13010-000", email: "a@b.c",
     };
     expect(m.bloqueiosDoEnvio({ ...base, emitente: completo })).toEqual([]);
     expect(m.bloqueiosDoEnvio({ ...base, status: "autorizada", emitente: completo })).toHaveLength(1);

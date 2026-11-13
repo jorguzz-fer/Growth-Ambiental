@@ -36,7 +36,7 @@ foi alterado.** SQL em [`sql/v2-prompt-d-diagnostico.sql`](./sql/v2-prompt-d-dia
   componente morto; não é tocado (fora de escopo).
 - **Base local**: 19 grupos (10 CEF, 9 complementares), **nenhum** subitem de
   natureza receita, **0** `budget_account`, **0** `budget_line`; 1 versão
-  budget e 1 forecast (SIGNATURE SUARÃO). Produção (27 obras, linha legada
+  budget e 1 forecast (EMPREENDIMENTO PILOTO). Produção (várias obras, linha legada
   "Receita" com valores): rodar o SQL — relatórios A–F dão a linha de base
   do teste 8.9 (contagens e somas por versão).
 

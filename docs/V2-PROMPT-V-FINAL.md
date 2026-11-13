@@ -3,7 +3,7 @@
 Entregue em 5 PRs: Fase 1 (#210), V-1 (#211), V-2 (#212), V-3 (#213), V-4.
 SQL de diagnóstico em `docs/sql/v2-prompt-v-diagnostico.sql`.
 
-1. **BV-1**: **não decidido** (depende de a RMV ter a PLS de cada obra e de
+1. **BV-1**: **não decidido** (depende de a Cliente Piloto ter a PLS de cada obra e de
    como o engenheiro mede). **Parte 2 não executada.** Caminho não
    destrutivo: nada descontinuado, nada apagado; o selo dos dois KPIs do
    Dashboard passou a dizer "medição por serviço não está em uso" (texto,

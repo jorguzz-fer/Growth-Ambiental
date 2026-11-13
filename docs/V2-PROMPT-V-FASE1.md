@@ -8,11 +8,11 @@ documentos e assistente. **Só leitura nesta fase; nada foi alterado.** SQL em
 ## Bloqueios — o que a base e o código mostram
 | | Situação (base local) | Decisão adotada |
 |---|---|---|
-| **BV-1** migrar para medição por serviço? | `medicao` 0 · `servico` 0 · `medicao_servico` 0. Confirmado no código: **ninguém grava** `servico`/`medicao_servico` (zero INSERT no repositório); `getIndicadoresObra` lê `medicao_servico` e alimenta os KPIs "Evolução física acumulada" e "Evolução do mês" do Dashboard, que mostram traço + "sem medição lançada" mesmo com medições em `medicao`. | **Não posso decidir** (depende de a RMV ter a PLS de cada obra e de como o engenheiro mede). Caminho não destrutivo: **Parte 1 inteira; Parte 2 não executada; nada descontinuado nem apagado**. Enquanto isso, o selo dos dois KPIs deixa de enganar: passa a dizer que a medição por serviço não está em uso (texto, reversível). **Pergunta ao usuário** abaixo. |
+| **BV-1** migrar para medição por serviço? | `medicao` 0 · `servico` 0 · `medicao_servico` 0. Confirmado no código: **ninguém grava** `servico`/`medicao_servico` (zero INSERT no repositório); `getIndicadoresObra` lê `medicao_servico` e alimenta os KPIs "Evolução física acumulada" e "Evolução do mês" do Dashboard, que mostram traço + "sem medição lançada" mesmo com medições em `medicao`. | **Não posso decidir** (depende de a Cliente Piloto ter a PLS de cada obra e de como o engenheiro mede). Caminho não destrutivo: **Parte 1 inteira; Parte 2 não executada; nada descontinuado nem apagado**. Enquanto isso, o selo dos dois KPIs deixa de enganar: passa a dizer que a medição por serviço não está em uso (texto, reversível). **Pergunta ao usuário** abaixo. |
 | **BV-2** medição fora da Atual | 0 registros fora da Atual (0 medições). Produção: relatório BV-2 do SQL. | Nada é movido. A 1.2 impede novos casos. |
 | **BV-3** autoria | `medicao` **não tem coluna de autor**; `audit_log` local sem evento de medição (produção: relatório BV-3 do SQL; `medicao.create` existe desde o Prompt AK, mas sem `entity_id` — não liga ao registro). | Coluna aditiva `created_by` (uuid → `user`, `ON DELETE set null`), preenchida por `addMedicao` dali em diante. **Nenhum backfill.** Medição sem autor é visível a todos, marcada "autor não registrado" (0.5.3). Preenchimento manual a partir do log = pergunta ao usuário. |
 | **BV-4** o FRE é impresso daqui? | `PrintButton` só chama `window.print()`; não há `@media print` em nenhum arquivo (só `print:hidden` na barra lateral e no cabeçalho). CNPJ, contrato, CNO, RT, ART, município, período e assinaturas não são lidos. | **Não implementar layout de impressão** sem a resposta. A aba do Relatório **fica** (não destrutivo); o rodapé passa a dizer o que o botão faz. **Pergunta ao usuário** abaixo. |
-| **3.5** `PCT_REF_CEF` | Dez números fixos do piloto (SIGNATURE SUARÃO), indexados por posição; somam **99,66**; o "100%" do Total está escrito à mão. Não existe cadastro de PLS. | **Opção 2: a coluna sai do relatório** enquanto não houver PLS por obra (opção 1 depende de BV-1). A constante fica no código. Pergunta ao usuário. |
+| **3.5** `PCT_REF_CEF` | Dez números fixos do piloto (EMPREENDIMENTO PILOTO), indexados por posição; somam **99,66**; o "100%" do Total está escrito à mão. Não existe cadastro de PLS. | **Opção 2: a coluna sai do relatório** enquanto não houver PLS por obra (opção 1 depende de BV-1). A constante fica no código. Pergunta ao usuário. |
 
 ## O que já está feito por prompts anteriores
 | Item | Situação |
@@ -41,7 +41,7 @@ documentos e assistente. **Só leitura nesta fase; nada foi alterado.** SQL em
 5. Selo dos KPIs do Dashboard (BV-1 provisório) entra na V-2 como texto.
 
 ## Perguntas ao usuário (não bloqueiam a Parte 1)
-1. **BV-1**: a RMV tem a PLS aprovada de cada obra? O engenheiro mede por % ou por R$? → opção 1 (migrar, Parte 2) ou 2 (descontinuar e tirar os dois KPIs). Até lá: nada apagado, KPIs com selo honesto.
+1. **BV-1**: a Cliente Piloto tem a PLS aprovada de cada obra? O engenheiro mede por % ou por R$? → opção 1 (migrar, Parte 2) ou 2 (descontinuar e tirar os dois KPIs). Até lá: nada apagado, KPIs com selo honesto.
 2. **BV-4**: o FRE / Cronograma CEF é impresso daqui ou montado em planilha?
 3. **3.5**: a coluna `% Ref. CEF` sai (adotado) — ou prefere cadastrar a PLS por obra (junto com BV-1)?
 4. **BV-3**: preencher autor das medições antigas a mão, a partir do log? (Nunca por script.)

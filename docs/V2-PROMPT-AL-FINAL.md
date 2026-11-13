@@ -45,15 +45,15 @@ Não sobrou nenhuma menção à rota nem ao id no código. O teste
 `telas-removidas.test.ts` confere isso. As outras ocorrências da palavra
 "contabilidade" são texto de negócio, como "confirme com a contabilidade".
 
-## 6. Divergência de R$ 1.152, para o Prompt AC (RC-D5)
+## 6. Divergência entre Contabilidade e DRE, para o Prompt AC (RC-D5)
 
 | Tela | Conta |
 |---|---|
 | Acesso Contabilidade (saiu) | `receita` = soma de `getMonthlyRevenue` · `despesas` = soma crua de `getDespesas` da versão Atual · `resultado = receita − despesas` |
 | DRE | `Resultado Final = Receita − Custo Variável − Despesa Variável − Custo Fixo − Despesa Fixa − Retiradas − Investimentos − Empréstimos − Despesas Financeiras` |
 
-**O sinal não bate com a hipótese do prompt.** O resultado da Contabilidade,
-R$ 355.638, é o **menor**. Se a diferença fosse Empréstimos subtraído só na
+**O sinal não bate com a hipótese do prompt.** O resultado da Contabilidade
+([valor removido]) é o **menor**. Se a diferença fosse Empréstimos subtraído só na
 DRE, a Contabilidade daria o maior. A causa mais provável é a soma crua de
 todas as despesas da versão, inclusive de categorias que a DRE não leva para
 a cascata. Nada foi corrigido aqui. A base local não tem esses lançamentos,

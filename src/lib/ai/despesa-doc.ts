@@ -212,7 +212,7 @@ function acharFornecedor(
   if (!n) return { id: null, fraco: false };
   const exato = lista.find((f) => normalizarNome(f.nome) === n);
   if (exato) return { id: exato.id, fraco: false };
-  // 2) "CASARAO ITANHAEM COM MAT CONSTR LTDA" no cupom x "Casarão Itanhaém"
+  // 2) "DEPOSITO LITORAL COM MAT CONSTR LTDA" no cupom x "Depósito Litoral"
   //    no cadastro: casa, mas é palpite — o usuário confirma.
   const parcial = lista.find((f) => {
     const fn = normalizarNome(f.nome);
@@ -226,7 +226,7 @@ function acharProjeto(nome: string, lista: ContextoDespesa["projetos"]): Match {
   if (!n) return { id: null, fraco: false };
   const exato = lista.find((p) => normalizarNome(p.nome) === n);
   if (exato) return { id: exato.id, fraco: false };
-  // A obra costuma vir embutida no nome do destinatário ("BMV CONSTRUCOES
+  // A obra costuma vir embutida no nome do destinatário ("CONSTRUTORA EXEMPLO
   // LTDA (OBRA 25)") ou carimbada no cupom ("OBRA 28").
   const parcial = lista.find((p) => {
     const pn = normalizarNome(p.nome);

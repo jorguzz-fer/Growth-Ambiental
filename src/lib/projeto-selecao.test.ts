@@ -19,13 +19,13 @@ describe("ordenarProjetos (Prompt A, 10)", () => {
 
   it("escritórios em grupo próprio, no fim, em ordem alfabética", () => {
     const lista = [
-      p("1", "DESPESAS GERAIS ITANHAÉM", "office"),
+      p("1", "DESPESAS GERAIS MATRIZ", "office"),
       p("2", "OBRA 28"),
       p("3", "Administração", "office"),
       p("4", "OBRA 5"),
     ];
     expect(ordenarProjetos(lista).map((x) => x.name)).toEqual([
-      "OBRA 5", "OBRA 28", "Administração", "DESPESAS GERAIS ITANHAÉM",
+      "OBRA 5", "OBRA 28", "Administração", "DESPESAS GERAIS MATRIZ",
     ]);
   });
 

@@ -7,7 +7,7 @@ Sem migração. Nenhum dado de `tenant` alterado. `calc/emitente-fiscal.ts`,
 1. **Parte 1 · placeholders**: IBGE → placeholder "7 dígitos, sem ponto" +
    ajuda; alíquota → "0 a 5" + ajuda; LC 116 e CNAE → **sem placeholder**, com
    o valor típico do setor em texto **abaixo** do campo ("construção civil
-   costuma ser 7.02…", "4120-4/00…"). `3552502`, `4120400`, `placeholder="7.02"`
+   costuma ser 7.02…", "4120-4/00…"). o código IBGE da cidade-sede, `4120400`, `placeholder="7.02"`
    e `placeholder="3"` não aparecem mais no HTML. Nenhum `defaultValue` novo.
    Textos em `empresa-regras.ts` (`AJUDA_CAMPO`).
 2. **Parte 2 · validação no servidor**: `salvarDadosFiscais` chama os
@@ -47,7 +47,7 @@ sem alteração. Suíte: 175 arquivos / 1592.
 Navegador (admin, local): nenhum dos quatro números no HTML; placeholders e
 ajudas novos; selo "R2 não configurado"; texto do emissor; avisos novos; 5
 "(opcional)"; CEP "1234" recusado com a mensagem; nome vazio recusado. Linha
-de `tenant` RMV idêntica antes e depois; nenhum log gerado.
+de `tenant` Cliente Piloto idêntica antes e depois; nenhum log gerado.
 
 ## Arquivos
 `lib/empresa-regras.ts` (+test), `actions/empresa.ts` (+`empresa-ah.test.ts`),

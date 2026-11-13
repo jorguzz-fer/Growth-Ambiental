@@ -53,7 +53,7 @@ describe("calcProjection (paridade com calcProj do protótipo)", () => {
 });
 
 describe("calcUnitTotal", () => {
-  it("soma o total contratado da BLA 401", () => {
+  it("soma o total contratado da UNID 401", () => {
     // sinais 20000 + mensais 180000 + semestrais 120000 + anuais 90000
     // + FGTS 20000 + subsídio 10000 + permuta 90000 + banco 25000 = 555000
     expect(calcUnitTotal(bla401())).toBe(555000);

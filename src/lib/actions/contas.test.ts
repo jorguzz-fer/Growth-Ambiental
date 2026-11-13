@@ -43,7 +43,7 @@ describe.skipIf(!HAS_DB)("Contas correntes (Prompt X)", async () => {
     expect(r).toMatchObject({ ok: true, aviso: expect.stringMatching(/Sem agência e sem número/) });
     expect(await addConta(fd({ banco: "", saldo: "0" }))).toMatchObject({ ok: false, error: expect.stringMatching(/banco/) });
     expect(await addConta(fd({ banco: "Itaú", saldo: "abc" }))).toMatchObject({ ok: false, error: expect.stringMatching(/número/) });
-    const neg = await addConta(fd({ banco: "Itaú", ag: "0039", cc: "1-1", saldo: "-250.5" }));
+    const neg = await addConta(fd({ banco: "Itaú", ag: "0001", cc: "1-1", saldo: "-250.5" }));
     expect(neg).toMatchObject({ ok: true, aviso: null });
     const contas = await getBankAccounts(tenantId);
     expect(contas.find((c) => c.banco === "Itaú")?.saldo).toBe("-250.50");

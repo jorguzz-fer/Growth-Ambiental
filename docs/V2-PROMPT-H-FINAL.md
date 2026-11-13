@@ -31,7 +31,7 @@ todas as empresas: nada mudou em produção até alguém ligar.
 6. **Lista de conferência (5.3)**: na própria tela `/chaves`
    (`#previa-rascunho`): projeto, versão (link), tipo, situação, receitas e
    despesas de cada versão de planejamento não Aprovada. Base local: as 2
-   versões (Budget e Forecast da SIGNATURE SUARÃO) com R$ 0,00.
+   versões (Budget e Forecast da EMPREENDIMENTO PILOTO) com R$ 0,00.
 7. **Antes/depois com a chave desligada**: na base local as versões de
    planejamento têm 0 `budget_line`, logo todos os relatórios são idênticos
    por construção; o teste 8.1 confirma leituras iguais com dados. Produção:

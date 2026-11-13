@@ -31,8 +31,8 @@ do teste 8.9 em `docs/sql/v2-prompt-d-diagnostico.sql` (relatório C).
    receita.
 5. **Linha legada "Receita"**: **continua visível** com o selo "legado"
    (BD-2, opção 1), não removível pela ação, intacta no banco. Teste com
-   banco: salvar o bloco de receitas sem mandar a legada mantém os
-   R$ 204.140,40. Nenhum valor apagado.
+   banco: salvar o bloco de receitas sem mandar a legada mantém o
+   valor dela intacto. Nenhum valor apagado.
 6. **BG-11**: **implementada**. `saveBudgetPlanning` apaga/reinsere só as
    chaves enviadas (`inArray`), por bloco, na transação; o log traz as chaves.
 7. **Assistente**: somente leitura (BD-3), 4 funções, análise pura no

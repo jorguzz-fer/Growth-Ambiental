@@ -471,7 +471,7 @@ export const permutas = pgTable("permuta", {
   tenantId: uuid("tenant_id")
     .notNull()
     .references(() => tenants.id, { onDelete: "cascade" }),
-  /** código da unidade vinculada (ex.: "BLA 401"). */
+  /** código da unidade vinculada (ex.: "UNID 401"). */
   unitCode: text("unit_code"),
   cliente: text("cliente"),
   dataRecebimento: text("data_recebimento"),
@@ -642,7 +642,7 @@ export const despesas = pgTable("despesa", {
   tenantId: uuid("tenant_id")
     .notNull()
     .references(() => tenants.id, { onDelete: "cascade" }),
-  /** nº de documento interno (ex.: BMV-2026-001682). */
+  /** nº de documento interno (ex.: EXM-2026-001682). */
   numDoc: text("num_doc"),
   fornecedorId: uuid("fornecedor_id").references(() => stakeholders.id, {
     onDelete: "set null",
@@ -1444,7 +1444,7 @@ export const clientes = pgTable("cliente", {
   tenantId: uuid("tenant_id")
     .notNull()
     .references(() => tenants.id, { onDelete: "cascade" }),
-  /** código da unidade comprada (ex.: "BLA 401"). */
+  /** código da unidade comprada (ex.: "UNID 401"). */
   unitCode: text("unit_code"),
   statusContrato: text("status_contrato"),
   // ── Dados cadastrais ──

@@ -51,7 +51,7 @@ Testes: `medicao-regras.test.ts` (puro) e `actions/medicao-v1.test.ts`
 Testes antigos ajustados à nova assinatura (`despesas-integridade`,
 `planejamento-projeto-explicito`, `ordem-data`). Suíte: 168 arquivos / 1559.
 Navegador (local, admin): valor 0 recusado com mensagem; duas medições iguais
-→ 2 marcas "duplicidade aparente"; coluna "Quem lançou" = RMV Admin; Excluir
+→ 2 marcas "duplicidade aparente"; coluna "Quem lançou" = Cliente Piloto Admin; Excluir
 cancelado mantém a linha, aceito remove; `/medicao` abre. Medições do teste
 apagadas e auditoria limpa; `medicao` local segue com 0 linhas.
 

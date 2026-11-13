@@ -37,8 +37,8 @@ restringe.
 
 Já implementada pelo **AJ Parte 3** (mesmo mecanismo, `TELAS_SO_ADMIN`):
 Usuários e Gestão de Acessos negadas a quem não é owner/admin, depois do merge
-dos overrides. Diagnóstico de produção: só a Islane (BMV) seria afetada — a
-decisão foi **promovê-la a admin** antes do deploy.
+dos overrides. Diagnóstico de produção: só um membro (Construtora Piloto) seria afetado — a
+decisão foi **promovê-lo a admin** antes do deploy.
 
 ## AI Parte 1 — senha provisória e sessão
 

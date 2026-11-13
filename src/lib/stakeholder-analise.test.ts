@@ -15,13 +15,13 @@ const hoje = new Date("2026-10-01T00:00:00Z");
 
 describe("analisarStakeholders (7.2) — puro, sem modelo", () => {
   const cadastros = [
-    c({ id: "a", nome: "A Ltda", doc: "20.957.509/0001-34", papeis: ["Fornecedor de Material"], email: "a@a" }),
-    c({ id: "b", nome: "B Ltda", doc: "20957509000134", papeis: ["Construtora"], tel: "1" }),
-    c({ id: "i", nome: "Inativo", ativo: false, papeis: ["Fornecedor de Material"], doc: "332.641.358-09", tipo: "PF" }),
+    c({ id: "a", nome: "A Ltda", doc: "00.000.001/0001-36", papeis: ["Fornecedor de Material"], email: "a@a" }),
+    c({ id: "b", nome: "B Ltda", doc: "00000001000136", papeis: ["Construtora"], tel: "1" }),
+    c({ id: "i", nome: "Inativo", ativo: false, papeis: ["Fornecedor de Material"], doc: "000.000.001-91", tipo: "PF" }),
     c({ id: "s", nome: "Sem nada" }),
     c({ id: "p", nome: "Pagador sem papel", papeis: ["Sócio/Quotista"], tel: "2", doc: "123.456.789-09", tipo: "PJ" }),
     c({ id: "x", nome: "Doc ruim", doc: "12.345", papeis: ["Seguradora"], email: "x" }),
-    c({ id: "m", nome: "Mestre PF", tipo: "PF", papeis: ["Mão de Obra RPA"], tel: "3", doc: "332.641.358-09" }),
+    c({ id: "m", nome: "Mestre PF", tipo: "PF", papeis: ["Mão de Obra RPA"], tel: "3", doc: "000.000.001-91" }),
   ];
   const uso: UsoDoCadastro[] = [
     { id: "i", despesas: 3, ultimaDespesa: "2026-09-20", obrigacoes: 0 },

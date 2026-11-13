@@ -5,38 +5,38 @@ import { traduzirStatus } from "./focus";
 import type { EmitenteFiscal } from "@/lib/calc/emitente-fiscal";
 
 const EMITENTE: EmitenteFiscal = {
-  razaoSocial: "BMV Construções Ltda",
+  razaoSocial: "Construtora Exemplo Ltda",
   cnpj: "11222333000181",
   inscricaoMunicipal: "123456",
   regimeTributario: "LUCRO_PRESUMIDO",
   itemListaServico: "7.02",
   aliquotaIss: 3,
-  codigoMunicipio: "3552502", // Itanhaém/SP (sede)
+  codigoMunicipio: "3509502", // Campinas/SP (sede fictícia)
   uf: "SP",
   logradouro: "Av. Brasil",
   numero: "1000",
   bairro: "Centro",
-  cep: "11740-000",
+  cep: "13010-000",
   cnae: "4120400",
-  email: "fiscal@bmv.com.br",
+  email: "fiscal@exemplo.com.br",
 };
 
 const DADOS: DadosEmissaoNfse = {
   emitente: EMITENTE,
   tomador: {
     cnpj: "11222333000181",
-    razaoSocial: "RMV Empreendimentos Ltda",
+    razaoSocial: "Incorporadora Exemplo Ltda",
     endereco: {
       logradouro: "Rua das Flores",
       numero: "123",
       bairro: "Centro",
-      codigoMunicipio: "3552502",
+      codigoMunicipio: "3509502",
       uf: "sp",
-      cep: "11740-000",
+      cep: "13010-000",
     },
   },
   servico: {
-    discriminacao: "Medição 05/2026 — SIGNATURE SUARÃO",
+    discriminacao: "Medição 05/2026 — Projeto Exemplo",
     valores: { valorServicos: 100_000, aliquotaIss: 3, issRetido: false },
   },
   dataEmissao: "2026-08-26T10:30:00-03:00",
@@ -50,7 +50,7 @@ describe("montarPayloadNfse — estrutura", () => {
     expect(payload!.prestador).toEqual({
       cnpj: "11222333000181",
       inscricao_municipal: "123456",
-      codigo_municipio: "3552502",
+      codigo_municipio: "3509502",
     });
     expect(payload!.servico).toMatchObject({
       valor_servicos: 100_000,
@@ -59,8 +59,8 @@ describe("montarPayloadNfse — estrutura", () => {
       valor_iss: 3_000,
       iss_retido: false,
       item_lista_servico: "7.02",
-      codigo_municipio: "3552502",
-      discriminacao: "Medição 05/2026 — SIGNATURE SUARÃO",
+      codigo_municipio: "3509502",
+      discriminacao: "Medição 05/2026 — Projeto Exemplo",
     });
     expect(calculo!.valorLiquido).toBe(100_000);
   });
@@ -89,7 +89,7 @@ describe("montarPayloadNfse — estrutura", () => {
     expect(t.cnpj).toBe("11222333000181");
     expect(t.telefone).toBe("13999998888");
     expect((t.endereco as Record<string, unknown>).uf).toBe("SP");
-    expect((t.endereco as Record<string, unknown>).cep).toBe("11740000");
+    expect((t.endereco as Record<string, unknown>).cep).toBe("13010000");
   });
 
   it("omite campos vazios em vez de mandar string em branco", () => {
@@ -114,20 +114,20 @@ describe("montarPayloadNfse — município da obra (LC 116 art. 3º III)", () =>
     expect(payload!.servico).toMatchObject({ codigo_municipio: "3550308" });
     expect(payload!.natureza_operacao).toBe("2");
     // O prestador continua sendo o da sede.
-    expect(payload!.prestador.codigo_municipio).toBe("3552502");
+    expect(payload!.prestador.codigo_municipio).toBe("3509502");
   });
 
   it("obra no mesmo município da sede: natureza 1", () => {
     const { payload } = montarPayloadNfse({
       ...DADOS,
-      obra: { codigoMunicipio: "3552502" },
+      obra: { codigoMunicipio: "3509502" },
     });
     expect(payload!.natureza_operacao).toBe("1");
   });
 
   it("sem obra cadastrada, usa o município do prestador", () => {
     const { payload } = montarPayloadNfse(DADOS);
-    expect(payload!.servico).toMatchObject({ codigo_municipio: "3552502" });
+    expect(payload!.servico).toMatchObject({ codigo_municipio: "3509502" });
     expect(payload!.natureza_operacao).toBe("1");
   });
 

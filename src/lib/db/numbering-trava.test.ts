@@ -4,16 +4,16 @@ import { analisarOcupacao, mensagemColisaoNumDoc, INDICE_NUM_DOC } from "./numbe
 
 const PED = { prefix: "PED", usePrefix: true, digits: 6 };
 
-/** Retrato do que o diagnóstico de 29/09 achou na BMV (valores sintéticos). */
-const BMV_LIKE = [
+/** Amostra de números de documento como aparecem numa base real (valores sintéticos). */
+const AMOSTRA = [
   "PED-000001", "PED-000002", "PED-000431",
   "PED-026179", "PED-026180", "PED-026181",
-  "202606", "8441-1", "8441-2", "BMV-2026-000001", "56", null, "",
+  "202606", "8441-1", "8441-2", "EXM-2026-000001", "56", null, "",
 ];
 
 describe("analisarOcupacao — só conta o que o contador pode reproduzir", () => {
   it("contador em 432 com lote importado à frente: livre, mas com números adiante", () => {
-    const o = analisarOcupacao(BMV_LIKE, PED, 432);
+    const o = analisarOcupacao(AMOSTRA, PED, 432);
     expect(o.proximoOcupado).toBe(false);
     expect(o.maiorEmitido).toBe(26181);
     expect(o.emUsoAFrente).toBe(3);
@@ -25,17 +25,17 @@ describe("analisarOcupacao — só conta o que o contador pode reproduzir", () =
   });
 
   it("recuar para um número já emitido é detectado", () => {
-    expect(analisarOcupacao(BMV_LIKE, PED, 2).proximoOcupado).toBe(true);
-    expect(analisarOcupacao(BMV_LIKE, PED, 26181).proximoOcupado).toBe(true);
+    expect(analisarOcupacao(AMOSTRA, PED, 2).proximoOcupado).toBe(true);
+    expect(analisarOcupacao(AMOSTRA, PED, 26181).proximoOcupado).toBe(true);
   });
 
   it("igual ao maior emitido também está ocupado", () => {
-    const o = analisarOcupacao(BMV_LIKE, PED, 26181);
+    const o = analisarOcupacao(AMOSTRA, PED, 26181);
     expect(o.proximoOcupado).toBe(true);
   });
 
   it("acima do maior: nada à frente", () => {
-    const o = analisarOcupacao(BMV_LIKE, PED, 26182);
+    const o = analisarOcupacao(AMOSTRA, PED, 26182);
     expect(o).toEqual({ maiorEmitido: 26181, proximoOcupado: false, emUsoAFrente: 0 });
   });
 
@@ -46,9 +46,9 @@ describe("analisarOcupacao — só conta o que o contador pode reproduzir", () =
     expect(o.maiorEmitido).toBe(202606); // "202606" tem 6 dígitos: é deste formato
   });
 
-  it("prefixo com dígitos (BMV-2026) funciona", () => {
-    const f = { prefix: "BMV-2026", usePrefix: true, digits: 6 };
-    const o = analisarOcupacao(BMV_LIKE, f, 1);
+  it("prefixo com dígitos (EXM-2026) funciona", () => {
+    const f = { prefix: "EXM-2026", usePrefix: true, digits: 6 };
+    const o = analisarOcupacao(AMOSTRA, f, 1);
     expect(o.proximoOcupado).toBe(true);
     expect(o.maiorEmitido).toBe(1);
   });

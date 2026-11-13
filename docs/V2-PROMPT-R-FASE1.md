@@ -9,7 +9,7 @@ leitura nesta fase; nada foi alterado.** SQL em
 | | Local | Decisão |
 |---|---|---|
 | **BR-1** PED pode repetir | `number_sequence`: 0 linhas (a semente nasce no 1º lançamento pelo app); 0 PEDs repetidos. Produção: rodar o SQL (sequência × maior usado) | Fora desta tela (tarefa própria). **Nenhuma constraint é criada** antes de a 2ª consulta vir vazia |
-| **BR-2** guarda-chuva | nenhum projeto "DESPESAS GERAIS" local; os `kind` locais: SIGNATURE (`proj`), ESCRITÓRIO CENTRAL (`office`), OBRA 7 (`proj`). Produção: SQL | Reportar; reclassificar é decisão humana |
+| **BR-2** guarda-chuva | nenhum projeto "DESPESAS GERAIS" local; os `kind` locais: EMPREENDIMENTO PILOTO (`proj`), ESCRITÓRIO CENTRAL (`office`), OBRA 7 (`proj`). Produção: SQL | Reportar; reclassificar é decisão humana |
 
 ## O que o Prompt I já fez aqui (e não se toca)
 

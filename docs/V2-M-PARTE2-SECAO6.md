@@ -124,7 +124,7 @@ o cadastro de cliente ganhar vínculo com a obra.
 ## Ainda pendente
 
 - ~~**6.2 · domínio fechado do status**~~ — **feito em 30/09/2026.** Em
-  produção só havia "ATIVO" (10 clientes). Lista decidida pelo dono: Ativo ·
+  produção só havia "ATIVO" [dado de produção removido]. Lista decidida pelo dono: Ativo ·
   Assinado · Em análise · Reservado · Distratado · Cancelado. O campo vira
   seleção; "ATIVO" continua valendo como Ativo e **não é convertido**; valor
   fora da lista segue legível, sinalizado, e o servidor só o aceita se for o

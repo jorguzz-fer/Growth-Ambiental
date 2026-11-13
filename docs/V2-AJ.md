@@ -6,9 +6,9 @@ o Bloco 5.
 
 ## §13 do prompt, item a item
 
-**1. BAJ-1 — o que causou o relato.** Em produção (29/09), **nenhum membro está
-sem override**: todos já salvaram a matriz. O caminho é o **salvamento total**
-(Parte 2), não o default sozinho. Islane tinha as 38 chaves, com Usuários e
+**1. BAJ-1 — o que causou o relato.** Em produção, **nenhum membro estava
+sem override**: todos já tinham salvado a matriz. O caminho é o **salvamento total**
+(Parte 2), não o default sozinho. Havia membro com as 38 chaves, com Usuários e
 Gestão de Acessos concedidos. Detalhe em `V2-BLOCO0-BLOQUEIOS.md` §5.
 
 **2. BAJ-2:** opção 2 — o membro alcança **Despesas, Contas a Pagar,
@@ -19,16 +19,10 @@ Excluir fica com owner e admin. `MEMBRO_TELAS` em `permissions.ts`.
 **3. BAJ-3:** ajustar o `membro`, sem papel novo.
 
 **4. A prévia (1.4)** — a tela Gestão de Acessos mostra, com a chave desligada,
-o que cada membro perde ao ligar. Calculado com os overrides de produção:
-
-| Membro | Perde ao ligar a chave |
-|---|---|
-| Renata (BMV) | Backup e Ponto (ver, criar, editar) |
-| Felipe (RMV) | Backup e Ponto (ver, criar, editar) |
-| Roberto (RMV) | Backup e Ponto (ver, criar, editar) |
-
-É pouco porque as outras 34 telas de cada um já estão gravadas no override e
-continuam valendo. Membros novos, convidados depois, nascem no padrão novo.
+o que cada membro perde ao ligar. Com os overrides de produção do cliente
+anterior, o efeito foi pequeno (os membros listados perdiam só Backup e Ponto —
+ver, criar, editar) [dado de produção removido], porque as demais telas de cada
+um já estavam gravadas no override e continuam valendo. Membros novos, convidados depois, nascem no padrão novo.
 
 **A chave** — o app não tem mecanismo de chave por tenant (B4). Até ter, é a
 variável de ambiente `MEMBRO_PADRAO_RESTRITO`: ids de tenant separados por
@@ -87,8 +81,9 @@ exceto Usuários/Acessos para quem não é owner/admin.
 foi para `nav-menu.ts`, sem a afirmação errada).
 
 **16. Limitações**
-- **Islane (BMV)** perde Usuários e Gestão de Acessos no deploy. Decisão:
-  **promover a admin antes do merge** (tela Usuários, na BMV).
+- Um membro da Construtora Piloto que hoje tem Usuários e Gestão de Acessos por
+  override perde essas telas no deploy. Decisão: **promover a admin antes do
+  merge** (tela Usuários, na Construtora Piloto).
 - A matriz ainda desenha as 61 caixas mortas (Parte 5) e o log não está na mesma
   transação do update (7.2).
 - O agente de WhatsApp (`/api/agent`) passa pelo mesmo `effectivePermissions`,

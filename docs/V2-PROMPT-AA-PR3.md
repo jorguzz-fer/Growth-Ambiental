@@ -52,5 +52,5 @@ desce para baixo dos cartões.
   - o que mudou;
   - o painel sem escrita;
   - "Montar outra análise" é a primeira ação e não fala em conversa.
-- Navegador, na SIGNATURE e na Empresa toda: as ações, a desabilitada com o
+- Navegador, na EMPREENDIMENTO PILOTO e na Empresa toda: as ações, a desabilitada com o
   motivo, as contas vencidas e a segunda visita ("nada mudou").

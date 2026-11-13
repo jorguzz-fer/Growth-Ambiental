@@ -98,7 +98,7 @@ qual PR. Nada aqui altera dado gravado.
   bloqueio mudou e `emitentePronto` dá o mesmo resultado (teste). A tela e o
   assistente deixaram de concatenar à parte.
 - **16 · dado inválido já gravado.**
-  - **Resultado na base local:** a única empresa (RMV) tem todos os campos
+  - **Resultado na base local:** a única empresa (Cliente Piloto) tem todos os campos
     fiscais vazios — **nenhum valor preenchido e inválido**. Em produção,
     rodar o 2º relatório de
     [`sql/v2-prompt-ah-diagnostico.sql`](./sql/v2-prompt-ah-diagnostico.sql)
@@ -146,7 +146,7 @@ nunca entra em log nem em auditoria.
   chave.
 - **Com o dono:**
   - conferir que a chave é da organização comercial e pedir o ZDR;
-  - cuidar do contrato da RMV (controlador, operador e suboperador).
+  - cuidar do contrato da Cliente Piloto (controlador, operador e suboperador).
 - **No sistema:** nenhum conteúdo de pergunta, documento ou resposta é
   guardado. Só o consumo em números (tabela `ia_uso`, Prompt AM).
 
@@ -215,7 +215,7 @@ números em parâmetro, não em código.
 - **Recebível vencido.** Contas a receber da obra com saldo em aberto e
   vencimento há mais de N dias: quantidade e soma. Não mostra nome de cliente.
   Exige permissão de ver Contas a Receber.
-- **Conferido na base local:** o SIGNATURE não tem Orçamento lançado e a linha
+- **Conferido na base local:** o EMPREENDIMENTO PILOTO não tem Orçamento lançado e a linha
   diz isso. Com uma linha de orçamento temporária e o limite baixado para
   R$ 1.000, o alerta apareceu com valor, mês e diferença. Tudo foi desfeito
   depois, e o limite voltou a R$ 5.000.
@@ -254,7 +254,7 @@ comparativo só com mais de uma obra.
 - **Fica por obra:** os blocos Vendas, Exposição e Atenção (chave ligada) e o
   assistente. No consolidado a tela avisa para escolher uma obra.
 - **Conferido na base local:**
-  - A coluna Previsão (1 de 3) bate com a tela do SIGNATURE na Previsão.
+  - A coluna Previsão (1 de 3) bate com a tela do EMPREENDIMENTO PILOTO na Previsão.
   - Os recebimentos do período na Atual (R$ 4.321) são a soma das três obras
     (0 + 4.321 + 0).
   - Ativos/Finalizados mostram o aviso das 2 obras sem status.
@@ -299,7 +299,7 @@ de nome de comprador para e pergunta antes.
 - **Pergunta fora do catálogo** (por exemplo, o telefone de um cliente): o chat
   diz que ainda não responde e lista o que sabe responder.
 - **Conferido no navegador na base local:**
-  - "quanto gastamos nesta obra?" no SIGNATURE deu R$ 5.826,90, igual à DRE
+  - "quanto gastamos nesta obra?" no EMPREENDIMENTO PILOTO deu R$ 5.826,90, igual à DRE
     (3.285 + 2.542).
   - O desvio sem Orçamento diz que não calcula.
   - O telefone de cliente é recusado.

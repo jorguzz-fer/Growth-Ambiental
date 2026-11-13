@@ -48,7 +48,7 @@ export const campoSensivelCliente = (k: string) => SENSIVEIS.has(k);
 
 /**
  * CPF/CNPJ mascarado (5.1): só os dígitos centrais aparecem.
- * CPF `123.748.618-09` → `•••.748.618-••`; CNPJ mostra a raiz central.
+ * CPF `000.000.002-72` → `•••.000.002-••`; CNPJ mostra a raiz central.
  * Valor fora do padrão (dado antigo) não é convertido: aparece mascarado inteiro,
  * exceto os 4 últimos caracteres.
  */

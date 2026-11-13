@@ -113,7 +113,7 @@ export function normalizarCampoBool(bruto: unknown): CampoLido<boolean> {
  *
  * A ordem importa:
  *  1. a IA trouxe algo que a tela NÃO conseguiu usar → sempre "conferir"
- *     (ex.: leu "Casarão Itanhaém" e não existe esse fornecedor cadastrado);
+ *     (ex.: leu "Depósito Litoral" e não existe esse fornecedor cadastrado);
  *  2. ficou vazio e o campo é essencial ao lançamento → "faltando";
  *  3. preencheu, mas sem confiança alta → "conferir".
  *
@@ -224,7 +224,7 @@ export function somenteDigitos(s: string): string {
 
 /**
  * CPF/CNPJ legível por completo? Comprovante de Pix mascara o CPF
- * ("***.844.476-**") e cupom às vezes borra o CNPJ — nesses casos o documento
+ * ("***.123.456-**") e cupom às vezes borra o CNPJ — nesses casos o documento
  * existe, mas o dado NÃO serve para identificar o fornecedor com segurança.
  */
 export function docCompleto(doc: string): boolean {

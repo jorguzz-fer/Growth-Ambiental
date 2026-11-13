@@ -2,6 +2,13 @@
 // Uso: com o app em http://localhost:3400 e o banco do seed:
 //   node scripts/e2e/v3-telas.mjs
 import pw from "playwright";
+// Credenciais do ambiente de teste (nada fixo no código):
+//   E2E_EMAIL, E2E_PASSWORD (owner/admin) · E2E_EMAIL_ADMIN (2º admin, opcional) ·
+//   E2E_EMAIL_CONTADOR (usuário criado pelo teste de restrição).
+const E2E_EMAIL = process.env.E2E_EMAIL ?? "";
+const E2E_PASSWORD = process.env.E2E_PASSWORD ?? "";
+if (!E2E_EMAIL || !E2E_PASSWORD) throw new Error("Defina E2E_EMAIL e E2E_PASSWORD.");
+
 const { chromium } = pw;
 
 const BASE = process.env.BASE ?? "http://localhost:3400";
@@ -16,7 +23,7 @@ async function entrar(email) {
   const page = await ctx.newPage();
   await page.goto(`${BASE}/login`);
   await page.fill('input[type="email"]', email);
-  await page.fill('input[type="password"]', "Trocar@2026");
+  await page.fill('input[type="password"]', E2E_PASSWORD);
   await page.click('button[type="submit"]');
   await page.waitForURL((u) => !u.pathname.includes("/login"), { timeout: 30000 });
   return page;
@@ -30,7 +37,7 @@ const texto = async (page, url) => {
 
 // ── Owner do cliente (não é operador da plataforma) ──────────────────────
 {
-  const page = await entrar("admin@rmv.com.br");
+  const page = await entrar(E2E_EMAIL);
   const menu = await texto(page, "/dashboard");
   check("REN: menu mostra Fornecedores e Parceiros", menu.includes("Fornecedores e Parceiros"));
   check("REN: menu mostra Medição de Projeto", menu.includes("Medição de Projeto"));
@@ -48,7 +55,7 @@ const texto = async (page, url) => {
 
 // ── Operador da plataforma ───────────────────────────────────────────────
 {
-  const page = await entrar("fer.jorge@gmail.com");
+  const page = await entrar((process.env.E2E_EMAIL_ADMIN ?? E2E_EMAIL));
   const menu = await texto(page, "/dashboard");
   check("PLAT: operador vê Chaves de mudança", menu.includes("Chaves de mudança"));
   check("PLAT: operador vê Backup de dados", menu.includes("Backup de dados"));
@@ -99,7 +106,7 @@ const texto = async (page, url) => {
   await page.context().close();
 }
 {
-  const page = await entrar("fer.jorge@gmail.com");
+  const page = await entrar((process.env.E2E_EMAIL_ADMIN ?? E2E_EMAIL));
   await page.evaluate(() => { try { localStorage.clear(); sessionStorage.clear(); } catch {} });
   const bal = await texto(page, "/balancodia");
   check("AB2: /balancodia leva ao Caixa com o aviso", page.url().includes("/caixa") && bal.includes("A tela Balanço do Dia saiu"), page.url());

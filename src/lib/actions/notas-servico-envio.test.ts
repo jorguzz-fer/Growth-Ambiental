@@ -67,19 +67,19 @@ describe.skipIf(!HAS_DB)("Prompt AG · envio da NFS-e", async () => {
         regimeTributario: "LUCRO_PRESUMIDO",
         itemListaServico: "7.02",
         aliquotaIss: "3",
-        codigoMunicipio: "3552502",
-        municipio: "Itanhaém",
+        codigoMunicipio: "3509502",
+        municipio: "Campinas",
         uf: "SP",
         logradouro: "Av. Brasil",
         numeroEndereco: "1000",
         bairro: "Centro",
-        cep: "11740-000",
+        cep: "13010-000",
         emailFiscal: "fiscal@x.com.br",
       })
       .returning();
     tenantId = t.id;
     tenant = t;
-    const [p] = await db.insert(schema.projects).values({ tenantId, name: "OBRA NF", codigoMunicipioObra: "3552502" }).returning();
+    const [p] = await db.insert(schema.projects).values({ tenantId, name: "OBRA NF", codigoMunicipioObra: "3509502" }).returning();
     obra = p;
     await db.insert(schema.versions).values({ projectId: p.id, tenantId, key: "atual", kind: "atual", label: "Atual", color: "#000" });
   });
@@ -108,7 +108,7 @@ describe.skipIf(!HAS_DB)("Prompt AG · envio da NFS-e", async () => {
     expect(focus.emitirNfse).toHaveBeenCalledTimes(1);
     expect(focus.emitirNfse.mock.calls[0][1]).toBe(ref);
     const n1 = await nota(id);
-    expect(n1).toMatchObject({ status: "processando", tentativa: 1, ref, baseCalculo: "10000.00", valorIss: "300.00", totalRetencoes: "1100.00", valorLiquido: "8900.00", codigoMunicipioPrestacao: "3552502" });
+    expect(n1).toMatchObject({ status: "processando", tentativa: 1, ref, baseCalculo: "10000.00", valorIss: "300.00", totalRetencoes: "1100.00", valorLiquido: "8900.00", codigoMunicipioPrestacao: "3509502" });
 
     focus.consultarNfse.mockResolvedValue({ status: "autorizado", ref, http: 200, numero: "77", codigoVerificacao: "AB12", urlDanfse: "https://x/danfse.pdf" });
     expect(await atualizarNota(id)).toMatchObject({ ok: true, situacao: "autorizada" });

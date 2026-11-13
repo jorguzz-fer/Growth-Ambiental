@@ -98,7 +98,7 @@ componente da tela  ──►  Server Action  ──►  *-extract.ts   (server-
 - **A empresa nunca é o fornecedor.** Em comprovante de Pix o fornecedor é o
   *recebedor*; o CNPJ da própria construtora vai no prompt exatamente para não
   ser confundido.
-- **Documento mascarado não casa cadastro.** CPF `***.844.476-**` não
+- **Documento mascarado não casa cadastro.** CPF `***.123.456-**` não
   identifica ninguém: o vínculo por documento só acontece com CNPJ/CPF
   completo, o resto vira alerta.
 - **Deduzir é permitido, esconder não.** Competência deduzida da emissão,

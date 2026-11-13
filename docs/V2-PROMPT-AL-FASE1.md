@@ -35,7 +35,7 @@ leitura nesta fase; nada foi alterado.**
 - **Base local:** só owner e admins, nenhum contador e nenhum override. O
   SQL roda limpo e devolve zero linhas nos itens 1 a 5.
 
-## Divergência de R$ 1.152 (1.7) — registrar, não corrigir
+## Divergência entre Contabilidade e DRE (1.7) — registrar, não corrigir
 
 As duas contas, lado a lado:
 

@@ -1,4 +1,11 @@
 import { chromium } from "playwright";
+// Credenciais do ambiente de teste (nada fixo no código):
+//   E2E_EMAIL, E2E_PASSWORD (owner/admin) · E2E_EMAIL_ADMIN (2º admin, opcional) ·
+//   E2E_EMAIL_CONTADOR (usuário criado pelo teste de restrição).
+const E2E_EMAIL = process.env.E2E_EMAIL ?? "";
+const E2E_PASSWORD = process.env.E2E_PASSWORD ?? "";
+if (!E2E_EMAIL || !E2E_PASSWORD) throw new Error("Defina E2E_EMAIL e E2E_PASSWORD.");
+
 
 const BASE = "http://localhost:3300";
 let ok = 0, falha = 0;
@@ -12,8 +19,8 @@ const page = await browser.newPage({ viewport: { width: 1500, height: 1000 } });
 
 // login
 await page.goto(`${BASE}/login`);
-await page.fill('input[type="email"]', "admin@rmv.com.br");
-await page.fill('input[type="password"]', "Trocar@2026");
+await page.fill('input[type="email"]', E2E_EMAIL);
+await page.fill('input[type="password"]', E2E_PASSWORD);
 await page.click('button[type="submit"]');
 await page.waitForURL((u) => !u.pathname.includes("/login"), { timeout: 20000 });
 check("Login", true);

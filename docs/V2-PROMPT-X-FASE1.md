@@ -47,7 +47,7 @@ Prompt X (21 de 42), `/contas`. **Só leitura; nada foi alterado.** SQL em
 ## Base local × produção
 
 A base local tem **4 contas**, todas com agência e número, saldo 0, manual.
-**As três linhas da seção 3 (SOCIO MESSIAS, SOCIO VINICIUS, CHEQUE
+**As três linhas da seção 3 (SOCIO A, SOCIO B, CHEQUE
 TERCEIRO) não existem aqui** — são de produção. Logo:
 
 - O inventário BX-2 e o das despesas (3.3) ficam como **consultas prontas**
@@ -87,7 +87,7 @@ TERCEIRO) não existem aqui** — são de produção. Logo:
 
 ## Antes/depois (base local, consulta 12)
 
-4 contas: Caixa 0742/579179671-0 (Construtora), Caixa 0742/575733196-4
-(Imobiliária), Inter 0001/28519646-4 (Imobiliária), Itaú 0039/99155-9
+4 contas: Caixa 0001/00000001-0 (Construtora), Caixa 0001/00000002-0
+(Imobiliária), Inter 0001/00000003-0 (Imobiliária), Itaú 0039/12345-6
 (Imobiliária) — todas saldo 0, manual, sem Open Finance.
 `saldo_disponivel` = 0; `saldo_total` = 0.
