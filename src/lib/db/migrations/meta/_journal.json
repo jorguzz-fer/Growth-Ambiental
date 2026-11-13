@@ -568,6 +568,27 @@
       "when": 1792800000000,
       "tag": "0080_cliente_contratante",
       "breakpoints": true
+    },
+    {
+      "idx": 81,
+      "version": "7",
+      "when": 1792900000000,
+      "tag": "0081_medicao_vinculos",
+      "breakpoints": true
+    },
+    {
+      "idx": 82,
+      "version": "7",
+      "when": 1793000000000,
+      "tag": "0082_horas_e_vinculos_nfse",
+      "breakpoints": true
+    },
+    {
+      "idx": 83,
+      "version": "7",
+      "when": 1793100000000,
+      "tag": "0083_cris_implantacao",
+      "breakpoints": true
     }
   ]
 }

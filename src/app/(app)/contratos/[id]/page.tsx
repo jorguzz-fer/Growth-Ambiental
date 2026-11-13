@@ -7,8 +7,12 @@ import { AccessDenied } from "@/components/app/access-denied";
 import { CrisDaTela } from "@/components/app/cris-contexto";
 import { isR2Configured, readUrl } from "@/lib/storage/r2";
 import { dateBR } from "@/lib/utils";
-import { despesasCandidatas, detalheDoContrato, planejamentoDosProjetos } from "@/lib/contratos-queries";
+import { despesasCandidatas, detalheDoContrato, planejamentoDosProjetos, planoDosProjetos } from "@/lib/contratos-queries";
 import { opcoesDoFormulario } from "@/lib/contratos-opcoes";
+import { cincoValores, REGRA_DE_RECONHECIMENTO } from "@/lib/receita-servicos";
+import { dreDosContratos } from "@/lib/resultado-contratos";
+import { projecaoDoProjeto } from "@/lib/projecao-financeira-dados";
+import { ProjecaoAoTermino } from "@/components/app/projecao-ao-termino";
 import { aditivoEficaz, contratoEmExecucao, contratoEmPreparo, hojeMDY, ROTULO_TIPO_CONTRATO, ROTULO_VINCULO, statusDoAditivoEditavel, type TipoContrato, type VinculoValor } from "@/lib/contrato-regras";
 import { Kpi, Secao, StatusBadge, brl } from "@/components/app/contratos/visual";
 import { ContratoForm } from "@/components/app/contratos/contrato-form";
@@ -117,7 +121,14 @@ export default async function ContratoPage({ params, searchParams }: { params: P
   }
 
   const candidatas = veFinanceiro && (aba === "resultado" || aba === "financeiro") ? await despesasCandidatas(ctx.tenant.id, c.id) : [];
+  const planoDeTrabalho = aba === "medicoes" ? await planoDosProjetos(ctx.tenant.id, d.projetos.map((p) => p.projectId)) : null;
   const planejamento = veFinanceiro && aba === "resultado" && can(ctx.perms, "dre", "ver") ? await planejamentoDosProjetos(ctx.tenant.id, d.projetos) : null;
+  // Rentabilidade: DRE gerencial do contrato (faturas + despesas apropriadas) e projeção ao término dos projetos.
+  const dreDoContrato = veFinanceiro && aba === "resultado" && can(ctx.perms, "dre", "ver") ? await dreDosContratos(ctx.tenant.id, [c.id]) : null;
+  const projecoes =
+    veFinanceiro && aba === "resultado" && can(ctx.perms, "forecast", "ver")
+      ? (await Promise.all(d.projetos.map(async (p) => ({ nome: p.nome, p: await projecaoDoProjeto(ctx.tenant.id, p.projectId) })))).filter((x) => x.p)
+      : [];
   const docs =
     aba === "documentos"
       ? await Promise.all(
@@ -361,6 +372,8 @@ export default async function ContratoPage({ params, searchParams }: { params: P
             itens={d.itens.map((i) => ({ id: i.id, codigo: i.codigo, descricao: i.descricao, criterioMedicao: i.criterioMedicao, limite: i.limite, saldo: i.saldo, vigente: i.vigente }))}
             projetos={projetosDoContrato}
             marcos={d.marcos.filter((m) => !m.cancelado).map((m) => ({ id: m.id, etapa: m.etapa }))}
+            aditivos={d.aditivos.filter((a) => a.status !== "rejeitado" && a.status !== "cancelado").map((a) => ({ id: a.id, codigo: `AD${String(a.numero).padStart(2, "0")}` }))}
+            plano={planoDeTrabalho ?? { fases: [], atividades: [], entregas: [] }}
             podeLancar={can(ctx.perms, "contratosmedicao", "criar")}
             podeAprovar={can(ctx.perms, "contratosaprovar", "editar")}
             contratoAceita={emExecucao}
@@ -370,6 +383,31 @@ export default async function ContratoPage({ params, searchParams }: { params: P
 
       {aba === "financeiro" && veFinanceiro && (
         <>
+          {(() => {
+            const v = cincoValores(s, d.faturas, hoje);
+            const linhas: [string, number, string][] = [
+              ["Contratado (valor atualizado)", v.contratado, "original + aditivos eficazes"],
+              ["Medido (aprovado)", v.medido, `saldo a medir ${brl(v.saldoAMedir)}`],
+              ["Faturado", v.faturado, `medido não faturado ${brl(v.medidoNaoFaturado)}`],
+              ["Receita reconhecida (DRE)", v.receitaReconhecida, `faturado ainda a reconhecer ${brl(v.faturadoAReconhecer)}`],
+              ["Recebido", v.recebido, `faturado não recebido ${brl(v.faturadoNaoRecebido)}`],
+            ];
+            return (
+              <Secao titulo="Conciliação dos cinco valores" descricao={REGRA_DE_RECONHECIMENTO}>
+                <table className="w-full text-[12.5px]" data-cinco-valores>
+                  <tbody>
+                    {linhas.map(([rotulo, valor, detalhe]) => (
+                      <tr key={rotulo} className="border-t border-[var(--color-line)]">
+                        <td className="px-2 py-1.5">{rotulo}</td>
+                        <td className="px-2 py-1.5 text-right font-[family-name:var(--font-mono)]">{brl(valor)}</td>
+                        <td className="px-2 py-1.5 text-[11.5px] text-[var(--color-ink3)]">{detalhe}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </Secao>
+            );
+          })()}
           <Secao titulo="Faturamento e recebimentos" descricao={`Faturado ${brl(s.faturado)} · recebido ${brl(s.recebido)} · a receber ${brl(s.faturadoNaoRecebido)}`}>
             <FaturamentoPainel contratoId={c.id} faturas={d.faturas} projetos={projetosDoContrato} podeFaturar={can(ctx.perms, "contratosfinanceiro", "criar") && can(ctx.perms, "contasreceber", "criar")} contratoAceita={emExecucao || c.status === "encerrado"} sugestao={Math.max(0, s.medidoNaoFaturado)} />
           </Secao>
@@ -392,6 +430,43 @@ export default async function ContratoPage({ params, searchParams }: { params: P
             <Kpi rotulo="Custo apropriado" valor={brl(d.resultado.custoRealizado)} />
             <Kpi rotulo="Margem sobre o medido" valor={brl(d.resultado.margemSobreMedido)} tom={d.resultado.margemSobreMedido < 0 ? "perigo" : "ok"} detalhe={s.medidoAprovado > 0 ? `${((d.resultado.margemSobreMedido / s.medidoAprovado) * 100).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}% · gerencial, não é DRE` : "gerencial, não é DRE"} />
           </div>
+          {dreDoContrato && (
+            <Secao titulo="Rentabilidade · DRE gerencial do contrato" descricao={`${REGRA_DE_RECONHECIMENTO} Custos: as despesas apropriadas ao contrato, na conta do plano de cada uma (custo dos serviços = direto; despesas operacionais = indiretas atribuídas). Nada é rateado automaticamente.`}>
+              <table className="w-full text-[12.5px]" data-dre-contrato>
+                <tbody>
+                  {dreDoContrato.linhas
+                    .filter((l) => l.tipo !== "conta")
+                    .map((l) => (
+                      <tr key={l.id} className={`border-t border-[var(--color-line)] ${l.tipo !== "item" ? "font-semibold" : ""}`}>
+                        <td className="px-2 py-1.5">{l.rotulo}</td>
+                        <td className="px-2 py-1.5 text-right font-[family-name:var(--font-mono)]">{brl(l.valor)}</td>
+                      </tr>
+                    ))}
+                  {(() => {
+                    const rb = dreDoContrato.linhas.find((l) => l.id === "receita_bruta")?.valor ?? 0;
+                    return (
+                      <tr className="border-t border-[var(--color-line)]">
+                        <td className="px-2 py-1.5">Margem líquida</td>
+                        <td className="px-2 py-1.5 text-right font-[family-name:var(--font-mono)]">{rb > 0 ? `${((dreDoContrato.resultadoLiquido / rb) * 100).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%` : "—"}</td>
+                      </tr>
+                    );
+                  })()}
+                </tbody>
+              </table>
+              <p className="mt-2 text-[11.5px] text-[var(--color-ink3)]">
+                Comparação com outros contratos e clientes em <Link href="/dre/contratos" className="text-[var(--color-accent2)] hover:underline">DRE por Contrato e Cliente</Link>.
+              </p>
+            </Secao>
+          )}
+          {projecoes.length > 0 && (
+            <Secao titulo="Projeção ao término dos projetos do contrato" descricao="Orçamento original × revisado × realizado × previsão, por projeto (o projeto pode ter outros contratos: os números são do projeto inteiro).">
+              <div className="grid gap-3 lg:grid-cols-2">
+                {projecoes.map((x) => (
+                  <ProjecaoAoTermino key={x.nome} p={x.p!} versoes={x.p!.versoes} titulo={x.nome} />
+                ))}
+              </div>
+            </Secao>
+          )}
           <Secao titulo="Custos apropriados ao contrato" descricao="Despesas lançadas nos projetos do contrato e apropriadas a ele. Apropriar não muda valor, conta, categoria nem a DRE do projeto.">
             <ApropriarDespesas contratoId={c.id} candidatas={candidatas.map((x) => ({ ...x, valor: String(x.valor) }))} apropriadas={d.despesas.map((x) => ({ ...x, valor: String(x.valor), contratoId: c.id }))} podeEditar={can(ctx.perms, "contratosfinanceiro", "editar")} />
           </Secao>

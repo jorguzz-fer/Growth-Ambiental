@@ -20,11 +20,11 @@ export async function GET(req: Request) {
     if (!c) contratoId = null;
   }
   const linhas = await relatorioDeReembolsos(ctx.tenant.id, { contratoId, de: sp.get("de"), ate: sp.get("ate") });
-  const rows: (string | number)[][] = [["Contrato", "Título", "Despesa", "Data", "Competência", "Descrição", "Fornecedor", "Categoria DRE", "Conta", "Solicitado", "Aprovado", "Recebido", "Pendente", "Situação", "Comprovantes"]];
+  const rows: (string | number)[][] = [["Contrato", "Título", "Despesa", "Data", "Competência", "Descrição", "Fornecedor", "Categoria DRE", "Conta", "Solicitado", "Aprovado", "Glosa", "Recebido", "Pendente", "Situação", "Comprovantes"]];
   for (const l of linhas)
-    rows.push([l.contrato, l.tituloContrato, l.numDoc ?? "", l.data ?? "", l.competencia ?? "", l.descricao ?? "", l.fornecedor ?? "", l.categoria ?? "", l.conta ?? "", l.solicitado, l.aprovado ?? "", l.recebido, l.pendente, ROTULO_STATUS_REEMBOLSO[l.status as StatusReembolso] ?? l.status, l.comprovantes.join("; ")]);
+    rows.push([l.contrato, l.tituloContrato, l.numDoc ?? "", l.data ?? "", l.competencia ?? "", l.descricao ?? "", l.fornecedor ?? "", l.categoria ?? "", l.conta ?? "", l.solicitado, l.aprovado ?? "", l.glosa, l.recebido, l.pendente, ROTULO_STATUS_REEMBOLSO[l.status as StatusReembolso] ?? l.status, l.comprovantes.join("; ")]);
   const tot = (k: "solicitado" | "recebido" | "pendente") => linhas.reduce((s, l) => s + l[k], 0);
-  rows.push(["Total", "", "", "", "", "", "", "", "", tot("solicitado"), linhas.reduce((s, l) => s + (l.aprovado ?? 0), 0), tot("recebido"), tot("pendente"), "", ""]);
+  rows.push(["Total", "", "", "", "", "", "", "", "", tot("solicitado"), linhas.reduce((s, l) => s + (l.aprovado ?? 0), 0), linhas.reduce((s, l) => s + l.glosa, 0), tot("recebido"), tot("pendente"), "", ""]);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), "Reembolsos");
   await logAudit({ tenantId: ctx.tenant.id, userId: ctx.userId, action: "contrato.reembolso.exportar", entity: "contrato", entityId: contratoId, meta: { linhas: linhas.length, de: sp.get("de"), ate: sp.get("ate") } });

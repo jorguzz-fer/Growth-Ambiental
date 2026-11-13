@@ -29,6 +29,7 @@ export default async function ReembolsosPage({ searchParams }: { searchParams: P
   const aprovado = soma((l) => (["aprovado", "faturado", "recebido"].includes(l.status) ? l.aprovado ?? l.solicitado : 0));
   const recebido = soma((l) => l.recebido);
   const pendente = soma((l) => l.pendente);
+  const glosa = soma((l) => l.glosa);
   const contrato = contratos.find((c) => c.id === contratoId);
   // 0079 — por conta do Plano de Contas: o reembolso não muda a conta da despesa (nem vira receita).
   const nomes = new Map((await db.select({ code: schema.chartAccounts.code, name: schema.chartAccounts.name }).from(schema.chartAccounts).where(eq(schema.chartAccounts.tenantId, ctx.tenant.id))).map((c) => [c.code, c.name]));
@@ -72,9 +73,10 @@ export default async function ReembolsosPage({ searchParams }: { searchParams: P
         </label>
         <button className="h-9 rounded-[8px] bg-[var(--color-accent)] px-3 text-[12.5px] text-white">Filtrar</button>
       </form>
-      <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-5">
         <Kpi rotulo="Total solicitado" valor={brl(solicitado)} />
         <Kpi rotulo="Total aprovado" valor={brl(aprovado)} />
+        <Kpi rotulo="Glosa" valor={brl(glosa)} tom={glosa > 0 ? "alerta" : undefined} />
         <Kpi rotulo="Recebido" valor={brl(recebido)} />
         <Kpi rotulo="Saldo pendente" valor={brl(pendente)} tom={pendente > 0 ? "alerta" : undefined} />
       </div>
@@ -89,6 +91,7 @@ export default async function ReembolsosPage({ searchParams }: { searchParams: P
               <th className="px-2 py-2">Categoria</th>
               <th className="px-2 py-2 text-right">Solicitado</th>
               <th className="px-2 py-2 text-right">Aprovado</th>
+              <th className="px-2 py-2 text-right">Glosa</th>
               <th className="px-2 py-2 text-right">Recebido</th>
               <th className="px-2 py-2">Situação</th>
               <th className="px-2 py-2">Comprovantes</th>
@@ -97,7 +100,7 @@ export default async function ReembolsosPage({ searchParams }: { searchParams: P
           <tbody>
             {linhas.length === 0 && (
               <tr>
-                <td colSpan={10} className="px-2 py-6 text-center text-[var(--color-ink3)]">
+                <td colSpan={11} className="px-2 py-6 text-center text-[var(--color-ink3)]">
                   Nenhuma despesa reembolsável no filtro.
                 </td>
               </tr>
@@ -119,6 +122,7 @@ export default async function ReembolsosPage({ searchParams }: { searchParams: P
                 </td>
                 <td className="px-2 py-1.5 text-right font-[family-name:var(--font-mono)]">{brl(l.solicitado)}</td>
                 <td className="px-2 py-1.5 text-right font-[family-name:var(--font-mono)]">{l.aprovado == null ? "—" : brl(l.aprovado)}</td>
+                <td className="px-2 py-1.5 text-right font-[family-name:var(--font-mono)]">{l.glosa ? brl(l.glosa) : "—"}</td>
                 <td className="px-2 py-1.5 text-right font-[family-name:var(--font-mono)]">{brl(l.recebido)}</td>
                 <td className="px-2 py-1.5">{ROTULO_STATUS_REEMBOLSO[l.status as StatusReembolso] ?? l.status}</td>
                 <td className="px-2 py-1.5">{l.comprovantes.length ? l.comprovantes.join(", ") : <span className="text-[#b45309]">sem comprovante</span>}</td>

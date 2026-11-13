@@ -2118,6 +2118,8 @@ export const equipesProjeto = pgTable("equipe_projeto", {
   funcionarioId: uuid("funcionario_id").references(() => funcionarios.id, { onDelete: "restrict" }),
   funcaoId: uuid("funcao_id").references(() => funcoesEquipe.id, { onDelete: "set null" }),
   valorDiaria: numeric("valor_diaria", { precision: 15, scale: 2 }),
+  /** 0082 — base opcional do custo gerencial das horas apontadas (não gera despesa). */
+  custoHora: numeric("custo_hora", { precision: 15, scale: 2 }),
   entrada: text("entrada"),
   saida: text("saida"),
   situacao: text("situacao").notNull().default("ativa"),
@@ -2251,6 +2253,10 @@ export const notasServico = pgTable(
     itemListaServico: text("item_lista_servico"),
     codigoTributarioMunicipio: text("codigo_tributario_municipio"),
     codigoMunicipioPrestacao: text("codigo_municipio_prestacao"),
+    /** 0082 — vínculos opcionais (a nota não cria recebível; ver nota-servico.ts). */
+    clienteId: uuid("cliente_id").references((): AnyPgColumn => clientes.id, { onDelete: "set null" }),
+    contratoId: uuid("contrato_id").references((): AnyPgColumn => contratos.id, { onDelete: "set null" }),
+    contratoMedicaoId: uuid("contrato_medicao_id").references((): AnyPgColumn => contratoMedicoes.id, { onDelete: "set null" }),
     valorServicos: numeric("valor_servicos", { precision: 15, scale: 2 }).notNull().default("0"),
     valorDeducoes: numeric("valor_deducoes", { precision: 15, scale: 2 }).notNull().default("0"),
     descontoIncondicionado: numeric("desconto_incondicionado", { precision: 15, scale: 2 }).notNull().default("0"),
@@ -2508,6 +2514,8 @@ export const contratos = pgTable(
     /** retenção contratual (%), informativa: o faturamento segue bruto. */
     retencaoPct: numeric("retencao_pct", { precision: 8, scale: 4 }),
     regrasReembolso: text("regras_reembolso"),
+    /** 0083 — chave da tela (ou da proposta da Cris): o mesmo contrato entra uma vez. */
+    idempotencyKey: text("idempotency_key"),
     /** ver STATUS_CONTRATO em contrato-regras.ts. */
     status: text("status").notNull().default("rascunho"),
     motivoStatus: text("motivo_status"),
@@ -2684,6 +2692,17 @@ export const contratoMedicoes = pgTable(
     itemId: uuid("item_id").references(() => contratoItens.id, { onDelete: "restrict" }),
     projectId: uuid("project_id").references(() => projects.id, { onDelete: "set null" }),
     marcoId: uuid("marco_id").references(() => contratoMarcos.id, { onDelete: "set null" }),
+    /** 0081 — número sequencial por contrato (1, 2, 3…). */
+    numero: integer("numero"),
+    /** 0081 — período executado (MM/DD/YYYY), além da competência. */
+    periodoInicio: text("periodo_inicio"),
+    periodoFim: text("periodo_fim"),
+    /** 0081 — aditivo que autorizou o serviço medido. */
+    aditivoId: uuid("aditivo_id").references((): AnyPgColumn => contratoAditivos.id, { onDelete: "set null" }),
+    /** 0081 — o que foi executado, no plano de trabalho do projeto. */
+    projetoFaseId: uuid("projeto_fase_id").references((): AnyPgColumn => projetoFases.id, { onDelete: "set null" }),
+    projetoAtividadeId: uuid("projeto_atividade_id").references((): AnyPgColumn => projetoAtividades.id, { onDelete: "set null" }),
+    projetoEntregaId: uuid("projeto_entrega_id").references((): AnyPgColumn => projetoEntregas.id, { onDelete: "set null" }),
     etapa: text("etapa"),
     /** período de referência "MM/YYYY". */
     competencia: text("competencia").notNull(),
@@ -2704,6 +2723,7 @@ export const contratoMedicoes = pgTable(
   (t) => [
     index("contrato_medicao_contrato_idx").on(t.contratoId),
     uniqueIndex("contrato_medicao_idem_uq").on(t.tenantId, t.idempotencyKey).where(sql`${t.idempotencyKey} is not null`),
+    uniqueIndex("contrato_medicao_numero_uq").on(t.contratoId, t.numero).where(sql`${t.numero} is not null`),
   ],
 );
 
@@ -2949,4 +2969,109 @@ export const projetoPlanoImportacoes = pgTable(
     createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
   },
   (t) => [unique("projeto_plano_importacao_chave_uq").on(t.tenantId, t.chave)],
+);
+
+/**
+ * 0082 — Apontamento de horas (planejadas ou realizadas) de um profissional
+ * num projeto (com contrato, fase e atividade opcionais) ou em atividade
+ * interna. Gerencial: NÃO gera despesa nem lançamento financeiro — a
+ * remuneração continua em Folha/Despesas. `custoHora` é o retrato da base
+ * usada para o custo gerencial (nulo = sem base válida).
+ */
+export const apontamentosHora = pgTable(
+  "apontamento_hora",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    /** "planejado" | "realizado" */
+    tipo: text("tipo").notNull().default("realizado"),
+    funcionarioId: uuid("funcionario_id").references(() => funcionarios.id, { onDelete: "restrict" }),
+    stakeholderId: uuid("stakeholder_id").references((): AnyPgColumn => stakeholders.id, { onDelete: "restrict" }),
+    projectId: uuid("project_id").references(() => projects.id, { onDelete: "cascade" }),
+    atividadeInterna: text("atividade_interna"),
+    contratoId: uuid("contrato_id").references((): AnyPgColumn => contratos.id, { onDelete: "set null" }),
+    projetoFaseId: uuid("projeto_fase_id").references((): AnyPgColumn => projetoFases.id, { onDelete: "set null" }),
+    projetoAtividadeId: uuid("projeto_atividade_id").references((): AnyPgColumn => projetoAtividades.id, { onDelete: "set null" }),
+    /** MM/DD/YYYY */
+    data: text("data").notNull(),
+    /** MM/YYYY */
+    competencia: text("competencia").notNull(),
+    horas: numeric("horas", { precision: 8, scale: 2 }).notNull(),
+    custoHora: numeric("custo_hora", { precision: 15, scale: 2 }),
+    descricao: text("descricao"),
+    idempotencyKey: text("idempotency_key"),
+    createdBy: text("created_by"),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("apontamento_hora_tenant_comp_idx").on(t.tenantId, t.competencia),
+    index("apontamento_hora_project_idx").on(t.projectId),
+    uniqueIndex("apontamento_hora_idem_uq").on(t.tenantId, t.idempotencyKey).where(sql`${t.idempotencyKey} is not null`),
+  ],
+);
+
+/** 0083 — limites de consumo da IA por empresa (nulo = o padrão do sistema). */
+export const iaLimites = pgTable("ia_limite", {
+  tenantId: uuid("tenant_id")
+    .primaryKey()
+    .references(() => tenants.id, { onDelete: "cascade" }),
+  conversasPessoaHora: integer("conversas_pessoa_hora"),
+  conversasEmpresaHora: integer("conversas_empresa_hora"),
+  /** orçamento mensal ESTIMADO (US$), pela tabela de preços; nulo = sem alerta. */
+  orcamentoMensalUsd: numeric("orcamento_mensal_usd", { precision: 12, scale: 2 }),
+  updatedBy: text("updated_by"),
+  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+});
+
+/** 0083 — etapas da implantação (onboarding) de uma empresa. */
+export const implantacaoEtapas = pgTable(
+  "implantacao_etapa",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    /** A a H (diagnóstico … homologação) ou outro grupo da empresa. */
+    grupo: text("grupo").notNull(),
+    codigo: text("codigo").notNull(),
+    titulo: text("titulo").notNull(),
+    descricao: text("descricao"),
+    ordem: integer("ordem").notNull().default(0),
+    responsavel: text("responsavel"),
+    /** MM/DD/YYYY */
+    previsto: text("previsto"),
+    realizado: text("realizado"),
+    /** STATUS_DA_ETAPA em implantacao-regras.ts */
+    status: text("status").notNull().default("nao_iniciada"),
+    /** código da etapa de que esta depende */
+    dependeDe: text("depende_de"),
+    observacoes: text("observacoes"),
+    /** evidência de conclusão (texto, link ou referência de documento) */
+    evidencia: text("evidencia"),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+  },
+  (t) => [unique("implantacao_etapa_codigo_uq").on(t.tenantId, t.codigo)],
+);
+
+/** 0083 — treinamentos da implantação, por perfil. */
+export const implantacaoTreinamentos = pgTable(
+  "implantacao_treinamento",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    perfil: text("perfil").notNull(),
+    tema: text("tema").notNull(),
+    participante: text("participante"),
+    data: text("data"),
+    /** "planejado" | "realizado" | "pendente" */
+    status: text("status").notNull().default("planejado"),
+    pendencias: text("pendencias"),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  },
+  (t) => [index("implantacao_treinamento_tenant_idx").on(t.tenantId)],
 );

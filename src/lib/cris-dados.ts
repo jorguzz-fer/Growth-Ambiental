@@ -13,6 +13,11 @@ import { detalheDoContrato, listarContratos } from "@/lib/contratos-queries";
 import { hojeMDY, venceEm } from "@/lib/contrato-regras";
 import { atrasado, consolidar, desvioEmDias, progressoDaFase, ROTULO_STATUS_ENTREGA, ROTULO_STATUS_ITEM } from "@/lib/plano-regras";
 import { categoriaDaConta } from "@/lib/categoria-do-plano";
+import { METRICAS, METRICAS_PADRAO, metricasPermitidas, ROTULO_DIMENSAO, ROTULO_METRICA, type Dimensao, type Metrica } from "@/lib/relatorio-gerencial";
+import { fatosGerenciais } from "@/lib/relatorio-gerencial-dados";
+import { tabelaGerencial } from "@/lib/relatorio-custom";
+import { projecaoDoProjeto } from "@/lib/projecao-financeira-dados";
+import { DIMENSOES_DA_CRIS } from "@/lib/cris-dados-ferramentas";
 import { classeDaConta, normalizar as normalizarTexto, ROTULO_CLASSE, ROTULO_TIPO_CUSTO, semelhanca, sugerirContas } from "@/lib/planocontas-regras";
 
 export { FERRAMENTAS_DE_DADOS, NOMES_DAS_FERRAMENTAS_DE_DADOS } from "@/lib/cris-dados-ferramentas";
@@ -523,12 +528,91 @@ export async function executarFerramentaDeDados(ctx: TenantContext, nome: string
       });
     }
 
+    case "analise_gerencial": {
+      // Mesmas permissões da fonte gerencial na tela de Relatórios.
+      if (!pode(ctx, "contratos")) return semPermissao("Contratos");
+      const verHoras = pode(ctx, "equipes");
+      const permitidas = metricasPermitidas({ financeiro: pode(ctx, "contratosfinanceiro"), horas: verHoras });
+      const dimPedida = texto(o, "dimensao");
+      const dim: Dimensao = (DIMENSOES_DA_CRIS as readonly string[]).includes(dimPedida) ? (dimPedida as Dimensao) : "contrato";
+      const pedidas = lista(o, "metricas").filter((m): m is Metrica => (METRICAS as readonly string[]).includes(m));
+      const omitidas = pedidas.filter((m) => !permitidas.includes(m));
+      const metricas = [...new Set(pedidas.length ? pedidas : METRICAS_PADRAO)].filter((m) => permitidas.includes(m)).slice(0, 8);
+      if (!metricas.length) return semPermissao("o financeiro dos contratos ou Equipes (horas)");
+      const fatos = await fatosGerenciais(tenantId, obras, { incluirHoras: verHoras });
+      const t = tabelaGerencial(fatos, { titulo: "", fonte: "gerencial", colunas: "cenario", cenarios: ["atual"], proj: "all", de, ate, av: false, dim, metricas }, metricas);
+      // Cliente pessoa física não vai ao modelo (só CNPJ aparece pelo nome).
+      let rotuloDoCliente = (s: string) => s;
+      if (dim === "cliente") {
+        const cls = await db.select({ nome: schema.clientes.nomeCompleto, doc: schema.clientes.cpfCnpj }).from(schema.clientes).where(eq(schema.clientes.tenantId, tenantId));
+        const pf = new Set(cls.filter((c) => (c.doc ?? "").replace(/\D/g, "").length !== 14).map((c) => c.nome));
+        rotuloDoCliente = (s) => (pf.has(s) ? "cliente pessoa física" : s);
+      }
+      const total = t.linhas.at(-1)!;
+      const iMargem = metricas.indexOf("margem");
+      let linhas = t.linhas.slice(0, -1);
+      if (texto(o, "somente") === "margem_negativa") linhas = iMargem >= 0 ? linhas.filter((l) => l.valores[iMargem] < 0) : [];
+      const iPrimeira = 0;
+      return JSON.stringify({
+        fonte: "Relatório gerencial (o mesmo motor de Relatórios Customizados → Gerencial), só projetos que a pessoa vê",
+        ...(metricas.some((m) => m === "receitaReconhecida" || m === "margem") ? { regraDeReceita: "Receita reconhecida = faturas do contrato com vencimento até hoje (regra atual; a política definitiva aguarda validação contábil)." } : {}),
+        dimensao: ROTULO_DIMENSAO[dim],
+        periodo,
+        colunas: metricas.map((m) => ROTULO_METRICA[m]),
+        linhas: linhas.slice(0, MAX_GRUPOS).map((l) => ({ [ROTULO_DIMENSAO[dim]]: rotuloDoCliente(l.label), ...Object.fromEntries(metricas.map((m, i) => [ROTULO_METRICA[m], l.valores[i]])), percentualDaPrimeiraColuna: pct(l.valores[iPrimeira], total.valores[iPrimeira]) })),
+        ...(linhas.length > MAX_GRUPOS ? { outrasLinhas: linhas.length - MAX_GRUPOS } : {}),
+        total: Object.fromEntries(metricas.map((m, i) => [ROTULO_METRICA[m], total.valores[i]])),
+        ...(omitidas.length ? { semAcesso: `Métricas omitidas por falta de acesso (financeiro dos contratos ou Equipes): ${omitidas.map((m) => ROTULO_METRICA[m]).join(", ")}. Diga isso; não estime.` } : {}),
+        ...(o.somente === "margem_negativa" && iMargem < 0 ? { aviso: "Peça a métrica margem para filtrar margem negativa." } : {}),
+        ...aviso,
+      });
+    }
+
+    case "projecao_ao_termino": {
+      if (!pode(ctx, "forecast")) return semPermissao("Previsão");
+      const hoje = new Date();
+      const linhas: Record<string, unknown>[] = [];
+      for (const obra of obras.slice(0, MAX_GRUPOS)) {
+        const p = await projecaoDoProjeto(tenantId, obra.id, hoje);
+        if (!p) continue;
+        if (texto(o, "somente") === "com_desvio" && !((p.desvioDeCusto ?? 0) > 0.005)) continue;
+        linhas.push({
+          projeto: obra.name,
+          orcamentoOriginal: p.orcamentoOriginal,
+          orcamentoRevisado: p.orcamentoRevisado,
+          realizadoAteHoje: p.realizadoAteHoje,
+          custoParaConcluir: r2(p.custoParaConcluir),
+          custoEstimadoAoTermino: r2(p.custoEstimadoAoTermino),
+          desvioDeCusto: p.desvioDeCusto == null ? null : r2(p.desvioDeCusto),
+          desvioDeCustoPct: p.desvioDeCustoPct,
+          receitaEstimada: r2(p.receitaEstimada),
+          resultadoEstimado: r2(p.resultadoEstimado),
+          margemEstimadaPct: p.margemEstimadaPct,
+          margemOrcadaPct: p.margemOrcadaPct,
+          baseDoRestante: p.baseDoRestante === "previsao" ? `Previsão (${p.versoes.previsao ?? ""})` : p.baseDoRestante === "orcamento" ? `Orçamento revisado (${p.versoes.revisado ?? ""})` : "sem base para o restante",
+        });
+      }
+      return JSON.stringify({
+        fonte: "Previsão → Projeção ao término (custo = custos e despesas da cascata; retiradas e investimentos fora)",
+        projetos: linhas,
+        ...(obras.length > MAX_GRUPOS ? { aviso: `Só os primeiros ${MAX_GRUPOS} projetos; peça projetos específicos.` } : {}),
+        ...aviso,
+      });
+    }
+
     case "montar_relatorio": {
       if (!pode(ctx, "relatorios") && !pode(ctx, "dre")) return semPermissao("Relatórios");
       const obraNome = texto(o, "obra");
       const obra = obraNome ? obrasPedidas(ctx, [obraNome]).obras[0] : null;
+      const fonte = texto(o, "fonte");
+      if (fonte === "gerencial" && !pode(ctx, "contratos")) return semPermissao("Contratos");
+      const dimensao = texto(o, "dimensao");
       const receita = receitaValida(
-        { titulo: texto(o, "titulo"), fonte: texto(o, "fonte"), colunas: texto(o, "colunas"), cenarios: lista(o, "cenarios"), proj: obra?.id ?? "all", de, ate, av: o.analiseVertical === true },
+        {
+          titulo: texto(o, "titulo"), fonte, colunas: texto(o, "colunas"), cenarios: lista(o, "cenarios"), proj: obra?.id ?? "all", de, ate, av: o.analiseVertical === true,
+          // A fonte gerencial nunca recebe a dimensão "profissional" pela Cris.
+          ...(fonte === "gerencial" ? { dim: (DIMENSOES_DA_CRIS as readonly string[]).includes(dimensao) ? dimensao : "contrato", metricas: lista(o, "metricas") } : {}),
+        },
         ctx.projects.map((p) => p.id),
       );
       return JSON.stringify({ link: urlDaReceita(receita), observacao: "Abra o link: a tela calcula com o acesso de quem abre e exporta CSV e PDF." });

@@ -86,3 +86,53 @@ export function avisoDeFallback(linhas: readonly LinhaDeUso[]): string | null {
     return `${alt.length} de ${ok.length} chamadas foram respondidas por um modelo alternativo: o modelo configurado está indisponível para a conta. Confira ANTHROPIC_MODEL.`;
   return null;
 }
+
+// ── Limites por empresa e custo estimado (implementação integrada, 0083) ──
+
+/** Override da empresa (nulo = o padrão do sistema). */
+export interface LimitesDaEmpresa {
+  conversasPessoaHora: number | null;
+  conversasEmpresaHora: number | null;
+  orcamentoMensalUsd: number | null;
+}
+
+/** Limites que valem para a empresa: o configurado ou o padrão. */
+export function limitesEfetivos(o: Partial<LimitesDaEmpresa> | null | undefined): { porPessoaPorHora: number; porEmpresaPorHora: number } {
+  return {
+    porPessoaPorHora: o?.conversasPessoaHora ?? LIMITES_DE_CONVERSA.porPessoaPorHora,
+    porEmpresaPorHora: o?.conversasEmpresaHora ?? LIMITES_DE_CONVERSA.porEmpresaPorHora,
+  };
+}
+
+/** Recusa (texto) de uma configuração de limites inválida; null = aceita. */
+export function recusaDeLimites(o: LimitesDaEmpresa): string | null {
+  const inteiro = (n: number | null) => n == null || (Number.isInteger(n) && n >= 1 && n <= 10000);
+  if (!inteiro(o.conversasPessoaHora) || !inteiro(o.conversasEmpresaHora)) return "Os limites por hora são números inteiros de 1 a 10.000 (ou vazio para o padrão).";
+  if (o.conversasPessoaHora != null && o.conversasEmpresaHora != null && o.conversasPessoaHora > o.conversasEmpresaHora) return "O limite por pessoa não pode passar do limite da empresa.";
+  if (o.orcamentoMensalUsd != null && (!Number.isFinite(o.orcamentoMensalUsd) || o.orcamentoMensalUsd < 0)) return "O orçamento mensal é um valor em US$ maior ou igual a zero (ou vazio).";
+  return null;
+}
+
+/**
+ * Custo ESTIMADO (US$) pela tabela de preços (`ai/precos.ts`). Chamada de
+ * modelo fora da tabela não vira zero: é contada à parte (custo desconhecido).
+ */
+export function custoEstimado(uso: readonly LinhaDeUso[], precoDe: (l: LinhaDeUso) => number | null): { usd: number; semPreco: number } {
+  let usd = 0;
+  let semPreco = 0;
+  for (const l of uso) {
+    const c = precoDe(l);
+    if (c == null) semPreco += 1;
+    else usd += c;
+  }
+  return { usd: Math.round(usd * 10000) / 10000, semPreco };
+}
+
+/** Aviso quando o custo estimado do mês passa de 80% ou de 100% do orçamento; null = sem orçamento ou dentro. */
+export function alertaDeOrcamento(custoDoMesUsd: number, orcamentoUsd: number | null): string | null {
+  if (orcamentoUsd == null || orcamentoUsd <= 0) return null;
+  const pct = (custoDoMesUsd / orcamentoUsd) * 100;
+  if (pct >= 100) return `Custo estimado do mês (US$ ${custoDoMesUsd.toFixed(2)}) passou do orçamento de US$ ${orcamentoUsd.toFixed(2)}.`;
+  if (pct >= 80) return `Custo estimado do mês em ${pct.toFixed(0)}% do orçamento (US$ ${custoDoMesUsd.toFixed(2)} de US$ ${orcamentoUsd.toFixed(2)}).`;
+  return null;
+}

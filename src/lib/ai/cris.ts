@@ -3,6 +3,7 @@ import type Anthropic from "@anthropic-ai/sdk";
 import { aiClient, createMessageWithFallback } from "@/lib/ai/client";
 import { BASE_DE_CONHECIMENTO } from "@/lib/assistente-base";
 import { TIPO_DOCX, textoDoDocx } from "@/lib/docx-texto";
+import { textoDaPlanilha } from "@/lib/planilha-texto";
 import { CATALOGO } from "@/lib/assistente-chat";
 import { FERRAMENTAS_DE_DADOS, NOMES_DAS_FERRAMENTAS_DE_DADOS } from "@/lib/cris-dados-ferramentas";
 import {
@@ -166,9 +167,17 @@ export async function responderComoCris(p: PedidoDaCris): Promise<RespostaDaCris
   }));
   const ultima = p.conversa[p.conversa.length - 1];
   const conteudo: Anthropic.ContentBlockParam[] = [];
-  if (p.anexo && ehPlanilha(p.anexo.tipo)) {
-    // Planilha não vai ao modelo: só `ler_extrato` a lê, no servidor.
-    conteudo.push({ type: "text", text: tools.some((t) => t.name === "ler_extrato") ? `[A pessoa anexou a planilha "${p.anexo.nome}". Para ler as linhas, use a ferramenta ler_extrato; não peça para transcrever.]` : `[A pessoa anexou a planilha "${p.anexo.nome}". Planilha de extrato só é lida na tela do Caixa; diga isso.]` });
+  if (p.anexo && ehPlanilha(p.anexo.tipo) && tools.some((t) => t.name === "ler_extrato")) {
+    // No Caixa, o extrato é lido no servidor por `ler_extrato`.
+    conteudo.push({ type: "text", text: `[A pessoa anexou a planilha "${p.anexo.nome}". Para ler as linhas, use a ferramenta ler_extrato; não peça para transcrever.]` });
+  } else if (p.anexo && ehPlanilha(p.anexo.tipo)) {
+    // Fora do Caixa: a planilha vira texto CSV no servidor e vai como documento (dado, não instrução).
+    const lido = textoDaPlanilha(Buffer.from(p.anexo.base64, "base64"), p.anexo.tipo);
+    conteudo.push(
+      lido.ok
+        ? { type: "document", source: { type: "text", media_type: "text/plain", data: lido.texto || "(planilha vazia)" }, title: p.anexo.nome, context: lido.cortado ? "Planilha longa: só o começo (até 3 abas) foi enviado." : undefined }
+        : { type: "text", text: `[A pessoa anexou "${p.anexo.nome}", mas não foi possível ler: ${lido.erro}]` },
+    );
   } else if (p.anexo && p.anexo.tipo === TIPO_DOCX) {
     // DOCX: o texto é extraído aqui e vai como documento de texto (dado, não instrução).
     const lido = await textoDoDocx(Buffer.from(p.anexo.base64, "base64"));

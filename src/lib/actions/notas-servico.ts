@@ -67,7 +67,46 @@ export async function salvarRascunhoDeNota(formData: FormData): Promise<Resultad
       .limit(1);
     if (!cr) return { ok: false, error: "A conta a receber escolhida não é deste projeto." };
   }
-  const valores = valoresDoRascunho(r);
+  // 0082 — contrato do próprio projeto; medição aprovada desse contrato;
+  // conta a receber do mesmo contrato; cliente = o do contrato (ou o da conta).
+  let clienteId: string | null = null;
+  if (r.contratoId) {
+    const [vc] = await db
+      .select({ clienteId: schema.contratos.clienteId })
+      .from(schema.contratoProjetos)
+      .innerJoin(schema.contratos, eq(schema.contratoProjetos.contratoId, schema.contratos.id))
+      .where(and(eq(schema.contratoProjetos.contratoId, r.contratoId), eq(schema.contratoProjetos.projectId, r.projectId), eq(schema.contratos.tenantId, ctx.tenant.id)))
+      .limit(1);
+    if (!vc) return { ok: false, error: "O contrato escolhido não está vinculado a este projeto." };
+    clienteId = vc.clienteId;
+  }
+  if (r.contratoMedicaoId) {
+    if (!r.contratoId) return { ok: false, error: "Para ligar a medição, escolha o contrato." };
+    const [m] = await db
+      .select({ status: schema.contratoMedicoes.status })
+      .from(schema.contratoMedicoes)
+      .where(and(eq(schema.contratoMedicoes.id, r.contratoMedicaoId), eq(schema.contratoMedicoes.contratoId, r.contratoId), eq(schema.contratoMedicoes.tenantId, ctx.tenant.id)))
+      .limit(1);
+    if (!m) return { ok: false, error: "A medição não é deste contrato." };
+    if (m.status !== "aprovada") return { ok: false, error: "Só medição aprovada pode ser faturada na nota." };
+  }
+  if (r.contaReceberId) {
+    const [cr] = await db
+      .select({ contratoId: schema.contasReceber.contratoId, clienteId: schema.contasReceber.clienteId })
+      .from(schema.contasReceber)
+      .where(and(eq(schema.contasReceber.id, r.contaReceberId), eq(schema.contasReceber.tenantId, ctx.tenant.id)))
+      .limit(1);
+    if (r.contratoId && cr?.contratoId && cr.contratoId !== r.contratoId) return { ok: false, error: "A conta a receber é de outro contrato." };
+    clienteId = clienteId ?? cr?.clienteId ?? null;
+    // Uma conta a receber, uma nota viva: evita faturar o mesmo recebível duas vezes.
+    const outras = await db
+      .select({ id: schema.notasServico.id, status: schema.notasServico.status })
+      .from(schema.notasServico)
+      .where(and(eq(schema.notasServico.tenantId, ctx.tenant.id), eq(schema.notasServico.contaReceberId, r.contaReceberId)));
+    if (outras.some((o) => o.id !== id && o.status !== "cancelada" && o.status !== "rejeitada"))
+      return { ok: false, error: "Esta conta a receber já tem outra nota fiscal (não cancelada). Cancele a anterior ou escolha outra conta." };
+  }
+  const valores = { ...valoresDoRascunho(r), clienteId };
 
   try {
     const notaId = await db.transaction(async (tx) => {
@@ -101,7 +140,7 @@ export async function salvarRascunhoDeNota(formData: FormData): Promise<Resultad
       action: id ? "nfse.rascunho.editar" : "nfse.rascunho.criar",
       entity: "nota_servico",
       entityId: notaId,
-      meta: { projectId: r.projectId, valorServicos: r.valorServicos, contaReceberId: r.contaReceberId },
+      meta: { projectId: r.projectId, valorServicos: r.valorServicos, contaReceberId: r.contaReceberId, contratoId: r.contratoId, contratoMedicaoId: r.contratoMedicaoId },
     });
     revalidatePath("/notasfiscais");
     return { ok: true, id: notaId };
@@ -117,6 +156,8 @@ function valoresDoRascunho(r: RascunhoDaNota) {
   return {
     projectId: r.projectId,
     contaReceberId: r.contaReceberId,
+    contratoId: r.contratoId,
+    contratoMedicaoId: r.contratoMedicaoId,
     competencia: r.competencia,
     discriminacao: r.discriminacao,
     itemListaServico: r.itemListaServico,

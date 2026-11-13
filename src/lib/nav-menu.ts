@@ -77,6 +77,7 @@ export const NAV_MENU: NavModule[] = [
       { href: "/dre", label: "DRE" },
       // Prompt AC3: mora sob /dre — a permissão é a da DRE.
       { href: "/dre/analitica", label: "DRE Analítica" },
+      { href: "/dre/contratos", label: "DRE por Contrato e Cliente", exige: [{ tela: "contratos", acao: "ver" }] },
       { href: "/fluxocaixa", label: "Fluxo de Caixa" },
       // Prompt AD3: mora sob /fluxocaixa — a permissão é a do Fluxo.
       { href: "/fluxocaixa/analitico", label: "Fluxo de Caixa Analítico" },
@@ -158,6 +159,7 @@ export const NAV_MENU: NavModule[] = [
       // Growth Ambiental: o cadastro de Projetos saiu de Planejamento e abre
       // o módulo Projetos. Rota e permissão ("projeto") continuam as mesmas.
       { href: "/projeto", label: "Cadastro de Projetos" },
+      { href: "/projeto/documentos", label: "Documentos" },
       // Planejamento (0078): fases, atividades, entregas e cronograma do projeto.
       { href: "/plano", label: "Plano de Trabalho" },
       { href: "/estoque", label: "Materiais e Equipamentos" },
@@ -172,6 +174,7 @@ export const NAV_MENU: NavModule[] = [
     items: [
       { href: "/funcionarios", label: "Funcionários" },
       { href: "/equipes", label: "Equipes e Presença de Campo" },
+      { href: "/equipes/horas", label: "Apontamento de Horas" },
     ],
   },
   {
@@ -180,6 +183,8 @@ export const NAV_MENU: NavModule[] = [
     icon: "config",
     items: [
       { href: "/empresa", label: "Empresa" },
+      // Implementação integrada, Etapa 3: acompanhamento da implantação (permissão da tela Empresa).
+      { href: "/implantacao", label: "Implantação e Treinamento", perm: "empresa" },
       { href: "/modelos", label: "Modelos de Fases e Atividades" },
       { href: "/usuarios", label: "Usuários" },
       { href: "/acessos", label: "Gestão de Acessos" },

@@ -7,7 +7,7 @@ import { comUsoDeIa, limiteDeConversa } from "@/lib/ai/uso";
 import { responderComoCris } from "@/lib/ai/cris";
 import { interpretarLocalmente, normalizarIntencao } from "@/lib/assistente-chat";
 import { responderMetrica } from "@/lib/chat-metricas";
-import { anexoValido, contextoValido, historicoDaCris, type PropostaDeConciliacao, type PropostaDeImportacao, type PropostaDePreenchimento } from "@/lib/cris";
+import { anexoValido, contextoValido, historicoDaCris, type PropostaDeConciliacao, type PropostaDeImportacao, type PropostaDePreenchimento, mensagemDeFalhaDaCris } from "@/lib/cris";
 import { can } from "@/lib/permissions";
 import { ferramentasDoCaixa } from "@/lib/conciliacao-cris-ferramentas";
 import { executarFerramentaDeDados } from "@/lib/cris-dados";
@@ -54,7 +54,7 @@ export async function perguntarACris(entrada: { conversa: unknown; tela: unknown
   if (!conversa) return { ok: false, error: "Escreva a pergunta." };
   const tela = contextoValido(entrada?.tela);
   const anexo = entrada?.anexo ? anexoValido(entrada.anexo) : null;
-  if (entrada?.anexo && !anexo) return { ok: false, error: "Anexo não aceito: envie PDF, imagem (PNG, JPG, WEBP) ou planilha de extrato (XLSX, CSV) de até 4 MB." };
+  if (entrada?.anexo && !anexo) return { ok: false, error: "Anexo não aceito: envie PDF, DOCX, imagem (PNG, JPG, WEBP) ou planilha (XLSX, CSV) de até 4 MB." };
 
   // Prompt AQ §2 — a permissão vem do item do menu da rota (com as exigências
   // dele, como as do Acerto), e falha fechada: rota sem item não libera nada.
@@ -95,6 +95,7 @@ export async function perguntarACris(entrada: { conversa: unknown; tela: unknown
     return { ok: true, texto: r.texto, proposta: r.proposta, via: "ia", conciliacoes: r.conciliacoes ?? null, importacao: r.importacao ?? null };
   } catch (e) {
     console.error("[cris] falha:", e instanceof Error ? e.name : "erro");
-    return { ok: false, error: e instanceof Error ? e.message : "Não consegui responder agora. Tente de novo." };
+    // Nunca o texto cru do provedor de IA (pode trazer detalhes técnicos): mensagem própria.
+    return { ok: false, error: mensagemDeFalhaDaCris(e) };
   }
 }

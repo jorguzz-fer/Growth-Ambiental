@@ -1,6 +1,10 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import { CATEGORIAS_DRE } from "@/lib/calc/constants";
 import { FONTES, COLUNAS, CENARIOS_RC } from "@/lib/relatorio-custom";
+import { DIMENSOES, METRICAS } from "@/lib/relatorio-gerencial";
+
+/** Dimensões que a Cris pode usar: "profissional" (nome de pessoa) fica fora do modelo. */
+export const DIMENSOES_DA_CRIS = DIMENSOES.filter((d) => d !== "profissional");
 
 /**
  * Revisão 4, Etapa 7 — as DEFINIÇÕES das ferramentas de dados da Cris (só os
@@ -125,9 +129,37 @@ export const FERRAMENTAS_DE_DADOS: Anthropic.Tool[] = [
     },
   },
   {
+    name: "analise_gerencial",
+    description:
+      "Análise gerencial pelo MESMO motor do relatório gerencial (Relatórios Customizados → Gerencial): uma dimensão nas linhas e métricas nas colunas, com Total que reconcilia. Use para rentabilidade e margem por contrato ou cliente (margem = receita reconhecida − custo apropriado), concentração de receita por cliente, contratos com margem negativa, reembolsos solicitados e pendentes, horas planejadas × realizadas e custo de pessoal por projeto ou fase, saldo a medir. Receita reconhecida segue a regra ATUAL (fatura pelo vencimento); diga isso quando falar de receita. Métricas de posição (contratado, aditivos, saldo a medir) não seguem o período. Nunca traz nome de profissional.",
+    input_schema: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        dimensao: { type: "string", enum: [...DIMENSOES_DA_CRIS] },
+        metricas: { type: "array", items: { type: "string", enum: [...METRICAS] }, description: "Até 8; vazio = contratado, medido, faturado, receita reconhecida, custo apropriado e margem." },
+        ...OBRAS,
+        ...PERIODO,
+        somente: { type: "string", enum: ["todos", "margem_negativa"], description: "margem_negativa = só linhas com margem < 0." },
+      },
+      required: ["dimensao", "metricas", "obras", "de", "ate", "somente"],
+    },
+  },
+  {
+    name: "projecao_ao_termino",
+    description:
+      "Projeção ao término de cada projeto (Previsão): orçamento original e revisado, realizado até o mês corrente, custo para concluir (ETC), custo estimado ao término (EAC), desvio de custo em valor e %, receita e resultado estimados, margem estimada × orçada e a base usada para o restante (Previsão ou Orçamento). Use para 'quais projetos vão estourar o orçamento', 'margem prevista', 'desvio de custo'.",
+    input_schema: {
+      type: "object",
+      additionalProperties: false,
+      properties: { ...OBRAS, somente: { type: "string", enum: ["todos", "com_desvio"], description: "com_desvio = só projetos com custo estimado acima do orçamento revisado." } },
+      required: ["obras", "somente"],
+    },
+  },
+  {
     name: "montar_relatorio",
     description:
-      "Monta um relatório exportável em Relatórios Customizados (CSV e PDF) com a DRE, a DRE por categoria e grupo, ou o Fluxo de Caixa previsto; por cenário, mês a mês ou por projeto (colunas obra). Devolve o link para a pessoa abrir; escreva-o como link markdown.",
+      "Monta um relatório exportável em Relatórios Customizados (CSV e PDF) com a DRE, a DRE por categoria e grupo, o Fluxo de Caixa previsto (por cenário, mês a mês ou por projeto — colunas obra) ou a tabela GERENCIAL (fonte gerencial: dimensão nas linhas e métricas nas colunas; use dimensao e metricas). Devolve o link para a pessoa abrir; escreva-o como link markdown. Nas fontes que não são gerencial, dimensao fica \"\" e metricas vazio.",
     input_schema: {
       type: "object",
       additionalProperties: false,
@@ -139,8 +171,10 @@ export const FERRAMENTAS_DE_DADOS: Anthropic.Tool[] = [
         obra: { type: "string", description: 'Nome do projeto, ou "" para todos.' },
         ...PERIODO,
         analiseVertical: { type: "boolean" },
+        dimensao: { type: "string", enum: ["", ...DIMENSOES_DA_CRIS] },
+        metricas: { type: "array", items: { type: "string", enum: [...METRICAS] } },
       },
-      required: ["titulo", "fonte", "colunas", "cenarios", "obra", "de", "ate", "analiseVertical"],
+      required: ["titulo", "fonte", "colunas", "cenarios", "obra", "de", "ate", "analiseVertical", "dimensao", "metricas"],
     },
   },
 ];

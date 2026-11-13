@@ -25,6 +25,7 @@ import { brl } from "@/lib/utils";
 import { PageHeader } from "@/components/app/page-header";
 import { AccessDenied } from "@/components/app/access-denied";
 import { NotaServicoForm } from "@/components/app/nota-servico-form";
+import { vinculosParaANota } from "@/lib/nota-servico-vinculos";
 import { AcoesDaNotaProcessando, CancelarNota } from "@/components/app/nota-servico-acoes";
 import { origemNoProvedor, temArquivos } from "@/lib/nota-servico-arquivos";
 import { Card, CardContent } from "@/components/ui/card";
@@ -205,6 +206,7 @@ export default async function NotaPage({ params }: { params: Promise<{ id: strin
           inicial={valoresIniciais(n as unknown as Record<string, unknown>, {})}
           projetos={ctx.projects.map((p) => ({ id: p.id, name: p.name }))}
           contasReceber={(await getContasReceber(ctx.tenant.id, n.projectId)).map((c) => ({ id: c.id, projectId: c.projectId, rotulo: rotuloDaConta(c) }))}
+          {...(await vinculosParaANota(ctx.tenant.id, [n.projectId]))}
           emitente={{ razaoSocial: e.razaoSocial ?? "", cnpj: e.cnpj ? formatarCnpj(e.cnpj) : "", itemListaServico: e.itemListaServico ?? "", municipio: e.municipio ?? "" }}
         />
       ) : (

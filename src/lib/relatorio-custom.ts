@@ -11,14 +11,16 @@
 import type { EntradaAnalitica, ContaAnalitica } from "@/lib/dre-analitica";
 import { linhasDaDreAnalitica } from "@/lib/dre-analitica";
 
-export const FONTES = ["dre", "dreanalitica", "fluxo"] as const;
+import { DIMENSOES, METRICAS, METRICAS_PADRAO, ROTULO_DIMENSAO, ROTULO_METRICA, noPeriodo, pivotar, type Dimensao, type Fato, type Metrica } from "@/lib/relatorio-gerencial";
+
+export const FONTES = ["dre", "dreanalitica", "fluxo", "gerencial"] as const;
 export type Fonte = (typeof FONTES)[number];
 export const COLUNAS = ["cenario", "mes", "obra"] as const;
 export type Colunas = (typeof COLUNAS)[number];
 export const CENARIOS_RC = ["atual", "forecast", "budget"] as const;
 export type CenarioRC = (typeof CENARIOS_RC)[number];
 
-export const ROTULO_FONTE: Record<Fonte, string> = { dre: "DRE", dreanalitica: "DRE por categoria e grupo", fluxo: "Fluxo de Caixa (previsto)" };
+export const ROTULO_FONTE: Record<Fonte, string> = { dre: "DRE", dreanalitica: "DRE por categoria e grupo", fluxo: "Fluxo de Caixa (previsto)", gerencial: "Gerencial (tabela dinâmica)" };
 export const ROTULO_COLUNAS: Record<Colunas, string> = { cenario: "por cenário", mes: "mês a mês", obra: "por projeto" };
 export const ROTULO_CENARIO_RC: Record<CenarioRC, string> = { atual: "Atual", forecast: "Previsão Atualizada", budget: "Orçamento" };
 /** Teto de colunas de valor (meses ou obras): além disso, a tela avisa e corta. */
@@ -37,6 +39,9 @@ export interface ReceitaDeRelatorio {
   ate: string;
   /** Análise vertical: % da receita (DRE) ou das entradas (Fluxo). */
   av: boolean;
+  /** Fonte "gerencial": a dimensão das linhas e as métricas das colunas. */
+  dim?: Dimensao;
+  metricas?: Metrica[];
 }
 
 export const RECEITA_PADRAO: ReceitaDeRelatorio = { titulo: "", fonte: "dre", colunas: "cenario", cenarios: ["atual"], proj: "all", de: "", ate: "", av: false };
@@ -61,15 +66,22 @@ export function receitaValida(entrada: unknown, obrasVisiveis: readonly string[]
   const unicos = [...new Set(cens)].slice(0, 3);
   const proj = typeof o.proj === "string" && (["all", "ativos", "finalizados"].includes(o.proj) || obrasVisiveis.includes(o.proj)) ? o.proj : "all";
   const av = o.av === true || o.av === "1" || o.av === "true";
+  const fonte = deLista(FONTES, o.fonte, "dre");
   return {
     titulo: typeof o.titulo === "string" ? o.titulo.trim().slice(0, 120) : "",
-    fonte: deLista(FONTES, o.fonte, "dre"),
+    fonte,
     colunas: deLista(COLUNAS, o.colunas, "cenario"),
     cenarios: unicos.length ? unicos : ["atual"],
     proj,
     de: competencia(o.de),
     ate: competencia(o.ate),
     av,
+    ...(fonte === "gerencial"
+      ? (() => {
+          const ms = (Array.isArray(o.metricas) ? o.metricas : typeof o.metricas === "string" ? o.metricas.split(",") : []).filter((m): m is Metrica => typeof m === "string" && (METRICAS as readonly string[]).includes(m));
+          return { dim: deLista(DIMENSOES, o.dim, "contrato"), metricas: ms.length ? [...new Set(ms)].slice(0, 10) : [...METRICAS_PADRAO] };
+        })()
+      : {}),
   };
 }
 
@@ -84,11 +96,19 @@ export function urlDaReceita(r: ReceitaDeRelatorio): string {
   if (r.de) p.set("de", r.de);
   if (r.ate) p.set("ate", r.ate);
   if (r.av) p.set("av", "1");
+  if (r.fonte === "gerencial") {
+    if (r.dim) p.set("dim", r.dim);
+    if (r.metricas?.length) p.set("metricas", r.metricas.join(","));
+  }
   return `/relatorios?${p.toString()}`;
 }
 
 /** Descrição de uma linha da receita, para o cabeçalho e a Cris. */
 export function descricaoDaReceita(r: ReceitaDeRelatorio, escopo: string): string {
+  if (r.fonte === "gerencial") {
+    const periodo = r.de || r.ate ? `${r.de || "início"} a ${r.ate || "fim"}` : "todo o período";
+    return `Gerencial por ${ROTULO_DIMENSAO[r.dim ?? "contrato"].toLowerCase()} · ${(r.metricas ?? METRICAS_PADRAO).map((m) => ROTULO_METRICA[m]).join(", ")} · ${escopo} · ${periodo}`;
+  }
   const cen = r.colunas === "cenario" ? r.cenarios.map((c) => ROTULO_CENARIO_RC[c]).join(" × ") : ROTULO_CENARIO_RC[r.cenarios[0]];
   const periodo = r.de || r.ate ? `${r.de || "início"} a ${r.ate || "fim"}` : r.colunas === "mes" ? "5 meses antes, o atual e 6 depois" : "todo o horizonte";
   return `${ROTULO_FONTE[r.fonte]} ${ROTULO_COLUNAS[r.colunas]} · ${cen} · ${escopo} · ${periodo}${r.av ? " · com análise vertical" : ""}`;
@@ -165,6 +185,30 @@ export function montarTabela(fonte: Fonte, colunas: readonly ColunaDeDados[], co
     return { id: o.id, nivel: o.nivel, label: o.label, destaque: o.destaque, valores, pcts };
   });
   return { colunas: colunas.map((c) => c.titulo), linhas, rotuloPct: "% Receita" };
+}
+
+/**
+ * Fonte "gerencial": a tabela dinâmica sobre os FATOS (relatorio-gerencial.ts),
+ * já filtrados por escopo; aqui entram o período e as métricas permitidas.
+ * Linhas = valores da dimensão; colunas = métricas; última linha = Total.
+ */
+export function tabelaGerencial(fatos: readonly Fato[], r: ReceitaDeRelatorio, metricasPermitidas: readonly Metrica[]): TabelaDeRelatorio {
+  const metricas = (r.metricas ?? METRICAS_PADRAO).filter((m) => metricasPermitidas.includes(m));
+  const ord = (s: string) => {
+    const m = /^(\d{2})\/(\d{4})$/.exec(s);
+    return m ? Number(m[2]) * 100 + Number(m[1]) : null;
+  };
+  const de = r.de ? ord(r.de) : null;
+  const ate = r.ate ? ord(r.ate) : null;
+  const p = pivotar(fatos.filter((f) => noPeriodo(f, de, ate)), r.dim ?? "contrato", metricas);
+  return {
+    colunas: metricas.map((m) => ROTULO_METRICA[m]),
+    linhas: [
+      ...p.linhas.map((l, i) => ({ id: `g${i}`, nivel: 0, label: l.rotulo, destaque: false, valores: l.valores, pcts: null })),
+      { id: "total", nivel: 0, label: "Total", destaque: true, valores: p.total, pcts: null },
+    ],
+    rotuloPct: "",
+  };
 }
 
 /** CSV (separador ";", vírgula decimal) para baixar a tabela. */

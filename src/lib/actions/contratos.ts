@@ -170,6 +170,10 @@ export interface DadosDoContrato {
   regrasReembolso?: string | null;
   /** projetos vinculados (só na criação; depois, por `vincularProjetos`). */
   projetos?: { projectId: string; valorAlocado?: number | string | null }[];
+  /** Chave da tela: o mesmo envio duas vezes cria um contrato só (criação). */
+  idempotencyKey?: string | null;
+  /** "cris" quando a pessoa confirmou um preenchimento proposto pela Cris (vai à auditoria). */
+  origem?: "manual" | "cris" | null;
 }
 
 /**
@@ -275,20 +279,35 @@ export async function salvarContrato(input: DadosDoContrato): Promise<Resultado>
     regrasReembolso: txt(input.regrasReembolso),
   };
 
+  const origem = input.origem === "cris" ? "cris" : "manual";
   if (!editando) {
+    const idem = txt(input.idempotencyKey);
+    const jaCriado = async () =>
+      idem ? (await db.select({ id: schema.contratos.id }).from(schema.contratos).where(and(eq(schema.contratos.tenantId, tenantId), eq(schema.contratos.idempotencyKey, idem))).limit(1))[0] ?? null : null;
+    const antes = await jaCriado();
+    if (antes) return { ok: true, id: antes.id, aviso: "Este contrato já tinha sido criado." };
     const codigo = await reservarNumero(tenantId, "contrato", "CT");
-    const id = await db.transaction(async (tx) => {
-      const [c] = await tx
-        .insert(schema.contratos)
-        .values({ tenantId, codigo, ...campos, valorOriginal: String(valorOriginal), createdBy: quem(ctx) })
-        .returning({ id: schema.contratos.id });
-      if (projetos.length)
-        await tx.insert(schema.contratoProjetos).values(projetos.map((p) => ({ tenantId, contratoId: c.id, projectId: p.projectId, valorAlocado: num(p.valorAlocado) == null ? null : String(num(p.valorAlocado)) })));
-      await logAudit({ tenantId, userId: ctx.userId, action: "contrato.create", entity: "contrato", entityId: c.id, meta: { codigo, titulo, valorOriginal, tipo, principalId, projetos: projetos.map((p) => p.projectId) } }, tx);
-      return c.id;
-    });
-    revalidar(id);
-    return { ok: true, id };
+    try {
+      const id = await db.transaction(async (tx) => {
+        const [c] = await tx
+          .insert(schema.contratos)
+          .values({ tenantId, codigo, ...campos, valorOriginal: String(valorOriginal), idempotencyKey: idem, createdBy: quem(ctx) })
+          .returning({ id: schema.contratos.id });
+        if (projetos.length)
+          await tx.insert(schema.contratoProjetos).values(projetos.map((p) => ({ tenantId, contratoId: c.id, projectId: p.projectId, valorAlocado: num(p.valorAlocado) == null ? null : String(num(p.valorAlocado)) })));
+        await logAudit({ tenantId, userId: ctx.userId, action: "contrato.create", entity: "contrato", entityId: c.id, meta: { codigo, titulo, valorOriginal, tipo, principalId, projetos: projetos.map((p) => p.projectId), origem } }, tx);
+        return c.id;
+      });
+      revalidar(id);
+      return { ok: true, id };
+    } catch (e) {
+      // Dois envios simultâneos com a mesma chave: o segundo devolve o primeiro.
+      if (idem && String((e as { code?: string })?.code) === "23505") {
+        const ja = await jaCriado();
+        if (ja) return { ok: true, id: ja.id, aviso: "Este contrato já tinha sido criado." };
+      }
+      throw e;
+    }
   }
 
   return db.transaction(async (tx) => {
@@ -312,7 +331,7 @@ export async function salvarContrato(input: DadosDoContrato): Promise<Resultado>
       if (!igual) mudou[k] = { de, para: v };
     }
     if (mudaValor) mudou.valorOriginal = { de: atual.valorOriginal, para: valorOriginal };
-    await logAudit({ tenantId, userId: ctx.userId, action: "contrato.update", entity: "contrato", entityId: atual.id, meta: { codigo: atual.codigo, mudou } }, tx);
+    await logAudit({ tenantId, userId: ctx.userId, action: "contrato.update", entity: "contrato", entityId: atual.id, meta: { codigo: atual.codigo, mudou, origem } }, tx);
     revalidar(atual.id);
     return { ok: true as const, id: atual.id };
   });
@@ -740,10 +759,49 @@ export interface DadosDaMedicao {
   responsavel?: string | null;
   dataMedicao?: string | null;
   obs?: string | null;
+  /** 0081 — período executado (MM/DD/YYYY). */
+  periodoInicio?: string | null;
+  periodoFim?: string | null;
+  /** 0081 — aditivo que autorizou o serviço; fase, atividade e entrega do plano. */
+  aditivoId?: string | null;
+  projetoFaseId?: string | null;
+  projetoAtividadeId?: string | null;
+  projetoEntregaId?: string | null;
   /** "enviar" já envia para análise; senão fica em rascunho. */
   enviar?: boolean;
   /** chave gerada pela tela: a mesma medição enviada duas vezes entra uma vez. */
   idempotencyKey?: string | null;
+}
+
+/**
+ * 0081 — fase, atividade e entrega informadas pertencem ao plano do projeto
+ * da medição (e a atividade/entrega, à fase informada). Sem projeto, recusa.
+ */
+async function vinculosDoPlanoValidos(
+  tenantId: string,
+  projectId: string | null,
+  v: { faseId: string | null; atividadeId: string | null; entregaId: string | null },
+): Promise<{ faseId: string | null; atividadeId: string | null; entregaId: string | null } | { erro: string }> {
+  if (!v.faseId && !v.atividadeId && !v.entregaId) return v;
+  if (!projectId) return { erro: "Para ligar a medição ao plano de trabalho, escolha o projeto." };
+  let faseId = v.faseId;
+  if (v.atividadeId) {
+    const [a] = await db.select({ faseId: schema.projetoAtividades.faseId }).from(schema.projetoAtividades).where(and(eq(schema.projetoAtividades.id, v.atividadeId), eq(schema.projetoAtividades.tenantId, tenantId), eq(schema.projetoAtividades.projectId, projectId))).limit(1);
+    if (!a) return { erro: "Atividade não encontrada no plano deste projeto." };
+    if (faseId && a.faseId && a.faseId !== faseId) return { erro: "A atividade não é da fase informada." };
+    faseId = faseId ?? a.faseId ?? null;
+  }
+  if (v.entregaId) {
+    const [e] = await db.select({ faseId: schema.projetoEntregas.faseId }).from(schema.projetoEntregas).where(and(eq(schema.projetoEntregas.id, v.entregaId), eq(schema.projetoEntregas.tenantId, tenantId), eq(schema.projetoEntregas.projectId, projectId))).limit(1);
+    if (!e) return { erro: "Entrega não encontrada no plano deste projeto." };
+    if (faseId && e.faseId && e.faseId !== faseId) return { erro: "A entrega não é da fase informada." };
+    faseId = faseId ?? e.faseId ?? null;
+  }
+  if (faseId) {
+    const [f] = await db.select({ id: schema.projetoFases.id }).from(schema.projetoFases).where(and(eq(schema.projetoFases.id, faseId), eq(schema.projetoFases.tenantId, tenantId), eq(schema.projetoFases.projectId, projectId))).limit(1);
+    if (!f) return { erro: "Fase não encontrada no plano deste projeto." };
+  }
+  return { faseId, atividadeId: v.atividadeId, entregaId: v.entregaId };
 }
 
 /** Cria ou edita (só em rascunho) uma medição. O valor sai do critério do item. */
@@ -781,6 +839,26 @@ export async function salvarMedicao(input: DadosDaMedicao): Promise<Resultado> {
     const [m] = await db.select({ id: schema.contratoMarcos.id }).from(schema.contratoMarcos).where(and(eq(schema.contratoMarcos.id, marcoId), eq(schema.contratoMarcos.contratoId, c.id))).limit(1);
     if (!m) return falha("Marco não encontrado neste contrato.");
   }
+  // 0081 — período executado: datas válidas e em ordem.
+  const pi = data(input.periodoInicio, "Início do período");
+  if (!pi.ok) return falha(pi.error);
+  const pf = data(input.periodoFim, "Fim do período");
+  if (!pf.ok) return falha(pf.error);
+  if (pi.v && pf.v && (ymd(pf.v) ?? 0) < (ymd(pi.v) ?? 0)) return falha("O fim do período é anterior ao início.");
+  // 0081 — aditivo do próprio contrato, que não esteja rejeitado nem cancelado.
+  const aditivoId = txt(input.aditivoId);
+  if (aditivoId) {
+    const ad = base.aditivos.find((a) => a.id === aditivoId);
+    if (!ad) return falha("Aditivo não encontrado neste contrato.");
+    if (ad.status === "rejeitado" || ad.status === "cancelado") return falha("Aditivo rejeitado ou cancelado não autoriza medição.");
+  }
+  // 0081 — fase, atividade e entrega: do plano do projeto da medição.
+  const vinculosDoPlano = await vinculosDoPlanoValidos(tenantId, projectId, {
+    faseId: txt(input.projetoFaseId),
+    atividadeId: txt(input.projetoAtividadeId),
+    entregaId: txt(input.projetoEntregaId),
+  });
+  if ("erro" in vinculosDoPlano) return falha(vinculosDoPlano.erro);
   const criterio = item?.criterioMedicao ?? "entrega";
   const quantidade = num(input.quantidade);
   const percentual = num(input.percentual);
@@ -798,16 +876,32 @@ export async function salvarMedicao(input: DadosDaMedicao): Promise<Resultado> {
     responsavel: txt(input.responsavel),
     dataMedicao: dm.v ?? hoje,
     obs: txt(input.obs),
+    periodoInicio: pi.v ?? null,
+    periodoFim: pf.v ?? null,
+    aditivoId,
+    projetoFaseId: vinculosDoPlano.faseId,
+    projetoAtividadeId: vinculosDoPlano.atividadeId,
+    projetoEntregaId: vinculosDoPlano.entregaId,
   };
   // Aviso cedo (a trava de verdade é na aprovação): já passaria do limite?
   const aviso = recusaDeLimite({ id: input.id ?? "nova", itemId, valor: calc.valor }, base.medicoes, valorDoContrato(c, base.aditivos, hoje).atualizado, limites) ?? undefined;
   if (!input.id) {
     try {
-      const [m] = await db
-        .insert(schema.contratoMedicoes)
-        .values({ tenantId, contratoId: c.id, ...campos, status: input.enviar ? "enviada" : "rascunho", idempotencyKey: idem, createdBy: quem(ctx) })
-        .returning({ id: schema.contratoMedicoes.id });
-      await logAudit({ tenantId, userId: ctx.userId, action: "contrato.medicao.create", entity: "contrato_medicao", entityId: m.id, meta: { contrato: c.codigo, ...campos, status: input.enviar ? "enviada" : "rascunho" } });
+      // 0081 — número sequencial por contrato: o contrato fica travado na
+      // transação, então duas medições simultâneas não pegam o mesmo número.
+      const m = await db.transaction(async (tx) => {
+        await contratoDaEmpresa(tenantId, c.id, tx, true);
+        const [{ ultimo }] = await tx
+          .select({ ultimo: sql<number | null>`max(${schema.contratoMedicoes.numero})` })
+          .from(schema.contratoMedicoes)
+          .where(eq(schema.contratoMedicoes.contratoId, c.id));
+        const [nova] = await tx
+          .insert(schema.contratoMedicoes)
+          .values({ tenantId, contratoId: c.id, ...campos, numero: Number(ultimo ?? 0) + 1, status: input.enviar ? "enviada" : "rascunho", idempotencyKey: idem, createdBy: quem(ctx) })
+          .returning({ id: schema.contratoMedicoes.id, numero: schema.contratoMedicoes.numero });
+        return nova;
+      });
+      await logAudit({ tenantId, userId: ctx.userId, action: "contrato.medicao.create", entity: "contrato_medicao", entityId: m.id, meta: { contrato: c.codigo, numero: m.numero, ...campos, status: input.enviar ? "enviada" : "rascunho" } });
       revalidar(c.id);
       revalidatePath("/contratos/medicoes");
       return { ok: true, id: m.id, aviso };

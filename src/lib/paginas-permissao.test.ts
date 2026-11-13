@@ -14,6 +14,8 @@ import { SCREEN_IDS } from "./permissions";
 /** Rotas cuja permissão é de outra tela (declarado, não inferido). */
 const PERMISSAO_DE: Record<string, string> = {
   acerto: "despesas",
+  // Implementação integrada: a implantação é governada pela tela Empresa.
+  implantacao: "empresa",
 };
 /** Rotas pessoais, sem tela governada. */
 const LIVRES = new Set(["perfil"]);

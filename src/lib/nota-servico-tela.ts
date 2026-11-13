@@ -22,6 +22,8 @@ export function valoresIniciais(n: Linha | null, padrao: { projectId?: string; a
     ...(n ? { id: s(n.id) } : {}),
     projectId: n ? s(n.projectId) : (padrao.projectId ?? ""),
     contaReceberId: s(n?.contaReceberId),
+    contratoId: s(n?.contratoId),
+    contratoMedicaoId: s(n?.contratoMedicaoId),
     competencia: s(n?.competencia),
     discriminacao: s(n?.discriminacao),
     itemListaServico: s(n?.itemListaServico),
