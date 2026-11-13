@@ -41,38 +41,40 @@ Testes = `*.test.ts`; Docs = `docs/` e README.
 
 | Termo | Interface | Componentes | Cris/IA | Regras | Testes | Docs |
 |---|---|---|---|---|---|---|
-| obra(s) | 327 → 181 | 321 → 108 | 295 → 91 | 920 → 584 | 841 → 727 | 1844 → 1844 |
-| construção/construções | 0 → 0 | 29 → 16 | 29 → 25 | 114 → 109 | 58 → 69 | 125 → 125 |
-| construtora(s) | 0 → 0 | 3 → 1 | 5 → 2 | 24 → 22 | 34 → 37 | 78 → 78 |
-| construído | 0 → 0 | 4 → 2 | 3 → 0 | 17 → 14 | 4 → 5 | 23 → 23 |
-| edificação | 0 → 0 | 0 → 0 | 0 → 0 | 0 → 0 | 0 → 0 | 3 → 3 |
-| empreitada | 0 → 0 | 0 → 0 | 1 → 0 | 3 → 2 | 0 → 0 | 9 → 9 |
-| canteiro | 0 → 0 | 0 → 1 | 1 → 0 | 2 → 2 | 6 → 8 | 9 → 9 |
-| terreno(s) | 0 → 0 | 13 → 4 | 10 → 0 | 31 → 15 | 11 → 12 | 56 → 56 |
-| lote/loteamento | 2 → 2 | 17 → 17 | 10 → 7 | 43 → 37 | 24 → 24 | 144 → 144 |
-| unidade imobiliária/habitacional | 0 → 0 | 0 → 0 | 1 → 2 | 1 → 6 | 1 → 2 | 0 → 0 |
-| apartamento | 0 → 0 | 1 → 0 | 4 → 0 | 4 → 0 | 1 → 0 | 4 → 4 |
-| empreendimento | 4 → 0 | 13 → 5 | 5 → 0 | 16 → 10 | 2 → 5 | 70 → 70 |
-| incorporação/incorporadora | 0 → 10 | 1 → 6 | 0 → 1 | 5 → 16 | 2 → 15 | 13 → 13 |
-| comprador | 10 → 1 | 8 → 5 | 17 → 3 | 47 → 33 | 14 → 14 | 62 → 62 |
-| INCC | 60 → 34 | 53 → 4 | 14 → 2 | 255 → 182 | 144 → 104 | 341 → 341 |
-| CUB | 0 → 1 | 6 → 0 | 0 → 0 | 20 → 19 | 9 → 10 | 9 → 9 |
-| BDI | 1 → 1 | 8 → 0 | 1 → 0 | 25 → 23 | 6 → 7 | 24 → 24 |
-| VGV | 32 → 25 | 3 → 1 | 17 → 1 | 91 → 65 | 37 → 40 | 82 → 82 |
-| SAC/PRICE/SBPE | 3 → 0 | 11 → 0 | 6 → 2 | 26 → 12 | 27 → 16 | 81 → 81 |
-| FGTS | 5 → 4 | 21 → 2 | 33 → 5 | 101 → 66 | 49 → 44 | 57 → 57 |
-| subsídio | 3 → 3 | 20 → 0 | 28 → 1 | 82 → 48 | 45 → 41 | 43 → 43 |
-| permuta | 63 → 27 | 64 → 17 | 55 → 8 | 369 → 241 | 172 → 137 | 546 → 546 |
-| repasse | 0 → 0 | 0 → 0 | 1 → 1 | 76 → 76 | 26 → 26 | 44 → 44 |
-| financiamento | 16 → 19 | 60 → 10 | 22 → 3 | 153 → 108 | 76 → 66 | 145 → 145 |
-| liberação de obra | 16 → 2 | 8 → 0 | 7 → 3 | 25 → 14 | 7 → 5 | 141 → 141 |
-| CEF/Caixa Econômica | 11 → 8 | 34 → 13 | 14 → 2 | 92 → 57 | 85 → 51 | 132 → 132 |
-| habite-se | 0 → 0 | 0 → 0 | 0 → 0 | 0 → 0 | 1 → 3 | 1 → 1 |
+| obra(s) | 327 → 181 | 321 → 108 | 295 → 91 | 920 → 576 | 841 → 735 | 1844 → 1881 |
+| construção/construções | 0 → 0 | 29 → 16 | 29 → 25 | 114 → 109 | 58 → 72 | 125 → 140 |
+| construtora(s) | 0 → 0 | 3 → 1 | 5 → 2 | 24 → 22 | 34 → 42 | 78 → 85 |
+| construído | 0 → 0 | 4 → 2 | 3 → 0 | 17 → 16 | 4 → 7 | 23 → 27 |
+| edificação | 0 → 0 | 0 → 0 | 0 → 0 | 0 → 0 | 0 → 0 | 3 → 4 |
+| empreitada | 0 → 0 | 0 → 0 | 1 → 0 | 3 → 2 | 0 → 0 | 9 → 10 |
+| canteiro | 0 → 0 | 0 → 1 | 1 → 0 | 2 → 2 | 6 → 9 | 9 → 11 |
+| terreno(s) | 0 → 0 | 13 → 4 | 10 → 0 | 31 → 15 | 11 → 15 | 56 → 63 |
+| lote/loteamento | 2 → 2 | 17 → 17 | 10 → 7 | 43 → 37 | 24 → 24 | 144 → 146 |
+| unidade imobiliária/habitacional | 0 → 0 | 0 → 0 | 1 → 2 | 1 → 6 | 1 → 2 | 0 → 1 |
+| apartamento | 0 → 0 | 1 → 0 | 4 → 0 | 4 → 0 | 1 → 0 | 4 → 5 |
+| empreendimento | 4 → 0 | 13 → 5 | 5 → 0 | 16 → 10 | 2 → 5 | 70 → 76 |
+| incorporação/incorporadora | 0 → 10 | 1 → 7 | 0 → 1 | 5 → 22 | 2 → 17 | 13 → 24 |
+| comprador | 10 → 1 | 8 → 5 | 17 → 3 | 47 → 33 | 14 → 17 | 62 → 73 |
+| INCC | 60 → 34 | 53 → 4 | 14 → 2 | 255 → 182 | 144 → 109 | 341 → 357 |
+| CUB | 0 → 1 | 6 → 0 | 0 → 0 | 20 → 19 | 9 → 10 | 9 → 11 |
+| BDI | 1 → 1 | 8 → 0 | 1 → 0 | 25 → 23 | 6 → 7 | 24 → 27 |
+| VGV | 32 → 25 | 3 → 1 | 17 → 1 | 91 → 65 | 37 → 44 | 82 → 93 |
+| SAC/PRICE/SBPE | 3 → 0 | 11 → 0 | 6 → 2 | 26 → 12 | 27 → 16 | 81 → 87 |
+| FGTS | 5 → 4 | 21 → 2 | 33 → 5 | 101 → 66 | 49 → 45 | 57 → 61 |
+| subsídio | 3 → 3 | 20 → 0 | 28 → 1 | 82 → 48 | 45 → 41 | 43 → 44 |
+| permuta | 63 → 27 | 64 → 17 | 55 → 8 | 369 → 241 | 172 → 139 | 546 → 565 |
+| repasse | 0 → 0 | 0 → 0 | 1 → 1 | 76 → 76 | 26 → 26 | 44 → 45 |
+| financiamento | 16 → 19 | 60 → 15 | 22 → 3 | 153 → 110 | 76 → 73 | 145 → 154 |
+| liberação de obra | 16 → 2 | 8 → 0 | 7 → 3 | 25 → 12 | 7 → 5 | 141 → 143 |
+| CEF/Caixa Econômica | 11 → 8 | 34 → 13 | 14 → 2 | 92 → 57 | 85 → 51 | 132 → 143 |
+| habite-se | 0 → 0 | 0 → 0 | 0 → 0 | 0 → 0 | 1 → 3 | 1 → 2 |
 
 Leitura da tabela:
 
-- **Docs** não mudou de propósito: os documentos `V2-*`, `SPEC.md` e afins
-  são **histórico** do produto anterior (veja a seção 6).
+- **Docs:** os documentos `V2-*`, `SPEC.md` e afins são **histórico** do
+  produto anterior e não foram reescritos (veja a seção 6). A contagem sobe
+  um pouco porque os dois documentos novos citam os termos ao descrever o que
+  saiu.
 - O que sobra em Interface, Componentes e Regras é, na maior parte, classe
   **D**. Exemplos: a variável `obra`, a chave `porObra`, o campo `vgv`, os
   enums `"obra"` da Cris e a coluna `conta_cef`. O restante é classe **E**,
@@ -112,6 +114,27 @@ Visão por área. O detalhe está nos commits da branch.
   - A conta corrente "Construtora" aparece como "Empresa (conta própria)".
   - "Empreendimento próprio" vira "Projeto próprio (sem cliente)".
   - "Projetos — empreendimentos imobiliários" vira "Projetos".
+
+## 4.1 Checagem no navegador
+
+Foi feita no build de produção, com uma empresa de diagnóstico provisionada
+no banco local isolado e removida depois. Telas verificadas: Projetos,
+Clientes (lista e nova ficha), Dashboard, Resumo (consolidado e por
+projeto), Contas a Receber, Materiais e Equipamentos, Equipes e Presença de
+Campo, Medições, Acertos e Rateios, e os redirecionamentos de `/unidades` e
+`/simulador`.
+
+A checagem achou resíduos que o teste automático não pega, porque
+"unidade" e "funding" são genéricos demais para entrar na lista de termos
+proibidos. Todos foram corrigidos:
+
+- o painel "Indicadores de negócio" do Resumo (VGV/m²), que passou a usar
+  indicadores de serviço;
+- o assistente do Resumo ("não tem unidade cadastrada");
+- o assistente de Contas a Receber ("Sem unidade ou cliente"), que também
+  marcava fatura de serviço sem unidade;
+- a dica de Projetos, que contava "funding" como inconsistência;
+- o texto do "A pagar" no Dashboard.
 
 ## 5. Ocorrências preservadas
 
