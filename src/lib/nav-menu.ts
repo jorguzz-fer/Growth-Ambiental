@@ -91,7 +91,6 @@ export const NAV_MENU: NavModule[] = [
     label: "Planejamento",
     icon: "planejamento",
     items: [
-      { href: "/projeto", label: "Projetos" },
       { href: "/budget", label: "Orçamentos" },
       { href: "/forecast", label: "Previsão Atualizada" },
       { href: "/planocontas", label: "Plano de Contas" },
@@ -143,6 +142,9 @@ export const NAV_MENU: NavModule[] = [
     label: "Projetos",
     icon: "obra",
     items: [
+      // Growth Ambiental: o cadastro de Projetos saiu de Planejamento e abre
+      // o módulo Projetos. Rota e permissão ("projeto") continuam as mesmas.
+      { href: "/projeto", label: "Cadastro de Projetos" },
       // Prompt V, 0.2: UM item. /medicao (relatório) e /medicaolanc (lançar e
       // lançadas) continuam como rotas e abas da mesma tela; quem só tem a
       // permissão de lançamento é levado à aba dele pela própria página.

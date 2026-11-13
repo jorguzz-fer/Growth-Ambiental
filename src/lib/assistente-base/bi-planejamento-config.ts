@@ -203,7 +203,7 @@ A tela Consolidado saiu. O endereço /consolidado leva à **Projeção de Receit
 
 ---
 
-## Projetos (/projeto) — módulo Planejamento
+## Cadastro de Projetos (/projeto) — módulo Projetos
 
 **Para que serve:** cadastro das obras e das unidades/escritórios, que alimenta datas, valores, financiamento e metragem dos relatórios.
 
