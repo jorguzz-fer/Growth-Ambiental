@@ -38,15 +38,15 @@ describe.skipIf(!HAS_DB)("catálogo de leitura (Etapa 7)", async () => {
 
   beforeAll(async () => {
     [tenant] = await db.insert(schema.tenants).values({ name: "Etapa7-dados" }).returning();
-    for (const nome of ["Residencial Alfa", "Residencial Beta", "Escritório Central"]) {
+    for (const nome of ["Monitoramento Alfa", "Licenciamento Beta", "Escritório Central"]) {
       const [p] = await db.insert(schema.projects).values({ tenantId: tenant.id, name: nome }).returning();
       const [v] = await db.insert(schema.versions).values({ projectId: p.id, tenantId: tenant.id, key: "atual", kind: "atual", label: "Atual", color: "#000" }).returning();
       obras[nome] = { project: p, atual: v.id };
     }
-    await despesa("Residencial Alfa", "Custo Variável", 30000, "09/2026");
-    await despesa("Residencial Alfa", "Custo Variável", 15000, "10/2026");
-    await despesa("Residencial Beta", "Custo Variável", 15000, "10/2026");
-    await despesa("Residencial Alfa", "Custo Fixo", 5000, "10/2026");
+    await despesa("Monitoramento Alfa", "Custo Variável", 30000, "09/2026");
+    await despesa("Monitoramento Alfa", "Custo Variável", 15000, "10/2026");
+    await despesa("Licenciamento Beta", "Custo Variável", 15000, "10/2026");
+    await despesa("Monitoramento Alfa", "Custo Fixo", 5000, "10/2026");
     await despesa("Escritório Central", "Despesa Fixa", 8000, "10/2026");
     ctx = { tenant, projects: Object.values(obras).map((o) => o.project), userId: null, userEmail: "e7@teste", role: "owner", perms: defaultPermissions("owner") } as never;
   });
@@ -54,14 +54,14 @@ describe.skipIf(!HAS_DB)("catálogo de leitura (Etapa 7)", async () => {
     await db.delete(schema.tenants).where(eq(schema.tenants.id, tenant.id));
   });
 
-  it("AC-T1: só as obras com custo variável, o valor de cada uma, o percentual sobre o total (soma 100%) e os mesmos números da DRE", async () => {
+  it("AC-T1: só os projetos com custo variável, o valor de cada um, o percentual sobre o total (soma 100%) e os mesmos números da DRE", async () => {
     const r = JSON.parse(await executarFerramentaDeDados(ctx, "custos_e_despesas_da_dre", { obras: [], de: "", ate: "", categorias: ["Custo Variável"], agrupar: "obra" }));
-    expect(r.grupos.map((g: { obra: string }) => g.obra)).toEqual(["Residencial Alfa", "Residencial Beta"]);
+    expect(r.grupos.map((g: { obra: string }) => g.obra)).toEqual(["Monitoramento Alfa", "Licenciamento Beta"]);
     expect(r.grupos.map((g: { valor: number }) => g.valor)).toEqual([45000, 15000]);
     expect(r.total).toBe(60000);
     expect(r.grupos.map((g: { percentualDoTotal: number }) => g.percentualDoTotal)).toEqual([75, 25]);
     expect(r.grupos.reduce((a: number, g: { percentualDoTotal: number }) => a + g.percentualDoTotal, 0)).toBe(100);
-    // os números batem com a DRE de cada obra na versão Atual
+    // os números batem com a DRE de cada projeto na versão Atual
     for (const g of r.grupos as { obra: string; valor: number }[]) {
       const dre = await versionInputsByMonth(tenant.id, obras[g.obra].atual, obras[g.obra].project.id);
       expect(Object.values(dre).reduce((a, m) => a + m.custoVar, 0)).toBe(g.valor);
@@ -71,10 +71,10 @@ describe.skipIf(!HAS_DB)("catálogo de leitura (Etapa 7)", async () => {
     expect(out.grupos.map((g: { valor: number }) => g.valor)).toEqual([15000, 15000]);
   });
 
-  it("agrupamentos e obras pedidas pelo nome (inclusive a não encontrada)", async () => {
-    const r = JSON.parse(await executarFerramentaDeDados(ctx, "custos_e_despesas_da_dre", { obras: ["alfa", "Obra Fantasma"], de: "", ate: "", categorias: [], agrupar: "categoria" }));
+  it("agrupamentos e projetos pedidos pelo nome (inclusive o não encontrado)", async () => {
+    const r = JSON.parse(await executarFerramentaDeDados(ctx, "custos_e_despesas_da_dre", { obras: ["alfa", "Projeto Fantasma"], de: "", ate: "", categorias: [], agrupar: "categoria" }));
     expect(r.grupos.map((g: { categoria: string; valor: number }) => [g.categoria, g.valor])).toEqual([["Custo Variável", 45000], ["Custo Fixo", 5000]]);
-    expect(r.obrasNaoEncontradas).toEqual(["Obra Fantasma"]);
+    expect(r.obrasNaoEncontradas).toEqual(["Projeto Fantasma"]);
   });
 
   it("despesas por situação e por fornecedor; nunca mais de 30 grupos", async () => {
@@ -91,7 +91,7 @@ describe.skipIf(!HAS_DB)("catálogo de leitura (Etapa 7)", async () => {
   });
 
   it("recebíveis vêm das contas a receber; empresa contratante aparece, pessoa física não", async () => {
-    const proj = obras["Residencial Alfa"];
+    const proj = obras["Monitoramento Alfa"];
     const [pj] = await db.insert(schema.clientes).values({ tenantId: tenant.id, nomeCompleto: "Empresa Contratante Exemplo Ltda", cpfCnpj: "11.222.333/0001-81" } as never).returning();
     const [pf] = await db.insert(schema.clientes).values({ tenantId: tenant.id, nomeCompleto: "Maria Pessoa Física", cpfCnpj: "000.000.002-72" } as never).returning();
     await db.insert(schema.contasReceber).values([
@@ -109,8 +109,8 @@ describe.skipIf(!HAS_DB)("catálogo de leitura (Etapa 7)", async () => {
     expect(await executarFerramentaDeDados(ctx, "unidades_e_vendas", { obras: [], agrupar: "obra" })).toMatch(/desconhecida/);
   });
 
-  it("montar_relatorio: a receita de Relatórios Customizados, com a obra que a pessoa vê", async () => {
-    const r = JSON.parse(await executarFerramentaDeDados(ctx, "montar_relatorio", { titulo: "Custos por obra", fonte: "dreanalitica", colunas: "obra", cenarios: ["atual"], obra: "", de: "01/2026", ate: "12/2026", analiseVertical: false }));
+  it("montar_relatorio: a receita de Relatórios Customizados, com o projeto que a pessoa vê", async () => {
+    const r = JSON.parse(await executarFerramentaDeDados(ctx, "montar_relatorio", { titulo: "Custos por projeto", fonte: "dreanalitica", colunas: "obra", cenarios: ["atual"], obra: "", de: "01/2026", ate: "12/2026", analiseVertical: false }));
     expect(r.link).toMatch(/^\/relatorios\?/);
     expect(r.link).toMatch(/fonte=dreanalitica/);
   });

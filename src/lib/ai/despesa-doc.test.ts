@@ -14,7 +14,7 @@ import {
 } from "./despesa-doc";
 
 /**
- * Os cenários abaixo são os documentos que realmente chegam da obra:
+ * Os cenários abaixo são os documentos que realmente chegam do campo:
  * DANFE de NF-e, cupom "SEM VALOR FISCAL" de loja de material e comprovante de
  * Pix. Cada um exercita uma parte diferente da regra de alerta.
  */
@@ -161,9 +161,10 @@ describe("DANFE de NF-e (documento completo)", () => {
     expect(res.alertas.competencia).toBeUndefined();
   });
 
-  it("acha a obra citada dentro do nome do destinatário, mas pede confirmação", () => {
+  it("acha o projeto citado dentro do nome do destinatário, mas pede confirmação", () => {
     expect(res.valores.projetoId).toBe("p25");
     expect(res.alertas.projeto?.nivel).toBe("conferir");
+    expect(res.alertas.projeto?.motivo).toMatch(/^Projeto identificado por semelhança/);
   });
 });
 
@@ -254,9 +255,10 @@ describe("comprovante de Pix (sem nota, CPF mascarado)", () => {
     expect(res.alertas.categoriaDre?.nivel).toBe("faltando");
   });
 
-  it("sem obra citada, pede confirmação do projeto em vez de aceitar em silêncio", () => {
+  it("sem projeto citado, pede confirmação do projeto em vez de aceitar em silêncio", () => {
     expect(res.valores.projetoId).toBeUndefined();
     expect(res.alertas.projeto?.nivel).toBe("conferir");
+    expect(res.alertas.projeto?.motivo).toMatch(/não identifica o projeto/);
   });
 
   it("repassa as ressalvas gerais da leitura", () => {

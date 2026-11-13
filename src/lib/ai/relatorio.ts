@@ -6,7 +6,7 @@ import { CENARIOS_RC, COLUNAS, FONTES, receitaValida, type ReceitaDeRelatorio } 
 
 /**
  * Prompt RC — o chat dos Relatórios Customizados. O modelo recebe só o que
- * dá para pedir (fontes, colunas, cenários) e os NOMES das obras que a pessoa
+ * dá para pedir (fontes, colunas, cenários) e os NOMES dos projetos que a pessoa
  * vê, e devolve uma receita pela ferramenta `montar_relatorio`. Nenhum número
  * vai ao modelo: quem calcula é o servidor, depois, com o acesso da pessoa.
  */
@@ -19,9 +19,9 @@ const FERRAMENTA: Anthropic.Tool = {
     properties: {
       titulo: { type: "string", description: "Título curto do relatório." },
       fonte: { type: "string", enum: [...FONTES], description: "dre = DRE (cascata); dreanalitica = DRE por categoria e grupo do plano de contas; fluxo = Fluxo de Caixa previsto (entradas, saídas, saldo)." },
-      colunas: { type: "string", enum: [...COLUNAS], description: "cenario = uma coluna por cenário; mes = mês a mês; obra = uma coluna por obra." },
-      cenarios: { type: "array", items: { type: "string", enum: [...CENARIOS_RC] }, description: "atual = movimento real; forecast = Previsão Atualizada; budget = Orçamento. Por mês ou por obra, só o primeiro vale." },
-      proj: { type: "string", description: '"all" (empresa toda), "ativos", "finalizados" ou o id de uma obra da lista.' },
+      colunas: { type: "string", enum: [...COLUNAS], description: "cenario = uma coluna por cenário; mes = mês a mês; obra = uma coluna por projeto." },
+      cenarios: { type: "array", items: { type: "string", enum: [...CENARIOS_RC] }, description: "atual = movimento real; forecast = Previsão Atualizada; budget = Orçamento. Por mês ou por projeto, só o primeiro vale." },
+      proj: { type: "string", description: '"all" (empresa toda), "ativos", "finalizados" ou o id de um projeto da lista.' },
       de: { type: "string", description: 'Competência inicial "MM/AAAA" ou "".' },
       ate: { type: "string", description: 'Competência final "MM/AAAA" ou "".' },
       av: { type: "boolean", description: "Análise vertical (% da receita na DRE, % das entradas no Fluxo)." },
@@ -35,10 +35,10 @@ function regras(obras: readonly { id: string; nome: string }[], hoje: Date): str
   return [
     "Você é o assistente da tela Relatórios Customizados do Growth Ambiental, um sistema financeiro de consultoria ambiental. Responda em português do Brasil, em uma ou duas frases.",
     "Seu trabalho é transformar o pedido num relatório pela ferramenta montar_relatorio. Use a ferramenta sempre que o pedido couber nela; depois diga em uma frase o que montou.",
-    "O que existe: DRE (Receita, custos e despesas até o Resultado Final), DRE por categoria e grupo do plano de contas, e Fluxo de Caixa previsto pelo vencimento (entradas, saídas e saldo). Colunas por cenário, mês a mês ou por obra. Análise vertical opcional.",
+    "O que existe: DRE (Receita, custos e despesas até o Resultado Final), DRE por categoria e grupo do plano de contas, e Fluxo de Caixa previsto pelo vencimento (entradas, saídas e saldo). Colunas por cenário, mês a mês ou por projeto. Análise vertical opcional.",
     "Se o pedido não couber (por exemplo, um número que não está nessas fontes, ou uma lista de lançamentos), diga o que dá para montar e não invente.",
     `Hoje é ${mes}. "Este ano" é de 01 a 12 do ano atual. Sem período pedido, deixe de e ate vazios.`,
-    "Obras que a pessoa vê (use o id em proj):",
+    "Projetos que a pessoa vê (use o id em proj):",
     ...obras.map((o) => `- ${o.nome}: ${o.id}`),
   ].join("\n");
 }

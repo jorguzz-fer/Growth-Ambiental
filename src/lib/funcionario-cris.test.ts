@@ -3,7 +3,7 @@ import { dataDaFicha, formularioDoFuncionario, valoresDoFuncionario } from "./fu
 import { sanitizarDados } from "./cris";
 
 /** Prompt Z2 — a Cris ajuda a cadastrar o funcionário, sem dado pessoal (BE-2). */
-const OBRAS = [{ id: "p1", nome: "OBRA A" }];
+const OBRAS = [{ id: "p1", nome: "PROJETO A" }];
 
 describe("Prompt Z2 · Funcionários com a Cris", () => {
   it("o formulário só tem o vínculo de trabalho, nenhum dado pessoal", () => {
@@ -17,9 +17,9 @@ describe("Prompt Z2 · Funcionários com a Cris", () => {
     expect(Object.keys(filtrado)).toEqual(nomes);
   });
 
-  it("a proposta vira os campos da ficha; a obra vira o id; a data vira AAAA-MM-DD", () => {
-    const r = valoresDoFuncionario({ cargo: "Pedreiro", obra: "OBRA A", tipoContrato: "Experiência", admissao: "11/03/2026" }, OBRAS);
-    expect(r).toEqual({ valores: { cargo: "Pedreiro", tipoContrato: "Experiência", projectId: "p1", admissao: "2026-11-03" }, avisos: [] });
+  it("a proposta vira os campos da ficha; o projeto vira o id; a data vira AAAA-MM-DD", () => {
+    const r = valoresDoFuncionario({ cargo: "Técnico de campo", obra: "PROJETO A", tipoContrato: "Experiência", admissao: "11/03/2026" }, OBRAS);
+    expect(r).toEqual({ valores: { cargo: "Técnico de campo", tipoContrato: "Experiência", projectId: "p1", admissao: "2026-11-03" }, avisos: [] });
   });
 
   it("data que não dá para ler fica de fora com aviso", () => {

@@ -24,11 +24,12 @@ export { FERRAMENTAS_DE_DADOS, NOMES_DAS_FERRAMENTAS_DE_DADOS } from "@/lib/cris
  * - O modelo escolhe a ferramenta e os filtros; o SERVIDOR calcula e agrega;
  *   o modelo escreve o texto sobre o resultado. Nunca linhas cruas em massa
  *   (no máximo 30 grupos por resposta), nunca SQL do modelo, nunca o banco.
- * - Cada ferramenta confere o "ver" do módulo da pessoa; obra só entre as que
- *   ela vê. Sem permissão, a ferramenta diz isso e não lê nada.
+ * - Cada ferramenta confere o "ver" do módulo da pessoa; projeto só entre os
+ *   que ela vê (o parâmetro se chama `obras`, nome antigo). Sem permissão, a ferramenta diz isso e não lê nada.
  * - DADO PESSOAL FORA de todas: CPF, CNPJ de pessoa física, renda, salário,
  *   dados bancários, saúde. Nome de fornecedor aparece (as telas de despesa
- *   mostram); de comprador e de membro de equipe, não: vão a unidade e a função.
+ *   mostram); cliente contratante só quando é empresa (CNPJ); de cliente pessoa
+ *   física e de membro de equipe, não: vão "pessoa física (nome omitido)" e a função.
  * - A análise não depende da tela aberta (AC-T2): as ferramentas são as mesmas
  *   em qualquer tela; só o que já é da tela vem no bloco <tela>.
  * - Relatório exportável: `montar_relatorio` monta a receita de Relatórios

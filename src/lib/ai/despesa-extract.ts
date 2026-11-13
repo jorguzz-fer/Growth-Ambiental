@@ -118,7 +118,7 @@ export async function extractDespesaFromDocument(
         resumo: {
           type: "string",
           description:
-            "Uma frase em português dizendo o que é a despesa (ex.: 'Compra de 1 saco de cimento na Materiais Exemplo, NF-e 17547').",
+            "Uma frase em português dizendo o que é a despesa (ex.: 'Hospedagem da equipe técnica no Hotel Exemplo, 3 diárias, NF-e 17547').",
         },
         observacoes: {
           type: "array",
@@ -143,7 +143,7 @@ export async function extractDespesaFromDocument(
           "Data de vencimento, formato ISO YYYY-MM-DD. Vazio se o documento não trouxer prazo.",
         ),
         descricao: campoSchema(
-          "Objeto da compra em uma linha (ex.: '2 discos diamantados segmentados 110mm'). Para serviço, o que foi feito.",
+          "Objeto da compra em uma linha (ex.: '2 trenas de 50 m e 1 GPS de mão', 'análises laboratoriais de água — 12 amostras'). Para serviço, o que foi feito.",
         ),
         categoriaDre: campoSchema(
           "Categoria DRE mais provável, EXATAMENTE como listada abaixo. Vazio se incerto.",
@@ -154,7 +154,7 @@ export async function extractDespesaFromDocument(
           "Código do plano de contas mais adequado (ex.: 1.1), dentre os listados. Vazio se incerto.",
         ),
         projetoNome: campoSchema(
-          "Obra/projeto citado no documento (ex.: 'OBRA 25' no nome do destinatário, ou carimbado no cupom). Vazio se não citar.",
+          "Projeto ou contrato citado no documento (ex.: 'PROJETO 25' ou 'Monitoramento Arqueológico' no nome do destinatário, na descrição ou carimbado no cupom). Vazio se não citar.",
         ),
         docFiscalTipo: campoSchema(
           "Tipo de documento fiscal, usando um dos ids listados. Use SEM_DOC para comprovante de pagamento, cupom sem valor fiscal e orçamento.",

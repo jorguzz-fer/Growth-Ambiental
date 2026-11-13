@@ -42,7 +42,7 @@ export async function extrairItensDaNota(docs: DocumentoParaLeitura[], ctx: Cont
   const client = aiClient();
   const tool: Anthropic.ToolUnion = {
     name: "listar_itens_da_nota",
-    description: "Lista os itens (materiais) de uma nota fiscal ou cupom de compra de materiais de construção, um por linha da nota.",
+    description: "Lista os itens (materiais e equipamentos) de uma nota fiscal ou cupom de compra, um por linha da nota.",
     input_schema: {
       type: "object",
       additionalProperties: false,
@@ -78,7 +78,7 @@ export async function extrairItensDaNota(docs: DocumentoParaLeitura[], ctx: Cont
     system: [
       {
         type: "text",
-        text: `Você lê notas fiscais e cupons de compra de MATERIAIS de uma construtora brasileira e devolve os itens, um por linha da nota, para dar entrada no estoque. Não invente item: só o que está escrito. Para "materialCadastrado", use somente nomes desta lista do cadastro, exatamente como escritos, ou deixe vazio:\n${lista}`,
+        text: `Você lê notas fiscais e cupons de compra de MATERIAIS E EQUIPAMENTOS de uma consultoria ambiental brasileira (EPI, ferramentas de campo, material de coleta e amostragem, equipamentos) e devolve os itens, um por linha da nota, para dar entrada em Materiais e Equipamentos. Não invente item: só o que está escrito. Para "materialCadastrado", use somente nomes desta lista do cadastro, exatamente como escritos, ou deixe vazio:\n${lista}`,
         cache_control: { type: "ephemeral" },
       },
     ],
@@ -87,7 +87,7 @@ export async function extrairItensDaNota(docs: DocumentoParaLeitura[], ctx: Cont
         role: "user",
         content: [
           ...docs.flatMap((d): Anthropic.ContentBlockParam[] => (docs.length > 1 ? [{ type: "text", text: `Arquivo: ${d.filename}` }, blocoDoDocumento(d)] : [blocoDoDocumento(d)])),
-          { type: "text", text: "Liste os itens de material desta nota. Se a nota for de serviço, ou não tiver item de material, devolva a lista vazia e explique em observacoes." },
+          { type: "text", text: "Liste os itens de material ou equipamento desta nota. Se a nota for de serviço, ou não tiver item de material ou equipamento, devolva a lista vazia e explique em observacoes." },
         ],
       },
     ],
