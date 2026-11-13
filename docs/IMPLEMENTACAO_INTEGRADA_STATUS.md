@@ -51,4 +51,43 @@ Legenda: **F** = implementada e funcional · **P** = parcial · **I** = lógica 
   - `/projeto/documentos`: busca transversal com a permissão de cada origem.
   - Testes: 3 arquivos puros + `actions/integracao-operacional.test.ts` (Postgres); catálogo do backup inclui `apontamento_hora`.
   - Pendências: centro de custo e rateio para contrato; NFS-e multiempresa e emissão real (credenciais/homologação); modelos salvos de relatório; cadastro de equipamento como ativo.
-- [ ] Etapa 3 — Cris, onboarding e homologação
+- [x] Etapa 3 — Cris, onboarding e homologação (detalhes em `CRIS_AVANCADA.md`, `ONBOARDING_GROWTH_AMBIENTAL.md`, `HOMOLOGACAO_PONTA_A_PONTA.md`)
+  - Migração 0083 (aditiva): `contrato.idempotency_key`, `ia_limite`, `implantacao_etapa`, `implantacao_treinamento`.
+  - Cris:
+    - planilha (XLSX/CSV) lida fora do Caixa como documento de texto;
+    - regra explícita contra injeção;
+    - mensagem de falha sem texto cru do provedor ou do banco;
+    - ferramentas `analise_gerencial` e `projecao_ao_termino`;
+    - `montar_relatorio` com a fonte gerencial;
+    - medição assistida na aba do contrato (proposta → conferência → salvar, nunca aprova);
+    - contrato com idempotência e `origem: "cris"` na auditoria.
+  - Consumo da IA:
+    - custo estimado por período, mês e operação;
+    - limites por hora configuráveis por empresa;
+    - orçamento mensal opcional, só com alerta.
+  - Implantação e Treinamento (`/implantacao`, permissão da tela Empresa):
+    - modelo A–H customizável;
+    - situações, dependências e evidência;
+    - treinamentos por perfil.
+  - **Correção de permissão:** as métricas financeiras do relatório gerencial, da Cris e do painel do Dashboard passaram a exigir `contratosfinanceiro:ver`. Antes, `contratos:ver` bastava e o técnico de campo veria faturado e margem.
+  - Homologação ponta a ponta com empresa fictícia em Postgres isolado: 24 passos, conferências financeiras, 6 perfis e isolamento entre empresas (27 testes).
+  - Pendências:
+    - orçamento de IA só alerta (não bloqueia);
+    - anexo direto na etapa de implantação;
+    - formulários assistidos de aditivo e reembolso;
+    - centro de custo (C2);
+    - chamada real à API de IA não exercitada (sem chave neste ambiente).
+
+## Validação final (Etapa 3)
+
+| Verificação | Resultado |
+|---|---|
+| Typecheck (`npm run typecheck`) | sem erros |
+| Lint (`npm run lint`) | 0 erros; 9 avisos (variáveis não usadas) em 5 arquivos de teste que esta etapa não alterou |
+| Suíte com Postgres isolado (`npm run test:db`) | 274 arquivos, 2364 testes, todos passando, nenhum pulado |
+| Build de produção | compilou; rotas novas no manifesto |
+| Verificação visual (Playwright, `next start` local, empresa fictícia apagada ao fim) | `/implantacao` (modelo aplicado, A–H, recusa sem evidência, conclusão com evidência, dependência liberando A2, temas de treinamento); `/diagnosticoia` (custo estimado, limites); `/relatorios` com fonte gerencial; nenhum erro de página |
+| Scripts e2e legados (`scripts/e2e/*.mjs`) | **não executados**: dependem de credenciais e de um seed de revisões antigas que não existem neste ambiente |
+| Integrações externas | **não testadas de verdade**: IA (sem chave; modelo simulado nos testes), NFS-e (nenhuma emissão; provedor simulado), Open Finance (fora do escopo) |
+
+Desempenho (volume sintético de 30 projetos e 60 contratos): relatório gerencial em 52 ms, painel executivo em 331 ms e 30 projeções em 223 ms. Detalhes em `HOMOLOGACAO_PONTA_A_PONTA.md` §5.

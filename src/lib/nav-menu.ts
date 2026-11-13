@@ -183,6 +183,8 @@ export const NAV_MENU: NavModule[] = [
     icon: "config",
     items: [
       { href: "/empresa", label: "Empresa" },
+      // Implementação integrada, Etapa 3: acompanhamento da implantação (permissão da tela Empresa).
+      { href: "/implantacao", label: "Implantação e Treinamento", perm: "empresa" },
       { href: "/modelos", label: "Modelos de Fases e Atividades" },
       { href: "/usuarios", label: "Usuários" },
       { href: "/acessos", label: "Gestão de Acessos" },

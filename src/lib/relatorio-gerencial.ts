@@ -62,6 +62,12 @@ export const ROTULO_METRICA: Record<Metrica, string> = {
 export const METRICAS_DE_HORAS: readonly Metrica[] = ["horasPlanejadas", "horasRealizadas", "custoPessoal"];
 /** Métricas de posição: não seguem o período. */
 export const METRICAS_DE_POSICAO: readonly Metrica[] = ["contratado", "aditivos", "saldoAMedir"];
+/** Métricas do financeiro do contrato (exigem ver o financeiro dos contratos). */
+export const METRICAS_FINANCEIRAS: readonly Metrica[] = ["faturado", "receitaReconhecida", "recebido", "aReceber", "custoApropriado", "margem", "reembolsoSolicitado", "reembolsoPendente"];
+/** O que a pessoa pode ver: o financeiro do contrato e as horas dependem das telas de origem. */
+export function metricasPermitidas(acesso: { financeiro: boolean; horas: boolean }): Metrica[] {
+  return METRICAS.filter((m) => (acesso.financeiro || !METRICAS_FINANCEIRAS.includes(m)) && (acesso.horas || !METRICAS_DE_HORAS.includes(m)));
+}
 export const METRICAS_PADRAO: Metrica[] = ["contratado", "medido", "faturado", "receitaReconhecida", "custoApropriado", "margem"];
 
 export type AtributosDoFato = Partial<Record<Dimensao, string | null>>;

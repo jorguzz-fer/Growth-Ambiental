@@ -136,6 +136,9 @@ export const TABELAS_DO_PACOTE: readonly TabelaDoPacote[] = [
   { tabela: "projeto_atividade", chave: "projetoAtividades", familia: "Operação", recorte: { tipo: "cadastro" } },
   { tabela: "projeto_entrega", chave: "projetoEntregas", familia: "Operação", recorte: { tipo: "cadastro" } },
   { tabela: "projeto_plano_importacao", chave: "projetoPlanoImportacoes", familia: "Operação", recorte: { tipo: "cadastro" } },
+  // 0083 — implantação (onboarding) e treinamentos: cadastro da empresa, vêm inteiros.
+  { tabela: "implantacao_etapa", chave: "implantacaoEtapas", familia: "Operação", recorte: { tipo: "cadastro" } },
+  { tabela: "implantacao_treinamento", chave: "implantacaoTreinamentos", familia: "Operação", recorte: { tipo: "cadastro" } },
   // ── Fiscal ────────────────────────────────────────────────────────────────
   { tabela: "documento_fiscal", chave: "documentosFiscais", familia: "Fiscal", recorte: { tipo: "data", colunas: ["dataEmissao"] } },
   { tabela: "nota_servico", chave: "notasServico", familia: "Fiscal", recorte: { tipo: "instante", coluna: "createdAt" } },
@@ -155,6 +158,7 @@ export const FORA_DO_PACOTE: readonly { tabela: string; grupo: string; motivo: s
   { tabela: "number_sequence", grupo: "Sequência", motivo: "estado do contador de PED — vai como informação neste leia-me (prefixo, próximo número, dígitos)" },
   { tabela: "tenant_flag", grupo: "Configuração", motivo: "chaves de mudança ligadas ou desligadas — configuração, não lançamento" },
   { tabela: "ia_uso", grupo: "Consumo", motivo: "registro de uso do assistente de IA — consumo, não lançamento" },
+  { tabela: "ia_limite", grupo: "Consumo", motivo: "limites de consumo da IA da empresa — configuração, não lançamento" },
   { tabela: "backup_pacote", grupo: "Backup", motivo: "registro dos próprios pacotes gerados — não é lançamento" },
   { tabela: "openfinance_item", grupo: "Open Finance", motivo: "conexão com o banco pela Pluggy — configuração, não lançamento; os movimentos que ela trouxe vão em cash_entry e extrato_cartao" },
   { tabela: "openfinance_conta", grupo: "Open Finance", motivo: "associação das contas do banco conectado — configuração, não lançamento" },

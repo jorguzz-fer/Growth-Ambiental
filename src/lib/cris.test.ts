@@ -133,6 +133,8 @@ describe("Prompt AQ §4 — o que não muda", () => {
       "@/lib/cris-dados-ferramentas",
       // Planejamento — extração de texto de DOCX (só lê o arquivo anexado, sem banco).
       "@/lib/docx-texto",
+      // Etapa 3 do ERP integrado — planilha anexada vira texto (só lê o arquivo, sem banco).
+      "@/lib/planilha-texto",
     ]);
     for (const arq of ["src/lib/ai/cris.ts", "src/lib/actions/cris.ts"]) {
       const imps = importsDe(arq);

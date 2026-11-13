@@ -164,7 +164,8 @@ export default async function DashboardPage({
   // Implementação integrada — painel executivo de contratos e operação (só quem vê contratos).
   const filtroCli = contratosDaEmpresa.some((c) => c.clienteId === sp.cli) ? sp.cli! : null;
   const filtroCtr = contratosDaEmpresa.some((c) => c.id === sp.ctr) ? sp.ctr! : null;
-  const executivo = can(ctx.perms, "contratos", "ver") ? await indicadoresExecutivos(ctx.tenant.id, projetosDaTela, { clienteId: filtroCli, contratoId: filtroCtr }) : null;
+  // O painel mostra faturado, recebido e receita: exige também o financeiro dos contratos.
+  const executivo = can(ctx.perms, "contratos", "ver") && can(ctx.perms, "contratosfinanceiro", "ver") ? await indicadoresExecutivos(ctx.tenant.id, projetosDaTela, { clienteId: filtroCli, contratoId: filtroCtr }) : null;
   const clientesDosContratos = [...new Map(contratosDaEmpresa.filter((c) => c.clienteId && c.cliente).map((c) => [c.clienteId!, { id: c.clienteId!, nome: c.cliente! }])).values()];
 
   let summaries: Summary[];

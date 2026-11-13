@@ -13,7 +13,7 @@ import {
   receitaValida,
   tabelaGerencial,
 } from "@/lib/relatorio-custom";
-import { DIMENSOES, METRICAS, METRICAS_DE_HORAS, METRICAS_DE_POSICAO, ROTULO_DIMENSAO, ROTULO_METRICA } from "@/lib/relatorio-gerencial";
+import { DIMENSOES, METRICAS_DE_POSICAO, ROTULO_DIMENSAO, ROTULO_METRICA, metricasPermitidas as metricasPermitidasDe } from "@/lib/relatorio-gerencial";
 import { fatosGerenciais } from "@/lib/relatorio-gerencial-dados";
 import { projetosDoEscopo, rotuloDoEscopo } from "@/lib/projeto-selecao";
 import { colunasDoRelatorio } from "@/lib/relatorio-custom-dados";
@@ -44,11 +44,12 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: P
   if (!can(ctx.perms, "relatorios", "ver")) return <AccessDenied />;
   const sp = await searchParams;
   const receita = receitaValida(sp, ctx.projects.map((p) => p.id));
-  // Cada fonte exige a tela de origem; a gerencial, Contratos (e Equipes para as métricas de horas).
+  // Cada fonte exige a tela de origem; a gerencial, Contratos (o financeiro do
+  // contrato para faturado, receita, custo e reembolso; Equipes para as horas).
   const fontesPermitidas = FONTES.filter((f) => can(ctx.perms, f === "fluxo" ? "fluxocaixa" : f === "gerencial" ? "contratos" : "dre", "ver"));
   const podeFonte = fontesPermitidas.includes(receita.fonte);
   const temPedido = !!sp.fonte;
-  const metricasPermitidas = METRICAS.filter((m) => !METRICAS_DE_HORAS.includes(m) || can(ctx.perms, "equipes", "ver"));
+  const metricasPermitidas = metricasPermitidasDe({ financeiro: can(ctx.perms, "contratosfinanceiro", "ver"), horas: can(ctx.perms, "equipes", "ver") });
   const gerencial = receita.fonte === "gerencial";
 
   const dados = podeFonte && temPedido && !gerencial ? await colunasDoRelatorio(ctx.tenant.id, ctx.projects, receita) : null;

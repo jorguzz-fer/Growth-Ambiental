@@ -69,7 +69,7 @@ Esta etapa integra clientes, projetos, contratos, equipes, horas, custos, notas 
 
 ## 5. Dashboard executivo
 
-- **Painel "Contratos e operação"** (só para quem vê Contratos), com filtro de cliente e contrato:
+- **Painel "Contratos e operação"** (só para quem vê Contratos **e** o financeiro dos contratos — ajuste da Etapa 3), com filtro de cliente e contrato:
   - projetos ativos e contratos ativos;
   - valor contratado, aditivos, medido e saldo a medir (com o número de contratos que têm saldo);
   - faturado, receita reconhecida (regra atual), recebido e a receber;
@@ -101,6 +101,7 @@ Esta etapa integra clientes, projetos, contratos, equipes, horas, custos, notas 
   - fato sem o atributo da dimensão vai para "(não informado)".
 - **Permissões:**
   - a fonte exige `contratos:ver`;
+  - as métricas financeiras (faturado, receita reconhecida, recebido, a receber, custo apropriado, margem, reembolsos) exigem `contratosfinanceiro:ver` (ajuste da Etapa 3, `metricasPermitidas`);
   - as métricas de horas exigem `equipes:ver`;
   - só entram os projetos que a pessoa vê.
 - **Pendências:** modelos salvos de relatório (hoje o modelo é o link) e exportação XLSX nessa tela (o CSV abre no Excel).

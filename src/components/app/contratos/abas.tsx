@@ -1,7 +1,9 @@
 "use client";
 
 import type { PlanoDosProjetos } from "@/lib/contratos-queries";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useCrisFormulario } from "@/components/app/cris-contexto";
+import { formularioDaMedicao, medicaoDaProposta } from "@/lib/contrato-cris";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
 import { MoneyInput } from "@/components/ui/money-input";
@@ -692,6 +694,19 @@ export function MedicoesPainel({ contratoId, medicoes, itens, projetos, marcos, 
       .join(" › ");
   const [novo, setNovo] = useState(vazio);
   const [chave, setChave] = useState(novaChave);
+  const [avisoCris, setAvisoCris] = useState<string | null>(null);
+  // Etapa 3 — a Cris pode PROPOR a medição a partir do boletim; nada é gravado sem o botão.
+  const opcoesCris = useMemo(
+    () => ({ itens: itens.filter((i) => i.vigente).map((i) => ({ id: i.id, rotulo: `${i.codigo} · ${i.descricao}` })), projetos: projetos.map((p) => ({ id: p.id, nome: p.nome })), aditivos }),
+    [itens, projetos, aditivos],
+  );
+  const formCris = useMemo(() => (podeLancar && contratoAceita ? formularioDaMedicao(opcoesCris) : null), [podeLancar, contratoAceita, opcoesCris]);
+  useCrisFormulario(formCris, (p) => {
+    const r = medicaoDaProposta(p.valores, opcoesCris);
+    setNovo((x) => ({ ...x, ...Object.fromEntries(Object.entries(r.campos).filter(([, v]) => v !== "")) }));
+    const conf = [...new Set([...r.conferir, ...Object.keys(p.conferir ?? {})])];
+    setAvisoCris(`A Cris preencheu a nova medição a partir do documento. Confira cada campo antes de salvar: nada foi gravado.${conf.length ? ` Conferir: ${conf.join(", ")}.` : ""}${p.observacao ? ` ${p.observacao}` : ""}`);
+  });
   const item = itens.find((i) => i.id === novo.itemId);
   const crit = item?.criterioMedicao ?? "entrega";
   const mudar = (m: MedicaoDaTela, para: string) => {
@@ -777,6 +792,7 @@ export function MedicoesPainel({ contratoId, medicoes, itens, projetos, marcos, 
       {podeLancar && contratoAceita && (
         <div className="mt-3 rounded-[10px] border border-dashed border-[var(--color-line)] p-3">
           <p className="mb-2 text-[12.5px] font-medium">Nova medição (medição não é fatura nem receita: só a aprovação conta no saldo)</p>
+          {avisoCris && <p className="mb-2 rounded-[8px] bg-[#fef3c7] px-2 py-1 text-[12px] text-[#92400e]" data-aviso-cris>{avisoCris}</p>}
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-4">
             <Select value={novo.itemId} onChange={(e) => setNovo({ ...novo, itemId: e.target.value })} aria-label="Item medido">
               <option value="">{itens.some((i) => i.vigente) ? "Item contratual *" : "Sem itens (medição do contrato)"}</option>
@@ -892,6 +908,7 @@ export function MedicoesPainel({ contratoId, medicoes, itens, projetos, marcos, 
                     () => {
                       setNovo(vazio);
                       setChave(novaChave());
+                      setAvisoCris(null);
                     },
                   )
                 }

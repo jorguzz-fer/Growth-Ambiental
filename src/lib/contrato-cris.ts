@@ -87,3 +87,78 @@ export function itensDaProposta(v: Record<string, string>): ItemProposto[] {
   }
   return out;
 }
+
+/**
+ * Etapa 3 do ERP integrado — medição assistida. A Cris lê o boletim de
+ * medição (PDF, DOCX, planilha ou texto) e PROPÕE os campos; a tela mostra e
+ * a pessoa salva (rascunho ou envio). Aprovar continua exclusivo de quem tem
+ * `contratosaprovar`, na própria tela: a Cris nunca aprova.
+ */
+export interface OpcoesDaMedicao {
+  itens: { id: string; rotulo: string }[];
+  projetos: { id: string; nome: string }[];
+  aditivos: { id: string; codigo: string }[];
+}
+
+export function formularioDaMedicao(o: OpcoesDaMedicao): FormularioDaTela {
+  return {
+    id: "medicao",
+    titulo: "Nova medição de serviço (dados extraídos do boletim — conferir antes de salvar)",
+    campos: [
+      { nome: "item", rotulo: "Item contratual (da lista)", tipo: "opcao", opcoes: o.itens.map((i) => i.rotulo) },
+      { nome: "competencia", rotulo: "Competência", tipo: "texto", dica: "MM/AAAA", obrigatorio: true },
+      { nome: "quantidade", rotulo: "Quantidade executada", tipo: "numero", dica: "só para item medido por quantidade" },
+      { nome: "percentual", rotulo: "Percentual de avanço no período", tipo: "numero", dica: "só para item medido por percentual" },
+      { nome: "valor", rotulo: "Valor medido", tipo: "numero", dica: "em reais; para entrega, marco ou valor fixo" },
+      { nome: "projeto", rotulo: "Projeto (da lista)", tipo: "opcao", opcoes: o.projetos.map((p) => p.nome) },
+      { nome: "aditivo", rotulo: "Aditivo que autorizou (da lista)", tipo: "opcao", opcoes: o.aditivos.map((a) => a.codigo) },
+      { nome: "periodoInicio", rotulo: "Início do período executado", tipo: "data", dica: "MM/DD/YYYY" },
+      { nome: "periodoFim", rotulo: "Fim do período executado", tipo: "data", dica: "MM/DD/YYYY" },
+      { nome: "responsavel", rotulo: "Responsável pela medição", tipo: "texto" },
+      { nome: "obs", rotulo: "Observação (o que foi executado)", tipo: "texto" },
+    ],
+  };
+}
+
+/** Converte a proposta da Cris nos campos da tela (nomes → ids). O que não casa com a lista fica vazio e vai para conferência. */
+export function medicaoDaProposta(v: Record<string, string>, o: OpcoesDaMedicao): { campos: Record<string, string>; conferir: string[] } {
+  const conferir: string[] = [];
+  const achar = <T extends { id: string }>(lista: T[], rot: (x: T) => string, valor: string | undefined, campo: string) => {
+    const alvo = (valor ?? "").trim().toLowerCase();
+    if (!alvo) return "";
+    const x = lista.find((i) => rot(i).trim().toLowerCase() === alvo);
+    if (!x) conferir.push(campo);
+    return x ? x.id : "";
+  };
+  const numero = (k: string) => {
+    const n = lerNumero(v[k]);
+    if (v[k] && (n == null || n < 0)) conferir.push(k);
+    return n == null || n < 0 ? "" : String(n);
+  };
+  const comp = (v.competencia ?? "").trim();
+  const competencia = /^(0[1-9]|1[0-2])\/\d{4}$/.test(comp) ? comp : "";
+  if (comp && !competencia) conferir.push("competencia");
+  const data = (k: string) => {
+    const d = (v[k] ?? "").trim();
+    if (!d) return "";
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(d)) return d;
+    conferir.push(k);
+    return "";
+  };
+  return {
+    campos: {
+      itemId: achar(o.itens, (i) => i.rotulo, v.item, "item"),
+      projectId: achar(o.projetos, (p) => p.nome, v.projeto, "projeto"),
+      aditivoId: achar(o.aditivos, (a) => a.codigo, v.aditivo, "aditivo"),
+      competencia,
+      quantidade: numero("quantidade"),
+      percentual: numero("percentual"),
+      valor: numero("valor"),
+      periodoInicio: data("periodoInicio"),
+      periodoFim: data("periodoFim"),
+      responsavel: (v.responsavel ?? "").trim().slice(0, 200),
+      obs: (v.obs ?? "").trim().slice(0, 500),
+    },
+    conferir,
+  };
+}

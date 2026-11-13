@@ -8,6 +8,7 @@ import { MoneyInput } from "@/components/ui/money-input";
 import { DateField } from "@/components/ui/date-field";
 import { useCrisFormulario } from "@/components/app/cris-contexto";
 import { salvarContrato, salvarItem, type DadosDoContrato } from "@/lib/actions/contratos";
+import { novaChave } from "./comum";
 import { formularioDoContrato, itensDaProposta, type ItemProposto } from "@/lib/contrato-cris";
 import { INDICES_DE_REAJUSTE, indicesOferecidosNoContrato } from "@/lib/incc-regras";
 import { CRITERIOS_MEDICAO, ROTULO_CRITERIO, ROTULO_TIPO_CONTRATO, ROTULO_VINCULO, TIPOS_CONTRATO, VINCULOS_VALOR, lerNumero, totalDoItem } from "@/lib/contrato-regras";
@@ -64,6 +65,9 @@ export function ContratoForm({ opcoes, inicial, podeEditarValor = true, projetoI
   const [itens, setItens] = useState<ItemProposto[]>([]);
   const [conferir, setConferir] = useState<Record<string, string>>({});
   const [obsCris, setObsCris] = useState<string | null>(null);
+  // Etapa 3 — a mesma tela envia a mesma chave: duplo clique ou nova tentativa criam um contrato só.
+  const [chave] = useState(novaChave);
+  const [viaCris, setViaCris] = useState(false);
   const [msg, setMsg] = useState<{ tom: "ok" | "erro" | "aviso"; texto: string } | null>(null);
   const [pendente, start] = useTransition();
   const set = (k: keyof Campos, v: string) => setF((x) => ({ ...x, [k]: v }));
@@ -95,6 +99,7 @@ export function ContratoForm({ opcoes, inicial, podeEditarValor = true, projetoI
     if (v.clienteNoDocumento && !cliente) conf.cliente = `O documento cita "${v.clienteNoDocumento}", que não está na lista de clientes: cadastre em Receitas → Clientes ou escolha outro.`;
     setConferir(conf);
     setObsCris(p.observacao);
+    setViaCris(true);
     setMsg({ tom: "aviso", texto: "A Cris preencheu o formulário a partir do documento. Confira cada campo antes de salvar: nada foi gravado." });
   });
 
@@ -110,10 +115,13 @@ export function ContratoForm({ opcoes, inicial, podeEditarValor = true, projetoI
         versao: inicial?.versao,
         valorOriginal: f.valorOriginal === "" ? NaN : Number(f.valorOriginal),
         projetos: editando ? undefined : projetos.map((p) => ({ projectId: p.projectId, valorAlocado: p.valorAlocado || null })),
+        idempotencyKey: editando ? null : chave,
+        origem: viaCris ? "cris" : "manual",
       });
       if (!r.ok) return setMsg({ tom: "erro", texto: r.error });
       const recusados: string[] = [];
-      for (const i of itens) {
+      // Contrato que já existia (mesma chave): os itens já foram enviados na primeira vez.
+      for (const i of r.aviso ? [] : itens) {
         const ri = await salvarItem({ contratoId: r.id!, codigo: i.codigo, descricao: i.descricao, unidade: i.unidade, quantidade: i.quantidade, valorUnitario: i.valorUnitario, criterioMedicao: i.criterio });
         if (!ri.ok) recusados.push(`${i.codigo}: ${ri.error}`);
       }

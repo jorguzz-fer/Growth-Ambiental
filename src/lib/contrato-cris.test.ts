@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { formularioDoContrato, itensDaProposta, MAX_ITENS_PROPOSTOS } from "./contrato-cris";
+import { formularioDaMedicao, formularioDoContrato, itensDaProposta, medicaoDaProposta, MAX_ITENS_PROPOSTOS } from "./contrato-cris";
 
 describe("Contratos × Cris — formulário de extração", () => {
   it("traz os campos do contrato e até 10 itens, com as listas da empresa", () => {
@@ -29,5 +29,37 @@ describe("Contratos × Cris — formulário de extração", () => {
       { codigo: "01", descricao: "Mobilização da equipe", unidade: null, quantidade: 1, valorUnitario: 40000, criterio: "marco" },
       { codigo: "02", descricao: "Monitoramento arqueológico", unidade: "mês", quantidade: 12, valorUnitario: 17500, criterio: "periodico" },
     ]);
+  });
+});
+
+describe("Etapa 3 — medição assistida pela Cris", () => {
+  const opc = {
+    itens: [{ id: "i1", rotulo: "01 · Monitoramento de ruído" }],
+    projetos: [{ id: "p1", nome: "Licenciamento LO" }],
+    aditivos: [{ id: "a1", codigo: "AD-001" }],
+  };
+
+  it("o formulário só oferece as listas da tela e não tem campo de situação (a Cris nunca aprova)", () => {
+    const f = formularioDaMedicao(opc);
+    expect(f.id).toBe("medicao");
+    expect(f.campos.find((c) => c.nome === "item")?.opcoes).toEqual(["01 · Monitoramento de ruído"]);
+    expect(f.campos.some((c) => /status|situa|aprova/i.test(c.nome))).toBe(false);
+  });
+
+  it("converte nomes em ids e manda para conferência o que não casa", () => {
+    const r = medicaoDaProposta(
+      { item: "01 · Monitoramento de ruído", projeto: "Projeto inexistente", aditivo: "AD-001", competencia: "03/2026", valor: "R$ 12.500,00", periodoInicio: "03/01/2026", periodoFim: "31/03/2026", obs: "Campanha de março" },
+      opc,
+    );
+    expect(r.campos).toMatchObject({ itemId: "i1", projectId: "", aditivoId: "a1", competencia: "03/2026", valor: "12500", periodoInicio: "03/01/2026", obs: "Campanha de março" });
+    expect(r.conferir).toEqual(expect.arrayContaining(["projeto"]));
+  });
+
+  it("competência, número ou data inválidos não entram", () => {
+    const r = medicaoDaProposta({ competencia: "março", percentual: "-5", periodoInicio: "2026-03-01" }, opc);
+    expect(r.campos.competencia).toBe("");
+    expect(r.campos.percentual).toBe("");
+    expect(r.campos.periodoInicio).toBe("");
+    expect(r.conferir).toEqual(expect.arrayContaining(["competencia", "percentual", "periodoInicio"]));
   });
 });

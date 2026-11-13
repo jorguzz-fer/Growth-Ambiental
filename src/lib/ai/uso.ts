@@ -1,7 +1,7 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import { and, eq, gte, inArray, count } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
-import { OPERACOES_DE_CONVERSA, recusaPorLimite } from "@/lib/ia-uso-regras";
+import { OPERACOES_DE_CONVERSA, recusaPorLimite, limitesEfetivos } from "@/lib/ia-uso-regras";
 
 /**
  * Prompt AM, Parte 5 — registro do consumo da IA. A action MARCA a chamada
@@ -55,5 +55,7 @@ export async function limiteDeConversa(tenantId: string, userId: string | null):
   const base = and(eq(schema.iaUso.tenantId, tenantId), gte(schema.iaUso.createdAt, desde), inArray(schema.iaUso.operacao, [...OPERACOES_DE_CONVERSA]));
   const [empresa] = await db.select({ n: count() }).from(schema.iaUso).where(base);
   const [pessoa] = userId ? await db.select({ n: count() }).from(schema.iaUso).where(and(base, eq(schema.iaUso.userId, userId))) : [{ n: 0 }];
-  return recusaPorLimite({ pessoa: Number(pessoa?.n ?? 0), empresa: Number(empresa?.n ?? 0) });
+  // 0083 — limites configurados pela empresa (nulo = o padrão).
+  const [cfg] = await db.select().from(schema.iaLimites).where(eq(schema.iaLimites.tenantId, tenantId)).limit(1);
+  return recusaPorLimite({ pessoa: Number(pessoa?.n ?? 0), empresa: Number(empresa?.n ?? 0) }, limitesEfetivos(cfg ? { conversasPessoaHora: cfg.conversasPessoaHora, conversasEmpresaHora: cfg.conversasEmpresaHora } : null));
 }

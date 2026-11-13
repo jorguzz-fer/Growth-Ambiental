@@ -170,6 +170,10 @@ export interface DadosDoContrato {
   regrasReembolso?: string | null;
   /** projetos vinculados (só na criação; depois, por `vincularProjetos`). */
   projetos?: { projectId: string; valorAlocado?: number | string | null }[];
+  /** Chave da tela: o mesmo envio duas vezes cria um contrato só (criação). */
+  idempotencyKey?: string | null;
+  /** "cris" quando a pessoa confirmou um preenchimento proposto pela Cris (vai à auditoria). */
+  origem?: "manual" | "cris" | null;
 }
 
 /**
@@ -275,20 +279,35 @@ export async function salvarContrato(input: DadosDoContrato): Promise<Resultado>
     regrasReembolso: txt(input.regrasReembolso),
   };
 
+  const origem = input.origem === "cris" ? "cris" : "manual";
   if (!editando) {
+    const idem = txt(input.idempotencyKey);
+    const jaCriado = async () =>
+      idem ? (await db.select({ id: schema.contratos.id }).from(schema.contratos).where(and(eq(schema.contratos.tenantId, tenantId), eq(schema.contratos.idempotencyKey, idem))).limit(1))[0] ?? null : null;
+    const antes = await jaCriado();
+    if (antes) return { ok: true, id: antes.id, aviso: "Este contrato já tinha sido criado." };
     const codigo = await reservarNumero(tenantId, "contrato", "CT");
-    const id = await db.transaction(async (tx) => {
-      const [c] = await tx
-        .insert(schema.contratos)
-        .values({ tenantId, codigo, ...campos, valorOriginal: String(valorOriginal), createdBy: quem(ctx) })
-        .returning({ id: schema.contratos.id });
-      if (projetos.length)
-        await tx.insert(schema.contratoProjetos).values(projetos.map((p) => ({ tenantId, contratoId: c.id, projectId: p.projectId, valorAlocado: num(p.valorAlocado) == null ? null : String(num(p.valorAlocado)) })));
-      await logAudit({ tenantId, userId: ctx.userId, action: "contrato.create", entity: "contrato", entityId: c.id, meta: { codigo, titulo, valorOriginal, tipo, principalId, projetos: projetos.map((p) => p.projectId) } }, tx);
-      return c.id;
-    });
-    revalidar(id);
-    return { ok: true, id };
+    try {
+      const id = await db.transaction(async (tx) => {
+        const [c] = await tx
+          .insert(schema.contratos)
+          .values({ tenantId, codigo, ...campos, valorOriginal: String(valorOriginal), idempotencyKey: idem, createdBy: quem(ctx) })
+          .returning({ id: schema.contratos.id });
+        if (projetos.length)
+          await tx.insert(schema.contratoProjetos).values(projetos.map((p) => ({ tenantId, contratoId: c.id, projectId: p.projectId, valorAlocado: num(p.valorAlocado) == null ? null : String(num(p.valorAlocado)) })));
+        await logAudit({ tenantId, userId: ctx.userId, action: "contrato.create", entity: "contrato", entityId: c.id, meta: { codigo, titulo, valorOriginal, tipo, principalId, projetos: projetos.map((p) => p.projectId), origem } }, tx);
+        return c.id;
+      });
+      revalidar(id);
+      return { ok: true, id };
+    } catch (e) {
+      // Dois envios simultâneos com a mesma chave: o segundo devolve o primeiro.
+      if (idem && String((e as { code?: string })?.code) === "23505") {
+        const ja = await jaCriado();
+        if (ja) return { ok: true, id: ja.id, aviso: "Este contrato já tinha sido criado." };
+      }
+      throw e;
+    }
   }
 
   return db.transaction(async (tx) => {
@@ -312,7 +331,7 @@ export async function salvarContrato(input: DadosDoContrato): Promise<Resultado>
       if (!igual) mudou[k] = { de, para: v };
     }
     if (mudaValor) mudou.valorOriginal = { de: atual.valorOriginal, para: valorOriginal };
-    await logAudit({ tenantId, userId: ctx.userId, action: "contrato.update", entity: "contrato", entityId: atual.id, meta: { codigo: atual.codigo, mudou } }, tx);
+    await logAudit({ tenantId, userId: ctx.userId, action: "contrato.update", entity: "contrato", entityId: atual.id, meta: { codigo: atual.codigo, mudou, origem } }, tx);
     revalidar(atual.id);
     return { ok: true as const, id: atual.id };
   });

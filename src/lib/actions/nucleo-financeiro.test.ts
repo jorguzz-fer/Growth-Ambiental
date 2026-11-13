@@ -28,7 +28,6 @@ describe.skipIf(!HAS_DB)("Núcleo financeiro — integração", async () => {
   const R = await import("@/lib/resultado-contratos");
   const { cincoValores } = await import("@/lib/receita-servicos");
   const { projecaoDoProjeto } = await import("@/lib/projecao-financeira-dados");
-  const { hojeMDY } = await import("@/lib/contrato-regras");
 
   const t = { a: "", b: "" };
   let p1 = "";
@@ -40,7 +39,6 @@ describe.skipIf(!HAS_DB)("Núcleo financeiro — integração", async () => {
   let atividade = "";
   let atividadeOutraFase = "";
   let faseP2 = "";
-  const hoje = hojeMDY();
   const ok = <T extends { ok: boolean }>(r: T) => {
     if (!r.ok) throw new Error((r as unknown as { error: string }).error);
     return r as T & { ok: true; id: string };

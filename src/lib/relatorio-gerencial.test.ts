@@ -34,3 +34,15 @@ describe("Relatório gerencial — tabela dinâmica", () => {
     expect(pivotar(dentro, "contrato", ["medido", "contratado"]).total).toEqual([0, 1000]);
   });
 });
+
+describe("metricasPermitidas — o financeiro do contrato e as horas seguem as telas de origem", () => {
+  it("técnico (só Contratos) vê posição e medido; não vê faturado, receita, custo, margem nem reembolso", async () => {
+    const { metricasPermitidas, METRICAS_FINANCEIRAS } = await import("./relatorio-gerencial");
+    const tecnico = metricasPermitidas({ financeiro: false, horas: false });
+    expect(tecnico).toEqual(["contratado", "aditivos", "saldoAMedir", "medido"]);
+    for (const m of METRICAS_FINANCEIRAS) expect(tecnico).not.toContain(m);
+    expect(metricasPermitidas({ financeiro: true, horas: false })).not.toContain("horasRealizadas");
+    expect(metricasPermitidas({ financeiro: false, horas: true })).toContain("custoPessoal");
+    expect(metricasPermitidas({ financeiro: true, horas: true })).toHaveLength(15);
+  });
+});

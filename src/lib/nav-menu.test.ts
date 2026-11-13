@@ -67,6 +67,7 @@ const TELAS_NOVAS: Record<string, string> = {
   "/equipes": "equipes", // Prompt Z, Parte 3
   "/equipes/horas": "equipes", // Implementação integrada: apontamento de horas
   "/projeto/documentos": "projeto", // Implementação integrada: busca de documentos
+  "/implantacao": "empresa", // Implementação integrada: implantação e treinamento
   "/conferencia": "conferencia", // Prompt AN, Parte 5 (era /diagnostico/categorias-invertidas)
   "/notasfiscais": "notasfiscais", // Prompt AG: NFS-e emitida, última seção de Receitas
   "/dre/analitica": "dre", // Prompt AC3: mora sob /dre, mesma permissão
