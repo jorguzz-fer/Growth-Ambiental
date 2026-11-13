@@ -1,5 +1,5 @@
 import "server-only";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import type { TenantContext } from "@/lib/context";
 import { can, type Modulo } from "@/lib/permissions";
@@ -147,12 +147,46 @@ export async function executarFerramentaDeDados(ctx: TenantContext, nome: string
         const v = d.vencimento && /^\d{2}\/\d{2}\/\d{4}$/.test(d.vencimento) ? `${d.vencimento.slice(6)}-${d.vencimento.slice(0, 2)}-${d.vencimento.slice(3, 5)}` : null;
         return v && v < hoje ? "vencidas" : "em_aberto";
       };
+      // Plano de Contas DESTA empresa: conta → subgrupo → grupo superior (consolidação por grupo).
+      const [plano, gruposDoPlano] = await Promise.all([
+        db.select({ code: schema.chartAccounts.code, name: schema.chartAccounts.name, groupCode: schema.chartAccounts.groupCode, groupName: schema.chartAccounts.groupName }).from(schema.chartAccounts).where(eq(schema.chartAccounts.tenantId, tenantId)),
+        db.select({ id: schema.chartGroups.id, code: schema.chartGroups.code, name: schema.chartGroups.name, parentId: schema.chartGroups.parentId }).from(schema.chartGroups).where(eq(schema.chartGroups.tenantId, tenantId)),
+      ]);
+      const contaDe = new Map(plano.map((c) => [c.code, c]));
+      const grupoPorCodigo = new Map(gruposDoPlano.map((g) => [g.code, g]));
+      const grupoPorId = new Map(gruposDoPlano.map((g) => [g.id, g]));
+      const rotuloConta = (code: string | null) => (code ? `${code} ${contaDe.get(code)?.name ?? "(fora do plano)"}` : "sem conta");
+      const rotuloSub = (code: string | null) => {
+        const c = code ? contaDe.get(code) : null;
+        return c ? `${c.groupCode} ${c.groupName}` : "sem conta do plano";
+      };
+      const rotuloTopo = (code: string | null) => {
+        const c = code ? contaDe.get(code) : null;
+        let g = c ? grupoPorCodigo.get(c.groupCode) : undefined;
+        while (g?.parentId && grupoPorId.get(g.parentId)) g = grupoPorId.get(g.parentId);
+        return g ? `${g.code} ${g.name}` : c ? `${c.groupCode} ${c.groupName}` : "sem conta do plano";
+      };
+      const chaveDe = (d: (typeof rows)[number]): Record<string, string> => {
+        switch (agrup) {
+          case "conta":
+            return { conta: rotuloConta(d.contaCef) };
+          case "grupo_do_plano":
+            return { grupo: rotuloSub(d.contaCef) };
+          case "grupo_superior":
+            return { grupo: rotuloTopo(d.contaCef) };
+          case "obra_conta":
+            return { obra: nomeDaObra.get(d.projectId) ?? "—", conta: rotuloConta(d.contaCef) };
+          case "situacao":
+            return { situacao: situacaoDe(d) };
+          case "obra":
+            return { obra: nomeDaObra.get(d.projectId) ?? "—" };
+          default:
+            return { fornecedor: d.fornecedorNome ?? "sem fornecedor" };
+        }
+      };
       const linhas = rows
         .filter((d) => situacao === "todas" || situacaoDe(d) === situacao || (situacao === "em_aberto" && situacaoDe(d) === "vencidas"))
-        .map((d) => ({
-          chave: (agrup === "conta" ? { conta: d.contaCef ?? "sem conta" } : agrup === "situacao" ? { situacao: situacaoDe(d) } : agrup === "obra" ? { obra: nomeDaObra.get(d.projectId) ?? "—" } : { fornecedor: d.fornecedorNome ?? "sem fornecedor" }) as Record<string, string>,
-          valor: Number(d.valor),
-        }));
+        .map((d) => ({ chave: chaveDe(d), valor: Number(d.valor) }));
       return JSON.stringify({ fonte: "Despesas lançadas, versão Atual, por competência", periodo, situacao, ...agrupar(linhas), ...aviso });
     }
 
@@ -462,6 +496,27 @@ export async function executarFerramentaDeDados(ctx: TenantContext, nome: string
           ...agrupar(fora.map((l) => ({ chave: { conta: l.conta ?? "sem conta" }, valor: Number(l.valor) }))),
           quantidade: fora.length,
           regra: "Para corrigir: editar a despesa ou usar Plano de Contas → Reclassificar lançamentos (com prévia).",
+        });
+      }
+      if (assunto === "pouco_uso") {
+        if (!pode(ctx, "despesas")) return semPermissao("Despesas");
+        const ativas = contas.filter((c) => c.ativo && c.natureza === "despesa");
+        const usos = await db
+          .select({ conta: schema.despesas.contaCef, n: sql<number>`count(*)::int`, valor: sql<string>`coalesce(sum(${schema.despesas.valor}),0)` })
+          .from(schema.despesas)
+          .innerJoin(schema.versions, eq(schema.despesas.versionId, schema.versions.id))
+          .where(and(eq(schema.despesas.tenantId, tenantId), eq(schema.versions.kind, "atual"), eq(schema.despesas.cancelado, false), inArray(schema.versions.projectId, ctx.projects.map((p) => p.id))))
+          .groupBy(schema.despesas.contaCef);
+        const porConta = new Map(usos.map((u) => [u.conta, u]));
+        const lista = ativas
+          .map((c) => ({ conta: `${c.code} ${c.name}`, lancamentos: porConta.get(c.code)?.n ?? 0, valor: r2(Number(porConta.get(c.code)?.valor ?? 0)) }))
+          .sort((a, b) => a.lancamentos - b.lancamentos || a.valor - b.valor);
+        return JSON.stringify({
+          fonte: "Contas ativas de despesa × despesas da versão Atual (todas as competências) nos projetos que a pessoa vê",
+          semUso: lista.filter((x) => x.lancamentos === 0).length,
+          poucoUsadas: lista.filter((x) => x.lancamentos > 0).slice(0, MAX_GRUPOS),
+          exemplosSemUso: lista.filter((x) => x.lancamentos === 0).slice(0, MAX_GRUPOS).map((x) => x.conta),
+          regra: "Conta sem uso não é erro: o plano padrão traz contas para a empresa escolher. Inativar ou unir é decisão da pessoa, na tela.",
         });
       }
       const filtro = normalizarTexto(alvo);

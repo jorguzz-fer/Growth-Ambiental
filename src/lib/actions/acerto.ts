@@ -551,7 +551,7 @@ export async function ratearEntreObras(
     return { ok: false, error: ERRO_CATEGORIA_CREDORA };
   }
   // 0079 — a conta do rateio precisa ser do plano da empresa, ativa e analítica.
-  const recusaDaConta = await validarContaDoLancamento(ctx.tenant.id, input.contaCef);
+  const recusaDaConta = await validarContaDoLancamento(ctx.tenant.id, input.contaCef, null, undefined, "despesa");
   if (recusaDaConta) return { ok: false, error: recusaDaConta };
   const valorTotal = Math.abs(input.valorTotal);
   const rateio = calcularRateio(valorTotal, input.linhas);

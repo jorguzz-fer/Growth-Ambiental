@@ -290,17 +290,18 @@ A tela Consolidado saiu. O endereço /consolidado leva à **Projeção de Receit
 
 **Para que serve:** dizer a NATUREZA econômica de cada lançamento (salário, hospedagem, taxa de órgão ambiental, receita de monitoramento…). Projeto, contrato, fase, atividade e modalidade (arqueologia, fauna, flora…) são **dimensões do lançamento**, não contas: a mesma conta "Hospedagens" serve a qualquer projeto.
 
-**Estrutura:** Grupo → Subgrupo → Conta (até 3 níveis de grupos). Só a CONTA recebe lançamento; grupo não. O plano padrão para consultorias ambientais tem 6 grupos: 1 Receitas operacionais (inclui Deduções), 2 Custos diretos dos projetos (pessoal técnico, terceirizados, mobilização e logística, equipamentos e materiais, saúde e segurança, taxas técnicas, outros), 3 Despesas administrativas e indiretas (inclui despesas indiretas de projetos), 4 Resultado financeiro, 5 Tributos e obrigações (sobre faturamento, sobre o resultado, da empresa) e 6 Outras (não operacional, investimentos, empréstimos, retiradas). Empresa nova recebe esse plano; cada uma personaliza o seu.
+**Estrutura:** Grupo → Subgrupo → Conta (até 3 níveis de grupos). Só a CONTA recebe lançamento; grupo não. O plano padrão para consultorias ambientais tem 6 grupos: 1 Receitas operacionais (prestação de serviços, outras receitas, deduções), 2 Custos diretos dos serviços (pessoal técnico, terceirizados, mobilização e logística, equipamentos e materiais, saúde e segurança ocupacional, taxas técnicas, infraestrutura operacional de projetos, outros), 3 Despesas operacionais e administrativas (administração, RH, TI, serviços profissionais, comercial, despesas indiretas e compartilhadas, registros e seguros), 4 Resultado financeiro, 5 Tributos e encargos (sobre o faturamento, sobre o lucro, encargos de pessoal, outros) e 6 Outras classificações (outras receitas e despesas, imobilizado, empréstimos, retiradas). Empresa nova recebe esse plano; cada uma personaliza o seu.
+
+**Empresa criada antes (plano de obra ou plano ambiental anterior):** a tela mostra um aviso "Esta empresa ainda usa o plano de contas anterior" com "Ver prévia detalhada" e "Converter para o plano ambiental" (owner/admin). A conversão cria o plano ambiental, deixa as contas antigas INATIVAS (seção "Plano anterior", com a conta ambiental equivalente sugerida) e arquiva com o prefixo "ANT-" os códigos antigos que ocupavam códigos do plano novo — despesas, Orçamento e medições acompanham. Nenhum lançamento é apagado nem muda de valor ou categoria. Pode ser desfeita enquanto as contas novas não tiverem uso. Trazer os lançamentos antigos para as contas novas é a "Reclassificação", conta a conta, com prévia.
 
 **Cada conta tem:** código, nome, descrição, grupo, natureza (receita/despesa), **categoria da DRE** (alimenta a DRE de sempre: Margem de Contribuição → EBITDA → Resultado Final), **classe gerencial** (alimenta a "Estrutura gerencial" da DRE Analítica: Receita bruta → Deduções → Receita líquida → Custos dos serviços → Resultado bruto → Despesas operacionais → Resultado operacional → Resultado financeiro → Tributos sobre o lucro → Resultado líquido) e **custo padrão direto ou indireto** — o lançamento pode tratar diferente (campo "Custo direto ou indireto" na despesa).
 
 **O que se faz:**
-- Buscar por código/nome/descrição; filtrar por grupo, natureza, categoria DRE, classe e situação; expandir e recolher.
-- Criar grupo, subgrupo e conta (formulário simples; classe e custo em "Opções avançadas"); editar; reordenar (↑ ↓); mover conta ou grupo de lugar; duplicar subgrupo com as contas; inativar; excluir conta sem uso.
+- Buscar por código/nome/descrição; filtrar por natureza, categoria DRE e situação (ativas, inativas, todas); expandir e recolher os grupos.
+- Criar grupo (1º nível), subgrupo ("+ Novo subgrupo", código sugerido) e conta ("Editar" no subgrupo: nome, natureza, categoria da DRE já sugerida, descrição; o código vem sugerido); editar; mover a conta para outro subgrupo ou o subgrupo para outro grupo; inativar; excluir conta sem uso. Ao escolher a categoria, a tela diz onde a conta aparece na DRE.
 - Ao criar, o sistema avisa se já existe conta parecida ("Hospedagem em viagem" ≈ "Hospedagens"); não impede.
 - "Onde a conta é usada": lançamentos, Orçamento, medições e, por botão, valores por projeto, contrato, fase e custo direto/indireto.
 - Exportar XLSX/CSV; Importar planilha (Código, Nome, Grupo, Natureza, Categoria DRE, Descrição) com prévia: novas, alteradas, duplicidades, erros e impacto na DRE — nada grava antes de confirmar.
-- "Plano padrão ambiental": empresa antiga acrescenta grupos e contas do padrão que faltam, com prévia; nada existente muda (código ocupado: grupo entra como "PA-…", conta não entra).
 - "Reclassificar lançamentos" (permissão própria, só owner/admin por padrão): move as despesas de uma conta para outra com prévia de quantidade, valor e versões; versões congeladas não mudam; fica na auditoria.
 
 **Regras que confundem:**
@@ -309,11 +310,12 @@ A tela Consolidado saiu. O endereço /consolidado leva à **Projeção de Receit
 - Conta inativa some do lançamento novo; o histórico fica. Lançar em conta inativa, inexistente, de outra empresa ou num grupo é recusado.
 - Excluir só conta sem nenhum uso (nem despesa cancelada, nem Orçamento). Com uso, inative.
 - O Orçamento planeja por subgrupo (uma linha por grupo do plano). Com a chave "Orçamento usa a categoria da DRE do Plano de Contas", a linha nova nasce com a categoria das contas do grupo.
-- Tributos: ISS/PIS/COFINS/Simples são deduções na visão gerencial; IRPJ/CSLL, tributos sobre o lucro. Nenhuma conta gera apuração ou lançamento de imposto automático.
+- Tributos: ISS/PIS/COFINS/Simples (5.1) são deduções na visão gerencial; IRPJ/CSLL (5.2), tributos sobre o lucro; INSS/FGTS (5.3) só quando a empresa não separa os encargos por função (quem separa usa 2.1.02 e 3.2.02 — a mesma guia nunca vai nos dois). Nenhuma conta gera apuração ou lançamento de imposto automático.
+- Despesa só usa conta de natureza despesa; conta de receita é recusada no lançamento de despesa.
 - Reembolso de despesa ao cliente não é receita operacional: a despesa mantém a conta original (Contratos → Reembolsos, com resumo por conta).
 - Não há contas patrimoniais nem depreciação: o plano é gerencial de receitas e despesas.
 
-**Com a Cris:** "qual conta uso para…?" (ela consulta as contas DESTA empresa e propõe uma; quem confirma é você no formulário), "há contas duplicadas?", "explique a conta 2.3.03", "quais despesas estão sem conta?". Contas novas: diga ou anexe a lista; a Cris propõe até 10 em grupos existentes e você marca o que criar.
+**Com a Cris:** "qual conta uso para…?" (ela consulta as contas DESTA empresa e propõe uma; quem confirma é você no formulário), "há contas duplicadas?", "explique a conta 2.3.04", "quais despesas estão sem conta?", "quais contas têm pouco uso?", "quanto gastamos com hospedagem neste mês?", "maiores despesas de logística", "quais contas concentram os custos?", "hospedagem por projeto". Contas novas: diga ou anexe a lista; a Cris propõe até 10 em grupos existentes e você marca o que criar.
 
 **Quem acessa:** owner e admin; o membro conforme a Gestão de Acessos; o contador só lê.
 
