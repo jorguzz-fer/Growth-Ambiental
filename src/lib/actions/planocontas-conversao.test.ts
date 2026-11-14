@@ -79,7 +79,8 @@ describe.skipIf(!HAS_DB)("Conversão do Plano de Contas de empresas existentes",
     t.v1 = await empresaAntiga("conv-v1", PLANO_AMBIENTAL_V1);
     const [novo] = await db.insert(schema.tenants).values({ name: "conv-novo" }).returning();
     t.novo = novo;
-    await instalarPlanoPadrao(novo.id, db, undefined, "teste");
+    await instalarPlanoPadrao(novo.id, db);
+    await (await import("@/lib/chaves-empresa-nova")).ligarChavesDeEmpresaNova(novo.id);
     await projeto(novo);
 
     // Lançamentos REAIS da empresa de obra (o que não pode se perder).

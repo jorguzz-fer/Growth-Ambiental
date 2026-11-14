@@ -5,6 +5,7 @@ import { instalarPlanoPadrao } from "@/lib/planocontas-padrao";
 import { garantirModalidades } from "@/lib/contrato-modalidades";
 import { garantirBiblioteca } from "@/lib/plano-biblioteca";
 import { hashPassword } from "@/lib/password";
+import { ligarChavesDeEmpresaNova } from "@/lib/chaves-empresa-nova";
 
 /**
  * Provisionamento de uma nova conta (tenant) com a estrutura padrão, para o
@@ -14,8 +15,10 @@ import { hashPassword } from "@/lib/password";
  *    o e-mail já existir — permite o mesmo dono em várias contas);
  *  - o vínculo owner;
  *  - 1 projeto com as 3 versões (Budget / Forecast / Atual);
- *  - o plano de contas (CEF + complementar);
- *  - a tabela INCC padrão.
+ *  - o plano de contas ambiental, as modalidades de serviço e a biblioteca de fases;
+ *  - as regras padrão ligadas (GA-1: `CHAVES_EMPRESA_NOVA`);
+ *  - a tabela INCC padrão, que não aparece para o cliente mas serve de
+ *    calendário de meses em exportações, Fluxo e DRE (medido no GA-1 §6).
  *
  * Não popula dados de movimento (unidades, despesas, etc.) — a conta nasce
  * utilizável e vazia, pronta para o cliente preencher.
@@ -135,6 +138,8 @@ export async function provisionTenant(
       await garantirModalidades(tenant.id, tx);
       // Biblioteca padrão de fases e atividades (sugestões; configurável).
       await garantirBiblioteca(tenant.id, tx);
+      // GA-1: empresa nova nasce com as regras corrigidas (lista única em chaves.ts).
+      await ligarChavesDeEmpresaNova(tenant.id, tx);
 
       // Tabela INCC padrão.
       await tx.insert(schema.inccRates).values(

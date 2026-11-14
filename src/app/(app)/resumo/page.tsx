@@ -1,3 +1,5 @@
+import { AvisoVersaoNaoAprovada } from "@/components/app/aviso-versao-nao-aprovada";
+import { avisoDeNaoAprovadas } from "@/lib/versoes-nao-aprovadas";
 import { getProjectVersions, getTenantContext } from "@/lib/context";
 import { avisoNoSeletor, entraNosRelatorios } from "@/lib/situacao-versao";
 import { chaveLigada } from "@/lib/chaves-tenant";
@@ -329,6 +331,7 @@ export default async function ResumoPage({
           </div>
         }
       />
+      <AvisoVersaoNaoAprovada aviso={await avisoDeNaoAprovadas(ctx.tenant.id, [obra.id])} />
       <div className="mb-4">{versionSelect}</div>
       <IndicadoresNegocio {...painel} escolhidos={indicadoresEscolhidos(sp.ind, verCustoAE2)} />
       {/* Prompt IAR — a Cris analisa e simula sobre os números do Resumo. */}
@@ -885,6 +888,7 @@ async function ResumoConsolidado({
           </div>
         }
       />
+      <AvisoVersaoNaoAprovada aviso={await avisoDeNaoAprovadas(ctx.tenant.id, obras.map((o) => o.id))} />
       {doEscopo.semSituacao > 0 && (
         <p className="mb-4 rounded-[8px] bg-[var(--color-surface3)] px-3 py-2 text-[13px] text-[var(--color-ink2)]">
           {doEscopo.semSituacao} projeto(s) sem status ficaram fora deste filtro. Classifique-os como Ativo ou Finalizado em Projetos.

@@ -1,3 +1,6 @@
+import { temDadosDeIncorporacao } from "@/lib/chaves-empresa-nova";
+import { AvisoVersaoNaoAprovada } from "@/components/app/aviso-versao-nao-aprovada";
+import { avisoDeNaoAprovadas } from "@/lib/versoes-nao-aprovadas";
 import { getProjectVersions, getTenantContext } from "@/lib/context";
 import { avisoNoSeletor } from "@/lib/situacao-versao";
 import { chaveLigada } from "@/lib/chaves-tenant";
@@ -99,6 +102,8 @@ export default async function DREPage({
   // Prompt AC, Parte 10 — a definição nova da DRE (nasce desligada).
   const definicaoNova = await chaveLigada(ctx.tenant.id, "dre_definicao_nova");
   const receitaRateio = await chaveLigada(ctx.tenant.id, "dre_receita_rateio");
+  // GA-1 §7: textos de incorporação (vendas, liberações, permutas) só para quem tem esses dados.
+  const comIncorporacao = await temDadosDeIncorporacao(ctx.tenant.id);
   const sp = await searchParams;
   // Prompt AC2 (revisão V5): a visão anual e a mensal aparecem juntas, a
   // mensal abaixo, com os mesmos seletores. `?view=` antigo é ignorado.
@@ -117,6 +122,8 @@ export default async function DREPage({
   const isAll = escopo.tipo !== "projeto";
   const doEscopo = escopo.tipo === "projeto" ? null : projetosDoEscopo(ctx.projects, escopo.tipo);
   const selectedProjects = escopo.tipo === "projeto" ? [escopo.projeto] : doEscopo!.projetos;
+  // GA-1 §3: o que ficou fora por não estar Aprovado aparece numa linha, com o link para aprovar.
+  const avisoNaoAprovadas = await avisoDeNaoAprovadas(ctx.tenant.id, selectedProjects.map((p) => p.id));
   const projParam =
     escopo.tipo === "projeto"
       ? escopo.projeto.id
@@ -398,6 +405,7 @@ export default async function DREPage({
           obra e parcelas pelo vencimento ficam no Fluxo de Caixa.
         </p>
       )}
+      <AvisoVersaoNaoAprovada aviso={avisoNaoAprovadas} />
       {escopo.tipo === "projeto" && <LembrarProjeto projectId={escopo.projeto.id} />}
       <CrisDaTela
         titulo="DRE — Demonstração de Resultado"
@@ -471,8 +479,17 @@ export default async function DREPage({
           )}
           {/* 3.2 e 6.2 — a tela declara o regime de cada bloco e o que a cascata inclui. */}
           <p className="mt-3 text-[11.5px] leading-relaxed text-[var(--color-ink3)]" data-regime>
-            Regime de cada bloco: despesas por <strong>competência</strong>; receita da venda e contas a receber pelo{" "}
-            <strong>vencimento</strong> das parcelas; liberações de financiamento e permutas (dados antigos) pela data de <strong>liquidação</strong>;
+            Regime de cada bloco: despesas por <strong>competência</strong>;{" "}
+            {comIncorporacao ? (
+              <>
+                receita da venda e contas a receber pelo <strong>vencimento</strong> das parcelas; liberações de financiamento e permutas (dados
+                antigos) pela data de <strong>liquidação</strong>;{" "}
+              </>
+            ) : (
+              <>
+                receita (faturas e contas a receber) pelo <strong>vencimento</strong>;{" "}
+              </>
+            )}
             encargos financeiros (multa, juros) pela {definicaoNova ? <><strong>competência</strong> da despesa que os gerou</> : <>data de <strong>pagamento</strong></>}. Retiradas, Investimentos e Empréstimos
             estão incluídos na cascata, como hoje — a classificação contábil dessas três linhas aguarda decisão.
             “—” numa célula: a linha não teve nenhum lançamento; “R$ 0” é soma que deu zero.

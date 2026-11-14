@@ -1,3 +1,6 @@
+import { temDadosDeIncorporacao } from "@/lib/chaves-empresa-nova";
+import { AvisoVersaoNaoAprovada } from "@/components/app/aviso-versao-nao-aprovada";
+import { avisoDeNaoAprovadas } from "@/lib/versoes-nao-aprovadas";
 import { Fragment } from "react";
 import { getTenantContext } from "@/lib/context";
 import { avisoNoSeletor } from "@/lib/situacao-versao";
@@ -89,6 +92,8 @@ export default async function FluxoCaixaPage({
   const project = escopo.tipo === "projeto" ? escopo.projeto : null;
   const doEscopo = escopo.tipo === "projeto" ? null : projetosDoEscopo(ctx.projects, escopo.tipo);
   const projetosConsolidados = doEscopo?.projetos ?? [];
+  const comIncorporacao = await temDadosDeIncorporacao(ctx.tenant.id);
+  const avisoNaoAprovadas = await avisoDeNaoAprovadas(ctx.tenant.id, project ? [project.id] : projetosConsolidados.map((p) => p.id));
 
   // Versões DA OBRA escolhida (vazio no modo consolidado).
   const versoes = project ? await getVersionsDoProjeto(ctx.tenant.id, project.id) : [];
@@ -396,6 +401,7 @@ export default async function FluxoCaixaPage({
           </div>
         }
       />
+      <AvisoVersaoNaoAprovada aviso={avisoNaoAprovadas} />
       {project && <LembrarProjeto projectId={project.id} />}
       {/* Prompt E2 — o que a Cris recebe: os números da tela, agregados. */}
       <CrisDaTela
@@ -773,7 +779,7 @@ export default async function FluxoCaixaPage({
           </Table>
           <p className="px-5 pb-4 pt-2 text-[11.5px] leading-relaxed text-[var(--color-ink3)]">
             O que tem data (vencimento, liquidação, data prevista) cai na semana dela. O que só tem competência — linha de
-            planejamento, revenda de permuta parcelada — cai na semana do dia 1º do mês. O saldo acumulado parte do mesmo saldo
+            planejamento{comIncorporacao ? ", revenda de permuta parcelada (dados antigos)" : ""} — cai na semana do dia 1º do mês. O saldo acumulado parte do mesmo saldo
             inicial da tabela mensal e soma o previsto de todas as semanas anteriores, pelo previsto.
           </p>
         </CardContent>

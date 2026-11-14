@@ -74,7 +74,7 @@ export interface ResumoDeResultado {
 /** DRE gerencial de um conjunto de contratos (um contrato ou todos de um cliente). */
 export async function dreDosContratos(tenantId: string, ids: readonly string[], f: FiltroDeResultado = {}) {
   const [mapa, mov] = await Promise.all([mapaGerencial(tenantId), movimentosDosContratos(tenantId, ids, f)]);
-  return dreGerencial({ receitaSemConta: mov.receita, encargos: 0, lancamentos: mov.lancamentos }, mapa);
+  return dreGerencial({ receitaSemConta: mov.receita, encargos: 0, lancamentos: mov.lancamentos, rotuloDaReceita: "Receita de contratos (faturas)" }, mapa);
 }
 
 /**
@@ -93,6 +93,7 @@ export async function resultadoPorContratoECliente(tenantId: string, f: FiltroDe
         receitaSemConta: mov.faturas.filter((x) => g.has(x.contratoId)).reduce((s, x) => s + x.valor, 0),
         encargos: 0,
         lancamentos: mov.lancamentos.filter((l) => g.has(l.contratoId)),
+        rotuloDaReceita: "Receita de contratos (faturas)",
       },
       mapa,
     );

@@ -65,7 +65,7 @@ export const CHAVES = [
     id: "fluxo_definicao_nova",
     titulo: "Fluxo de Caixa pela definição nova",
     efeito:
-      "No Fluxo de Caixa: o realizado vem sempre da versão Atual (antes, da primeira versão marcada); a permuta deixa de somar nas colunas de Orçamento e Previsão; projeto sem Atual mostra a ausência em vez de usar outra versão; o saldo acumulado de um projeto parte do caixa dele (não das contas da empresa) e corre pelo realizado nos meses fechados. Nada é gravado.",
+      "No Fluxo de Caixa: o realizado vem sempre da versão Atual (antes, da primeira versão marcada); projeto sem Atual mostra a ausência em vez de usar outra versão; o saldo acumulado de um projeto parte do caixa dele (não das contas da empresa) e corre pelo realizado nos meses fechados (dados antigos: a permuta deixa de somar nas colunas de Orçamento e Previsão). Nada é gravado.",
     origem: "Prompt AD, Partes 1, 2 e BAD-1 (8.1)",
     previa: { href: "/chaves#previa-fluxo", rotulo: "Prévia — saldo e acumulado de hoje × definição nova, por projeto" },
   },
@@ -73,7 +73,7 @@ export const CHAVES = [
     id: "dashboard_definicao_nova",
     titulo: "Dashboard pela definição nova",
     efeito:
-      "No Dashboard: \"Entradas de caixa\" soma só a versão Atual (antes, todas as versões do projeto); \"Executado\" é dividido por UM Orçamento, o mais recente que não é cópia (antes, a soma de todos); a margem usa a mesma janela de competências na receita e nos custos; o VGV vem da Atual em toda coluna; \"A receber\" do planejamento mostra o negativo; e os painéis de status passam a seguir o período. Nada é gravado.",
+      "No Dashboard: \"Entradas de caixa\" soma só a versão Atual (antes, todas as versões do projeto); \"Executado\" é dividido por UM Orçamento, o mais recente que não é cópia (antes, a soma de todos); a margem usa a mesma janela de competências na receita e nos custos; \"A receber\" do planejamento mostra o negativo; e os painéis de status passam a seguir o período (dados antigos: o valor de vendas vem da Atual em toda coluna). Nada é gravado.",
     origem: "Prompt AA, 4-B.1, 4-B.2, 4-B.3, 4.5, 4.2 e 2.3.2 (10.2)",
     previa: { href: "/chaves#previa-dashboard", rotulo: "Prévia — cada cartão hoje × definição nova, por projeto" },
   },
@@ -81,7 +81,7 @@ export const CHAVES = [
     id: "resumo_definicao_nova",
     titulo: "Resumo Executivo pela definição nova",
     efeito:
-      "No Resumo Executivo: os sinais S1, S2 e S3 multiplicam pela quantidade (como o Ato e como a Projeção); permuta e liberação canceladas saem dos totais; a permuta por tipo compara com o cadastro e mostra \"outros tipos\" (a soma fecha); unidades Permutadas aparecem e o Total é a contagem de unidades; e a tela ganha os blocos Vendas, Exposição e Atenção. Nada é gravado.",
+      "No Resumo Executivo, a tela ganha os blocos Exposição (a receber e a pagar do projeto, pelo saldo) e Atenção (custo acima do orçado, recebíveis vencidos, despesas sem classificação, projeto sem versão Atual) (dados antigos: o bloco Vendas e as regras novas de sinais, permutas, liberações e unidades). Nada é gravado.",
     origem: "Prompt AE, Partes 1, 2.3, 2.4, 2.6 e 2.7 (seção 6)",
     previa: { href: "/chaves#previa-resumo", rotulo: "Prévia — os indicadores de hoje × definição nova, por projeto" },
   },
@@ -144,6 +144,47 @@ export const CHAVES = [
 ] as const satisfies readonly Chave[];
 
 export type ChaveId = (typeof CHAVES)[number]["id"];
+
+/**
+ * Growth Ambiental (GA-1, decisão do dono de 14/11/2026): empresa NOVA nasce
+ * com as regras corrigidas que valem para qualquer empresa. Sem histórico,
+ * não há número publicado a preservar. Lugar ÚNICO da lista: provisionamento
+ * e seed de demonstração leem daqui (`ligarChavesDeEmpresaNova`).
+ *
+ * `resumo_definicao_nova` está aqui (decisão de 14/11): os blocos Exposição e
+ * Atenção do Resumo valem para consultoria; o bloco Vendas e as partes de
+ * financiamento e permuta só aparecem com dados de incorporação.
+ */
+export const CHAVES_EMPRESA_NOVA = [
+  "membro_padrao_restrito",
+  "contas_pagar_so_atual",
+  "restituicao_segue_despesa",
+  "rascunho_fora_dos_relatorios",
+  "dre_definicao_nova",
+  "fluxo_definicao_nova",
+  "dashboard_definicao_nova",
+  "resumo_definicao_nova",
+  "despesa_categoria_do_plano",
+  "orcamento_categoria_do_plano",
+  "caixa_conciliacao_por_conta",
+] as const satisfies readonly ChaveId[];
+
+/**
+ * Chaves que só têm efeito com dados de incorporação (unidades, parcelas de
+ * venda, permutas, liberações de financiamento). Nascem desligadas e só
+ * aparecem em /chaves para quem tem esses dados — ou se já estiverem ligadas.
+ */
+export const CHAVES_INCORPORACAO = ["incc_por_empresa", "plano_definicao_nova", "dre_receita_rateio", "parcela_recebida_situacao"] as const satisfies readonly ChaveId[];
+
+/** Quem ligou as chaves de empresa nova (gravado em `tenant_flag.alterada_por`). */
+export const LIGADA_NA_CRIACAO = "criação da empresa";
+
+export const ehChaveDeIncorporacao = (id: string) => (CHAVES_INCORPORACAO as readonly string[]).includes(id);
+
+/** /chaves: chave de incorporação só aparece com dados de incorporação — e nunca se esconde uma chave ligada. */
+export function chaveVisivel(id: string, o: { comIncorporacao: boolean; ligada: boolean }): boolean {
+  return !ehChaveDeIncorporacao(id) || o.comIncorporacao || o.ligada;
+}
 
 export function ehChave(id: unknown): id is ChaveId {
   return typeof id === "string" && CHAVES.some((c) => c.id === id);

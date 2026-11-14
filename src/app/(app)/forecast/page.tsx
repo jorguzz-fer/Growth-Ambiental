@@ -1,3 +1,5 @@
+import { AvisoVersaoNaoAprovada } from "@/components/app/aviso-versao-nao-aprovada";
+import { avisoDeNaoAprovadas } from "@/lib/versoes-nao-aprovadas";
 import { getTenantContext } from "@/lib/context";
 import { chaveLigada } from "@/lib/chaves-tenant";
 import { lerSelecaoDeProjeto } from "@/lib/projeto-selecao";
@@ -39,10 +41,11 @@ export default async function ForecastPage({
     return <PedirProjeto titulo="Previsão Atualizada" projetos={alvos} oQue="lançar a previsão" />;
   }
   const projId = selecao.projeto.id;
-  const [data, budgetVersions, projecao] = await Promise.all([
+  const [data, budgetVersions, projecao, avisoNaoAprovadas] = await Promise.all([
     getBudgetPlanning(ctx.tenant.id, projId, "forecast", sp.v ?? null),
     getProjectVersionsByKind(ctx.tenant.id, projId, "budget"),
     projecaoDoProjeto(ctx.tenant.id, projId),
+    avisoDeNaoAprovadas(ctx.tenant.id, [projId]),
   ]);
 
   const projects = alvos.map((p) => ({
@@ -76,6 +79,7 @@ export default async function ForecastPage({
           />
           {projecao && (
             <div className="mt-6">
+              <AvisoVersaoNaoAprovada aviso={avisoNaoAprovadas} />
               <ProjecaoAoTermino p={projecao} versoes={projecao.versoes} titulo={`Projeção ao término · ${selecao.projeto.name}`} />
             </div>
           )}

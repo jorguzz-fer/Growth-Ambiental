@@ -56,7 +56,8 @@ describe.skipIf(!HAS_DB)("Planilha de lançamentos com o plano da empresa (0079)
   beforeAll(async () => {
     const [t] = await db.insert(schema.tenants).values({ name: "planilha-0079" }).returning();
     tenantId = t.id;
-    await instalarPlanoPadrao(tenantId, db, undefined, "teste");
+    await instalarPlanoPadrao(tenantId, db);
+    await (await import("@/lib/chaves-empresa-nova")).ligarChavesDeEmpresaNova(tenantId);
     const [p] = await db.insert(schema.projects).values({ tenantId, name: "PROJ PLANILHA" }).returning();
     const [v] = await db.insert(schema.versions).values({ projectId: p.id, tenantId, key: "atual", kind: "atual", label: "atual", color: "#000" }).returning();
     atualId = v.id;

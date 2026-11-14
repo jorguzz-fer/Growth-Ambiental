@@ -4,7 +4,8 @@ import { eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { getTenantContext } from "@/lib/context";
 import { can } from "@/lib/permissions";
-import { CHAVES } from "@/lib/chaves";
+import { CHAVES, CHAVES_INCORPORACAO, LIGADA_NA_CRIACAO, chaveVisivel } from "@/lib/chaves";
+import { temDadosDeIncorporacao } from "@/lib/chaves-empresa-nova";
 import { getPlanejamentoNaoAprovado } from "@/lib/queries";
 import { previaDreDefinicaoNova } from "@/lib/dre-inputs";
 import { previaFluxoDefinicaoNova } from "@/lib/fluxo-caixa";
@@ -21,7 +22,7 @@ import { getBankAccounts } from "@/lib/queries";
 import { saldoDisponivel } from "@/lib/contas-saldo";
 import { brl, pct1 } from "@/lib/utils";
 import { membroRestritoPorAmbiente } from "@/lib/membro-padrao";
-import { avisosDaOrdem, exportacaoValida, temPreviaExportavel, VALIDADE_DA_EXPORTACAO_DIAS } from "@/lib/chaves-previa";
+import { avisosDaOrdem, exportacaoValida, ORDEM_DAS_CHAVES, temPreviaExportavel, VALIDADE_DA_EXPORTACAO_DIAS } from "@/lib/chaves-previa";
 import { ultimasExportacoes } from "@/lib/chaves-exportacao";
 import { definirChave } from "@/lib/actions/chaves";
 import { FormComResultado } from "@/components/app/form-com-resultado";
@@ -48,6 +49,10 @@ export default async function ChavesPage() {
     .from(schema.tenantFlags)
     .where(eq(schema.tenantFlags.tenantId, ctx.tenant.id));
   const estado = new Map(linhas.map((l) => [l.chave, l]));
+  // GA-1 §5: chave de incorporação só aparece para quem tem esses dados — ou se já estiver ligada (nunca esconder algo ligado).
+  const comIncorporacao = await temDadosDeIncorporacao(ctx.tenant.id);
+  const visivel = (id: string) => chaveVisivel(id, { comIncorporacao, ligada: estado.get(id)?.ligada ?? false });
+  const ocultas = CHAVES_INCORPORACAO.filter((id) => !visivel(id)).length;
   // Prompt H, 5.3: prévia da chave "rascunho_fora_dos_relatorios" (só leitura).
   const naoAprovadas = await getPlanejamentoNaoAprovado(ctx.tenant.id);
   const rascunhoLigada = estado.get("rascunho_fora_dos_relatorios")?.ligada ?? false;
@@ -87,19 +92,28 @@ export default async function ChavesPage() {
     <>
       <PageHeader title="Chaves de mudança" />
       <p className="mb-5 max-w-3xl text-[13px] leading-relaxed text-[var(--color-ink2)]">
-        Mudanças que alteram número de relatório ou acesso entram <strong>desligadas</strong>.
-        Desligada, a empresa continua exatamente como antes. Confira a prévia de cada uma e
-        ligue quando estiver de acordo. Desligar volta ao comportamento anterior. Toda troca
-        fica na Auditoria.
+        Cada chave liga ou desliga uma regra corrigida. Empresa nova já nasce com as regras que valem para qualquer
+        empresa ligadas. Em empresa que já tinha dados, uma regra que altera número de relatório ou acesso entra{" "}
+        <strong>desligada</strong>: desligada, a empresa continua exatamente como antes. Confira a prévia de cada uma e
+        ligue quando estiver de acordo. Desligar volta ao comportamento anterior. Toda troca fica na Auditoria.
       </p>
+      {ocultas > 0 && (
+        <p className="mb-5 max-w-3xl text-[12.5px] text-[var(--color-ink3)]" data-chaves-ocultas>
+          {ocultas} chave{ocultas === 1 ? "" : "s"} de incorporação imobiliária (unidades, permutas, liberações de financiamento) não aparece
+          {ocultas === 1 ? "" : "m"}: esta empresa não tem esses dados.
+        </p>
+      )}
+      {/* A ordem combinada só importa enquanto alguma das quatro definições novas estiver desligada (empresa nova já nasce com elas). */}
+      {ORDEM_DAS_CHAVES.some((id) => !(estado.get(id)?.ligada ?? false)) && (
       <p className="mb-5 max-w-3xl text-[13px] leading-relaxed text-[var(--color-ink2)]" data-ordem-das-chaves>
         <strong>Combinado em 01/10:</strong> as quatro definições novas entram <strong>uma de cada vez</strong>, com alguns dias
         entre elas, nesta ordem: Dashboard, Fluxo de Caixa, Resumo Executivo e DRE. Antes de ligar, exporte a prévia (o
         &ldquo;antes × depois&rdquo;) e guarde a planilha — sem a exportação dos últimos {VALIDADE_DA_EXPORTACAO_DIAS} dias a
         chave não liga. Quem exportou, quem ligou e quando ficam na Auditoria.
       </p>
+      )}
       <div className="space-y-4">
-        {CHAVES.map((c) => {
+        {CHAVES.filter((c) => visivel(c.id)).map((c) => {
           const l = estado.get(c.id);
           const ligadaAqui = l?.ligada ?? false;
           const ambiente = peloAmbiente[c.id] ?? false;
@@ -121,15 +135,14 @@ export default async function ChavesPage() {
                   )}
                 </div>
                 <p className="mt-1.5 text-[13px] text-[var(--color-ink2)]">{c.efeito}</p>
-                <p className="mt-1 text-[12px] text-[var(--color-ink3)]">
-                  Origem: {c.origem}
-                  {l && (
-                    <>
-                      {" "}· última troca por {l.alteradaPor ?? "—"} em{" "}
-                      {l.alteradaEm.toLocaleString("pt-BR")}
-                    </>
-                  )}
-                </p>
+                {/* GA-1 §5: o campo `origem` (referência interna) fica no catálogo e não é exibido. */}
+                {l && (
+                  <p className="mt-1 text-[12px] text-[var(--color-ink3)]" data-historico-chave>
+                    {ligadaAqui && l.alteradaPor === LIGADA_NA_CRIACAO
+                      ? "Ligada desde a criação da empresa."
+                      : `Última troca por ${l.alteradaPor ?? "—"} em ${l.alteradaEm.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}.`}
+                  </p>
+                )}
                 <p className="mt-2 text-[13px]">
                   Prévia:{" "}
                   <Link href={c.previa.href} className="text-[var(--color-accent2)] hover:underline">
@@ -431,6 +444,7 @@ export default async function ChavesPage() {
           </div>
         </CardContent>
       </Card>
+      {visivel("plano_definicao_nova") && (
       <Card className="mt-6" id="previa-plano">
         <CardContent className="p-5">
           <h2 className="text-sm font-semibold text-[var(--color-ink)]">Prévia · Plano de pagamento pela definição nova (caixa)</h2>
@@ -490,6 +504,8 @@ export default async function ChavesPage() {
           )}
         </CardContent>
       </Card>
+      )}
+      {visivel("dre_receita_rateio") && (
       <Card className="mt-6" id="previa-rateio">
         <CardContent className="p-5">
           <h2 className="text-sm font-semibold text-[var(--color-ink)]">Prévia · Receita da DRE pelo rateio do contrato</h2>
@@ -551,6 +567,7 @@ export default async function ChavesPage() {
           )}
         </CardContent>
       </Card>
+      )}
       <Card className="mt-6" id="previa-caixa-conta">
         <CardContent className="p-5">
           <h2 className="text-sm font-semibold text-[var(--color-ink)]">Prévia · Caixa: conciliação por conta</h2>
@@ -620,6 +637,7 @@ export default async function ChavesPage() {
           </p>
         </CardContent>
       </Card>
+      {visivel("parcela_recebida_situacao") && (
       <Card className="mt-6" id="previa-parcela">
         <CardContent className="p-5">
           <h2 className="text-sm font-semibold text-[var(--color-ink)]">Prévia · Parcela do comprador: situação e atrasados</h2>
@@ -660,6 +678,7 @@ export default async function ChavesPage() {
           </div>
         </CardContent>
       </Card>
+      )}
       <Card className="mt-6" id="previa-categoria">
         <CardContent className="p-5">
           <h2 className="text-sm font-semibold text-[var(--color-ink)]">Prévia · Despesa herda a categoria do Plano de Contas</h2>
@@ -703,6 +722,7 @@ export default async function ChavesPage() {
           )}
         </CardContent>
       </Card>
+      {visivel("incc_por_empresa") && (
       <Card className="mt-6" id="previa-incc">
         <CardContent className="p-5">
           <h2 className="text-sm font-semibold text-[var(--color-ink)]">Prévia · INCC da empresa</h2>
@@ -743,6 +763,7 @@ export default async function ChavesPage() {
           )}
         </CardContent>
       </Card>
+      )}
     </>
   );
 }

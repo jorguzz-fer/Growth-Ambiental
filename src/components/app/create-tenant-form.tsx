@@ -83,8 +83,8 @@ export function CreateTenantForm() {
       {result && result.ok && (
         <div className="rounded-[8px] border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-700">
           <p className="font-semibold">
-            ✓ Conta “{result.tenantName}” criada com estrutura padrão (projeto +
-            3 versões + plano de contas + INCC).
+            ✓ Conta “{result.tenantName}” criada com a estrutura padrão: projeto, 3 versões, plano de contas
+            ambiental, modalidades de serviço, biblioteca de fases e as regras padrão ligadas.
           </p>
           <p className="mt-1">
             Acesso do responsável: <strong>{result.ownerEmail}</strong>

@@ -1,3 +1,4 @@
+import { temDadosDeIncorporacao } from "@/lib/chaves-empresa-nova";
 import { getTenantContext } from "@/lib/context";
 import { can } from "@/lib/permissions";
 import { isAiConfigured } from "@/lib/ai/client";
@@ -60,7 +61,7 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: P
     return { projetos: [...ctx.projects], rotulo: "Empresa toda" };
   })();
   const fatos = podeFonte && temPedido && gerencial ? await fatosGerenciais(ctx.tenant.id, escopoGerencial.projetos, { incluirHoras: can(ctx.perms, "equipes", "ver") }) : null;
-  const tabela = dados ? montarTabela(receita.fonte, dados.colunas, dados.contas, receita.av) : fatos ? tabelaGerencial(fatos, receita, metricasPermitidas) : null;
+  const tabela = dados ? montarTabela(receita.fonte, dados.colunas, dados.contas, receita.av, { comIncorporacao: await temDadosDeIncorporacao(ctx.tenant.id) }) : fatos ? tabelaGerencial(fatos, receita, metricasPermitidas) : null;
   const descricao = dados ? descricaoDaReceita(receita, dados.escopo) : fatos ? descricaoDaReceita(receita, escopoGerencial.rotulo) : "";
   const titulo = receita.titulo || (dados ? `${ROTULO_FONTE[receita.fonte]} ${ROTULO_COLUNAS[receita.colunas]}` : "Relatórios Customizados");
 

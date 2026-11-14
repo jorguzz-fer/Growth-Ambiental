@@ -74,7 +74,6 @@ const PERMITIDAS: [string, string, string][] = [
   ["src/components/app/assistente-estoque.tsx", "permuta", "E: entrada antiga sem despesa nem permuta"],
   ["src/components/app/equipes-manager.tsx", "canteiro", "D: valor gravado antigo, filtrado da lista nova"],
   // INCC: o provisionamento e a replicação de versão ainda carregam a tabela (resíduo interno).
-  ["src/app/plataforma/(console)/page.tsx", "INCC", "E: provisionamento ainda grava a tabela INCC padrão"],
   ["src/components/app/budget-planning-screen.tsx", "INCC", "E: replicação de versão ainda carrega o INCC"],
 ];
 

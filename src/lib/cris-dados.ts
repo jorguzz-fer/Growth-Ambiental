@@ -590,6 +590,9 @@ export async function executarFerramentaDeDados(ctx: TenantContext, nome: string
           margemEstimadaPct: p.margemEstimadaPct,
           margemOrcadaPct: p.margemOrcadaPct,
           baseDoRestante: p.baseDoRestante === "previsao" ? `Previsão (${p.versoes.previsao ?? ""})` : p.baseDoRestante === "orcamento" ? `Orçamento revisado (${p.versoes.revisado ?? ""})` : "sem base para o restante",
+          // GA-1 §3: versão não Aprovada fica fora — dizer isso, nunca tratar como "zero a concluir".
+          ...(p.semPrevisaoAprovada ? { atencao: "Sem Previsão aprovada: o custo para concluir não vem de Previsão. Diga isso; não trate como zero." } : {}),
+          ...(p.semOrcamentoAprovado ? { semOrcamentoAprovado: true } : {}),
         });
       }
       return JSON.stringify({

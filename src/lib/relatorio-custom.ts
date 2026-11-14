@@ -150,7 +150,7 @@ const r2 = (v: number) => Math.round(v * 100) / 100;
  * Fluxo. A ordem das linhas vem da soma de todas as colunas, para que um
  * grupo que só existe numa coluna também apareça.
  */
-export function montarTabela(fonte: Fonte, colunas: readonly ColunaDeDados[], contas: readonly ContaAnalitica[], av: boolean): TabelaDeRelatorio {
+export function montarTabela(fonte: Fonte, colunas: readonly ColunaDeDados[], contas: readonly ContaAnalitica[], av: boolean, opts: { comIncorporacao?: boolean } = {}): TabelaDeRelatorio {
   if (fonte === "fluxo") {
     const vals = (f: (c: { entradas: number; saidas: number }) => number) => colunas.map((c) => r2(f(c.fluxo ?? { entradas: 0, saidas: 0 })));
     const entradas = vals((c) => c.entradas);
@@ -162,7 +162,7 @@ export function montarTabela(fonte: Fonte, colunas: readonly ColunaDeDados[], co
     ];
     return { colunas: colunas.map((c) => c.titulo), linhas, rotuloPct: "% Entradas" };
   }
-  const porColuna = colunas.map((c) => linhasDaDreAnalitica(c.dre ?? { receitaVendas: 0, receitaPermuta: 0, encargos: 0, lancamentos: [] }, contas));
+  const porColuna = colunas.map((c) => linhasDaDreAnalitica(c.dre ?? { receitaVendas: 0, receitaPermuta: 0, encargos: 0, lancamentos: [] }, contas, opts));
   const filtro = (l: { nivel: number; tipo: string }) => (fonte === "dre" ? l.nivel === 0 : l.nivel <= 1 && l.tipo !== "conta");
   // Ordem: a união, na ordem em que aparecem; linhas de nível 1 logo depois do pai.
   const ordem: { id: string; nivel: number; label: string; destaque: boolean; pai: string | null }[] = [];

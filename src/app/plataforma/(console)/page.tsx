@@ -26,9 +26,10 @@ export default async function PlataformaPage() {
           <CreateTenantForm />
           <p className="text-xs text-[var(--color-ink3)]">
             A conta nasce com 1 projeto, as 3 versões (Orçamento / Previsão
-            Atualizada / Atual), o plano de contas padrão de consultoria ambiental e a
-            tabela INCC padrão. Dados de movimento (contratos, despesas) ficam vazios para o
-            cliente preencher.
+            Atualizada / Atual), o plano de contas de consultoria ambiental, as modalidades de
+            serviço, a biblioteca de fases e atividades e as regras padrão já ligadas (Caixa por
+            conta, DRE, Fluxo e Dashboard corrigidos, só orçamento aprovado nos relatórios). Dados de
+            movimento (contratos, despesas) ficam vazios para o cliente preencher.
           </p>
         </CardContent>
       </Card>
