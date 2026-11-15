@@ -179,7 +179,7 @@ export function AssistenteCaixa({ usuario, projectId, analise, canConciliar }: {
                   <li key={m.cashEntryId} className={li}>
                     <span className={nome}>{dateBR(m.data)} · {brl0(Math.abs(m.valor))}</span> {m.descricao ? `· ${m.descricao}` : ""}
                     <div className="text-[var(--color-ink3)]">{m.parece ? `Parece: ${m.parece}.` : "Sem pista no histórico nem nas contas abertas."}</div>
-                    <Link href={l.href} className="text-[var(--color-accent2)] hover:underline">Lançar em {l.destino} com estes dados →</Link>
+                    <Link prefetch={false} href={l.href} className="text-[var(--color-accent2)] hover:underline">Lançar em {l.destino} com estes dados →</Link>
                   </li>
                 );
               })}

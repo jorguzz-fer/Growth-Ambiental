@@ -129,7 +129,7 @@ export function LoteDoCartaoDaCris({ proposta }: { proposta: PropostaDeConciliac
             {proposta.lancar.map((l) => (
               <li key={l.linha}>
                 <span className="text-[var(--color-ink3)]">{l.cartao} · {l.descricaoDaLinha}</span> ·{" "}
-                <Link href={l.href} className="text-[var(--color-accent2)] hover:underline">
+                <Link prefetch={false} href={l.href} className="text-[var(--color-accent2)] hover:underline">
                   Lançar em Despesas ({brlCris(l.valor)}) →
                 </Link>
               </li>

@@ -25,7 +25,7 @@ describe("GA-11 · uma tela só (testes 1, 2 e 10)", () => {
 
   it("2 · ?proj= e ?vs= abrem a mesma tela e são ignorados; ?tab=conciliacao (link antigo) abre Contas correntes", async () => {
     const { abaDoCaixa, urlDoCaixa, urlDaAba } = await import("@/lib/caixa-url");
-    expect(ler(PAGINA)).toMatch(/sp=\{\{ tab: sp\.tab, de: sp\.de, ate: sp\.ate, conta: sp\.conta \}\}/);
+    expect(ler(PAGINA)).toMatch(/sp=\{\{ tab: sp\.tab, conta: sp\.conta \}\}/);
     expect(abaDoCaixa("conciliacao")).toBe("contas");
     expect(abaDoCaixa(undefined)).toBe("contas");
     expect(abaDoCaixa("cartoes")).toBe("cartoes");
@@ -77,7 +77,6 @@ describe("GA-11 · 8 · o que não pode sumir (checklist §3.5)", () => {
   const tela = ler(TELA);
   const fonte = (f: string) => ler(`src/components/app/${f}`);
   const itens: [string, () => string, string][] = [
-    ["período e Confirmar período", () => tela, "<DateRangeFilter"],
     ["cartões do dia", () => tela, "data-cartoes-do-dia"],
     ["os três caminhos", () => fonte("faixa-conciliacao.tsx"), 'data-caminho="cris"'],
     ["Subir fatura na aba Cartões", () => fonte("faixa-conciliacao.tsx"), '"Subir fatura" : "Subir extrato"'],
@@ -106,6 +105,12 @@ describe("GA-11 · 8 · o que não pode sumir (checklist §3.5)", () => {
   ];
   it.each(itens)("%s", (_nome, src, marcador) => {
     expect(src()).toContain(marcador);
+  });
+
+  it("sem filtro de período (decisão do dono de 15/11/2026): a barra só tem o seletor de conta", () => {
+    expect(tela).not.toContain("DateRangeFilter");
+    expect(tela).not.toContain("dateInRange");
+    expect(ler(PAGINA)).not.toMatch(/de: sp\.de|ate: sp\.ate/);
   });
 
   it("sugestões da Cris por aba (§4.1)", () => {

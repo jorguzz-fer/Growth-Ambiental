@@ -82,7 +82,7 @@ export function FaixaDeConciliacao({
         </Button>
         <span data-caminho="openfinance" className="flex items-center gap-1.5">
           {openFinance.tipo === "conectado" ? (
-            <Link href="/contas" className="inline-flex h-8 items-center rounded-[8px] bg-[var(--color-accent)] px-3 text-xs font-medium text-white">
+            <Link prefetch={false} href="/contas" className="inline-flex h-8 items-center rounded-[8px] bg-[var(--color-accent)] px-3 text-xs font-medium text-white">
               Open Finance · conectado{openFinance.ultima ? ` (${new Date(openFinance.ultima).toLocaleDateString("pt-BR")})` : ""}
             </Link>
           ) : openFinance.tipo === "conectar" ? (
@@ -93,7 +93,7 @@ export function FaixaDeConciliacao({
             </span>
           )}
         </span>
-        <Link href={hrefConciliacao} className="ml-auto text-[12.5px] text-[var(--color-ink2)] hover:underline" data-contador-pendencias={pendentes}>
+        <Link prefetch={false} href={hrefConciliacao} className="ml-auto text-[12.5px] text-[var(--color-ink2)] hover:underline" data-contador-pendencias={pendentes}>
           {pendentes === 0 ? (
             cartao ? "Nenhuma linha de fatura a conciliar" : "Nenhum movimento a conciliar"
           ) : (

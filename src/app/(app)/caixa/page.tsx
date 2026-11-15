@@ -18,7 +18,8 @@ export const dynamic = "force-dynamic";
  * GA-11 — o Caixa é UMA tela, a Conciliação de Caixa, para toda empresa (a
  * tela antiga, por projeto e versão, e a chave do "Caixa por conta"
  * saíram). Links antigos com `?proj=` e `?vs=` abrem a mesma tela e os
- * parâmetros são ignorados; `?tab=conciliacao` abre a aba Contas correntes.
+ * parâmetros são ignorados (e também `?de=`/`?ate=`: a tela não tem filtro de
+ * período); `?tab=conciliacao` abre a aba Contas correntes.
  */
 export default async function CaixaPage({
   searchParams,
@@ -61,5 +62,6 @@ export default async function CaixaPage({
   ) : null;
   const avisoRemovida = <AvisoTelaRemovida de={sp.saiu} />;
 
-  return <ConciliacaoDeCaixa ctx={ctx} sp={{ tab: sp.tab, de: sp.de, ate: sp.ate, conta: sp.conta }} avisoRemovida={avisoRemovida} diasFechados={diasFechados} />;
+  // Sem filtro de período (decisão do dono de 15/11/2026): `?de=`/`?ate=` de links antigos são ignorados.
+  return <ConciliacaoDeCaixa ctx={ctx} sp={{ tab: sp.tab, conta: sp.conta }} avisoRemovida={avisoRemovida} diasFechados={diasFechados} />;
 }

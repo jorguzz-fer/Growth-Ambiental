@@ -21,7 +21,7 @@ describe("AT-T12: sem seletor de obra, de versão e modo comparação", () => {
   it("?proj= e ?vs= de links antigos não entram na tela nem saem nos links dela (4.7)", () => {
     const page = readFileSync("src/app/(app)/caixa/page.tsx", "utf8");
     // A página repassa à tela por conta só aba, período e conta.
-    expect(page).toMatch(/sp=\{\{ tab: sp\.tab, de: sp\.de, ate: sp\.ate, conta: sp\.conta \}\}/);
+    expect(page).toMatch(/sp=\{\{ tab: sp\.tab, conta: sp\.conta \}\}/);
     expect(urlDoCaixa({ tab: "ajustes", conta: "c1", de: "01/01/2026", ate: "" })).toBe("/caixa?tab=ajustes&conta=c1&de=01%2F01%2F2026");
     expect(urlDoCaixa({})).toBe("/caixa");
     expect(urlDoCaixa({ tab: "conciliacao", conta: "" })).toBe("/caixa");

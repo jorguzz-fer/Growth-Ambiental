@@ -101,7 +101,7 @@ export function CartaoConciliacaoLista({ cartoes, canConciliar, canLancar }: { c
                         )}
                       </>
                     ) : l.credito ? (
-                      <Badge tone={l.creditoComEstorno ? "success" : "info"}>{l.creditoComEstorno ? "crédito com estorno" : "crédito: registre o estorno em Cartões"}</Badge>
+                      <Badge tone={l.creditoComEstorno ? "success" : "info"}>{l.creditoComEstorno ? "crédito com estorno" : "crédito: registre o estorno na conferência abaixo"}</Badge>
                     ) : (
                       <Badge tone="warning">pendente</Badge>
                     )}
@@ -124,7 +124,7 @@ export function CartaoConciliacaoLista({ cartoes, canConciliar, canLancar }: { c
                       ))}
                       {l.sugestoes.length === 0 && <span className="text-[12px] text-[var(--color-ink4)]">Sem compra lançada compatível.</span>}
                       {canLancar && (
-                        <Link href={linkParaLancarCompra(f.cartaoId, l)} className="text-[12px] text-[var(--color-accent2)] hover:underline" data-lancar-da-linha>
+                        <Link prefetch={false} href={linkParaLancarCompra(f.cartaoId, l)} className="text-[12px] text-[var(--color-accent2)] hover:underline" data-lancar-da-linha>
                           Lançar despesa a partir desta linha →
                         </Link>
                       )}

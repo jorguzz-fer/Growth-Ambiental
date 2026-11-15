@@ -55,7 +55,7 @@ export function SaldosCaixa({ contas, total, importar, openFinance, totalAjustes
             {/* Prompt AT §1-B.9 — o selo diz a verdade: "disponível" sem conexão, "N contas conectadas" com; nada sem configuração. */}
             {openFinance.configurado &&
               (openFinance.podeConfigurar ? (
-                <Link href="/contas" className="text-[12px] text-[var(--color-accent2)] hover:underline" data-selo-openfinance>
+                <Link prefetch={false} href="/contas" className="text-[12px] text-[var(--color-accent2)] hover:underline" data-selo-openfinance>
                   {seloDoOpenFinance(true, openFinance.contasConectadas ?? 0)} → {openFinance.contasConectadas ? "ver conexões" : "conectar"}
                 </Link>
               ) : (
@@ -85,14 +85,14 @@ export function SaldosCaixa({ contas, total, importar, openFinance, totalAjustes
                   <tr key={c.id} className={`border-t border-[var(--color-line)] ${ativa ? "bg-[var(--color-accent2)]/8" : ""}`} data-conta-saldo={c.id} aria-current={ativa ? "true" : undefined}>
                     <td className="py-1.5 font-medium text-[var(--color-ink)]">
                       {filtro ? (
-                        <Link href={filtro.href(c.id)} className="hover:underline" title="Filtrar a tela por esta conta">
+                        <Link prefetch={false} href={filtro.href(c.id)} className="hover:underline" title="Filtrar a tela por esta conta">
                           {c.nome}
                         </Link>
                       ) : (
                         c.nome
                       )}
                       {filtro && (c.pendentes ?? 0) > 0 && (
-                        <Link href={filtro.href(c.id)} className="ml-1.5" data-pendentes-da-conta={c.pendentes} title="Movimentos desta conta a conciliar">
+                        <Link prefetch={false} href={filtro.href(c.id)} className="ml-1.5" data-pendentes-da-conta={c.pendentes} title="Movimentos desta conta a conciliar">
                           <Badge tone="warning">{c.pendentes} a conciliar</Badge>
                         </Link>
                       )}
@@ -115,14 +115,14 @@ export function SaldosCaixa({ contas, total, importar, openFinance, totalAjustes
                     <td className="py-1.5 font-medium text-[var(--color-ink)]">
                       <span className="mr-1 text-[10px] uppercase tracking-wide text-[var(--color-ink4)]">Cartão</span>
                       {filtro ? (
-                        <Link href={filtro.href(k.id)} className="hover:underline" title="Filtrar a tela por este cartão">
+                        <Link prefetch={false} href={filtro.href(k.id)} className="hover:underline" title="Filtrar a tela por este cartão">
                           {k.nome}
                         </Link>
                       ) : (
                         k.nome
                       )}
                       {filtro && k.pendentes > 0 && (
-                        <Link href={filtro.href(k.id)} className="ml-1.5" data-pendentes-da-conta={k.pendentes} title="Linhas do extrato do cartão a conciliar">
+                        <Link prefetch={false} href={filtro.href(k.id)} className="ml-1.5" data-pendentes-da-conta={k.pendentes} title="Linhas do extrato do cartão a conciliar">
                           <Badge tone="warning">{k.pendentes} a conciliar</Badge>
                         </Link>
                       )}
@@ -141,7 +141,7 @@ export function SaldosCaixa({ contas, total, importar, openFinance, totalAjustes
                 <td className="py-1.5">
                   Total (contas ativas da empresa)
                   {filtro && filtro.selecionada && (
-                    <Link href={filtro.todas} className="ml-2 text-[11.5px] font-normal text-[var(--color-accent2)] hover:underline" data-todas-as-contas>
+                    <Link prefetch={false} href={filtro.todas} className="ml-2 text-[11.5px] font-normal text-[var(--color-accent2)] hover:underline" data-todas-as-contas>
                       Todas as contas
                     </Link>
                   )}

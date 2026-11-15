@@ -213,7 +213,7 @@ export function ConciliacaoReview({ pendentes, pendentesEntrada, conciliados, ca
                 <div className="mt-2 flex flex-wrap items-center gap-3">
                   {/* Prompt L, 3-A.2 / 7.2 — encaminhar: o lançamento acontece em Despesas, com os dados do extrato; o movimento fica reservado e é conciliado ao gravar. */}
                   {perguntarACris(m)}
-                  <Link href={linkParaLancar({ id: m.cashEntryId, data: m.data, descricao: m.descricao, valor: m.valor }, projectId).href} className="text-[12px] text-[var(--color-accent2)] hover:underline">
+                  <Link prefetch={false} href={linkParaLancar({ id: m.cashEntryId, data: m.data, descricao: m.descricao, valor: m.valor }, projectId).href} className="text-[12px] text-[var(--color-accent2)] hover:underline">
                     Lançar em Despesas com estes dados →
                   </Link>
                   {escolherObra(m.cashEntryId)}
@@ -281,7 +281,7 @@ export function ConciliacaoReview({ pendentes, pendentesEntrada, conciliados, ca
               )}
               <div className="mt-2 flex flex-wrap items-center gap-3">
                 {perguntarACris(m)}
-                <Link href={linkParaLancar({ id: m.cashEntryId, data: m.data, descricao: m.descricao, valor: m.valor }, projectId).href} className="text-[12px] text-[var(--color-accent2)] hover:underline">
+                <Link prefetch={false} href={linkParaLancar({ id: m.cashEntryId, data: m.data, descricao: m.descricao, valor: m.valor }, projectId).href} className="text-[12px] text-[var(--color-accent2)] hover:underline">
                   Lançar em Contas a Receber com estes dados →
                 </Link>
                 {escolherObra(m.cashEntryId)}

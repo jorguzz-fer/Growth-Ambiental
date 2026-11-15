@@ -111,8 +111,12 @@ export default async function AppLayout({
       userRole={ctx.role}
       perms={ctx.perms}
     >
-      {/* Prompt E2 — a Cris sabe a tela aberta: o provedor envolve o conteúdo e o chat. */}
-      <Suspense fallback={null}>
+      {/* Prompt E2 — a Cris sabe a tela aberta: o provedor envolve o conteúdo e o chat.
+          Sem <Suspense> em volta do conteúdo (GA-11): toda rota de (app) é dinâmica (este
+          layout lê headers()), então o useSearchParams do provedor não precisa de fronteira; e,
+          com ela, o conteúdo da página ficava numa fronteira desidratada que travava navegação
+          e router.refresh() em telas grandes (a Conciliação de Caixa) no build de produção. */}
+      <>
         <CrisProvider>
           {/* Conteúdo em largura total da tela (antes: max-w-6xl, ~1150px, encaixotado em monitor largo). */}
           <div className="w-full px-4 pb-10 pt-6 sm:px-6 lg:px-8 lg:pt-8">
@@ -123,7 +127,7 @@ export default async function AppLayout({
             <ChatAssistente />
           </Suspense>
         </CrisProvider>
-      </Suspense>
+      </>
     </AppShell>
   );
 }

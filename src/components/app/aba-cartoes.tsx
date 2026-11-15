@@ -45,7 +45,7 @@ export function AbaCartoes({
       <Card>
         <CardContent className="p-8 text-center text-[13px] text-[var(--color-ink3)]" data-vazio-cartoes>
           Nenhum cartão cadastrado. Cadastre um cartão em{" "}
-          <Link href="/cartoes" className="text-[var(--color-accent2)] hover:underline">
+          <Link prefetch={false} href="/cartoes" className="text-[var(--color-accent2)] hover:underline">
             Cartões de Crédito
           </Link>{" "}
           para conciliar a fatura aqui.
@@ -79,7 +79,7 @@ export function AbaCartoes({
                 {quadro.map((q) => (
                   <tr key={q.id} className={`border-b border-[var(--color-line)]/60 ${selecionado === q.id ? "bg-[var(--color-accent4)]" : ""}`} data-cartao-saldo={q.nome}>
                     <td className="py-2 pr-3">
-                      <Link href={hrefDoCartao(q.id)} className="font-medium text-[var(--color-ink)] hover:underline">
+                      <Link prefetch={false} href={hrefDoCartao(q.id)} className="font-medium text-[var(--color-ink)] hover:underline">
                         {q.nome}
                       </Link>
                       {q.pendentes > 0 && (

@@ -234,7 +234,7 @@ No título da tela aparece "Acerto Contábil".
 **Para que serve:** a tela de conciliação da empresa. Concilia as **contas correntes** e os **cartões de crédito** cadastrados com os lançamentos, registra ajustes e fecha o dia. Trabalha só com o dinheiro real: a versão Atual de todos os projetos e os movimentos sem projeto. Não tem seletor de projeto nem de versão (Orçamento e Previsão não entram aqui).
 
 **Como a tela é organizada:**
-- **Barra de filtros:** o período (data inicial, data final e "Confirmar período") e o **seletor de conta**, sempre visível:
+- **Barra de filtros:** o **seletor de conta**, sempre visível (a tela não tem filtro de período: mostra todos os movimentos):
   - na aba Contas correntes: "Todas as contas correntes" ou uma conta ("Banco · conta");
   - na aba Cartões de crédito: "Todos os cartões" ou um cartão ("Apelido •••• final");
   - na aba Ajustes: "Todas as contas", cada conta e cada cartão.

@@ -174,7 +174,7 @@ export function ConferenciaDoCartao({ cartao, conferencia, compras, canEditar, c
           {conferencia.semLancamento.map((i) => (
             <li key={i.id} className="flex flex-wrap items-center justify-between gap-2" data-proposta-compra>
               <span>{dateBR(i.data)} · {i.descricao ?? "—"} · <strong>{brl0(i.valor)}</strong></span>
-              {canLancar && <Link href={linkParaLancarCompra(cartaoId, { id: i.id, data: i.data, descricao: i.descricao, valor: i.valor })} className="text-[var(--color-accent2)] hover:underline">Lançar em Despesas →</Link>}
+              {canLancar && <Link prefetch={false} href={linkParaLancarCompra(cartaoId, { id: i.id, data: i.data, descricao: i.descricao, valor: i.valor })} className="text-[var(--color-accent2)] hover:underline">Lançar em Despesas →</Link>}
             </li>
           ))}
         </Bloco>

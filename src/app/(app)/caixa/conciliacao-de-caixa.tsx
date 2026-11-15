@@ -13,9 +13,8 @@ import { isPluggyConfigured } from "@/lib/openfinance/pluggy";
 import { openFinanceDaEmpresa } from "@/lib/openfinance/situacao";
 import { isAiConfigured } from "@/lib/ai/despesa-extract";
 import { can } from "@/lib/permissions";
-import { brl0, dateInRange } from "@/lib/utils";
+import { brl0 } from "@/lib/utils";
 import { PageHeader } from "@/components/app/page-header";
-import { DateRangeFilter } from "@/components/app/date-range-filter";
 import { Card, CardContent } from "@/components/ui/card";
 import { ImportExtratoButton } from "@/components/app/import-extrato";
 import { AjustesCaixa, type AjusteLinha } from "@/components/app/ajustes-caixa";
@@ -39,7 +38,9 @@ import { FaixaDeConciliacao, VazioDaConciliacao, type EstadoDoOpenFinance } from
  * projeto. Sem seletor de projeto, de versão nem comparação; `?proj=` e `?vs=`
  * de links antigos são ignorados.
  *
- * Estrutura (§3): cabeçalho → barra de filtros (período e seletor de conta) →
+ * Estrutura (§3): cabeçalho → barra com o seletor de conta (o filtro de
+ * período saiu, decisão do dono de 15/11/2026: a tela mostra todos os
+ * movimentos; `?de=`/`?ate=` de links antigos são ignorados) →
  * cartões do dia → faixa dos três caminhos → abas Contas correntes · Cartões
  * de crédito · Ajustes → cadeia de saldo e Dias fechados; o Assistente à
  * direita. O seletor (`?conta=`) escolhe UMA conta (ou cartão) ou todas, e
@@ -57,8 +58,6 @@ const isoDe = (d: string | null) => (d && /^\d{2}\/\d{2}\/\d{4}$/.test(d) ? `${d
 
 export async function ConciliacaoDeCaixa({ ctx, sp, avisoRemovida, diasFechados }: { ctx: TenantContext; sp: ParamsDoCaixa; avisoRemovida: React.ReactNode; diasFechados: React.ReactNode }) {
   const aba = abaDoCaixa(sp.tab);
-  const de = sp.de ?? "";
-  const ate = sp.ate ?? "";
   const hoje = hojeDoServidor();
   const aiConfigured = isAiConfigured();
 
@@ -79,7 +78,7 @@ export async function ConciliacaoDeCaixa({ ctx, sp, avisoRemovida, diasFechados 
   const contaSel = aba !== "cartoes" ? contas.find((c) => c.id === sp.conta) ?? null : null;
   const cartaoSel = aba !== "contas" && !contaSel ? cartoes.find((k) => k.id === sp.conta) ?? null : null;
   const filtroId = contaSel?.id ?? cartaoSel?.id ?? "";
-  const params: ParamsDoCaixa = { tab: aba, de, ate, conta: filtroId };
+  const params: ParamsDoCaixa = { tab: aba, conta: filtroId };
   const opcoes: OpcaoDoSeletor[] =
     aba === "contas"
       ? contasAtivas.map((c) => ({ id: c.id, nome: nomeDaConta(c) }))
@@ -173,13 +172,13 @@ export async function ConciliacaoDeCaixa({ ctx, sp, avisoRemovida, diasFechados 
     hojeISO: hoje,
   });
 
-  const cashDaTela = empresa.cash.filter((c) => (!contaSel || c.bankAccountId === contaSel.id) && (!de && !ate ? true : dateInRange(c.data, de, ate)));
+  const cashDaTela = empresa.cash.filter((c) => !contaSel || c.bankAccountId === contaSel.id);
   const conciliados = cashDaTela.filter((c) => c.rec).length;
   const nomeDaObra = new Map(ctx.projects.map((p) => [p.id, p.name]));
   const projetos = ctx.projects.map((p) => ({ id: p.id, nome: p.name }));
 
   // §3.4 — ajustes: da conta escolhida; cartão não tem ajuste de caixa.
-  const ajustesFiltrados = cartaoSel ? [] : todosAjustes.filter((c) => (!de && !ate ? true : dateInRange(c.data, de, ate))).filter((c) => !contaSel || c.bankAccountId === contaSel.id);
+  const ajustesFiltrados = cartaoSel ? [] : todosAjustes.filter((c) => !contaSel || c.bankAccountId === contaSel.id);
   const autores = aba === "ajustes" ? await getAutoresDosAjustes(ctx.tenant.id, ajustesFiltrados.map((c) => c.id)) : new Map<string, { autor: string | null; quando: string | null }>();
   const diasDoAjusteMaisAntigo = ajustesFiltrados.reduce((max, c) => {
     const iso = isoDe(c.data);
@@ -235,12 +234,11 @@ export async function ConciliacaoDeCaixa({ ctx, sp, avisoRemovida, diasFechados 
   );
   const importar = <ImportExtratoButton contas={contas.map((c) => ({ id: c.id, banco: c.banco, cc: c.cc }))} aiConfigured={aiConfigured} projetos={projetos} contaInicial={contaSel?.id ?? ""} />;
 
-  // §4.1 — o que a Cris recebe: a aba, o que está escolhido (ou "todas"), o período, os saldos e as pendências.
+  // §4.1 — o que a Cris recebe: a aba, o que está escolhido (ou "todas"), os saldos e as pendências (sem filtro de período).
   const dadosDaCris = {
     tela: "Conciliação de Caixa",
     aba: ABAS_DO_CAIXA.find((a) => a.key === aba)!.label,
     escopo: contaSel ? `conta ${escolhido}` : cartaoSel ? `cartão ${escolhido}` : aba === "cartoes" ? "todos os cartões" : aba === "ajustes" ? "todas as contas" : "todas as contas correntes",
-    periodo: de || ate ? { de: de || null, ate: ate || null } : "sem filtro de período",
     saldoTotalEmConta: saldoTotal,
     contas: saldosDaTela.map((c) => ({ conta: c.nome, emConta: c.emConta, conciliado: c.conciliado, diasDesdeAtualizacao: c.diasDesde, conectada: c.conectada, aConciliar: c.pendentes })),
     cartoes: (abaCartoes?.quadro ?? cartoesDaTela.map((k) => ({ nome: k.nome, pendentes: k.pendentes, lancado: k.faturaDoCiclo?.lancado ?? 0, extrato: null, diferenca: null, situacao: null, limite: k.limite, fatura: k.faturaDoCiclo })))
@@ -260,18 +258,17 @@ export async function ConciliacaoDeCaixa({ ctx, sp, avisoRemovida, diasFechados 
       <PageHeader title="Conciliação de Caixa" subtitle="Suba o extrato, conecte pelo Open Finance ou concilie com a Cris. Nada é gravado sem a sua confirmação." />
       {avisoRemovida}
       <div className="mb-5 flex flex-wrap items-end gap-3" data-barra-de-filtros>
-        <DateRangeFilter de={de} ate={ate} />
         {opcoes.length > 0 ? (
           <SeletorDeConta rotulo={rotuloDoSeletor[0]} rotuloTodas={rotuloDoSeletor[1]} opcoes={opcoes} selecionada={filtroId} hrefs={hrefs} />
         ) : (
           <p className="text-[12.5px] text-[var(--color-ink3)]" data-sem-conta>
             {aba === "cartoes" ? (
               <>
-                Cadastre um cartão em <Link href="/cartoes" className="text-[var(--color-accent2)] hover:underline">Cartões de Crédito</Link>.
+                Cadastre um cartão em <Link prefetch={false} href="/cartoes" className="text-[var(--color-accent2)] hover:underline">Cartões de Crédito</Link>.
               </>
             ) : (
               <>
-                Cadastre uma conta corrente em <Link href="/contas" className="text-[var(--color-accent2)] hover:underline">Contas Correntes</Link> para importar o extrato.
+                Cadastre uma conta corrente em <Link prefetch={false} href="/contas" className="text-[var(--color-accent2)] hover:underline">Contas Correntes</Link> para importar o extrato.
               </>
             )}
           </p>
@@ -305,6 +302,7 @@ export async function ConciliacaoDeCaixa({ ctx, sp, avisoRemovida, diasFechados 
           <div className="mb-5 flex gap-1 rounded-[8px] bg-[var(--color-surface3)] p-1" role="tablist" data-abas-do-caixa>
             {ABAS_DO_CAIXA.map((t) => (
               <Link
+                prefetch={false}
                 key={t.key}
                 href={urlDaAba(params, t.key)}
                 role="tab"
@@ -324,7 +322,7 @@ export async function ConciliacaoDeCaixa({ ctx, sp, avisoRemovida, diasFechados 
               <Card className="mb-6">
                 <CardContent className="p-8 text-center text-[13px] text-[var(--color-ink3)]" data-vazio-contas>
                   Cadastre uma conta corrente em{" "}
-                  <Link href="/contas" className="text-[var(--color-accent2)] hover:underline">
+                  <Link prefetch={false} href="/contas" className="text-[var(--color-accent2)] hover:underline">
                     Contas Correntes
                   </Link>{" "}
                   para importar o extrato e conciliar.
