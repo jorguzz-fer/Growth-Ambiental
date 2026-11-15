@@ -8,6 +8,7 @@ import {
 } from "@/lib/queries";
 import { can } from "@/lib/permissions";
 import { emptyPlan } from "@/lib/calc/plan";
+import { calendarioDoProjeto } from "@/lib/calendario-projeto";
 import { buildExportBuffer, type ExportData } from "@/lib/xlsx/growth-template";
 import { planilhaDaEmpresa } from "@/lib/planocontas-servidor";
 
@@ -41,8 +42,13 @@ export async function GET(req: Request) {
     planilhaDaEmpresa(ctx.tenant.id),
   ]);
 
+  // GA-9 (Fase 2): a aba Parâmetros lista os meses do calendário do projeto.
+  // Só a versão com dados antigos de incorporação (unidades, liberações,
+  // permutas) ainda exporta a série INCC com as taxas — o formato antigo, que
+  // sai na Fase 3.
+  const legado = unitRows.length > 0 || reembRows.length > 0 || permRows.length > 0;
   const data: ExportData = {
-    incc,
+    incc: legado ? incc : calendarioDoProjeto(project).map((m) => ({ m, mo: 0, ac: 0 })),
     units: unitRows.map((u) => ({
       code: u.code,
       bloco: u.bloco,

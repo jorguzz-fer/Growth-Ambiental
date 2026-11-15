@@ -6,10 +6,10 @@ import {
   getParcelasByVersion,
   getPermutas,
   getCash,
-  getInccRows,
   getVersionsDoProjeto,
   permToResale,
 } from "@/lib/queries";
+import { calendarioDoProjeto } from "@/lib/calendario-projeto";
 import { eixoDoFluxo, linhasDoFluxo, mesCorrente, partidaDaObra, type Mapas } from "@/lib/fluxo-tela";
 import type { LadoDoCenario } from "@/lib/fluxo-analise";
 import { ROTULO_CENARIO, resolverCenario } from "@/lib/dre";
@@ -254,7 +254,7 @@ export interface PreviaFluxoObra {
  */
 export async function previaFluxoDefinicaoNova(
   tenantId: string,
-  projetos: readonly { id: string; name: string }[],
+  projetos: readonly { id: string; name: string; startDate: string | null; endDate: string | null }[],
   saldoDasContas: number,
 ): Promise<PreviaFluxoObra[]> {
   const out: PreviaFluxoObra[] = [];
@@ -274,8 +274,8 @@ export async function previaFluxoDefinicaoNova(
       out.push({ projeto: p.name, temAtual: false, partidaHoje: saldoDasContas, partidaNova: 0, acumuladoHoje: 0, acumuladoNovo: 0, permutaNoPlanejamento, caixaForaDaAtual });
       continue;
     }
-    const [previsto, realizado, incc] = await Promise.all([flowMaps(atual, p.id), flowMapsRealizado(atual.id), getInccRows(tenantId, p.id)]);
-    const eixo = eixoDoFluxo(incc.map((r) => r.m), [previsto], realizado);
+    const [previsto, realizado] = await Promise.all([flowMaps(atual, p.id), flowMapsRealizado(atual.id)]);
+    const eixo = eixoDoFluxo(calendarioDoProjeto(p), [previsto], realizado);
     const partidaNova = partidaDaObra(eixo, realizado);
     const ultimo = (ls: { saldo: number }[]) => (ls.length ? ls[ls.length - 1].saldo : 0);
     out.push({

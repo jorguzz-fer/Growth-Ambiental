@@ -17,10 +17,10 @@ import { flowMaps, flowMapsRealizado, ladosDoFluxo } from "@/lib/fluxo-caixa";
 import { analisarFluxo } from "@/lib/fluxo-analise";
 import { AssistenteFluxo } from "@/components/app/assistente-fluxo";
 import { TEXTO_ESTADO, eixoDoFluxo, linhasDoFluxo, mesCorrente, partidaDaObra, totalDoDesvio } from "@/lib/fluxo-tela";
+import { calendarioDoProjeto, calendarioDosProjetos } from "@/lib/calendario-projeto";
 import {
   getBankAccounts,
   getVersionsDoProjeto,
-  getInccRows,
   sortMonthKey,
 } from "@/lib/queries";
 import { brl0, brlk, dateBR, monthInRange, pct1 } from "@/lib/utils";
@@ -212,16 +212,15 @@ export default async function FluxoCaixaPage({
   const versoesTabela: { id: string; label: string; color: string }[] = isAll
     ? [{ id: "consolidado", label: "Atual", color: "#16a34a" }]
     : compareVersions;
-  const [fluxos, incc, contas, realizado] = await Promise.all([
+  const [fluxos, calendario, contas, realizado] = await Promise.all([
     isAll
       ? flowMapsConsolidado().then((m) => [m])
       : Promise.all(compareVersions.map((v) => flowMaps(v, project!.id, { definicaoNova: fluxoNovo }))),
-    // Eixo de meses: INCC da obra; no consolidado, a união das obras do escopo
-    // (antes: a da obra do cookie). Só acrescenta meses sem movimento — nenhum
-    // total muda, porque o saldo corre sobre todos os meses com movimento.
-    project
-      ? getInccRows(ctx.tenant.id, project.id)
-      : Promise.all(projetosConsolidados.map((p) => getInccRows(ctx.tenant.id, p.id))).then((r) => r.flat()),
+    // Eixo de meses: o calendário do projeto; no consolidado, a união das obras
+    // do escopo (GA-9, Fase 2: antes vinha da tabela INCC, com os mesmos meses).
+    // Só acrescenta meses sem movimento — nenhum total muda, porque o saldo
+    // corre sobre todos os meses com movimento.
+    Promise.resolve(project ? calendarioDoProjeto(project) : calendarioDosProjetos(projetosConsolidados)),
     getBankAccounts(ctx.tenant.id),
     // RG-01 — o fluxo acima é PREVISTO (montado pelo vencimento). Este é o
     // REALIZADO, montado pela data de liquidação: o dinheiro que de fato passou
@@ -246,11 +245,11 @@ export default async function FluxoCaixaPage({
   // primeiro mês — o fluxo da obra; Empresa toda segue pelas contas.
   const saldoDasContas = saldoDisponivel(contas);
 
-  // Eixo = INCC + meses com movimentação (âncora nos dados reais). Prompt AD,
+  // Eixo = calendário do projeto + meses com movimentação (âncora nos dados reais). Prompt AD,
   // 3.1: entram também os meses do REALIZADO — pagamento em mês sem previsão
   // tinha linha nenhuma onde aparecer. Nenhum total muda: nesses meses o
   // previsto é zero e o acumulado não se mexe.
-  const axis = eixoDoFluxo(incc.map((r) => r.m), fluxos, realizado).sort(sortMonthKey);
+  const axis = eixoDoFluxo(calendario, fluxos, realizado).sort(sortMonthKey);
   const partidaPelaObra = fluxoNovo && !!project;
   const saldoInicial = partidaPelaObra ? partidaDaObra(axis, realizado) : saldoDasContas;
   // Recortes por ano-calendário (2025, 2026, … até o ano atual + 5).

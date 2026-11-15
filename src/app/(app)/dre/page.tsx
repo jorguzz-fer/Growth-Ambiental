@@ -11,7 +11,8 @@ import {
   rotuloDoEscopo,
 } from "@/lib/projeto-selecao";
 import { LembrarProjeto, RecuperarProjeto } from "@/components/app/projeto-da-aba";
-import { getInccRows, getVersionsDoProjeto } from "@/lib/queries";
+import { getVersionsDoProjeto } from "@/lib/queries";
+import { calendarioDosProjetos } from "@/lib/calendario-projeto";
 import { calendarYearWindows } from "@/lib/planning";
 import { aggregateInputs, emptyInputs, waterfall, type Inputs } from "@/lib/calc/dre-cascata";
 import { foraDaCascataDaVersao, versionInputsByMonth } from "@/lib/dre-inputs";
@@ -186,8 +187,9 @@ export default async function DREPage({
   // 55) unida às competências com lançamento; a tabela INCC deixa de
   // governar. O eixo INCC só continua servindo ao período personalizado com
   // limite aberto, para esse total não mudar (a regra nova vai na chave, AC-3).
-  const inccAll = await Promise.all(selectedProjects.map((p) => getInccRows(p.tenantId, p.id)));
-  const axisIncc = ordenarMeses(new Set(inccAll.flat().map((r) => r.m)));
+  // GA-9 (Fase 2): o calendário dos projetos substitui os meses da tabela INCC
+  // (os mesmos 48 meses padrão, unidos à janela de cada projeto).
+  const axisIncc = calendarioDosProjetos(selectedProjects);
   const comLancamento = new Set(series.flatMap((x) => x.porProjeto.flatMap((bm) => Object.keys(bm))).filter((m) => m !== NO_COMP));
   const axis = eixoDeMeses(selectedProjects.map(janelaDoProjeto), comLancamento);
   // Recortes por ano-calendário: 2025, 2026, … até o ano atual + 5.
