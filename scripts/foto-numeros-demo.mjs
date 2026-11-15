@@ -227,8 +227,26 @@ function normalizar(foto) {
 }
 
 // ── Comparação ─────────────────────────────────────────────────────────────
+// Percentual na fronteira de arredondamento: a tela calcula o % sobre o valor
+// ANTES de arredondar (ex.: 285.000 / 1.200.000 = 23,75% exatos), e o resto de
+// ponto flutuante da soma — que depende da ordem das linhas vindas do banco —
+// decide entre "23,7%" e "23,8%". Uma célula de % pode diferir em até 0,1 ponto
+// SÓ se o restante da linha (os valores em R$) for idêntico.
+const ehPct = (c) => typeof c === "string" && /^[+\-−]?\d{1,3}(\.\d{3})*(,\d+)?%$/.test(c);
+const numPct = (c) => Number(c.replace(/[+%]/g, "").replace("−", "-").replace(/\./g, "").replace(",", "."));
+function linhasIguaisSalvoArredondamento(a, b) {
+  if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false;
+  let algumPct = false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] === b[i]) continue;
+    if (ehPct(a[i]) && ehPct(b[i]) && Math.abs(numPct(a[i]) - numPct(b[i])) <= 0.1 + 1e-9) algumPct = true;
+    else return false;
+  }
+  return algumPct;
+}
 function diferencas(a, b, caminho = "", saida = []) {
   if (saida.length > 500) return saida;
+  if (Array.isArray(a) && Array.isArray(b) && linhasIguaisSalvoArredondamento(a, b)) return saida;
   if (typeof a !== typeof b || Array.isArray(a) !== Array.isArray(b) || a === null || b === null || typeof a !== "object") {
     if (JSON.stringify(a) !== JSON.stringify(b)) saida.push(`${caminho}: antes ${JSON.stringify(a)} → agora ${JSON.stringify(b)}`);
     return saida;
