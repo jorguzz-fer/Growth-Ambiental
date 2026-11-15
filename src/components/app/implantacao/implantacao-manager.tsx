@@ -4,6 +4,8 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
+import { DateField } from "@/components/ui/date-field";
+import { dateBR } from "@/lib/utils";
 import { aplicarModeloDeImplantacao, excluirEtapaDeImplantacao, planejarTreinamentosDoPerfil, salvarEtapaDeImplantacao, salvarTreinamento, type DadosDaEtapa } from "@/lib/actions/implantacao";
 import { GRUPOS_DA_IMPLANTACAO, PERFIS_DE_TREINAMENTO, ROTULO_STATUS_ETAPA, ROTULO_STATUS_TREINAMENTO, STATUS_DA_ETAPA, STATUS_DO_TREINAMENTO, type StatusDaEtapa } from "@/lib/implantacao-regras";
 
@@ -115,12 +117,12 @@ export function ImplantacaoManager({ etapas, treinamentos, podeEditar }: { etapa
               <Input value={edit.responsavel ?? ""} onChange={(e) => set("responsavel", e.target.value)} aria-label="Responsável" />
             </div>
             <div>
-              <Label>Previsto (MM/DD/AAAA)</Label>
-              <Input value={edit.previsto ?? ""} onChange={(e) => set("previsto", e.target.value)} aria-label="Data prevista" />
+              <Label>Previsto</Label>
+              <DateField value={edit.previsto ?? ""} onChange={(v) => set("previsto", v)} aria-label="Data prevista" />
             </div>
             <div>
-              <Label>Realizado (MM/DD/AAAA)</Label>
-              <Input value={edit.realizado ?? ""} onChange={(e) => set("realizado", e.target.value)} aria-label="Data realizada" />
+              <Label>Realizado</Label>
+              <DateField value={edit.realizado ?? ""} onChange={(v) => set("realizado", v)} aria-label="Data realizada" />
             </div>
             <div>
               <Label>Situação</Label>
@@ -197,8 +199,8 @@ export function ImplantacaoManager({ etapas, treinamentos, podeEditar }: { etapa
                             {e.descricao && <p className="text-[11.5px] text-[var(--color-ink3)]">{e.descricao}</p>}
                           </td>
                           <td className={td}>{e.responsavel ?? "—"}</td>
-                          <td className={td}>{e.previsto ?? "—"}</td>
-                          <td className={td}>{e.realizado ?? "—"}</td>
+                          <td className={td}>{dateBR(e.previsto)}</td>
+                          <td className={td}>{dateBR(e.realizado)}</td>
                           <td className={td}>{e.dependeDe ?? "—"}</td>
                           <td className={td}>
                             <span className={`rounded-full px-2 py-0.5 text-[11px] ${COR[e.status] ?? ""}`}>{ROTULO_STATUS_ETAPA[e.status as StatusDaEtapa] ?? e.status}</span>
@@ -256,7 +258,7 @@ export function ImplantacaoManager({ etapas, treinamentos, podeEditar }: { etapa
                       <tr key={t.id} className="border-t border-[var(--color-line)]">
                         <td className={td}>{t.tema}</td>
                         <td className={td}>{t.participante ?? "—"}</td>
-                        <td className={td}>{t.data ?? "—"}</td>
+                        <td className={td}>{dateBR(t.data)}</td>
                         <td className={td}>
                           {podeEditar ? (
                             <Select
@@ -295,7 +297,7 @@ export function ImplantacaoManager({ etapas, treinamentos, podeEditar }: { etapa
             </Select>
             <Input value={trein.tema} onChange={(e) => setTrein({ ...trein, tema: e.target.value })} placeholder="Tema" aria-label="Tema" />
             <Input value={trein.participante} onChange={(e) => setTrein({ ...trein, participante: e.target.value })} placeholder="Participantes" aria-label="Participantes" />
-            <Input value={trein.data} onChange={(e) => setTrein({ ...trein, data: e.target.value })} placeholder="Data (MM/DD/AAAA)" aria-label="Data do treinamento" />
+            <DateField value={trein.data} onChange={(v) => setTrein({ ...trein, data: v })} aria-label="Data do treinamento" />
             <Select value={trein.status} onChange={(e) => setTrein({ ...trein, status: e.target.value })} aria-label="Situação do treinamento">
               {STATUS_DO_TREINAMENTO.map((s) => (
                 <option key={s} value={s}>

@@ -7,7 +7,8 @@ import { ATIVIDADES_INTERNAS, type LinhaDeDistribuicao } from "@/lib/horas-regra
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { brl0 } from "@/lib/utils";
+import { DateField } from "@/components/ui/date-field";
+import { brl0, dateBR } from "@/lib/utils";
 
 const th = "px-2 py-1.5 text-left text-[10.5px] uppercase tracking-wide text-[var(--color-ink3)]";
 const td = "px-2 py-1.5 border-t border-[var(--color-line)]";
@@ -72,7 +73,7 @@ export function HorasManager(props: {
                   {props.profissionais.map((p) => <option key={p.valor} value={p.valor}>{p.nome} ({p.origem === "clt" ? "CLT" : p.origem === "socio" ? "sócio" : "prestador"})</option>)}
                 </Select>
               </div>
-              <div><Label>Data * (MM/DD/AAAA)</Label><Input value={f.data} onChange={(e) => setF({ ...f, data: e.target.value })} placeholder="03/10/2027" aria-label="Data" /></div>
+              <div><Label>Data *</Label><DateField value={f.data} onChange={(v) => setF({ ...f, data: v })} aria-label="Data" /></div>
               <div className="sm:col-span-2">
                 <Label>Projeto</Label>
                 <Select value={f.projectId} onChange={(e) => setF({ ...f, projectId: e.target.value, contratoId: "", projetoFaseId: "", projetoAtividadeId: "" })} aria-label="Projeto">
@@ -168,7 +169,7 @@ export function HorasManager(props: {
               <tbody>
                 {props.apontamentos.map((a) => (
                   <tr key={a.id}>
-                    <td className={`${td} ${mono}`}>{a.data}</td><td className={td}>{a.tipo === "planejado" ? "Planejado" : "Realizado"}</td><td className={td}>{a.profissional}</td><td className={td}>{a.destino}</td>
+                    <td className={`${td} ${mono}`}>{dateBR(a.data)}</td><td className={td}>{a.tipo === "planejado" ? "Planejado" : "Realizado"}</td><td className={td}>{a.profissional}</td><td className={td}>{a.destino}</td>
                     <td className={`${td} text-right ${mono}`}>{a.horas}</td><td className={td}>{a.descricao ?? ""}</td>
                     <td className={td}>{props.podeExcluir && <button type="button" className="text-[12px] text-[var(--color-danger)] hover:underline" disabled={pend} onClick={() => window.confirm("Excluir este apontamento?") && rodar(() => excluirApontamento(a.id), "Apontamento excluído.")}>excluir</button>}</td>
                   </tr>

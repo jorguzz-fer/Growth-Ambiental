@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input, Label, Select } from "@/components/ui/input";
+import { DateField } from "@/components/ui/date-field";
 import { FuncionarioCampos } from "@/components/app/funcionario-campos";
 import { VALORES_VAZIOS, fdDe, type ValoresFuncionario } from "@/lib/funcionario-form";
 
@@ -131,7 +132,7 @@ export function FuncionarioFicha(p: FichaProps) {
             {p.podeEditarDados && (
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-6 sm:items-end">
                 <div className="sm:col-span-2"><Label>Nome</Label><Input value={dep.nome} onChange={(e) => setDep({ ...dep, nome: e.target.value })} aria-label="Nome do dependente" /></div>
-                <div><Label>Nascimento</Label><Input type="date" value={dep.nascimento} onChange={(e) => setDep({ ...dep, nascimento: e.target.value })} /></div>
+                <div><Label>Nascimento</Label><DateField formato="iso" value={dep.nascimento} onChange={(v) => setDep({ ...dep, nascimento: v })} aria-label="Nascimento do dependente" /></div>
                 <div><Label>Parentesco</Label><Select value={dep.parentesco} onChange={(e) => setDep({ ...dep, parentesco: e.target.value })}><option value="">—</option>{PARENTESCOS.map((x) => <option key={x} value={x}>{x}</option>)}</Select></div>
                 <div className="flex flex-col gap-1 text-[12px]">
                   <label><input type="checkbox" checked={dep.dependenteIr} onChange={(e) => setDep({ ...dep, dependenteIr: e.target.checked })} /> dependente p/ IR</label>
@@ -151,7 +152,7 @@ export function FuncionarioFicha(p: FichaProps) {
             <p className="text-[12px] text-[var(--color-ink3)]">Funcionário desligado não some: fica com a data e sai das listas de alocação; o histórico de equipes permanece. Excluir só sem nenhuma alocação, digitando o nome.</p>
             {p.canEditar && situacao === "Ativo" && (
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-5 sm:items-end">
-                <div><Label>Data do desligamento</Label><Input type="date" value={desligarEm} onChange={(e) => setDesligarEm(e.target.value)} aria-label="Data do desligamento" /></div>
+                <div><Label>Data do desligamento</Label><DateField formato="iso" value={desligarEm} onChange={setDesligarEm} aria-label="Data do desligamento" /></div>
                 <div className="sm:col-span-3"><Label>Motivo (opcional)</Label><Input value={motivo} onChange={(e) => setMotivo(e.target.value)} /></div>
                 <div><Button type="button" size="sm" variant="outline" className="w-full" disabled={pending} onClick={desligar}>Desligar</Button></div>
               </div>

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
 import { MoneyInput } from "@/components/ui/money-input";
 import { DateField, MonthField } from "@/components/ui/date-field";
-import { dateBR } from "@/lib/utils";
+import { dateBR, ymd } from "@/lib/utils";
 import {
   anexarDocumentoContrato,
   apropriarDespesa,
@@ -709,6 +709,8 @@ export function MedicoesPainel({ contratoId, medicoes, itens, projetos, marcos, 
   });
   const item = itens.find((i) => i.id === novo.itemId);
   const crit = item?.criterioMedicao ?? "entrega";
+  // GA-2 — fim antes do início é recusado já na tela (a action recusa de novo).
+  const periodoInvertido = !!novo.periodoInicio && !!novo.periodoFim && (ymd(novo.periodoFim) ?? 0) < (ymd(novo.periodoInicio) ?? 0);
   const mudar = (m: MedicaoDaTela, para: string) => {
     let motivo: string | null = null;
     if (para === "rejeitada" || para === "cancelada") {
@@ -755,7 +757,7 @@ export function MedicoesPainel({ contratoId, medicoes, itens, projetos, marcos, 
                   <td className={`${td} ${mono}`}>{m.numero ?? "—"}</td>
                   <td className={`${td} ${mono}`}>
                     {m.competencia}
-                    {(m.periodoInicio || m.periodoFim) && <div className="text-[11px] text-[var(--color-ink3)]">{m.periodoInicio ?? "…"} a {m.periodoFim ?? "…"}</div>}
+                    {(m.periodoInicio || m.periodoFim) && <div className="text-[11px] text-[var(--color-ink3)]">{m.periodoInicio ? dateBR(m.periodoInicio) : "…"} a {m.periodoFim ? dateBR(m.periodoFim) : "…"}</div>}
                   </td>
                   <td className={td}>
                     {it ? `${it.codigo} · ${it.descricao}` : "—"}
@@ -828,8 +830,17 @@ export function MedicoesPainel({ contratoId, medicoes, itens, projetos, marcos, 
             </Select>
             <Input placeholder="Responsável" value={novo.responsavel} onChange={(e) => setNovo({ ...novo, responsavel: e.target.value })} aria-label="Responsável" />
             <Input placeholder="Observação" value={novo.obs} onChange={(e) => setNovo({ ...novo, obs: e.target.value })} aria-label="Observação" />
-            <Input placeholder="Início do período (MM/DD/AAAA)" value={novo.periodoInicio} onChange={(e) => setNovo({ ...novo, periodoInicio: e.target.value })} aria-label="Início do período executado" />
-            <Input placeholder="Fim do período (MM/DD/AAAA)" value={novo.periodoFim} onChange={(e) => setNovo({ ...novo, periodoFim: e.target.value })} aria-label="Fim do período executado" />
+            {/* GA-2 — período executado numa linha própria, com rótulo: DD/MM/AAAA na tela, interno no servidor. */}
+            <div className="grid grid-cols-1 gap-2 sm:col-span-4 sm:grid-cols-4" data-periodo-medicao>
+              <div>
+                <Label>Início do período executado</Label>
+                <DateField value={novo.periodoInicio} onChange={(v) => setNovo({ ...novo, periodoInicio: v })} aria-label="Início do período executado" />
+              </div>
+              <div>
+                <Label>Fim do período executado</Label>
+                <DateField value={novo.periodoFim} onChange={(v) => setNovo({ ...novo, periodoFim: v })} aria-label="Fim do período executado" />
+              </div>
+            </div>
             {aditivos.length > 0 && (
               <Select value={novo.aditivoId} onChange={(e) => setNovo({ ...novo, aditivoId: e.target.value })} aria-label="Aditivo que autorizou">
                 <option value="">Aditivo (opcional)</option>
@@ -879,6 +890,11 @@ export function MedicoesPainel({ contratoId, medicoes, itens, projetos, marcos, 
             })()}
           </div>
           <p className="mt-1 text-[11.5px] text-[var(--color-ink3)]">Critério do item: {ROTULO_CRITERIO[crit as keyof typeof ROTULO_CRITERIO] ?? crit}. O valor é calculado pelo critério (quantidade × unitário ou % do valor vigente).</p>
+          {periodoInvertido && (
+            <p className="mt-2 text-[12px] text-[var(--color-danger)]" role="alert" data-erro-periodo>
+              O fim do período ({dateBR(novo.periodoFim)}) é anterior ao início ({dateBR(novo.periodoInicio)}). Corrija as datas para salvar.
+            </p>
+          )}
           <div className="mt-2 flex gap-2">
             {[false, true].map((enviar) => (
               <Button
@@ -886,7 +902,7 @@ export function MedicoesPainel({ contratoId, medicoes, itens, projetos, marcos, 
                 type="button"
                 size="sm"
                 variant={enviar ? "default" : "outline"}
-                disabled={pendente}
+                disabled={pendente || periodoInvertido}
                 onClick={() =>
                   rodar(
                     () =>

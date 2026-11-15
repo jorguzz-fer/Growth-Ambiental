@@ -33,7 +33,7 @@ export function formularioDoMovimento(materiais: readonly MaterialCris[], obras:
       { nome: "motivo", rotulo: "Origem da entrada ou motivo da baixa", tipo: "opcao", opcoes: [...new Set([...ENTRADA_ORIGENS, ...SAIDA_MOTIVOS])] },
       { nome: "obra", rotulo: "Projeto (destino da baixa; opcional na entrada)", tipo: "opcao", opcoes: obras.slice(0, LIMITE).map((o) => o.rotulo) },
       { nome: "despesa", rotulo: "Despesa de compra (só na entrada)", tipo: "opcao", opcoes: despesas.slice(0, LIMITE).map((d) => d.rotulo) },
-      { nome: "data", rotulo: "Data", tipo: "data", dica: "MM/DD/YYYY" },
+      { nome: "data", rotulo: "Data", tipo: "data", dica: "MM/DD/YYYY" }, // formato interno; vai só ao modelo, o usuário vê DD/MM pelo DateField
       { nome: "doc", rotulo: "Documento (NF / requisição)", tipo: "texto" },
       { nome: "obs", rotulo: "Observação", tipo: "texto" },
     ],

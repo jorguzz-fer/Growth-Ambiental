@@ -6,7 +6,8 @@ import type { ContaPagarRow } from "@/lib/queries";
 import { brl0, cn, dateBR } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Input, Label } from "@/components/ui/input";
+import { DateField } from "@/components/ui/date-field";
+import { Label } from "@/components/ui/input";
 import { Table, THead, TH, TR, TD } from "@/components/ui/table";
 import { SortTH, useOrdenacaoTabela } from "@/components/app/sortable-th";
 import type { ColunaOrdenavel } from "@/lib/tabela-ordenacao";
@@ -151,11 +152,11 @@ export function ContasPagarTable({
         <CardContent className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-4 lg:grid-cols-7">
           <div>
             <Label>De (vencimento)</Label>
-            <Input type="date" value={de} onChange={(e) => setDe(e.target.value)} />
+            <DateField formato="iso" value={de} onChange={setDe} aria-label="De" />
           </div>
           <div>
             <Label>Até</Label>
-            <Input type="date" value={ate} onChange={(e) => setAte(e.target.value)} />
+            <DateField formato="iso" value={ate} onChange={setAte} aria-label="Até" />
           </div>
           <MultiSelect label="Fornecedor" value={fornecedor} onChange={setFornecedor} options={opts.fornecedores.map((o) => ({ value: o, label: o }))} />
           <MultiSelect label="Cliente" value={cliente} onChange={setCliente} options={opts.clientes.map((o) => ({ value: o, label: o }))} />

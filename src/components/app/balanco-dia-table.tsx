@@ -4,7 +4,8 @@ import { useMemo, useState } from "react";
 import { brl0, dateBR } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input, Label, Select } from "@/components/ui/input";
+import { DateField } from "@/components/ui/date-field";
+import { Label, Select } from "@/components/ui/input";
 import { Table, THead, TH, TR, TD } from "@/components/ui/table";
 
 export interface BalancoRow {
@@ -89,11 +90,11 @@ export function BalancoDiaTable({ rows }: { rows: BalancoRow[] }) {
         <CardContent className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-4 lg:grid-cols-6">
           <div>
             <Label>De</Label>
-            <Input type="date" value={de} onChange={(e) => setDe(e.target.value)} />
+            <DateField formato="iso" value={de} onChange={setDe} aria-label="De" />
           </div>
           <div>
             <Label>Até</Label>
-            <Input type="date" value={ate} onChange={(e) => setAte(e.target.value)} />
+            <DateField formato="iso" value={ate} onChange={setAte} aria-label="Até" />
           </div>
           <div>
             <Label>Projeto</Label>

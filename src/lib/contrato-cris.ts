@@ -36,10 +36,10 @@ export function formularioDoContrato(opcoes: { clientes: string[]; modalidades: 
       { nome: "objeto", rotulo: "Objeto contratual", tipo: "texto" },
       { nome: "escopo", rotulo: "Descrição do escopo", tipo: "texto" },
       { nome: "modalidade", rotulo: "Modalidade de serviço", tipo: "opcao", opcoes: opcoes.modalidades },
-      { nome: "dataAssinatura", rotulo: "Data de assinatura", tipo: "data", dica: "MM/DD/YYYY" },
-      { nome: "dataInicio", rotulo: "Data de início", tipo: "data", dica: "MM/DD/YYYY" },
-      { nome: "dataTerminoPrevista", rotulo: "Término previsto", tipo: "data", dica: "MM/DD/YYYY" },
-      { nome: "dataBaseReajuste", rotulo: "Data-base de reajuste", tipo: "data", dica: "MM/DD/YYYY" },
+      { nome: "dataAssinatura", rotulo: "Data de assinatura", tipo: "data", dica: "MM/DD/YYYY" }, // formato interno; vai só ao modelo, o usuário vê DD/MM pelo DateField
+      { nome: "dataInicio", rotulo: "Data de início", tipo: "data", dica: "MM/DD/YYYY" }, // formato interno; vai só ao modelo, o usuário vê DD/MM pelo DateField
+      { nome: "dataTerminoPrevista", rotulo: "Término previsto", tipo: "data", dica: "MM/DD/YYYY" }, // formato interno; vai só ao modelo, o usuário vê DD/MM pelo DateField
+      { nome: "dataBaseReajuste", rotulo: "Data-base de reajuste", tipo: "data", dica: "MM/DD/YYYY" }, // formato interno; vai só ao modelo, o usuário vê DD/MM pelo DateField
       { nome: "valorOriginal", rotulo: "Valor global do contrato", tipo: "numero", dica: "em reais", obrigatorio: true },
       { nome: "formaFaturamento", rotulo: "Forma de faturamento", tipo: "texto" },
       { nome: "condicaoPagamento", rotulo: "Condição de pagamento", tipo: "texto" },
@@ -112,8 +112,8 @@ export function formularioDaMedicao(o: OpcoesDaMedicao): FormularioDaTela {
       { nome: "valor", rotulo: "Valor medido", tipo: "numero", dica: "em reais; para entrega, marco ou valor fixo" },
       { nome: "projeto", rotulo: "Projeto (da lista)", tipo: "opcao", opcoes: o.projetos.map((p) => p.nome) },
       { nome: "aditivo", rotulo: "Aditivo que autorizou (da lista)", tipo: "opcao", opcoes: o.aditivos.map((a) => a.codigo) },
-      { nome: "periodoInicio", rotulo: "Início do período executado", tipo: "data", dica: "MM/DD/YYYY" },
-      { nome: "periodoFim", rotulo: "Fim do período executado", tipo: "data", dica: "MM/DD/YYYY" },
+      { nome: "periodoInicio", rotulo: "Início do período executado", tipo: "data", dica: "MM/DD/YYYY" }, // formato interno; vai só ao modelo, o usuário vê DD/MM pelo DateField
+      { nome: "periodoFim", rotulo: "Fim do período executado", tipo: "data", dica: "MM/DD/YYYY" }, // formato interno; vai só ao modelo, o usuário vê DD/MM pelo DateField
       { nome: "responsavel", rotulo: "Responsável pela medição", tipo: "texto" },
       { nome: "obs", rotulo: "Observação (o que foi executado)", tipo: "texto" },
     ],

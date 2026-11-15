@@ -89,7 +89,7 @@ function NovaConta({
         { nome: "projeto", rotulo: "Projeto", tipo: "opcao", opcoes: projetos.map((p) => p.nome) },
         { nome: "tipo", rotulo: "Tipo", tipo: "opcao", opcoes: tiposDeReceitaOferecidos() },
         { nome: "valor", rotulo: "Valor", tipo: "numero", dica: "em reais" },
-        { nome: "vencimento", rotulo: "Vencimento", tipo: "data", dica: "MM/DD/YYYY" },
+        { nome: "vencimento", rotulo: "Vencimento", tipo: "data", dica: "MM/DD/YYYY" }, // formato interno; vai só ao modelo, o usuário vê DD/MM pelo DateField
         { nome: "descricao", rotulo: "Descrição", tipo: "texto", dica: "obrigatória em Outras Receitas" },
         // Unidade só existe nos dados antigos (incorporação).
         ...(unidades.length ? [{ nome: "unidade", rotulo: "Unidade (dados antigos)", tipo: "opcao" as const, opcoes: unidades }] : []),

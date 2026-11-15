@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getTenantContext } from "@/lib/context";
 import { can } from "@/lib/permissions";
+import { DateField } from "@/components/ui/date-field";
 import { getNotasParaAnalise, getNotasServico } from "@/lib/queries";
 import { ROTULO_DA_SITUACAO, ROTULO_DO_AMBIENTE, SITUACOES_DA_NOTA, emitenteDoTenant, obraFiscalDoProjeto, recusaDoTenant, type SituacaoDaNota } from "@/lib/nota-servico";
 import { analisarNotas } from "@/lib/nota-servico-analise";
@@ -108,8 +109,8 @@ export default async function NotasFiscaisPage({
               </option>
             ))}
           </select>
-          <input type="date" name="de" defaultValue={de ?? ""} className="h-8 rounded-[8px] border border-[var(--color-line)] bg-transparent px-2 text-[12.5px]" aria-label="Criadas de" />
-          <input type="date" name="ate" defaultValue={ate ?? ""} className="h-8 rounded-[8px] border border-[var(--color-line)] bg-transparent px-2 text-[12.5px]" aria-label="Criadas até" />
+          <DateField formato="iso" key={`de-${de ?? ""}`} name="de" defaultValue={de ?? ""} className="w-[150px]" aria-label="Criadas de" />
+          <DateField formato="iso" key={`ate-${ate ?? ""}`} name="ate" defaultValue={ate ?? ""} className="w-[150px]" aria-label="Criadas até" />
           <button type="submit" className="h-8 rounded-[8px] border border-[var(--color-line)] px-3 text-[12.5px]">
             Filtrar
           </button>
