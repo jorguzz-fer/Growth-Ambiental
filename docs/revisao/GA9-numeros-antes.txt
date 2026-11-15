@@ -1,0 +1,50 @@
+Empresa: Consultoria Ambiental — 5 projetos + 1 unidade(s) administrativa(s)
+Chaves ligadas: 11 (as de empresa nova) · versões de Orçamento/Previsão: 12, não aprovadas: 0
+
+1. Monitoramento Arqueológico — Rodovia das Araucárias — Grande, 18 meses, contrato ativo, projeto Ativo
+   Receita contratada R$ 1.200.000,00 (original R$ 1.200.000,00) · medido R$ 552.000,00 · faturado R$ 552.000,00 · receita reconhecida R$ 494.500,00 · recebido R$ 494.500,00 · saldo a medir R$ 648.000,00
+   Budget: receita R$ 1.200.000,00 [ok], custo R$ 840.000,00 [ok] em 7 subgrupos × 18 meses, situação Aprovado
+   Forecast: receita R$ 1.200.000,00 [ok], custo R$ 915.000,00 [ok]
+   Projeção ao término (motor da tela): realizado R$ 513.404,26 + para concluir R$ 401.595,74 = EAC R$ 915.000,00 [ok] · desvio R$ 75.000,00 (8.93%) · receita estimada R$ 1.200.000,00 [ok] · margem R$ 285.000,00 (23.75%) × orçada 30%
+   Equipe: 5 CLT + 4 terceiros · horas realizadas 4724 (custo gerencial R$ 306.656,88) · 6 fases, 16 atividades · em_execucao
+
+2. Diagnóstico Ambiental — Unidade Industrial Araucária — Pequeno, 3 meses, contrato concluido, projeto Finalizado
+   Receita contratada R$ 180.000,00 (original R$ 180.000,00) · medido R$ 180.000,00 · faturado R$ 180.000,00 · receita reconhecida R$ 180.000,00 · recebido R$ 150.000,00 · saldo a medir R$ 0,00
+   Budget: receita R$ 180.000,00 [ok], custo R$ 115.000,00 [ok] em 5 subgrupos × 3 meses, situação Aprovado
+   Forecast: receita R$ 180.000,00 [ok], custo R$ 110.000,00 [ok]
+   Projeção ao término (motor da tela): realizado R$ 110.000,00 + para concluir R$ 0,00 = EAC R$ 110.000,00 [ok] · desvio -R$ 5.000,00 (-4.35%) · receita estimada R$ 180.000,00 [ok] · margem R$ 70.000,00 (38.89%) × orçada 36.11%
+   Equipe: 2 CLT + 1 terceiros · horas realizadas 414 (custo gerencial R$ 37.755,00) · 3 fases, 8 atividades · concluido
+
+3. Programa de Monitoramento de Fauna — Parque Eólico Ventos do Sul — Médio-grande, 12 meses, contrato ativo, projeto Ativo
+   Receita contratada R$ 620.000,00 (original R$ 620.000,00) · medido R$ 310.000,00 · faturado R$ 310.000,00 · receita reconhecida R$ 310.000,00 · recebido R$ 290.000,00 · saldo a medir R$ 310.000,00
+   Budget: receita R$ 620.000,00 [ok], custo R$ 445.000,00 [ok] em 6 subgrupos × 12 meses, situação Aprovado
+   Forecast: receita R$ 620.000,00 [ok], custo R$ 490.000,00 [ok]
+   Projeção ao término (motor da tela): realizado R$ 341.746,55 + para concluir R$ 148.253,45 = EAC R$ 490.000,00 [ok] · desvio R$ 45.000,00 (10.11%) · receita estimada R$ 620.000,00 [ok] · margem R$ 130.000,00 (20.97%) × orçada 28.23%
+   Equipe: 3 CLT + 5 terceiros · horas realizadas 1868 (custo gerencial R$ 96.705,35) · 4 fases, 14 atividades · em_execucao
+
+4. Inventário e Diagnóstico de Flora — Loteamento Reserva das Araucárias — Médio, 7 meses, contrato ativo, projeto Ativo
+   Receita contratada R$ 330.000,00 (original R$ 330.000,00) · medido R$ 252.000,00 · faturado R$ 252.000,00 · receita reconhecida R$ 228.000,00 · recebido R$ 228.000,00 · saldo a medir R$ 78.000,00
+   Budget: receita R$ 330.000,00 [ok], custo R$ 235.000,00 [ok] em 6 subgrupos × 7 meses, situação Aprovado
+   Forecast: receita R$ 330.000,00 [ok], custo R$ 225.000,00 [ok]
+   Projeção ao término (motor da tela): realizado R$ 192.932,20 + para concluir R$ 32.067,80 = EAC R$ 225.000,00 [ok] · desvio -R$ 10.000,00 (-4.26%) · receita estimada R$ 330.000,00 [ok] · margem R$ 105.000,00 (31.82%) × orçada 28.79%
+   Equipe: 2 CLT + 3 terceiros · horas realizadas 1045 (custo gerencial R$ 67.000,76) · 4 fases, 11 atividades · proximo_da_conclusao
+
+5. Programa Integrado de Gestão Ambiental — Complexo Serra do Cobre — Muito grande, 24 meses, contrato ativo, projeto Ativo
+   Receita contratada R$ 2.000.000,00 (original R$ 1.880.000,00) · medido R$ 732.000,00 · faturado R$ 732.000,00 · receita reconhecida R$ 674.000,00 · recebido R$ 616.000,00 · saldo a medir R$ 1.268.000,00
+   Budget: receita R$ 1.880.000,00 [ok], custo R$ 1.430.000,00 [ok] em 7 subgrupos × 24 meses, situação Aprovado
+   Forecast: receita R$ 2.000.000,00 [ok], custo R$ 1.560.000,00 [ok]
+   Projeção ao término (motor da tela): realizado R$ 641.859,35 + para concluir R$ 918.140,65 = EAC R$ 1.560.000,00 [ok] · desvio R$ 130.000,00 (9.09%) · receita estimada R$ 2.000.000,00 [ok] · margem R$ 440.000,00 (22%) × orçada 23.94%
+   Equipe: 6 CLT + 6 terceiros · horas realizadas 3965 (custo gerencial R$ 290.755,47) · 7 fases, 20 atividades · em_execucao
+
+Consolidado dos 5 projetos:
+   contratado R$ 4.330.000,00 · medido R$ 2.026.000,00 · faturado R$ 2.026.000,00 · receita reconhecida R$ 1.886.500,00 · recebido R$ 1.778.500,00
+   Budget R$ 4.210.000,00 / R$ 3.065.000,00 [ok ok] · Forecast R$ 4.330.000,00 / R$ 3.300.000,00 [ok ok] · margem de referência R$ 1.030.000,00 [ok]
+   Dashboard executivo: contratado R$ 4.330.000,00 [ok], aditivos R$ 120.000,00, medido R$ 2.026.000,00 [ok], faturado R$ 2.026.000,00, recebido R$ 1.778.500,00 [ok], a receber R$ 247.500,00
+   Relatório gerencial (total): contratado R$ 4.330.000,00, medido R$ 2.026.000,00, faturado R$ 2.026.000,00, receita reconhecida R$ 1.886.500,00, recebido R$ 1.778.500,00, custo apropriado R$ 1.799.942,36, margem R$ 86.557,64, reembolso solicitado R$ 4.577,24, horas 12016, custo de pessoal R$ 798.873,46 — iguais por cliente, projeto e competência
+   DRE por contrato (total): receita R$ 2.026.000,00, resultado R$ 226.057,64
+   DRE (versão Atual, empresa toda): receita R$ 2.026.000,00 [ok], custos e despesas R$ 2.609.800,59, resultado -R$ 583.800,59 (inclui sede, folha não apropriada e DAS a 6%)
+   Despesas: 562 lançadas (R$ 2.625.780,59), 505 pagas (R$ 2.415.458,62) · contas a receber R$ 2.026.000,00, recebido R$ 1.778.500,00 [ok], em aberto R$ 247.500,00
+   Fluxo de caixa (Atual): entradas previstas R$ 2.026.000,00, saídas previstas R$ 2.625.780,59 · realizado: entradas R$ 2.708.500,00, saídas R$ 2.415.458,62
+   Folha apropriada: 39 despesas 2.1.01 (uma por projeto e mês; as horas não geram despesa)
+
+✓ Todas as conferências passaram.
