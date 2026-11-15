@@ -54,3 +54,21 @@ export async function conciliarPagamentoDeFatura(input: { cashEntryId: string; f
   }
   return r;
 }
+
+/**
+ * GA-11 §4.2 — o botão "Confirmar N conciliações" do lote que a Cris propôs
+ * no cartão. A Cris não grava: cada item passa de novo pela mesma conferência
+ * do servidor (`conciliarLinhaDoCartao` → candidatas da linha). Até 20 itens.
+ */
+export async function confirmarConciliacoesCartao(itens: { linha: string; despesaId: string }[]): Promise<{ ok: true; gravadas: number; resultados: { linha: string; ok: boolean; erro?: string }[] } | { ok: false; error: string }> {
+  const ctx = await getTenantContext();
+  if (!ctx || !can(ctx.perms, "caixa", "editar")) return { ok: false, error: "Conciliar exige a permissão Caixa/editar." };
+  if (!Array.isArray(itens) || itens.length === 0) return { ok: false, error: "Nada a confirmar." };
+  if (itens.length > 20) return { ok: false, error: "No máximo 20 conciliações por vez." };
+  const resultados: { linha: string; ok: boolean; erro?: string }[] = [];
+  for (const i of itens) {
+    const r = await conciliarLinhaDoCartao({ linhaId: String(i.linha), despesaId: String(i.despesaId) });
+    resultados.push(r.ok ? { linha: i.linha, ok: true } : { linha: i.linha, ok: false, erro: r.error });
+  }
+  return { ok: true, gravadas: resultados.filter((r) => r.ok).length, resultados };
+}

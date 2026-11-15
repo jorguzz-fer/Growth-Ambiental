@@ -205,10 +205,8 @@ export async function decidirPossivelDuplicado(id: string, decisao: "mesmo" | "i
       if (!d.existenteId) return { ok: false as const, error: "O movimento importado não existe mais; escolha importar." };
       await tx.update(schema.cashEntries).set({ externalId: d.externalId }).where(and(eq(schema.cashEntries.id, d.existenteId), eq(schema.cashEntries.tenantId, ctx.tenant.id), isNull(schema.cashEntries.externalId)));
     } else {
-      const versionId = (await import("@/lib/chaves-tenant").then((m) => m.chaveLigada(ctx.tenant.id, "caixa_conciliacao_por_conta")))
-        ? null
-        : (await tx.select({ id: schema.versions.id }).from(schema.versions).where(and(eq(schema.versions.tenantId, ctx.tenant.id), eq(schema.versions.kind, "atual"))).orderBy(schema.versions.createdAt, schema.versions.id).limit(1))[0]?.id;
-      if (versionId === undefined) return { ok: false as const, error: "A empresa não tem versão Atual para receber o movimento." };
+      // GA-11: o movimento do Open Finance nasce na conta, sem versão de obra.
+      const versionId = null;
       await tx.insert(schema.cashEntries).values({ tenantId: ctx.tenant.id, versionId, bankAccountId: d.bankAccountId, externalId: d.externalId, data: d.data, descricao: d.descricao, valor: d.valor, cat: "openfinance", rec: false }).onConflictDoNothing();
     }
     await tx.update(schema.openfinancePossiveisDuplicados).set({ decisao, decididoPor: quem, decididoEm: new Date() }).where(eq(schema.openfinancePossiveisDuplicados.id, d.id));

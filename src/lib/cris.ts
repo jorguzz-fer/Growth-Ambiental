@@ -99,6 +99,21 @@ export interface PropostaDeImportacao {
   contaSugerida: string | null;
 }
 
+/** GA-11 §4.2 — o lote que a Cris propõe no cartão: conciliações (gravadas pelo botão) e lançamentos (só link para Despesas). */
+export interface PropostaDeConciliacaoCartao {
+  itens: { linha: string; despesaId: string; rotulo: string; descricaoDaLinha: string; cartao: string; valor: number }[];
+  /** linhas sem compra lançada: o link abre Despesas preenchida; nada é lançado sozinho. */
+  lancar: { linha: string; descricaoDaLinha: string; cartao: string; valor: number; href: string }[];
+  recusados: { linha: string; motivo: string }[];
+}
+
+/** GA-11 §4.2 — a fatura lida por `ler_fatura`, para abrir a prévia de "Subir fatura" já preenchida. */
+export interface PropostaDeFatura {
+  nome: string;
+  cartaoSugerido: string | null;
+  itens: { data: string; descricao: string; valor: number }[];
+}
+
 export interface PropostaDePreenchimento {
   formulario: string;
   valores: Record<string, string>;

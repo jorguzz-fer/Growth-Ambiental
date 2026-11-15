@@ -1,9 +1,10 @@
 import { getTenantContext } from "@/lib/context";
-import { getBankAccounts, getCartoes, getComprasDaFatura, getComprasDoCartao, getComprasDosCartoes, getEstornosDoCartao, getExtratoCartao, getFaturasCartao, getVinculosDosCartoes } from "@/lib/queries";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getBankAccounts, getCartoes, getComprasDaFatura, getComprasDosCartoes, getFaturasCartao, getVinculosDosCartoes } from "@/lib/queries";
 import { analisarCartoes } from "@/lib/cartao-analise";
 import { AssistenteCartoes } from "@/components/app/assistente-cartoes";
-import { conferirExtrato } from "@/lib/calc/conferencia-cartao";
-import { ExtratoCartao } from "@/components/app/extrato-cartao";
+import { urlDoCaixa } from "@/lib/caixa-url";
 import { can } from "@/lib/permissions";
 import { hojeISO } from "@/lib/despesa-status";
 import { cicloAberto } from "@/lib/calc/cartao-ciclo";
@@ -25,14 +26,17 @@ export const dynamic = "force-dynamic";
 /**
  * Cartões de Crédito (Prompt U). Esta tela NÃO lança despesa: a compra é
  * lançada em /despesas com a forma "Cartão de crédito" e cai na fatura do
- * ciclo. Aqui: cadastro (seção 1) e faturas (seção 2); pagamento, projeção e
- * conferência nos PRs seguintes.
+ * ciclo. Aqui: cadastro, faturas, pagamento e projeção. A conferência e a
+ * conciliação da fatura moram na Conciliação de Caixa, aba Cartões de crédito
+ * (GA-11 §3.3): daqui sai só o link, com o cartão já escolhido.
  */
 export default async function CartoesPage({ searchParams }: { searchParams: Promise<{ fatura?: string; extrato?: string }> }) {
   const ctx = await getTenantContext();
   if (!ctx) return null;
   if (!can(ctx.perms, "cartoes", "ver")) return <AccessDenied />;
   const sp = await searchParams;
+  // GA-11 — link antigo da conferência (`?extrato=<cartão>`): abre a aba Cartões da Conciliação de Caixa.
+  if (sp.extrato) redirect(urlDoCaixa({ tab: "cartoes", conta: sp.extrato }));
   const [cartoes, bancos, faturas, vinculos] = await Promise.all([getCartoes(ctx.tenant.id), getBankAccounts(ctx.tenant.id), getFaturasCartao(ctx.tenant.id), getVinculosDosCartoes(ctx.tenant.id)]);
   const contas = bancos.map((b) => ({ id: b.id, nome: `${b.banco}${b.cc ? " · " + b.cc : ""}` }));
   const of = await openFinanceDaEmpresa(ctx.tenant.id);
@@ -48,21 +52,10 @@ export default async function CartoesPage({ searchParams }: { searchParams: Prom
   const faturaAberta = sp.fatura && faturas.some((f) => f.id === sp.fatura) ? sp.fatura : null;
   const [compras, pagamentos] = await Promise.all([faturaAberta ? getComprasDaFatura(ctx.tenant.id, faturaAberta) : Promise.resolve([]), getPagamentosDaFatura(ctx.tenant.id, faturas.map((f) => f.id))]);
   const projetos = ctx.projects.map((p) => ({ id: p.id, nome: p.name }));
-  // Seções 5 e 6 — conferência do extrato do cartão escolhido, em código puro.
-  const cartaoExtrato = cartoes.find((c) => c.id === sp.extrato) ?? null;
-  const [itensExtrato, comprasCartao, estornos] = cartaoExtrato
-    ? await Promise.all([getExtratoCartao(ctx.tenant.id, cartaoExtrato.id), getComprasDoCartao(ctx.tenant.id, cartaoExtrato.id), getEstornosDoCartao(ctx.tenant.id, cartaoExtrato.id)])
-    : [[], [], []];
-  const conferencia = cartaoExtrato ? conferirExtrato(itensExtrato, comprasCartao, estornos, cartaoExtrato) : null;
   // Seção 7 — assistente somente leitura, em código puro, sobre o que a
-  // página carregou (apelido e quatro últimos; nenhum número de cartão).
-  const analise = analisarCartoes(
-    cartoes,
-    faturas,
-    await getComprasDosCartoes(ctx.tenant.id),
-    cartaoExtrato && conferencia ? { cartao: `${cartaoExtrato.apelido}${cartaoExtrato.ultimos4 ? " •••• " + cartaoExtrato.ultimos4 : ""}`, resultado: conferencia } : null,
-    hoje,
-  );
+  // página carregou (apelido e quatro últimos; nenhum número de cartão). A
+  // conferência da fatura mora na Conciliação de Caixa (GA-11).
+  const analise = analisarCartoes(cartoes, faturas, await getComprasDosCartoes(ctx.tenant.id), null, hoje);
   const contaDoCartao: Record<string, string | null> = Object.fromEntries(cartoes.map((c) => [c.id, c.bankAccountId]));
 
   return (
@@ -102,16 +95,24 @@ export default async function CartoesPage({ searchParams }: { searchParams: Prom
             .filter((f) => f.qtdCompras > 0 || f.valorPago > 0)
             .slice(-24)
             .map((f) => ({ cartao: cartoes.find((c) => c.id === f.cartaoId)?.apelido ?? "—", fechamento: f.fechamento, vencimento: f.vencimento, estado: estadoDaFatura(f, hoje), compras: f.valorCompras, pago: f.valorPago, creditos: f.creditos })),
-          conferenciaDoExtrato: cartaoExtrato && conferencia
-            ? { cartao: cartaoExtrato.apelido, conferem: conferencia.casados.length, noExtratoSemLancamento: conferencia.semLancamento.map((i) => ({ data: i.data, descricao: i.descricao, valor: i.valor })), lancadoSemExtrato: conferencia.semExtrato.length, divergentes: conferencia.divergentes.length, creditos: conferencia.creditos.length }
-            : null,
         }}
-        sugestoes={["O que está no extrato e não foi lançado?", "Quanto vence na próxima fatura?", "Como subo a fatura em PDF?", "Como lanço um estorno?"]}
+        sugestoes={["Quanto vence na próxima fatura?", "Quanto do limite está usado?", "Onde concilio a fatura do cartão?", "Como pago a fatura?"]}
       />
       {can(ctx.perms, "cartoes", "criar") && <CartaoForm contas={contas} />}
       <CartoesManager cartoes={cartoes} contas={contas} usado={usado} vinculos={vinculos} hoje={hoje} canEditar={can(ctx.perms, "cartoes", "editar")} canExcluir={can(ctx.perms, "cartoes", "excluir")} />
       <ProjecaoCartao cartoes={cartoes} faturas={faturas} hoje={hoje} />
-      <ExtratoCartao cartoes={cartoes.map((c) => ({ id: c.id, nome: `${c.apelido}${c.ultimos4 ? " •••• " + c.ultimos4 : ""}` }))} cartaoId={cartaoExtrato?.id ?? null} conferencia={conferencia} compras={comprasCartao} projetos={projetos} canEditar={can(ctx.perms, "cartoes", "editar")} />
+      {/* GA-11 §3.3 — a conferência e a conciliação da fatura saíram daqui: uma tela só faz a conciliação. */}
+      <div className="mt-6 rounded-[10px] border border-[var(--color-line)] bg-[var(--color-surface)] p-4 text-[13px]" data-link-conciliacao-cartao>
+        <p className="font-semibold text-[var(--color-ink)]">Subir a fatura e conciliar</p>
+        <p className="mt-1 text-[12.5px] text-[var(--color-ink2)]">A fatura (PDF, imagem, XLSX ou CSV) sobe e é conferida com as compras lançadas na Conciliação de Caixa, aba Cartões de crédito.</p>
+        <div className="mt-2 flex flex-wrap gap-3">
+          {cartoes.filter((c) => c.ativo).map((c) => (
+            <Link key={c.id} href={urlDoCaixa({ tab: "cartoes", conta: c.id })} className="text-[var(--color-accent2)] hover:underline">
+              Conciliar {c.apelido}{c.ultimos4 ? ` •••• ${c.ultimos4}` : ""} na Conciliação de Caixa → aba Cartões
+            </Link>
+          ))}
+        </div>
+      </div>
       <FaturasCartao faturas={faturas} hoje={hoje} aberta={faturaAberta} compras={compras} pagamentos={pagamentos} contas={contas} projetos={projetos} contaDoCartao={contaDoCartao} canPagar={can(ctx.perms, "cartoes", "editar")} />
       </div>
       <AssistenteCartoes usuario={ctx.userEmail ?? "anon"} analise={analise} />

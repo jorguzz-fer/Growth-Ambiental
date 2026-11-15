@@ -26,6 +26,10 @@ export interface SaldoDoCartao {
   /** "YYYY-MM-DD" da linha mais recente do extrato; null = nunca subiu extrato. */
   ultimoExtrato: string | null;
   conectado: boolean;
+  /** GA-11 §3.3 — limite do cartão (null = não informado). */
+  limite: number | null;
+  /** A fatura aberta (ciclo em curso): fechamento, vencimento e o valor lançado nela (compras e parcelas). */
+  faturaDoCiclo: { fechamento: string; vencimento: string | null; lancado: number } | null;
 }
 
 const r2 = (n: number) => Math.round(n * 100) / 100;
@@ -64,6 +68,8 @@ export async function saldosDosCartoes(tenantId: string, hojeISO: string): Promi
       pendentes: doCartao.filter((l) => !l.despesaId && !comEstorno.has(l.id)).length,
       ultimoExtrato: ultimo == null ? null : `${String(ultimo).slice(0, 4)}-${String(ultimo).slice(4, 6)}-${String(ultimo).slice(6, 8)}`,
       conectado: conectado.get(c.id) ?? false,
+      limite: c.limite == null ? null : Number(c.limite),
+      faturaDoCiclo: aberta ? { fechamento: aberta.fechamento, vencimento: aberta.vencimento ?? null, lancado: r2(aberta.valorCompras) } : null,
     };
   });
 }

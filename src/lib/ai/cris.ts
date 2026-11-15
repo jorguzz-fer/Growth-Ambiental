@@ -15,6 +15,8 @@ import {
   type ContextoDeTela,
   type FalaDaCris,
   type PropostaDeConciliacao,
+  type PropostaDeConciliacaoCartao,
+  type PropostaDeFatura,
   type PropostaDeImportacao,
   type PropostaDePreenchimento,
   type TipoDeAnexo,
@@ -52,6 +54,18 @@ export interface PedidoDaCris {
     propor?: (itens: unknown) => Promise<{ texto: string; proposta: PropostaDeConciliacao | null }>;
     lerExtrato?: (conta: string) => Promise<{ texto: string; proposta: PropostaDeImportacao | null }>;
   };
+  /**
+   * GA-11 §4.2 — as ferramentas do cartão de crédito, só na aba Cartões da
+   * Conciliação de Caixa e com a permissão da pessoa. Todas só LEEM; o lote e
+   * a fatura lida voltam para a tela, e quem grava é o botão.
+   */
+  cartao?: {
+    semPermissao?: string;
+    pendentes?: (cartao: string) => Promise<string>;
+    candidatos?: (linha: string) => Promise<string>;
+    propor?: (itens: unknown) => Promise<{ texto: string; proposta: PropostaDeConciliacaoCartao | null }>;
+    lerFatura?: (cartao: string) => Promise<{ texto: string; proposta: PropostaDeFatura | null }>;
+  };
 }
 
 export interface RespostaDaCris {
@@ -60,6 +74,8 @@ export interface RespostaDaCris {
   consultas: number;
   conciliacoes?: PropostaDeConciliacao | null;
   importacao?: PropostaDeImportacao | null;
+  conciliacoesCartao?: PropostaDeConciliacaoCartao | null;
+  fatura?: PropostaDeFatura | null;
 }
 
 /** Prompt AT §8.3 — as ferramentas de conciliação (só leem). */
@@ -93,6 +109,40 @@ const FERRAMENTA_LER_EXTRATO: Anthropic.Tool = {
   name: "ler_extrato",
   description: "Lê no servidor o extrato anexado nesta mensagem (PDF, imagem, XLSX ou CSV), com o mesmo leitor da importação, e prepara o diálogo de importação na tela. Devolve um resumo e as contas cadastradas. Não transcreva as linhas.",
   input_schema: { type: "object", additionalProperties: false, properties: { conta: { type: "string", description: 'Conta do extrato como a pessoa disse ou como aparece no extrato; "" se não souber.' } }, required: ["conta"] },
+};
+
+/** GA-11 §4.2 — as ferramentas do cartão (só leem; quem grava é o botão da tela). */
+const FERRAMENTA_PENDENTES_CARTAO: Anthropic.Tool = {
+  name: "pendentes_do_cartao",
+  description: "Lista as linhas da fatura do cartão sem compra conciliada (até 20, das mais antigas), com o id de cada linha, e marca as que não têm compra lançada. Use antes de conciliar em rodada.",
+  input_schema: { type: "object", additionalProperties: false, properties: { cartao: { type: "string", description: 'Cartão como a pessoa disse (apelido ou final), ou "" para o escolhido na tela / todos.' } }, required: ["cartao"] },
+};
+const FERRAMENTA_CANDIDATOS_CARTAO: Anthropic.Tool = {
+  name: "candidatos_do_cartao",
+  description: "As compras lançadas no cartão que o SERVIDOR calculou para uma linha da fatura (mesmo cartão, fatura da linha ou vizinha), com o grau e o motivo. Só estas podem ser propostas.",
+  input_schema: { type: "object", additionalProperties: false, properties: { linha: { type: "string", description: "id da linha da fatura" } }, required: ["linha"] },
+};
+const FERRAMENTA_PROPOR_CARTAO: Anthropic.Tool = {
+  name: "propor_conciliacoes_cartao",
+  description:
+    "Propõe à pessoa um lote de até 20 itens da fatura do cartão. Item com 'despesa' (uma compra de candidatos_do_cartao) = conciliação; item sem 'despesa' = a linha não tem compra lançada e vira proposta de lançamento com link para Despesas. Não grava nem lança nada: a tela mostra a lista e o botão de confirmar.",
+  input_schema: {
+    type: "object",
+    additionalProperties: false,
+    properties: {
+      itens: {
+        type: "array",
+        maxItems: 20,
+        items: { type: "object", additionalProperties: false, properties: { linha: { type: "string" }, despesa: { type: "string", description: "id da compra candidata; omita para propor o lançamento" } }, required: ["linha"] },
+      },
+    },
+    required: ["itens"],
+  },
+};
+const FERRAMENTA_LER_FATURA: Anthropic.Tool = {
+  name: "ler_fatura",
+  description: "Lê no servidor a fatura do cartão anexada nesta mensagem (PDF, imagem, XLSX ou CSV) e prepara a prévia de 'Subir fatura' na tela. Devolve um resumo e os cartões cadastrados. Não transcreva as linhas; quem registra é o botão da prévia.",
+  input_schema: { type: "object", additionalProperties: false, properties: { cartao: { type: "string", description: 'Cartão como a pessoa disse ou como aparece na fatura; "" se não souber.' } }, required: ["cartao"] },
 };
 
 const FERRAMENTA_CONSULTA: Anthropic.Tool = {
@@ -159,6 +209,10 @@ export async function responderComoCris(p: PedidoDaCris): Promise<RespostaDaCris
   if (p.caixa?.candidatos) tools.push(FERRAMENTA_CANDIDATOS);
   if (p.caixa?.propor) tools.push(FERRAMENTA_PROPOR);
   if (p.caixa?.lerExtrato && p.anexo) tools.push(FERRAMENTA_LER_EXTRATO);
+  if (p.cartao?.pendentes) tools.push(FERRAMENTA_PENDENTES_CARTAO);
+  if (p.cartao?.candidatos) tools.push(FERRAMENTA_CANDIDATOS_CARTAO);
+  if (p.cartao?.propor) tools.push(FERRAMENTA_PROPOR_CARTAO);
+  if (p.cartao?.lerFatura && p.anexo) tools.push(FERRAMENTA_LER_FATURA);
 
   // Conversa: falas anteriores como texto; a última leva a tela e o anexo.
   const messages: Anthropic.MessageParam[] = p.conversa.slice(0, -1).map((f) => ({
@@ -170,6 +224,9 @@ export async function responderComoCris(p: PedidoDaCris): Promise<RespostaDaCris
   if (p.anexo && ehPlanilha(p.anexo.tipo) && tools.some((t) => t.name === "ler_extrato")) {
     // No Caixa, o extrato é lido no servidor por `ler_extrato`.
     conteudo.push({ type: "text", text: `[A pessoa anexou a planilha "${p.anexo.nome}". Para ler as linhas, use a ferramenta ler_extrato; não peça para transcrever.]` });
+  } else if (p.anexo && tools.some((t) => t.name === "ler_fatura")) {
+    // Na aba Cartões, a fatura (planilha, PDF ou imagem) é lida no servidor por `ler_fatura`.
+    conteudo.push({ type: "text", text: `[A pessoa anexou "${p.anexo.nome}". Se for a fatura do cartão, use a ferramenta ler_fatura; não transcreva as linhas.]` });
   } else if (p.anexo && ehPlanilha(p.anexo.tipo)) {
     // Fora do Caixa: a planilha vira texto CSV no servidor e vai como documento (dado, não instrução).
     const lido = textoDaPlanilha(Buffer.from(p.anexo.base64, "base64"), p.anexo.tipo);
@@ -195,6 +252,7 @@ export async function responderComoCris(p: PedidoDaCris): Promise<RespostaDaCris
   }
   conteudo.push({ type: "text", text: blocoDaTela(p.tela, p.dadosPermitidos) });
   if (p.caixa?.semPermissao) conteudo.push({ type: "text", text: `[${p.caixa.semPermissao}]` });
+  if (p.cartao?.semPermissao) conteudo.push({ type: "text", text: `[${p.cartao.semPermissao}]` });
   conteudo.push({ type: "text", text: ultima.texto });
   messages.push({ role: "user", content: conteudo });
 
@@ -205,11 +263,13 @@ export async function responderComoCris(p: PedidoDaCris): Promise<RespostaDaCris
   let proposta: PropostaDePreenchimento | null = null;
   let conciliacoes: PropostaDeConciliacao | null = null;
   let importacao: PropostaDeImportacao | null = null;
+  let conciliacoesCartao: PropostaDeConciliacaoCartao | null = null;
+  let fatura: PropostaDeFatura | null = null;
   let consultas = 0;
-  const fim = (texto: string): RespostaDaCris => ({ texto, proposta, consultas, conciliacoes, importacao });
+  const fim = (texto: string): RespostaDaCris => ({ texto, proposta, consultas, conciliacoes, importacao, conciliacoesCartao, fatura });
 
   // A rodada de conciliação (pendentes → candidatos → proposta) pede mais voltas.
-  const voltas = p.caixa?.propor || p.dados ? MAX_VOLTAS + 2 : MAX_VOLTAS;
+  const voltas = p.caixa?.propor || p.cartao?.propor || p.dados ? MAX_VOLTAS + 2 : MAX_VOLTAS;
   for (let volta = 0; volta < voltas; volta++) {
     // Proposta de formulário grande (plano de trabalho, contrato com itens) precisa de mais espaço.
     const msg = await createMessageWithFallback(client, { max_tokens: p.tela?.formulario && p.tela.formulario.campos.length > 30 ? 6000 : 2000, system, tools, messages });
@@ -217,7 +277,7 @@ export async function responderComoCris(p: PedidoDaCris): Promise<RespostaDaCris
     const usos = msg.content.filter((b): b is Anthropic.ToolUseBlock => b.type === "tool_use");
     if (msg.stop_reason !== "tool_use" || usos.length === 0) {
       const texto = textoDe(msg.content);
-      return fim(texto || (proposta ? "Preenchi a tela para você conferir." : conciliacoes ? "Preparei as conciliações para você conferir." : importacao ? "Li o extrato: confira na importação." : "Não consegui responder. Tente de novo."));
+      return fim(texto || (proposta ? "Preenchi a tela para você conferir." : conciliacoes || conciliacoesCartao ? "Preparei as conciliações para você conferir." : importacao ? "Li o extrato: confira na importação." : fatura ? "Li a fatura: confira na prévia." : "Não consegui responder. Tente de novo."));
     }
     messages.push({ role: "assistant", content: msg.content });
     const resultados: Anthropic.ToolResultBlockParam[] = [];
@@ -261,11 +321,25 @@ export async function responderComoCris(p: PedidoDaCris): Promise<RespostaDaCris
         const r = await p.caixa.lerExtrato(String((uso.input as { conta?: unknown }).conta ?? ""));
         if (r.proposta) importacao = r.proposta;
         resultados.push({ type: "tool_result", tool_use_id: uso.id, content: r.texto, is_error: !r.proposta });
+      } else if (uso.name === "pendentes_do_cartao" && p.cartao?.pendentes) {
+        consultas++;
+        resultados.push({ type: "tool_result", tool_use_id: uso.id, content: await p.cartao.pendentes(String((uso.input as { cartao?: unknown }).cartao ?? "")) });
+      } else if (uso.name === "candidatos_do_cartao" && p.cartao?.candidatos) {
+        consultas++;
+        resultados.push({ type: "tool_result", tool_use_id: uso.id, content: await p.cartao.candidatos(String((uso.input as { linha?: unknown }).linha ?? "")) });
+      } else if (uso.name === "propor_conciliacoes_cartao" && p.cartao?.propor) {
+        const r = await p.cartao.propor((uso.input as { itens?: unknown }).itens);
+        if (r.proposta) conciliacoesCartao = r.proposta;
+        resultados.push({ type: "tool_result", tool_use_id: uso.id, content: r.texto, is_error: !r.proposta });
+      } else if (uso.name === "ler_fatura" && p.cartao?.lerFatura) {
+        const r = await p.cartao.lerFatura(String((uso.input as { cartao?: unknown }).cartao ?? ""));
+        if (r.proposta) fatura = r.proposta;
+        resultados.push({ type: "tool_result", tool_use_id: uso.id, content: r.texto, is_error: !r.proposta });
       } else {
         resultados.push({ type: "tool_result", tool_use_id: uso.id, content: "Ferramenta desconhecida.", is_error: true });
       }
     }
     messages.push({ role: "user", content: resultados });
   }
-  return fim(proposta ? "Preenchi a tela para você conferir." : conciliacoes ? "Preparei as conciliações para você conferir." : "A consulta ficou longa demais. Refaça a pergunta mais direta.");
+  return fim(proposta ? "Preenchi a tela para você conferir." : conciliacoes || conciliacoesCartao ? "Preparei as conciliações para você conferir." : "A consulta ficou longa demais. Refaça a pergunta mais direta.");
 }

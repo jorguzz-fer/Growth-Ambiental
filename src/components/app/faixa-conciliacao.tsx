@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { useCris } from "@/components/app/cris-contexto";
+import { MENSAGEM_CRIS_SEM_IA } from "@/lib/cris-sem-ia";
 import { ConectarBanco } from "@/components/app/open-finance";
 import { Button } from "@/components/ui/button";
 
@@ -18,6 +20,14 @@ export interface EstadoDoOpenFinance {
   motivo?: string;
 }
 
+
+/** GA-11 §4.1 — o pedido que o botão "Conciliar com a Cris" leva ao chat, com a aba e o que está escolhido. */
+export function pedidoDeConciliacaoParaCris(aba: "contas" | "cartoes" | "ajustes", escolhido: string | null): string {
+  if (aba === "cartoes")
+    return `Quero conciliar ${escolhido ? `o cartão ${escolhido}` : "os cartões de crédito"} com você. Se eu anexar a fatura, leia e prepare o registro; depois, liste o que está na fatura sem par, proponha as conciliações com as compras lançadas (em rodadas de até 20) e, para o que não foi lançado, traga a proposta com o link para Despesas. Pergunte o que tiver dúvida.`;
+  return `Quero conciliar ${escolhido ? `a conta ${escolhido}` : "todas as contas correntes"} com você. Se eu anexar o extrato, leia e prepare a importação; depois, concilie os pendentes em rodadas de até 20, do mais antigo para o mais novo, me perguntando o que tiver dúvida.`;
+}
+
 export function FaixaDeConciliacao({
   pendentes,
   contasComPendencia,
@@ -26,6 +36,9 @@ export function FaixaDeConciliacao({
   openFinance,
   contas,
   cartoes,
+  aba = "contas",
+  escolhido = null,
+  aiConfigured = true,
 }: {
   pendentes: number;
   contasComPendencia: number;
@@ -34,26 +47,36 @@ export function FaixaDeConciliacao({
   openFinance: EstadoDoOpenFinance;
   contas: { id: string; nome: string }[];
   cartoes: { id: string; nome: string }[];
+  /** GA-11 §3 — na aba Cartões, "Subir extrato" vira "Subir fatura". */
+  aba?: "contas" | "cartoes" | "ajustes";
+  /** A conta ou o cartão escolhido no seletor (nome), ou null para todas. */
+  escolhido?: string | null;
+  aiConfigured?: boolean;
 }) {
   const cris = useCris();
+  const [semIa, setSemIa] = useState(false);
+  const cartao = aba === "cartoes";
   return (
     <div className="mb-4 rounded-[10px] border border-[var(--color-accent2)]/15 bg-[var(--color-accent4)] p-3" data-faixa-conciliacao>
       <div className="flex flex-wrap items-center gap-2">
         <Button
           size="sm"
-          data-caminho="extrato"
+          data-caminho={cartao ? "fatura" : "extrato"}
           onClick={() => {
-            const alvo = document.querySelector<HTMLElement>("[data-importar-extrato]");
+            const alvo = document.querySelector<HTMLElement>(cartao ? "[data-subir-fatura]" : "[data-importar-extrato]");
             alvo?.scrollIntoView({ behavior: "smooth", block: "center" });
             alvo?.querySelector<HTMLSelectElement>("select")?.focus();
           }}
         >
-          Subir extrato
+          {cartao ? "Subir fatura" : "Subir extrato"}
         </Button>
         <Button
           size="sm"
           data-caminho="cris"
-          onClick={() => cris?.perguntar("Quero conciliar com você. Se eu anexar o extrato, leia e prepare a importação; depois, concilie os pendentes em rodadas de até 20, do mais antigo para o mais novo, me perguntando o que tiver dúvida.")}
+          onClick={() => {
+            if (!aiConfigured) return setSemIa(true);
+            cris?.perguntar(pedidoDeConciliacaoParaCris(aba, escolhido));
+          }}
         >
           Conciliar com a Cris
         </Button>
@@ -72,16 +95,21 @@ export function FaixaDeConciliacao({
         </span>
         <Link href={hrefConciliacao} className="ml-auto text-[12.5px] text-[var(--color-ink2)] hover:underline" data-contador-pendencias={pendentes}>
           {pendentes === 0 ? (
-            "Nenhum movimento a conciliar"
+            cartao ? "Nenhuma linha de fatura a conciliar" : "Nenhum movimento a conciliar"
           ) : (
             <>
-              <strong className="text-[var(--color-ink)]">{pendentes}</strong> movimento{pendentes === 1 ? "" : "s"} a conciliar em {contasComPendencia} conta{contasComPendencia === 1 ? "" : "s"}
+              <strong className="text-[var(--color-ink)]">{pendentes}</strong> {cartao ? "linha" : "movimento"}{pendentes === 1 ? "" : "s"} a conciliar em {contasComPendencia} {cartao ? "cart" : "conta"}{contasComPendencia === 1 ? (cartao ? "ão" : "") : cartao ? "ões" : "s"}
               {maisAntigoDias != null ? ` · mais antigo há ${maisAntigoDias} dia${maisAntigoDias === 1 ? "" : "s"}` : ""}
             </>
           )}
         </Link>
       </div>
       {openFinance.tipo === "indisponivel" && openFinance.motivo && <p className="mt-1.5 text-[11.5px] text-[var(--color-ink3)]">Open Finance: {openFinance.motivo}</p>}
+      {semIa && (
+        <p className="mt-1.5 text-[12px] text-[#92400e]" role="status" data-cris-sem-ia>
+          {MENSAGEM_CRIS_SEM_IA}
+        </p>
+      )}
     </div>
   );
 }

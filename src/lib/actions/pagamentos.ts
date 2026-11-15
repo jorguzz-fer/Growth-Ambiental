@@ -32,7 +32,7 @@ export type ResultadoPagamento = { ok: true; pagamentoId: string; jaExistia?: bo
 /**
  * Registra o pagamento de uma parcela (§14), com desconto/multa/juros.
  * Numa transação: o registro do pagamento, a parcela (acumulado e status), a
- * despesa-mãe (status pelas parcelas) e a saída REAL no Controle de Caixa.
+ * despesa-mãe (status pelas parcelas) e a saída REAL na Conciliação de Caixa.
  * Idempotente pela chave; o valor original é o da parcela no banco, nunca o
  * do navegador. Os encargos são reconhecidos separadamente na DRE.
  */
@@ -147,7 +147,7 @@ export async function registrarPagamento(input: RegistrarPagamentoInput): Promis
         })
         .where(and(eq(schema.despesas.id, atual.despesaId), eq(schema.despesas.tenantId, ctx.tenant.id)));
 
-      // Saída REAL no Controle de Caixa (valor efetivamente pago, na data real).
+      // Saída REAL na Conciliação de Caixa (valor efetivamente pago, na data real).
       await tx.insert(schema.cashEntries).values({
         versionId: parc.versionId,
         tenantId: ctx.tenant.id,

@@ -26,7 +26,9 @@ import { linkParaLancar } from "@/lib/caixa-encaminhamento";
 const grauTone = (g: "alta" | "media" | "baixa") => (g === "alta" ? "success" : g === "media" ? "warning" : "neutral");
 const grauLabel = (g: "alta" | "media" | "baixa") => (g === "alta" ? "alta compatibilidade" : g === "media" ? "média" : "baixa");
 
-export function ConciliacaoReview({ pendentes, pendentesEntrada, conciliados, canDesfazer, projectId = "", projetos }: { pendentes: MovimentoPendente[]; pendentesEntrada: MovimentoPendenteEntrada[]; conciliados: MovimentoConciliado[]; canDesfazer: boolean; projectId?: string; /** Prompt AT §3: Caixa por conta — a obra da conta criada a partir do movimento. */ projetos?: { id: string; nome: string }[] }) {
+export function ConciliacaoReview({ pendentes, pendentesEntrada, conciliados, canDesfazer, projetos, contaDe }: { pendentes: MovimentoPendente[]; pendentesEntrada: MovimentoPendenteEntrada[]; conciliados: MovimentoConciliado[]; canDesfazer: boolean; /** Prompt AT §3 — a obra da conta criada a partir do movimento. */ projetos: { id: string; nome: string }[]; /** GA-11 §3.1 — "Todas as contas": movimento → nome da conta. */ contaDe?: Record<string, string> }) {
+  // A tela não tem obra (GA-11): o link de lançar abre com "Todos os projetos".
+  const projectId = "";
   const router = useRouter();
   const [pending, start] = useTransition();
   const [msg, setMsg] = useState<string | null>(null);
@@ -144,6 +146,7 @@ export function ConciliacaoReview({ pendentes, pendentesEntrada, conciliados, ca
                 <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                   <div className="flex flex-wrap items-center gap-2 text-[13px]">
                     <span className="font-[family-name:var(--font-mono)] text-[var(--color-ink3)]">{m.data ? dateBR(m.data) : "—"}</span>
+                    {contaDe && <Badge tone="neutral" data-coluna-conta>{contaDe[m.cashEntryId] ?? "sem conta"}</Badge>}
                     <span className="text-[var(--color-ink)]">{m.descricao ?? "—"}</span>
                     {m.doc && <span className="font-[family-name:var(--font-mono)] text-[11px] text-[var(--color-ink4)]">doc {m.doc}</span>}
                     {m.vinculado > 0 && <Badge tone="warning">parcial: {brl0(m.vinculado)} vinculado · falta {brl0(falta)}</Badge>}
@@ -228,7 +231,7 @@ export function ConciliacaoReview({ pendentes, pendentesEntrada, conciliados, ca
         <h3 className="text-sm font-semibold text-[var(--color-ink)]">
           Entradas do extrato a conciliar <span className="font-normal text-[var(--color-ink3)]">({pendentesEntrada.length})</span>
         </h3>
-        <p className="text-[12px] text-[var(--color-ink3)]">Para cada entrada, as contas a receber compatíveis. O recebimento é gravado com valor (Prompt K): um depósito pode quitar várias parcelas.</p>
+        <p className="text-[12px] text-[var(--color-ink3)]">Para cada entrada, as contas a receber compatíveis. O recebimento é gravado com valor: um depósito pode quitar várias parcelas.</p>
         {pendentesEntrada.length === 0 && <p className="py-6 text-center text-sm text-[var(--color-ink4)]">Nenhuma entrada do extrato pendente.</p>}
         {pendentesEntrada.map((m) => (
           <Card key={m.cashEntryId}>
@@ -236,6 +239,7 @@ export function ConciliacaoReview({ pendentes, pendentesEntrada, conciliados, ca
               <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                 <div className="flex flex-wrap items-center gap-2 text-[13px]">
                   <span className="font-[family-name:var(--font-mono)] text-[var(--color-ink3)]">{m.data ? dateBR(m.data) : "—"}</span>
+                    {contaDe && <Badge tone="neutral" data-coluna-conta>{contaDe[m.cashEntryId] ?? "sem conta"}</Badge>}
                   <span className="text-[var(--color-ink)]">{m.descricao ?? "—"}</span>
                   {m.doc && <span className="font-[family-name:var(--font-mono)] text-[11px] text-[var(--color-ink4)]">doc {m.doc}</span>}
                 </div>
@@ -300,6 +304,7 @@ export function ConciliacaoReview({ pendentes, pendentesEntrada, conciliados, ca
               <thead className="bg-[var(--color-surface2)] text-left text-[10px] uppercase tracking-wide text-[var(--color-ink3)]">
                 <tr>
                   <th className="px-3 py-2">Data</th>
+                  {contaDe && <th className="px-3 py-2">Conta</th>}
                   <th className="px-3 py-2">Movimento</th>
                   <th className="px-3 py-2 text-right">Valor</th>
                   <th className="px-3 py-2">Vínculos</th>
@@ -311,6 +316,7 @@ export function ConciliacaoReview({ pendentes, pendentesEntrada, conciliados, ca
                 {conciliados.map((c) => (
                   <tr key={c.cashEntryId} className="border-t border-[var(--color-accent2)]/8">
                     <td className="px-3 py-2 font-[family-name:var(--font-mono)]">{c.data ? dateBR(c.data) : "—"}</td>
+                    {contaDe && <td className="px-3 py-2 text-[12px] text-[var(--color-ink2)]" data-coluna-conta>{contaDe[c.cashEntryId] ?? "sem conta"}</td>}
                     <td className="px-3 py-2">{c.descricao ?? "—"}</td>
                     <td className={`px-3 py-2 text-right font-[family-name:var(--font-mono)] ${c.valor < 0 ? "text-[var(--color-danger)]" : "text-[var(--color-success)]"}`}>{brl0(c.valor)}</td>
                     <td className="px-3 py-2">

@@ -42,7 +42,7 @@ export const SCREENS: Screen[] = [
   // efeito (não há tela nem ação que a consulte).
   { id: "dashboard", label: "Dashboard", modulo: "Reports" },
   // Prompt AB2: o Consolidado saiu (redireciona para a Projeção de Receitas).
-  { id: "caixa", label: "Controle de Caixa", modulo: "Conciliação de Caixa" },
+  { id: "caixa", label: "Conciliação de Caixa", modulo: "Conciliação de Caixa" },
   // Prompt L, Parte 9: a rota /fechamento saiu; "criar" aqui é fechar o dia no cartão do Caixa.
   { id: "fechamento", label: "Fechar o dia (no Caixa)", modulo: "Conciliação de Caixa" },
   // Prompt AB2: a tela saiu; a chave ficou e governa a lista "Dias fechados" do Caixa.

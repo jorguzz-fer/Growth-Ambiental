@@ -1,7 +1,7 @@
 import { cache } from "react";
 import { and, asc, count, desc, eq, gte, inArray, isNotNull, isNull, lt, lte, max, ne, or, sql, type AnyColumn, type SQL } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
-import { vinculosDaVersao, vinculosDosMovimentos } from "@/lib/conciliacao-vinculos";
+import { vinculosDosMovimentos } from "@/lib/conciliacao-vinculos";
 import { partesDosMovimentosSemObra } from "@/lib/movimento-obra";
 import { chaveCompetencia, chaveDataBR } from "./db/ordem-data";
 import type { CalcPermutaRevenda } from "@/lib/calc/permuta-ganho";
@@ -3329,32 +3329,21 @@ const diaSerial = (s: string | null | undefined): number | null => {
 export async function getConciliacaoData(
   tenantId: string,
   /**
-   * A versão (a tela de antes, por obra) ou, com a chave
-   * "caixa_conciliacao_por_conta" (Prompt AT §4), a EMPRESA: a versão Atual de
-   * todas as obras e os movimentos sem obra, opcionalmente de uma conta só.
+   * A EMPRESA (GA-11: a tela de antes, por obra e versão, saiu): a versão Atual
+   * de todas as obras e os movimentos sem obra, opcionalmente de uma conta só.
    */
-  escopo: string | { conta?: string | null },
+  escopo: { conta?: string | null },
 ): Promise<ConciliacaoData> {
   const [entries, contas, receber] = await Promise.all([
-    typeof escopo === "string"
-      ? db
-          .select()
-          .from(schema.cashEntries)
-          .where(
-            and(
-              eq(schema.cashEntries.tenantId, tenantId),
-              eq(schema.cashEntries.versionId, escopo),
-            ),
-          )
-      : getCashDaEmpresa(tenantId).then((xs) => (escopo.conta ? xs.filter((c) => c.bankAccountId === escopo.conta) : xs)),
+    getCashDaEmpresa(tenantId).then((xs) => (escopo.conta ? xs.filter((c) => c.bankAccountId === escopo.conta) : xs)),
     getContasPagar(tenantId),
     getContasReceber(tenantId),
   ]);
   const despById = new Map(contas.map((c) => [c.id, c]));
   const recById = new Map(receber.map((c) => [c.id, c]));
   const abertas = contas.filter((c) => c.status !== "Pago");
-  // Prompt L, Parte 2 — vínculos com valor dos movimentos desta versão (ou da empresa).
-  const vinculos = typeof escopo === "string" ? await vinculosDaVersao(tenantId, escopo) : await vinculosDosMovimentos(tenantId, entries.map((e) => e.id));
+  // Prompt L, Parte 2 — vínculos com valor dos movimentos da empresa.
+  const vinculos = await vinculosDosMovimentos(tenantId, entries.map((e) => e.id));
   const vinculosPorMov = new Map<string, typeof vinculos>();
   for (const v of vinculos) vinculosPorMov.set(v.cashEntryId, [...(vinculosPorMov.get(v.cashEntryId) ?? []), v]);
   const vinculadoDe = (id: string) => Math.round((vinculosPorMov.get(id) ?? []).reduce((a, v) => a + v.valor, 0) * 100) / 100;
