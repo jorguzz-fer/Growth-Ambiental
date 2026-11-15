@@ -2,9 +2,11 @@ import { describe, it, expect, vi, beforeAll, afterAll } from "vitest";
 import { and, eq } from "drizzle-orm";
 
 /**
- * Prompt A, PR 4 — Caixa sem "projeto ativo". Todo movimento de caixa vai
- * para a versão de trabalho da obra que a tela informa, e só se ela for da
- * empresa. Integração: só com DATABASE_URL.
+ * Prompt A, PR 4, revisto no GA-11 — a Conciliação de Caixa não tem projeto:
+ * o movimento novo de extrato nasce na conta, em NENHUMA versão (a obra que
+ * um link antigo mandar é ignorada), e o projeto vem do vínculo. Continua: a
+ * conta a receber criada do extrato só vai para obra da empresa.
+ * Integração: só com DATABASE_URL.
  */
 const HAS_DB = !!process.env.DATABASE_URL;
 const ctxRef: { current: unknown } = { current: null };
@@ -21,7 +23,7 @@ describe.skipIf(!HAS_DB)("Caixa com obra explícita", async () => {
   const { db, schema } = await import("@/lib/db");
   const { defaultPermissions } = await import("@/lib/permissions");
   const { versaoDeTrabalho } = await import("@/lib/context");
-  const { addCash, importCash, pairMovimento, criarLancamentoDoExtrato } = await import("./caixa");
+  const { importCash, pairMovimento, criarLancamentoDoExtrato } = await import("./caixa");
   const tenants: string[] = [];
   let tA: typeof schema.tenants.$inferSelect;
   const p: Record<string, typeof schema.projects.$inferSelect> = {};
@@ -80,51 +82,39 @@ describe.skipIf(!HAS_DB)("Caixa com obra explícita", async () => {
     expect(versaoDeTrabalho([])).toBeNull();
   });
 
-  it("addCash grava na Atual da obra informada (a segunda da lista)", async () => {
-    await addCash(fd({ projectId: p.a2.id, tipo: "ajuste", valor: "10", data: "09/29/2026" }));
-    expect(await caixaDe(v.a2.id)).toHaveLength(1);
-    expect(await caixaDe(v.a1.id)).toHaveLength(0);
-    expect(await caixaDe(v.a2budget.id)).toHaveLength(0);
-  });
+  const daEmpresaSemVersao = (doc: string) =>
+    db.select().from(schema.cashEntries).where(and(eq(schema.cashEntries.tenantId, tA.id), eq(schema.cashEntries.doc, doc)));
 
-  it("addCash sem Atual: versão padrão da obra (como antes com o cookie)", async () => {
-    await addCash(fd({ projectId: p.semAtual.id, tipo: "ajuste", valor: "5" }));
-    expect(await caixaDe(v.semAtualForecast.id)).toHaveLength(1);
-  });
-
-  it("addCash sem obra ou com obra de outra empresa: recusa, nada gravado", async () => {
-    await expect(addCash(fd({ tipo: "ajuste", valor: "10" }))).rejects.toThrow(/Escolha o projeto/);
-    await expect(addCash(fd({ projectId: p.b1.id, tipo: "ajuste", valor: "10" }))).rejects.toThrow(
-      /Escolha o projeto/,
-    );
-    expect(await caixaDe(v.b1.id)).toHaveLength(0);
-  });
-
-  it("importCash grava na versão da obra informada; obra alheia é recusada", async () => {
+  it("GA-11: importCash grava na conta, sem versão; a obra informada (mesmo alheia) é ignorada", async () => {
     const rows = [{ data: "09/01/2026", descricao: "TED", valor: 77.7, doc: "imp-1" }];
     const r = await importCash({ rows, projectId: p.a1.id });
     expect(r.inserted).toBe(1);
-    expect((await caixaDe(v.a1.id)).some((c) => c.doc === "imp-1")).toBe(true);
-    await expect(importCash({ rows: [{ ...rows[0], doc: "imp-2" }], projectId: p.b1.id })).rejects.toThrow(
-      /Escolha o projeto/,
-    );
+    const [mov] = await daEmpresaSemVersao("imp-1");
+    expect(mov.versionId).toBeNull();
+    expect(await caixaDe(v.a1.id)).toHaveLength(0);
+    const r2 = await importCash({ rows: [{ ...rows[0], doc: "imp-2" }], projectId: p.b1.id });
+    expect(r2.inserted).toBe(1);
+    expect((await daEmpresaSemVersao("imp-2"))[0].versionId).toBeNull();
     expect(await caixaDe(v.b1.id)).toHaveLength(0);
   });
 
-  it("versão congelada da obra informada bloqueia", async () => {
+  it("GA-11: versão congelada de uma obra não bloqueia o extrato (ele não vai para versão nenhuma)", async () => {
     await db.update(schema.versions).set({ locked: true }).where(eq(schema.versions.id, v.a1.id));
-    await expect(addCash(fd({ projectId: p.a1.id, tipo: "ajuste", valor: "1" }))).rejects.toThrow(/congelada/);
+    const r = await importCash({ rows: [{ data: "09/05/2026", descricao: "TED", valor: 12, doc: "imp-3" }], projectId: p.a1.id });
+    expect(r.inserted).toBe(1);
+    expect((await daEmpresaSemVersao("imp-3"))[0].versionId).toBeNull();
     await db.update(schema.versions).set({ locked: false }).where(eq(schema.versions.id, v.a1.id));
   });
 
-  it("pairMovimento: obra alheia recusada antes de gravar", async () => {
+  it("pairMovimento: alvo inexistente é recusado, nada gravado em versão de obra", async () => {
     const r = await pairMovimento({
       mov: { data: "09/02/2026", descricao: "x", valor: -10, doc: "par-1" },
       projectId: p.b1.id,
       alvoId: "00000000-0000-0000-0000-000000000000",
       alvoTipo: "despesa",
     });
-    expect(r).toEqual({ ok: false, error: "Escolha o projeto do caixa." });
+    expect(r.ok).toBe(false);
+    expect(await caixaDe(v.b1.id)).toHaveLength(0);
   });
 
   it("criarLancamentoDoExtrato: conta a receber em obra de outra empresa é recusada", async () => {
@@ -142,14 +132,15 @@ describe.skipIf(!HAS_DB)("Caixa com obra explícita", async () => {
     expect((await caixaDe(v.a1.id)).some((c) => c.doc === "cr-1")).toBe(false);
   });
 
-  it("criarLancamentoDoExtrato: conta a receber na obra escolhida, caixa na obra da tela", async () => {
+  it("criarLancamentoDoExtrato: conta a receber na obra escolhida; o caixa nasce na conta, sem versão", async () => {
     const r = await criarLancamentoDoExtrato({
       mov: { data: "09/04/2026", descricao: "PIX", valor: 60, doc: "cr-2" },
       projectId: p.a1.id,
       caixaProjectId: p.a2.id,
     });
     expect(r.ok).toBe(true);
-    expect((await caixaDe(v.a2.id)).some((c) => c.doc === "cr-2")).toBe(true);
+    expect((await caixaDe(v.a2.id)).some((c) => c.doc === "cr-2")).toBe(false);
+    expect((await daEmpresaSemVersao("cr-2"))[0]?.versionId).toBeNull();
     const [cr] = await db.select().from(schema.contasReceber).where(eq(schema.contasReceber.id, r.id!));
     expect(cr.projectId).toBe(p.a1.id);
   });

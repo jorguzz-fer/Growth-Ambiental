@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeAll, afterAll } from "vitest";
-import { eq, and } from "drizzle-orm";
+import { eq, and, isNull } from "drizzle-orm";
 
 /** Prompt L, Parte 2 — vínculo com valor. Integração (precisa de DATABASE_URL). */
 const HAS_DB = !!process.env.DATABASE_URL;
@@ -62,7 +62,7 @@ describe.skipIf(!HAS_DB)("Conciliação com valor (Prompt L, Parte 2)", async ()
     expect(r2).toEqual({ ok: true, concluida: false, soma: 1500 });
     const [mm] = await db.select().from(schema.cashEntries).where(eq(schema.cashEntries.id, m2.id));
     expect(mm.rec).toBe(false);
-    const data = await getConciliacaoData(tenant.id, proj.a.versionId);
+    const data = await getConciliacaoData(tenant.id, {});
     expect(data.pendentes.find((p) => p.cashEntryId === m2.id)?.vinculado).toBe(1500);
     // completa com outra despesa: 500 → conclui
     const d2 = await despesa("a", 500, "pequena");
@@ -136,7 +136,7 @@ describe.skipIf(!HAS_DB)("Conciliação com valor (Prompt L, Parte 2)", async ()
     const m = await movimento("c", -77, "09/17/2026");
     // marca antiga, sem contraparte: o caminho que a criava foi fechado (Prompt AT §2.2); o estado continua existindo
     await db.update(schema.cashEntries).set({ rec: true }).where(eq(schema.cashEntries.id, m.id));
-    const data = await getConciliacaoData(tenant.id, proj.c.versionId);
+    const data = await getConciliacaoData(tenant.id, {});
     expect(data.conciliados.find((c) => c.cashEntryId === m.id)).toMatchObject({ semVinculo: true, vinculos: [] });
   });
 
@@ -147,7 +147,8 @@ describe.skipIf(!HAS_DB)("Conciliação com valor (Prompt L, Parte 2)", async ()
     const r = await importCash({ projectId: proj.b.id, rows: [{ data: "10/03/2026", descricao: "PAG UNICA", valor: -333, doc: "i1" }, { data: "10/04/2026", descricao: "PAG DUPLA", valor: -444, doc: "i2" }] });
     expect(r.inserted).toBe(2);
     expect(r.conciliated).toBe(1);
-    const movs = await db.select().from(schema.cashEntries).where(and(eq(schema.cashEntries.versionId, proj.b.versionId), eq(schema.cashEntries.cat, "despesa")));
+    // GA-11: o extrato nasce na conta, sem versão de obra.
+    const movs = await db.select().from(schema.cashEntries).where(and(eq(schema.cashEntries.tenantId, tenant.id), isNull(schema.cashEntries.versionId), eq(schema.cashEntries.cat, "despesa")));
     const unica = movs.find((x) => x.doc === "i1")!;
     const dupla = movs.find((x) => x.doc === "i2");
     expect(unica.rec).toBe(true);
@@ -155,9 +156,9 @@ describe.skipIf(!HAS_DB)("Conciliação com valor (Prompt L, Parte 2)", async ()
     expect(v).toMatchObject({ origem: "importacao" });
     expect(Number(v.valor)).toBe(333);
     expect(dupla).toBeUndefined(); // ficou "extrato" pendente: proposta, não marca
-    const pend = (await db.select().from(schema.cashEntries).where(and(eq(schema.cashEntries.versionId, proj.b.versionId), eq(schema.cashEntries.doc, "i2"))))[0];
+    const pend = (await db.select().from(schema.cashEntries).where(and(eq(schema.cashEntries.tenantId, tenant.id), isNull(schema.cashEntries.versionId), eq(schema.cashEntries.doc, "i2"))))[0];
     expect(pend.rec).toBe(false);
-    expect((await getConciliacaoData(tenant.id, proj.b.versionId)).pendentes.find((p) => p.cashEntryId === pend.id)?.sugestoes.length).toBe(2);
+    expect((await getConciliacaoData(tenant.id, {})).pendentes.find((p) => p.cashEntryId === pend.id)?.sugestoes.length).toBe(2);
   });
 
   it("conciliarDespesa (caminho antigo) agora limita ao menor entre o livre do movimento e o saldo da despesa", async () => {

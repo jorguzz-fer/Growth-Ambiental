@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
 
 /**
  * GA-11 — o Caixa é UMA tela, a Conciliação de Caixa, para toda empresa (a
- * tela antiga, por projeto e versão, e a chave "caixa_conciliacao_por_conta"
+ * tela antiga, por projeto e versão, e a chave do "Caixa por conta"
  * saíram). Links antigos com `?proj=` e `?vs=` abrem a mesma tela e os
  * parâmetros são ignorados; `?tab=conciliacao` abre a aba Contas correntes.
  */

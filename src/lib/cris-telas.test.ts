@@ -13,14 +13,15 @@ const TELAS_DE_RELATORIO = [
   "src/app/(app)/fluxocaixa/analitico/page.tsx",
   "src/app/(app)/resumo/page.tsx",
   "src/app/(app)/relatorios/page.tsx",
-  "src/app/(app)/caixa/page.tsx",
+  "src/app/(app)/caixa/conciliacao-de-caixa.tsx",
 ];
 
 describe("Prompt IAR — a Cris nas telas de relatório", () => {
   it.each(TELAS_DE_RELATORIO)("%s registra o resumo da tela", (f) => {
     const src = readFileSync(f, "utf8");
     expect(src).toContain("<CrisDaTela");
-    expect(src).toMatch(/sugestoes=\{\[/);
+    // A Conciliação de Caixa passa as sugestões da aba (GA-11): `sugestoes={SUGESTOES[aba]}`.
+    expect(src).toMatch(/sugestoes=\{(\[|SUGESTOES\[)/);
   });
 
   it("Resumo registra nos dois modos (projeto e consolidado); a Projeção de Receitas por unidade saiu", () => {

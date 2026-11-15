@@ -4,15 +4,17 @@ import { eq } from "drizzle-orm";
 import { urlDoCaixa } from "./caixa-url";
 
 /**
- * Prompt AT §4 (Revisão 4) — o Caixa como tela de conciliação da empresa,
- * conta a conta (chave "caixa_conciliacao_por_conta").
+ * Prompt AT §4 (Revisão 4), desde o GA-11 para toda empresa — a Conciliação
+ * de Caixa, conta a conta, sem projeto nem versão.
  */
 describe("AT-T12: sem seletor de obra, de versão e modo comparação", () => {
-  const fonte = readFileSync("src/app/(app)/caixa/caixa-por-conta.tsx", "utf8");
+  const fonte = readFileSync("src/app/(app)/caixa/conciliacao-de-caixa.tsx", "utf8");
 
   it("a tela por conta não usa ProjectPicker, VersionMultiSelect nem a comparação de versões", () => {
-    for (const proibido of ["ProjectPicker", "VersionMultiSelect", "VersionCompareTable", "resolveCompareVersions", "lerSelecaoDeProjeto", "LembrarProjeto"]) {
+    const page = readFileSync("src/app/(app)/caixa/page.tsx", "utf8");
+    for (const proibido of ["ProjectPicker", "VersionMultiSelect", "VersionCompareTable", "resolveCompareVersions", "lerSelecaoDeProjeto", "LembrarProjeto", "RecuperarProjeto", "Controle de Caixa", "caixa_conciliacao_por_conta"]) {
       expect(fonte, proibido).not.toContain(proibido);
+      expect(page, proibido).not.toContain(proibido);
     }
   });
 

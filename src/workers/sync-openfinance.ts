@@ -13,22 +13,9 @@
  *
  *   npx tsx src/workers/sync-openfinance.ts
  */
-import { and, asc, eq } from "drizzle-orm";
-import { db, schema } from "@/lib/db";
 import { isPluggyConfigured, type PluggyTransaction } from "@/lib/openfinance/pluggy";
 import { gravarTransacoesDaConta as gravar, sincronizarTodos } from "@/lib/openfinance/sincronizar";
 import { hojeISO } from "@/lib/despesa-status";
-
-/** Versão Atual que recebe os movimentos quando a chave da §3 está desligada: a mais antiga. */
-export async function versaoDeDestinoProvisoria(tenantId: string): Promise<string | null> {
-  const [v] = await db
-    .select({ id: schema.versions.id })
-    .from(schema.versions)
-    .where(and(eq(schema.versions.tenantId, tenantId), eq(schema.versions.kind, "atual")))
-    .orderBy(asc(schema.versions.createdAt), asc(schema.versions.id))
-    .limit(1);
-  return v?.id ?? null;
-}
 
 /** Grava as transações de UMA conta; devolve quantas entraram. */
 export async function gravarTransacoesDaConta(conta: { id: string; tenantId: string }, txs: PluggyTransaction[]): Promise<number> {
