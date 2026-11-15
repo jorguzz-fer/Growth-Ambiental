@@ -23,7 +23,7 @@ export const ACAO_EXPORTAR_PREVIA = "chave.previa.exportar";
 export async function tabelaDaPrevia(
   tenantId: string,
   chave: ChaveComPrevia,
-  projetos: readonly { id: string; name: string }[],
+  projetos: readonly { id: string; name: string; startDate: string | null; endDate: string | null }[],
 ): Promise<TabelaDaPrevia> {
   switch (chave) {
     case "rascunho_fora_dos_relatorios":

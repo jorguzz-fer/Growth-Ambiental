@@ -48,7 +48,7 @@ describe.skipIf(!HAS_DB)("Prompt AD — chave do Fluxo (banco)", async () => {
   });
 
   it("prévia: mostra a permuta que sai do planejamento e o caixa fora da Atual", async () => {
-    const [pv] = await previaFluxoDefinicaoNova(tenantId, [{ id: projectId, name: "OBRA" }], 1000);
+    const [pv] = await previaFluxoDefinicaoNova(tenantId, [{ id: projectId, name: "OBRA", startDate: null, endDate: null }], 1000);
     expect(pv).toMatchObject({ temAtual: true, partidaHoje: 1000, permutaNoPlanejamento: 800, caixaForaDaAtual: 123 });
   });
 });

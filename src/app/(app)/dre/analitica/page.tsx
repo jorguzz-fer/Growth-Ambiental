@@ -4,7 +4,8 @@ import { getTenantContext } from "@/lib/context";
 import { chaveLigada } from "@/lib/chaves-tenant";
 import { TODOS_OS_PROJETOS, lerEscopoDeRelatorio, projetosDoEscopo, rotuloDoEscopo } from "@/lib/projeto-selecao";
 import { RecuperarProjeto } from "@/components/app/projeto-da-aba";
-import { getChartAccounts, getInccRows, getVersionsDoProjeto } from "@/lib/queries";
+import { getChartAccounts, getVersionsDoProjeto } from "@/lib/queries";
+import { calendarioDosProjetos } from "@/lib/calendario-projeto";
 import { calendarYearWindows } from "@/lib/planning";
 import { NO_COMP } from "@/lib/calc/dre-cascata";
 import { versionAnaliticaByMonth } from "@/lib/dre-inputs";
@@ -61,16 +62,16 @@ export default async function DreAnaliticaPage({
   );
   const cobertura = textoDaCobertura(cenario, resolucao);
   const usadas = resolucao.filter((r) => r.versao);
-  const [porProjeto, contas, inccAll] = await Promise.all([
+  const [porProjeto, contas] = await Promise.all([
     Promise.all(usadas.map((r) => versionAnaliticaByMonth(ctx.tenant.id, r.versao!.id, r.projetoId, { definicaoNova }))),
     getChartAccounts(ctx.tenant.id),
-    Promise.all(selectedProjects.map((p) => getInccRows(p.tenantId, p.id))),
   ]);
 
   // Período: o mesmo da DRE (eixo das janelas dos projetos + competências).
   const comLancamento = new Set(porProjeto.flatMap((bm) => Object.keys(bm)).filter((m) => m !== NO_COMP));
   const axis = eixoDeMeses(selectedProjects.map(janelaDoProjeto), comLancamento);
-  const axisIncc = ordenarMeses(new Set(inccAll.flat().map((r) => r.m)));
+  // GA-9 (Fase 2): calendário dos projetos no lugar dos meses da tabela INCC.
+  const axisIncc = calendarioDosProjetos(selectedProjects);
   const years = calendarYearWindows(ordenarMeses(new Set([...axis, ...axisIncc])), new Date().getFullYear());
   const periodo = sp.periodo ?? "acum";
   const customDe = (sp.de ?? "").trim();

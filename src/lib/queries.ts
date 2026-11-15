@@ -27,6 +27,7 @@ import {
   custoReferencial,
 } from "./calc/medicao-bdi";
 import { fillHorizonForward } from "./horizon";
+import { calendarioDosProjetos } from "./calendario-projeto";
 import { OUTRAS_RECEITAS_KEY, OUTRAS_RECEITAS_PID } from "./budget/config";
 import { chaveLigada } from "./chaves-tenant";
 import { SERIE_DA_EMPRESA } from "./incc-empresa";
@@ -2800,7 +2801,7 @@ export async function getReceitaByProject(
   tenantId: string,
   kind: "budget" | "forecast",
 ): Promise<ReceitaByProject> {
-  const [projs, vers, incc] = await Promise.all([
+  const [projs, vers, calendario] = await Promise.all([
     db
       .select()
       .from(schema.projects)
@@ -2810,10 +2811,13 @@ export async function getReceitaByProject(
       .select()
       .from(schema.versions)
       .where(and(eq(schema.versions.tenantId, tenantId), eq(schema.versions.kind, kind))),
+    // GA-9 (Fase 2): meses do calendário de TODOS os projetos da empresa (antes,
+    // as linhas INCC da empresa, que cobriam os mesmos 48 meses padrão).
     db
-      .select({ mes: schema.inccRates.mes })
-      .from(schema.inccRates)
-      .where(eq(schema.inccRates.tenantId, tenantId)),
+      .select({ startDate: schema.projects.startDate, endDate: schema.projects.endDate })
+      .from(schema.projects)
+      .where(eq(schema.projects.tenantId, tenantId))
+      .then(calendarioDosProjetos),
   ]);
 
   const verByProj = new Map(vers.map((v) => [v.projectId, v.id]));
@@ -2833,7 +2837,7 @@ export async function getReceitaByProject(
   // Meses = INCC + meses lançados, estendidos PARA FRENTE até hoje + 5 anos,
   // para permitir lançamento nos próximos cinco anos. Contíguo e ordenado;
   // dados além do alvo (ex.: import multi-ano) são preservados.
-  const monthSet = new Set(incc.map((r) => r.mes));
+  const monthSet = new Set(calendario);
   for (const l of lines) monthSet.add(l.mes);
   const months = fillHorizonForward([...monthSet]);
   // Separa a receita do projeto ("Receita") da linha "Outras Receitas".
@@ -2894,7 +2898,7 @@ export async function getDespesaLinhas(
   tenantId: string,
   kind: "budget" | "forecast",
 ): Promise<DespesaLinhasData> {
-  const [projs, vers, chart, incc] = await Promise.all([
+  const [projs, vers, chart] = await Promise.all([
     db
       .select()
       .from(schema.projects)
@@ -2905,7 +2909,6 @@ export async function getDespesaLinhas(
       .from(schema.versions)
       .where(and(eq(schema.versions.tenantId, tenantId), eq(schema.versions.kind, kind))),
     getChartAccounts(tenantId),
-    db.select({ mes: schema.inccRates.mes }).from(schema.inccRates).where(eq(schema.inccRates.tenantId, tenantId)),
   ]);
 
   const projById = new Map(projs.map((p) => [p.id, p.name]));
@@ -2945,7 +2948,8 @@ export async function getDespesaLinhas(
   // Meses = INCC + meses lançados, estendidos PARA FRENTE até hoje + 5 anos
   // (permite lançar despesas nos próximos cinco anos). Dados além do alvo
   // (ex.: import multi-ano) são preservados.
-  const monthSet = new Set(incc.map((r) => r.mes));
+  // GA-9 (Fase 2): calendário dos projetos no lugar das linhas INCC da empresa.
+  const monthSet = new Set(calendarioDosProjetos(projs));
   for (const l of bl) monthSet.add(l.mes);
   const months = fillHorizonForward([...monthSet]);
 

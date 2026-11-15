@@ -3,7 +3,9 @@ import { and, eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { getTenantContext } from "@/lib/context";
 import { can } from "@/lib/permissions";
-import { getChartAccounts, getBudgetLines, getInccRows } from "@/lib/queries";
+import { getChartAccounts, getBudgetLines } from "@/lib/queries";
+import { calendarioDoProjeto } from "@/lib/calendario-projeto";
+import { ordenarMeses } from "@/lib/dre";
 import { RECEITA_ROWS, RECEITA_ROW_KEY, defaultDreCategory, isBudgetVersion } from "@/lib/budget/config";
 
 export const dynamic = "force-dynamic";
@@ -30,12 +32,17 @@ export async function GET(req: Request) {
     return new Response("Não autorizado", { status: 403 });
   }
 
-  const [chart, lines, incc] = await Promise.all([
+  const [chart, lines, [project]] = await Promise.all([
     getChartAccounts(ctx.tenant.id),
     getBudgetLines(version.id),
-    getInccRows(ctx.tenant.id, version.projectId),
+    db
+      .select({ startDate: schema.projects.startDate, endDate: schema.projects.endDate })
+      .from(schema.projects)
+      .where(and(eq(schema.projects.id, version.projectId), eq(schema.projects.tenantId, ctx.tenant.id))),
   ]);
-  const months = incc.map((r) => r.m);
+  // GA-9 (Fase 2): as colunas de mês vêm do calendário do projeto (antes, da
+  // tabela INCC) e incluem todo mês lançado — nenhum valor fica fora do arquivo.
+  const months = ordenarMeses(new Set([...calendarioDoProjeto(project), ...lines.map((l) => l.mes).filter((m) => /^\d{2}\/\d{4}$/.test(m))]));
 
   // valores: kind → rowKey → mes. Receita é consolidada numa única linha.
   const val: Record<string, Record<string, Record<string, number>>> = { receita: {}, despesa: {} };
