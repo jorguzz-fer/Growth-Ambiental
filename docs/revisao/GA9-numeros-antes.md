@@ -46,7 +46,7 @@ Uma terceira variação apareceu numa recriação seguinte:
 
 - No Fluxo analítico da Arqueologia (Previsão), o saldo é R$ 285.000 sobre R$ 1.200.000 de entradas, ou seja, **exatamente 23,75%**.
 - A tela calcula o percentual sobre o valor antes de arredondar. O resto de ponto flutuante da soma, que muda com a ordem das linhas vindas do banco, decide entre "23,7%" e "23,8%".
-- O código do `main` aberto no mesmo banco mostra o mesmo "23,8%". As planilhas exportadas, com os valores exatos, são idênticas.
+- Muda entre **recriações do banco**, não entre versões do código: num mesmo banco, o código do `main` e o da Fase 2 mostram o mesmo percentual (23,7% nos dois). As planilhas exportadas, com os valores exatos, são idênticas.
 
 Por isso a comparação aceita uma célula de % diferente em até 0,1 ponto, **só se os valores em R$ da linha forem idênticos**. Mudança de valor continua aparecendo.
 

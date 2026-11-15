@@ -24,7 +24,10 @@ SENHA="${FOTO_SENHA:-Local-Teste-123}"
 TXT=docs/revisao/GA9-numeros-antes.txt
 JSON=docs/revisao/GA9-numeros-antes.json
 TMP="$(mktemp -d)"
-trap 'kill "${SERVIDOR:-0}" 2>/dev/null || true; rm -rf "$TMP"' EXIT
+# O servidor sobe num grupo de processos próprio: ao sair, o grupo inteiro cai
+# (só matar o `npx` deixava o next-server vivo, segurando a porta 3100).
+trap 'kill -- "-${SERVIDOR:-0}" 2>/dev/null || true; rm -rf "$TMP"' EXIT
+if curl -s -o /dev/null localhost:3100; then echo "A porta 3100 já está em uso: pare o servidor que está nela (a foto leria a tela de outro código)."; exit 2; fi
 
 echo "1/4 Recriando a demonstração em growth_demo_seed (data fixa $DATA_FIXA)..."
 psql "${BASEURL%/*}/postgres" -qc "drop database if exists growth_demo_seed" -qc "create database growth_demo_seed"
@@ -37,9 +40,10 @@ echo "2/4 Conferência da demonstração..."
 SEED_ADMIN_EMAIL="$EMAIL" node --import ./scripts/data-fixa.mjs .migrate/conferir-demo.mjs | sed -E 's/ \([0-9a-f-]{36}\)//' >"$TMP/conferir.txt"
 
 echo "3/4 Subindo o app na data fixa..."
-NODE_OPTIONS="--import $PWD/scripts/data-fixa.mjs" npx next start -p 3100 >"$TMP/servidor.log" 2>&1 &
+NODE_OPTIONS="--import $PWD/scripts/data-fixa.mjs" setsid npx next start -p 3100 >"$TMP/servidor.log" 2>&1 &
 SERVIDOR=$!
 for _ in $(seq 1 60); do curl -s -o /dev/null localhost:3100/login && break; sleep 1; done
+if grep -q EADDRINUSE "$TMP/servidor.log"; then echo "O servidor não subiu (porta 3100 ocupada)."; exit 2; fi
 
 echo "4/4 Lendo as telas..."
 if [[ "$modo" == "gravar" ]]; then
