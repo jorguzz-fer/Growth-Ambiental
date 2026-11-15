@@ -174,7 +174,7 @@ function VincularDespesas({
       id: "acerto-vincular",
       titulo: "Acertos e Rateios: pagamento e despesas a quitar",
       campos: [
-        { nome: "dataPagamento", rotulo: "Data do pagamento", tipo: "data", dica: "MM/DD/YYYY" },
+        { nome: "dataPagamento", rotulo: "Data do pagamento", tipo: "data", dica: "MM/DD/YYYY" }, // formato interno; vai só ao modelo, o usuário vê DD/MM pelo DateField
         { nome: "banco", rotulo: "Banco / conta", tipo: "opcao", opcoes: bancos.map((b) => b.nome) },
         { nome: "valorTransferido", rotulo: "Valor transferido", tipo: "numero", dica: "em reais" },
         { nome: "formaPagamento", rotulo: "Forma", tipo: "opcao", opcoes: ["PIX", "Transferência bancária", "Boleto", "Cheque", "Dinheiro"] },

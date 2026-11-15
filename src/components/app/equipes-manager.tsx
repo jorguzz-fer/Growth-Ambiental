@@ -257,8 +257,8 @@ export function EquipesManager({ projectId, projectName, equipe, alocaveis, func
             <h3 className="text-sm font-semibold text-[var(--color-ink)]">Acumulado por membro <span className="font-normal text-[var(--color-ink3)]">{de || ate ? `· ${de ? dateBR(`${de.slice(5, 7)}/${de.slice(8, 10)}/${de.slice(0, 4)}`) : "…"} a ${ate ? dateBR(`${ate.slice(5, 7)}/${ate.slice(8, 10)}/${ate.slice(0, 4)}`) : "…"}` : "· todo o período"}</span></h3>
             <form method="get" action="/equipes" className="flex items-end gap-2 text-[12px]">
               <input type="hidden" name="proj" value={projectId} />
-              <div><Label>De</Label><Input type="date" name="de" defaultValue={de} /></div>
-              <div><Label>Até</Label><Input type="date" name="ate" defaultValue={ate} /></div>
+              <div><Label>De</Label><DateField formato="iso" key={`de-${de}`} name="de" defaultValue={de} aria-label="De" /></div>
+              <div><Label>Até</Label><DateField formato="iso" key={`ate-${ate}`} name="ate" defaultValue={ate} aria-label="Até" /></div>
               <Button type="submit" variant="outline" size="sm">Filtrar</Button>
             </form>
           </div>

@@ -9,8 +9,10 @@ import { comprimirImagem } from "@/lib/imagem-compressao";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input, Label, Select } from "@/components/ui/input";
+import { Label, Select } from "@/components/ui/input";
+import { DateField } from "@/components/ui/date-field";
 import { dateBR } from "@/lib/utils";
+import { isoParaBR } from "@/lib/datas-br";
 
 export interface DocDoFuncionario {
   id: string;
@@ -96,7 +98,7 @@ export function FuncionarioDocs({ funcionarioId, docs, hojeISO, canEditar, podeA
                 {tiposDisponiveis.map((t) => <option key={t.nome} value={t.nome}>{t.nome}{t.admissao ? " *" : ""}</option>)}
               </Select>
             </div>
-            {tipoSel?.comValidade && <div><Label>Validade</Label><Input type="date" value={validade} onChange={(e) => setValidade(e.target.value)} aria-label="Validade do documento" /></div>}
+            {tipoSel?.comValidade && <div><Label>Validade</Label><DateField formato="iso" value={validade} onChange={setValidade} aria-label="Validade do documento" /></div>}
             <div className={tipoSel?.comValidade ? "" : "sm:col-span-2"}>
               <Label>Arquivos ou fotos (até {LIMITE_UPLOAD_MB} MB; fotos comprimidas)</Label>
               <input ref={fileRef} type="file" multiple accept="image/*,application/pdf" className="text-xs" aria-label="Arquivos do funcionário" />
@@ -121,7 +123,7 @@ export function FuncionarioDocs({ funcionarioId, docs, hojeISO, canEditar, podeA
                   <span className="font-medium text-[var(--color-ink)]">{aso ? "ASO" : d.filename}</span>
                   <span className="rounded-full bg-[var(--color-surface3)] px-2 py-0.5 text-[10px] text-[var(--color-ink3)]">{d.tipo} · v{d.versao}</span>
                   {aso && <Badge tone="warning">dado de saúde · acesso registrado</Badge>}
-                  {val && <Badge tone={val.estado === "vencido" ? "danger" : val.estado === "vencendo" ? "warning" : "neutral"}>{val.estado === "vencido" ? `vencido há ${-val.dias} dias` : val.estado === "vencendo" ? `vence em ${val.dias} dias` : `válido até ${dateBR(d.validade)}`}</Badge>}
+                  {val && <Badge tone={val.estado === "vencido" ? "danger" : val.estado === "vencendo" ? "warning" : "neutral"}>{val.estado === "vencido" ? `vencido há ${-val.dias} dias` : val.estado === "vencendo" ? `vence em ${val.dias} dias` : `válido até ${isoParaBR(d.validade) || "—"}`}</Badge>}
                   {d.uploadedAt && <span className="text-[11px] text-[var(--color-ink4)]">{dateBR(d.uploadedAt)}</span>}
                   <span className="ml-auto flex items-center gap-3">
                     {aso ? (podeAso && <button type="button" disabled={pending} onClick={() => abrir(d)} className="text-[12px] text-[var(--color-accent2)] hover:underline">Abrir (registra o acesso)</button>) : d.url && <a href={d.url} target="_blank" rel="noopener" className="text-[12px] text-[var(--color-accent2)] hover:underline">Abrir</a>}

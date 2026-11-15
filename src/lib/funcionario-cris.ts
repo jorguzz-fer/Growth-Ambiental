@@ -25,7 +25,7 @@ export function formularioDoFuncionario(obras: readonly { id: string; nome: stri
       { nome: "obra", rotulo: "Projeto", tipo: "opcao", opcoes: obras.map((o) => o.nome) },
       { nome: "tipoContrato", rotulo: "Tipo de contrato", tipo: "opcao", opcoes: [...TIPOS_CONTRATO] },
       { nome: "prazoContrato", rotulo: "Prazo (se determinado)", tipo: "texto" },
-      { nome: "admissao", rotulo: "Admissão", tipo: "data", dica: "MM/DD/YYYY" },
+      { nome: "admissao", rotulo: "Admissão", tipo: "data", dica: "MM/DD/YYYY" }, // vai só ao modelo; a proposta é convertida para ISO e o usuário vê DD/MM pelo DateField
       { nome: "obs", rotulo: "Observação (sem dado pessoal)", tipo: "texto" },
     ],
   };

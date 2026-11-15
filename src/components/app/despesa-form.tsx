@@ -438,7 +438,7 @@ export function DespesaForm({
         { nome: "conta", rotulo: "Conta do Plano de Contas", tipo: "opcao" as const, opcoes: contas.map((c) => `${c.code} — ${c.name}`) },
         ...(categoriaDoPlano ? [] : [{ nome: "categoria", rotulo: "Categoria da DRE", tipo: "opcao" as const, opcoes: categoriasDespesa }]),
         { nome: "competencia", rotulo: "Competência", tipo: "mes" as const, dica: "MM/YYYY" },
-        { nome: "vencimento", rotulo: "Vencimento", tipo: "data" as const, dica: "MM/DD/YYYY" },
+        { nome: "vencimento", rotulo: "Vencimento", tipo: "data" as const, dica: "MM/DD/YYYY" }, // formato interno; vai só ao modelo, o usuário vê DD/MM pelo DateField
         { nome: "valor", rotulo: "Valor", tipo: "numero" as const, dica: "em reais" },
         { nome: "status", rotulo: "Status", tipo: "opcao" as const, opcoes: ["A pagar", "Pago"] },
         { nome: "obs", rotulo: "Descrição da compra", tipo: "texto" as const },
@@ -450,7 +450,7 @@ export function DespesaForm({
               { nome: "recMeses", rotulo: "Quantos meses", tipo: "numero" as const, dica: "2 a 60" },
               { nome: "pagoPorTerceiro", rotulo: "Paga por terceiro", tipo: "booleano" as const },
               { nome: "pagador", rotulo: "Quem desembolsou", tipo: "opcao" as const, opcoes: pagadores.map((x) => x.nome) },
-              { nome: "dataPagamentoTerceiro", rotulo: "Data em que o terceiro pagou", tipo: "data" as const, dica: "MM/DD/YYYY" },
+              { nome: "dataPagamentoTerceiro", rotulo: "Data em que o terceiro pagou", tipo: "data" as const, dica: "MM/DD/YYYY" }, // formato interno; vai só ao modelo, o usuário vê DD/MM pelo DateField
               { nome: "reembolsavel", rotulo: "Será reembolsada pela empresa", tipo: "booleano" as const },
             ]),
       ],

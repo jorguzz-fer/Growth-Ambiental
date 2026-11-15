@@ -1,4 +1,5 @@
 import { getTenantContext } from "@/lib/context";
+import { DateField } from "@/components/ui/date-field";
 import { getAuditLog, getEntidadesDaAuditoria, getMembers } from "@/lib/queries";
 import { intervaloDoMes, lerFiltrosDaAuditoria, temFiltro } from "@/lib/auditoria-filtros";
 import { hojeISO } from "@/lib/despesa-status";
@@ -124,11 +125,11 @@ export default async function AcoesPage({ searchParams }: { searchParams?: Promi
         </div>
         <div>
           <Label>De</Label>
-          <Input name="de" type="date" defaultValue={filtros.de ?? ""} />
+          <DateField formato="iso" key={`de-${filtros.de ?? ""}`} name="de" defaultValue={filtros.de ?? ""} aria-label="De" />
         </div>
         <div>
           <Label>Até</Label>
-          <Input name="ate" type="date" defaultValue={filtros.ate ?? ""} />
+          <DateField formato="iso" key={`ate-${filtros.ate ?? ""}`} name="ate" defaultValue={filtros.ate ?? ""} aria-label="Até" />
         </div>
         <div className="flex gap-2">
           <Button type="submit" size="sm">Filtrar</Button>

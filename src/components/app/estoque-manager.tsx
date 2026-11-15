@@ -494,8 +494,8 @@ function MovTab({ items, todosItens, movimentos, filtros, projetos, despesas, pe
         <CardContent className="p-4">
           <form method="get" action="/estoque" className="grid grid-cols-2 gap-3 sm:grid-cols-6">
             <input type="hidden" name="tab" value="mov" />
-            <div><Label>De</Label><Input type="date" name="de" defaultValue={filtros.de ?? ""} /></div>
-            <div><Label>Até</Label><Input type="date" name="ate" defaultValue={filtros.ate ?? ""} /></div>
+            <div><Label>De</Label><DateField formato="iso" key={`de-${filtros.de ?? ""}`} name="de" defaultValue={filtros.de ?? ""} aria-label="De" /></div>
+            <div><Label>Até</Label><DateField formato="iso" key={`ate-${filtros.ate ?? ""}`} name="ate" defaultValue={filtros.ate ?? ""} aria-label="Até" /></div>
             <div>
               <Label>Material</Label>
               <Select name="f_item" defaultValue={filtros.itemId ?? ""}><option value="">Todos</option>{todosItens.map((i) => <option key={i.id} value={i.id}>{i.nome}</option>)}</Select>

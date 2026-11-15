@@ -32,7 +32,7 @@ export function recusaDoApontamento(a: ApontamentoParaValidar): string | null {
   if (!(TIPOS_DE_APONTAMENTO as readonly string[]).includes(a.tipo)) return "Tipo de apontamento inválido (planejado ou realizado).";
   if (!a.funcionarioId === !a.stakeholderId) return "Escolha um profissional (funcionário ou prestador).";
   if (!a.projectId && !(a.atividadeInterna ?? "").trim()) return "Informe o projeto ou a atividade interna (ex.: Administrativo).";
-  if (!a.data || !DATA.test(a.data)) return "Informe a data (MM/DD/AAAA).";
+  if (!a.data || !DATA.test(a.data)) return "Informe a data (DD/MM/AAAA).";
   const [, mm, dd] = DATA.exec(a.data)!;
   if (Number(mm) < 1 || Number(mm) > 12 || Number(dd) < 1 || Number(dd) > 31) return "Data inválida.";
   if (a.horas == null || !Number.isFinite(a.horas) || a.horas <= 0) return "Informe as horas (maior que zero).";

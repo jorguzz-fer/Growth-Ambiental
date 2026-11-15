@@ -436,7 +436,7 @@ function RestituicaoModal({
       titulo: `Ressarcimento a ${dt.pagador} (saldo pendente ${brl0(dt.saldoPendente)})`,
       campos: [
         { nome: "valor", rotulo: "Valor a ressarcir", tipo: "numero", dica: `até ${dt.saldoPendente}` },
-        { nome: "dataRestituicao", rotulo: "Data", tipo: "data", dica: "MM/DD/YYYY" },
+        { nome: "dataRestituicao", rotulo: "Data", tipo: "data", dica: "MM/DD/YYYY" }, // formato interno; vai só ao modelo, o usuário vê DD/MM pelo DateField
         { nome: "banco", rotulo: "Conta bancária", tipo: "opcao", opcoes: bancos.map((b) => `${b.banco} · ${b.tipo}`) },
         { nome: "comprovante", rotulo: "Comprovante / observação", tipo: "texto" },
       ],

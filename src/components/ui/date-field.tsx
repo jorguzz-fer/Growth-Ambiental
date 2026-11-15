@@ -1,41 +1,20 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { cn, toISODate, fromISODate } from "@/lib/utils";
-
-// ── helpers de formatação (interno MM/DD/YYYY ↔ exibição DD/MM/AAAA) ──────
-const toBR = (internal: string) => {
-  const p = (internal || "").split("/");
-  return p.length === 3 ? `${p[1].padStart(2, "0")}/${p[0].padStart(2, "0")}/${p[2]}` : "";
-};
-const fromBR = (br: string): string | null => {
-  const m = br.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (!m) return null;
-  const d = Number(m[1]);
-  const mo = Number(m[2]);
-  if (d < 1 || d > 31 || mo < 1 || mo > 12) return null;
-  return `${String(mo).padStart(2, "0")}/${String(d).padStart(2, "0")}/${m[3]}`;
-};
-
-const monthToBR = (internal: string) => {
-  const p = (internal || "").split("/");
-  return p.length === 2 ? `${p[0].padStart(2, "0")}/${p[1]}` : "";
-};
-const monthFromBR = (br: string): string | null => {
-  const m = br.trim().match(/^(\d{1,2})\/(\d{4})$/);
-  if (!m) return null;
-  const mo = Number(m[1]);
-  if (mo < 1 || mo > 12) return null;
-  return `${String(mo).padStart(2, "0")}/${m[2]}`;
-};
-const monthToISO = (internal: string) => {
-  const p = (internal || "").split("/");
-  return p.length === 2 ? `${p[1]}-${p[0].padStart(2, "0")}` : "";
-};
-const monthFromISO = (iso: string) => {
-  const p = (iso || "").split("-");
-  return p.length === 2 ? `${p[1]}/${p[0]}` : "";
-};
+import { cn } from "@/lib/utils";
+import {
+  brParaISO,
+  brParaInterno,
+  brParaMes,
+  internoParaBR,
+  internoParaISO,
+  isoParaBR,
+  isoParaInterno,
+  isoParaMes,
+  mesParaBR,
+  mesParaISO,
+  mesmoValor,
+} from "@/lib/datas-br";
 
 interface BaseProps {
   name?: string;
@@ -46,22 +25,33 @@ interface BaseProps {
   id?: string;
   required?: boolean;
   className?: string;
+  /** Nome acessível do campo de texto (o que o leitor de tela e os testes usam). */
+  "aria-label"?: string;
 }
 
 /**
- * Campo de data: exibe/digita SEMPRE em DD/MM/AAAA e mantém o valor interno em
- * "MM/DD/YYYY". O botão de calendário abre o Date Picker nativo (moderno,
- * acessível) via showPicker(); a digitação é permitida como recurso
- * complementar. Uso controlado (`value`+`onChange`) ou em <form> (`name`).
+ * Campo de data: exibe/digita SEMPRE em DD/MM/AAAA, com botão de calendário.
+ *
+ * O valor que sai do campo (`onChange` e o `<input hidden name>` do form) não
+ * muda com isso:
+ * - `formato="interno"` (padrão): "MM/DD/YYYY", o que as actions e o banco esperam;
+ * - `formato="iso"`: "YYYY-MM-DD", para os filtros De/Até (`?de=`, `?ate=`) e
+ *   os campos que já trabalhavam em ISO.
+ *
+ * GA-2: é o único lugar do app com `type="date"`. Esse campo nativo mostra a
+ * data no idioma do navegador (num Chrome em inglês, mm/dd/yyyy); aqui ele só
+ * abre o calendário, escondido, e o texto visível é sempre DD/MM/AAAA.
+ * Uso controlado (`value`+`onChange`) ou em <form> (`name` + `defaultValue`).
  */
-export function DateField(props: BaseProps) {
+export function DateField({ formato = "interno", ...props }: BaseProps & { formato?: "interno" | "iso" }) {
+  const iso = formato === "iso";
   return (
     <PickerField
       {...props}
-      display={toBR}
-      parse={fromBR}
-      toNativeISO={toISODate}
-      fromNativeISO={fromISODate}
+      display={iso ? isoParaBR : internoParaBR}
+      parse={iso ? brParaISO : brParaInterno}
+      toNativeISO={iso ? mesmoValor : internoParaISO}
+      fromNativeISO={iso ? mesmoValor : isoParaInterno}
       nativeType="date"
       placeholder="dd/mm/aaaa"
     />
@@ -76,10 +66,10 @@ export function MonthField(props: BaseProps) {
   return (
     <PickerField
       {...props}
-      display={monthToBR}
-      parse={monthFromBR}
-      toNativeISO={monthToISO}
-      fromNativeISO={monthFromISO}
+      display={mesParaBR}
+      parse={brParaMes}
+      toNativeISO={mesParaISO}
+      fromNativeISO={isoParaMes}
       nativeType="month"
       placeholder="mm/aaaa"
     />
@@ -95,6 +85,7 @@ function PickerField({
   id,
   required,
   className,
+  "aria-label": ariaLabel,
   display,
   parse,
   toNativeISO,
@@ -145,6 +136,7 @@ function PickerField({
       <input
         type="text"
         id={id}
+        aria-label={ariaLabel}
         inputMode="numeric"
         required={required}
         disabled={disabled}

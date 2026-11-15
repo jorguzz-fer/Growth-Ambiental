@@ -75,7 +75,7 @@ export async function salvarEtapaDeImplantacao(input: DadosDaEtapa): Promise<Res
   if (!/^[A-Z0-9][A-Z0-9.-]*$/.test(codigo)) return { ok: false, error: "Código: letras, números, ponto ou hífen (ex.: C4)." };
   const previsto = txt(input.previsto, 10);
   const realizado = txt(input.realizado, 10);
-  if (!dataValida(previsto) || !dataValida(realizado)) return { ok: false, error: "Datas no formato MM/DD/AAAA." };
+  if (!dataValida(previsto) || !dataValida(realizado)) return { ok: false, error: "Data inválida: informe no formato DD/MM/AAAA." };
   const status = txt(input.status, 30) ?? "nao_iniciada";
   if (!ehStatusDaEtapa(status)) return { ok: false, error: "Situação inválida." };
   const dependeDe = txt(input.dependeDe, 20)?.toUpperCase() ?? null;
@@ -145,7 +145,7 @@ export async function salvarTreinamento(input: DadosDoTreinamento): Promise<Resu
   const tema = txt(input.tema, 200);
   if (!tema) return { ok: false, error: "Informe o tema do treinamento." };
   const data = txt(input.data, 10);
-  if (!dataValida(data)) return { ok: false, error: "Data no formato MM/DD/AAAA." };
+  if (!dataValida(data)) return { ok: false, error: "Data inválida: informe no formato DD/MM/AAAA." };
   const status = txt(input.status, 20) ?? "planejado";
   if (!(STATUS_DO_TREINAMENTO as readonly string[]).includes(status)) return { ok: false, error: "Situação inválida." };
   if (status === "realizado" && !data) return { ok: false, error: "Treinamento realizado precisa da data." };

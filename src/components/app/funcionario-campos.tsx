@@ -1,6 +1,7 @@
 "use client";
 
 import { Input, Label, Select } from "@/components/ui/input";
+import { DateField } from "@/components/ui/date-field";
 import { ESTADOS_CIVIS, TIPOS_CONTA_BANCARIA, TIPOS_CONTRATO, TIPOS_PIX } from "@/lib/funcionario-regras";
 
 import { type ValoresFuncionario } from "@/lib/funcionario-form";
@@ -27,6 +28,13 @@ export function FuncionarioCampos({ v, onChange, podeDados, projetos }: { v: Val
       <Input value={v[k] ?? ""} onChange={(e) => onChange(k, e.target.value)} aria-label={label} {...extra} />
     </div>
   );
+  // GA-2 — datas da ficha em DD/MM/AAAA na tela; o valor continua ISO (AAAA-MM-DD).
+  const d = (k: string, label: string) => (
+    <div>
+      <Label>{label}</Label>
+      <DateField formato="iso" value={v[k] ?? ""} onChange={(val) => onChange(k, val)} aria-label={label} />
+    </div>
+  );
   const sel = (k: string, label: string, opts: readonly string[], span = "") => (
     <div className={span}>
       <Label>{label}</Label>
@@ -40,7 +48,7 @@ export function FuncionarioCampos({ v, onChange, podeDados, projetos }: { v: Val
     <div className="space-y-3">
       <Secao titulo="Identificação">
         {c("nome", "Nome completo *", {}, "col-span-2")}
-        {c("nascimento", "Nascimento", { type: "date" })}
+        {d("nascimento", "Nascimento")}
         {c("nacionalidade", "Nacionalidade")}
         {sel("estadoCivil", "Estado civil", ESTADOS_CIVIS)}
         {c("nomeMae", "Nome da mãe", {}, "col-span-2 sm:col-span-3")}
@@ -57,7 +65,7 @@ export function FuncionarioCampos({ v, onChange, podeDados, projetos }: { v: Val
         {c("reservista", "Reservista (quando aplicável)")}
         {c("cnh", "CNH (se conduzir veículo)")}
         {c("cnhCategoria", "Categoria")}
-        {c("cnhValidade", "Validade da CNH", { type: "date" })}
+        {d("cnhValidade", "Validade da CNH")}
       </Secao>
       {podeDados && (
         <Secao titulo="Endereço residencial" nota="Dado pessoal: só quem tem a permissão de dados do funcionário vê e edita.">
@@ -71,7 +79,7 @@ export function FuncionarioCampos({ v, onChange, podeDados, projetos }: { v: Val
         </Secao>
       )}
       <Secao titulo="Contrato" nota="Registro, não folha: o sistema não calcula INSS, FGTS, IRRF, férias nem rescisão. O custo entra em Despesas.">
-        {c("admissao", "Admissão", { type: "date" })}
+        {d("admissao", "Admissão")}
         {c("cargo", "Cargo / função")}
         {c("setor", "Setor")}
         <div>
