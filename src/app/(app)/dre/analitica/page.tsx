@@ -1,3 +1,4 @@
+import { temDadosDeIncorporacao } from "@/lib/chaves-empresa-nova";
 import Link from "next/link";
 import { getTenantContext } from "@/lib/context";
 import { chaveLigada } from "@/lib/chaves-tenant";
@@ -84,9 +85,12 @@ export default async function DreAnaliticaPage({
     acc.lancamentos.push(...e.lancamentos);
     return acc;
   }, entradaVazia());
+  // GA-1 §7: sem dados de incorporação, os rótulos não citam vendas, liberações nem permuta.
+  const comIncorporacao = await temDadosDeIncorporacao(ctx.tenant.id);
   const linhas = linhasDaDreAnalitica(
     entrada,
     contas.map((c) => ({ code: c.code, name: c.name, groupCode: c.groupCode, groupName: c.groupName })),
+    { comIncorporacao },
   );
   const categoriaDoPlano = await chaveLigada(ctx.tenant.id, "despesa_categoria_do_plano");
   // 0079 — DRE gerencial: os MESMOS lançamentos, reagrupados pela classe
@@ -100,7 +104,10 @@ export default async function DreAnaliticaPage({
     const classes = new Set(doGrupo.map((c) => classeDaConta(c, categoriaDaConta(c))));
     mapaGerencial.set(code, { name: `${doGrupo[0].groupName} (planejado no grupo)`, classe: classes.size === 1 ? [...classes][0] : classePadrao(categoriaDaConta(doGrupo[0])) });
   }
-  const gerencial = dreGerencial({ receitaSemConta: entrada.receitaVendas + entrada.receitaPermuta, encargos: entrada.encargos, lancamentos: entrada.lancamentos }, mapaGerencial);
+  const gerencial = dreGerencial(
+    { receitaSemConta: entrada.receitaVendas + entrada.receitaPermuta, encargos: entrada.encargos, lancamentos: entrada.lancamentos, ...(comIncorporacao ? {} : { rotuloDaReceita: "Receita de faturas e contas a receber (sem conta do plano)" }) },
+    mapaGerencial,
+  );
   const resultadoCascata = waterfall([paraInputs(entrada)]).rows.at(-1)!.value;
   const confere = Math.abs(resultadoCascata - gerencial.resultadoDaCascata) < 0.01;
   const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });

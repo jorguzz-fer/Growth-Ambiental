@@ -1,3 +1,5 @@
+import { AvisoVersaoNaoAprovada } from "@/components/app/aviso-versao-nao-aprovada";
+import { avisoDeNaoAprovadas } from "@/lib/versoes-nao-aprovadas";
 import { totalPendente } from "@/lib/contas-pagar-regras";
 import { realizadoDaVersao } from "@/lib/movimento-obra";
 import { getTenantContext, type Version } from "@/lib/context";
@@ -147,6 +149,7 @@ export default async function DashboardPage({
   const project = escopo.tipo === "projeto" ? escopo.projeto : null;
   const doEscopo = escopo.tipo === "projeto" ? null : projetosDoEscopo(ctx.projects, escopo.tipo);
   const projetosDaTela = project ? [project] : doEscopo!.projetos;
+  const avisoNaoAprovadas = await avisoDeNaoAprovadas(ctx.tenant.id, projetosDaTela.map((p) => p.id));
   const idsDaTela = new Set(projetosDaTela.map((p) => p.id));
 
   // Uma obra: as versões DELA, selecionáveis. Escopo: uma coluna por TIPO de
@@ -367,6 +370,7 @@ export default async function DashboardPage({
           </div>
         }
       />
+      <AvisoVersaoNaoAprovada aviso={avisoNaoAprovadas} />
       {project && <LembrarProjeto projectId={project.id} />}
       {/* Prompt IAR — a Cris analisa e simula sobre os números do Dashboard. */}
       <CrisDaTela

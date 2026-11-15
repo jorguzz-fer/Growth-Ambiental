@@ -44,7 +44,11 @@ describe.skipIf(!HAS_DB)("Provisionamento: empresa nova recebe o plano ambiental
     expect((await previaDaConversao(id)).nadaAFazer).toBe(true);
     // chaves de categoria ligadas (despesa e Orçamento herdam a categoria da conta)
     const chaves = await db.select().from(schema.tenantFlags).where(eq(schema.tenantFlags.tenantId, id));
-    expect(chaves.filter((c) => c.ligada).map((c) => c.chave).sort()).toEqual(["despesa_categoria_do_plano", "orcamento_categoria_do_plano"]);
+    // GA-1 — exatamente as chaves de empresa nova, ligadas "na criação da empresa"; nenhuma de incorporação.
+    const { CHAVES_EMPRESA_NOVA, CHAVES_INCORPORACAO, LIGADA_NA_CRIACAO } = await import("@/lib/chaves");
+    expect(chaves.filter((c) => c.ligada).map((c) => c.chave).sort()).toEqual([...CHAVES_EMPRESA_NOVA].sort());
+    expect(chaves.every((c) => c.alteradaPor === LIGADA_NA_CRIACAO)).toBe(true);
+    expect(chaves.some((c) => (CHAVES_INCORPORACAO as readonly string[]).includes(c.chave))).toBe(false);
   });
 
   it("sem lançamento, cliente, fornecedor ou dado operacional; planos independentes", async () => {

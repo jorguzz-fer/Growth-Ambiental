@@ -8,7 +8,7 @@
  * por mês: os totais batem por construção. BAD3-1 em aberto: o drill-down
  * para na conta.
  */
-import type { LinhaAnalitica } from "@/lib/dre-analitica";
+import { rotuloDaReceita, type LinhaAnalitica } from "@/lib/dre-analitica";
 
 export interface ContaDoFluxo {
   code: string;
@@ -42,7 +42,7 @@ const BLOCOS = [
 type Bloco = (typeof BLOCOS)[number]["id"];
 
 /** Monta as linhas: Entradas, Saídas (bloco → grupo → conta) e o saldo. */
-export function linhasDoFluxoAnalitico(e: EntradaDoFluxoAnalitico, contas: readonly ContaDoFluxo[]): LinhaAnalitica[] {
+export function linhasDoFluxoAnalitico(e: EntradaDoFluxoAnalitico, contas: readonly ContaDoFluxo[], opts: { comIncorporacao?: boolean } = {}): LinhaAnalitica[] {
   const entradas = e.vendas + e.permuta;
   const totalSaidas = e.saidas.reduce((a, s) => a + s.valor, 0);
   const pct = (v: number) => (entradas > 0 ? (v / entradas) * 100 : null);
@@ -53,7 +53,7 @@ export function linhasDoFluxoAnalitico(e: EntradaDoFluxoAnalitico, contas: reado
   const doGrupo = new Map(contas.map((c) => [c.groupCode, { nome: c.groupName, kind: c.kind }]));
 
   push({ id: "entradas", pai: null, nivel: 0, tipo: "categoria", label: "Entradas", valor: entradas });
-  if (e.vendas) push({ id: "entradas:vendas", pai: "entradas", nivel: 1, tipo: "detalhe", label: "Receitas (faturas, contas a receber e, nos dados antigos, vendas e liberações)", valor: e.vendas });
+  if (e.vendas) push({ id: "entradas:vendas", pai: "entradas", nivel: 1, tipo: "detalhe", label: rotuloDaReceita(opts.comIncorporacao ?? true), valor: e.vendas });
   if (e.permuta) push({ id: "entradas:permuta", pai: "entradas", nivel: 1, tipo: "detalhe", label: "Revenda de bens de permuta", valor: e.permuta });
 
   push({ id: "saidas", pai: null, nivel: 0, tipo: "categoria", label: "(−) Saídas", valor: totalSaidas });

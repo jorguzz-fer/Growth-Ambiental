@@ -45,6 +45,7 @@ import { db, schema } from "@/lib/db";
 import { hashPassword } from "@/lib/password";
 import { linhasDoPlano } from "@/lib/calc/plano-ambiental";
 import { instalarPlanoPadrao } from "@/lib/planocontas-padrao";
+import { ligarChavesDeEmpresaNova } from "@/lib/chaves-empresa-nova";
 import { garantirModalidades } from "@/lib/contrato-modalidades";
 import { garantirBiblioteca } from "@/lib/plano-biblioteca";
 import { createProject, setProjectSituacao } from "@/lib/actions/projects";
@@ -259,7 +260,9 @@ async function criarEmpresa(email: string): Promise<{ tenantId: string; senha: s
     if (u) await db.insert(schema.memberships).values({ userId: u.id, tenantId: tenant.id, role: p.role });
   }
 
-  await instalarPlanoPadrao(tenant.id, db, undefined, "seed");
+  await instalarPlanoPadrao(tenant.id, db);
+  // GA-1: a demonstração nasce igual a uma empresa nova (mesma lista de chaves).
+  await ligarChavesDeEmpresaNova(tenant.id);
   await garantirModalidades(tenant.id);
   await garantirBiblioteca(tenant.id);
   return { tenantId: tenant.id, senha };
@@ -1046,6 +1049,16 @@ async function realizadoDoBanco(projectId: string) {
   return { custos, receitas };
 }
 
+/**
+ * GA-1 §3 — com "rascunho_fora_dos_relatorios" ligada (empresa nova), só a
+ * versão Aprovada entra em relatório. Aprova pelo fluxo real da tela:
+ * Rascunho → Concluído → Aprovado.
+ */
+async function aprovar(versionId: string, oQue: string) {
+  ok(await setVersionStatus(versionId, "Concluído"), `${oQue}: concluir`);
+  ok(await setVersionStatus(versionId, "Aprovado"), `${oQue}: aprovar`);
+}
+
 interface Conferencia {
   projeto: ProjetoDemo;
   orcamento: { receita: number; custo: number };
@@ -1068,8 +1081,7 @@ async function orcamentosEPrevisoes(c: Ctx, planos: Record<string, PlanoDeCustos
     const cellsOrc = [...plano.linhas.map((l) => ({ grupo: l.grupo, mes: l.mes, valor: l.valor })), ...[...plano.pessoal.entries()].map(([mes, valor]) => ({ grupo: "2.1", mes, valor }))];
     ok(await saveBudgetPlanning(orc.id, "receita", [linhaDoOrcamento(RECEITAS_PROJETO_KEY, "Receita", recOrc, valorOriginal(p))]), `Orçamento (receita) — ${p.nome}`);
     ok(await saveBudgetPlanning(orc.id, "despesa", linhasDeDespesa(cellsOrc)), `Orçamento (custo) — ${p.nome}`);
-    ok(await setVersionStatus(orc.id, "Concluído"), "Orçamento concluído");
-    ok(await setVersionStatus(orc.id, "Aprovado"), "Orçamento aprovado");
+    await aprovar(orc.id, `Orçamento — ${p.nome}`);
 
     // ── Previsão: realizado (banco) até o mês corrente + reprojeção depois.
     const real = await realizadoDoBanco(projectId);
@@ -1123,7 +1135,7 @@ async function orcamentosEPrevisoes(c: Ctx, planos: Record<string, PlanoDeCustos
     if (totalB > 0) linhasReceita.push(linhaDoOrcamento("1.1", "Receita", recB, totalB));
     ok(await saveBudgetPlanning(prev.id, "receita", linhasReceita), `Previsão (receita) — ${p.nome}`);
     if (Math.abs(totalA + totalB - p.forecast.receita) > 0.01) throw new FalhaDoSeed(`Previsão de receita de "${p.nome}": ${totalA + totalB} ≠ matriz ${p.forecast.receita}.`);
-    ok(await setVersionStatus(prev.id, "Concluído"), "Previsão concluída");
+    await aprovar(prev.id, `Previsão — ${p.nome}`);
     conta(c, "orcamentos");
     conta(c, "previsoes");
 
@@ -1147,8 +1159,12 @@ async function orcamentosEPrevisoes(c: Ctx, planos: Record<string, PlanoDeCustos
     }
     return linhasDeDespesa(cells.map((x) => ({ ...x, valor: r2(x.valor) })));
   };
-  ok(await saveBudgetPlanning((await versaoDoProjeto(c.sedeId, "budget")).id, "despesa", sede(1)), "Orçamento da sede");
-  ok(await saveBudgetPlanning((await versaoDoProjeto(c.sedeId, "forecast")).id, "despesa", sede(1.03)), "Previsão da sede");
+  const orcSede = (await versaoDoProjeto(c.sedeId, "budget")).id;
+  const prevSede = (await versaoDoProjeto(c.sedeId, "forecast")).id;
+  ok(await saveBudgetPlanning(orcSede, "despesa", sede(1)), "Orçamento da sede");
+  ok(await saveBudgetPlanning(prevSede, "despesa", sede(1.03)), "Previsão da sede");
+  await aprovar(orcSede, "Orçamento da sede");
+  await aprovar(prevSede, "Previsão da sede");
   return conferencias;
 }
 

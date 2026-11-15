@@ -24,6 +24,7 @@ import { METRICAS } from "../src/lib/relatorio-gerencial";
 import { indicadoresExecutivos } from "../src/lib/indicadores-executivos";
 import { resultadoPorContratoECliente } from "../src/lib/resultado-contratos";
 import { hojeMDY } from "../src/lib/contrato-regras";
+import { CHAVES_EMPRESA_NOVA } from "../src/lib/chaves";
 
 const brl = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const falhas: string[] = [];
@@ -45,6 +46,17 @@ async function main() {
   const deProjeto = projetos.filter((p) => p.kind !== "office");
   console.log(`Empresa: ${tenant.name} (${tenantId}) — ${deProjeto.length} projetos + ${projetos.length - deProjeto.length} unidade(s) administrativa(s)`);
   confere("quantidade de projetos", deProjeto.length, 5, 0);
+
+  // GA-1 — a demonstração nasce igual a uma empresa nova: as mesmas chaves ligadas,
+  // e todo Orçamento e Previsão (inclusive da sede) Aprovado.
+  const flags = await db.select().from(schema.tenantFlags).where(eq(schema.tenantFlags.tenantId, tenantId));
+  const ligadas = flags.filter((f) => f.ligada).map((f) => f.chave).sort();
+  const iguais = JSON.stringify(ligadas) === JSON.stringify([...CHAVES_EMPRESA_NOVA].sort());
+  if (!iguais) falhas.push(`chaves ligadas da demonstração (${ligadas.join(", ")}) ≠ chaves de empresa nova`);
+  const planejamento = await db.select({ kind: schema.versions.kind, status: schema.versions.status }).from(schema.versions).where(and(eq(schema.versions.tenantId, tenantId), inArray(schema.versions.kind, ["budget", "forecast"])));
+  const naoAprovadas = planejamento.filter((v) => v.status !== "Aprovado").length;
+  confere("versões de Orçamento/Previsão não aprovadas", naoAprovadas, 0, 0);
+  console.log(`Chaves ligadas: ${ligadas.length} (${iguais ? "as de empresa nova" : "DIFERENTES"}) · versões de Orçamento/Previsão: ${planejamento.length}, não aprovadas: ${naoAprovadas}`);
 
   const contratos = await db.select().from(schema.contratos).where(eq(schema.contratos.tenantId, tenantId));
   const hoje = new Date();

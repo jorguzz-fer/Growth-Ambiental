@@ -1,3 +1,4 @@
+import { temDadosDeIncorporacao } from "@/lib/chaves-empresa-nova";
 import Link from "next/link";
 import { getTenantContext } from "@/lib/context";
 import { chaveLigada } from "@/lib/chaves-tenant";
@@ -73,6 +74,7 @@ export default async function FluxoAnaliticoPage({
   const linhas = linhasDoFluxoAnalitico(
     entrada,
     contas.map((c) => ({ code: c.code, name: c.name, groupCode: c.groupCode, groupName: c.groupName, kind: c.kind })),
+    { comIncorporacao: await temDadosDeIncorporacao(ctx.tenant.id) },
   );
   const periodo = hasRange ? `${de || "início"} a ${ate || "fim"}` : "todo o horizonte";
   const fluxoHref = `/fluxocaixa?${new URLSearchParams({ proj: projParam, ...(de ? { de } : {}), ...(ate ? { ate } : {}) }).toString()}`;

@@ -56,6 +56,12 @@ describe.skipIf(!HAS_DB)("Homologação ponta a ponta — Consultoria Ambiental 
   const { addDespesa } = await import("./despesas");
   const { registrarRecebimento } = await import("./contas-receber");
   const { criarPlano } = await import("./plano");
+  const { setVersionStatus } = await import("./planning");
+  // GA-1: empresa nova nasce com "só orçamento aprovado entra em relatório": aprova pelo fluxo da tela.
+  const aprovar = async (versionId: string) => {
+    ok(await setVersionStatus(versionId, "Concluído"));
+    ok(await setVersionStatus(versionId, "Aprovado"));
+  };
   const Q = await import("@/lib/contratos-queries");
   const { cincoValores } = await import("@/lib/receita-servicos");
   const { resultadoPorContratoECliente } = await import("@/lib/resultado-contratos");
@@ -187,6 +193,7 @@ describe.skipIf(!HAS_DB)("Homologação ponta a ponta — Consultoria Ambiental 
       await linha(versoes.budget.id, "despesa", mes, 30000);
       await linha(versoes.budget.id, "receita", mes, 50000);
     }
+    await aprovar(versoes.budget.id);
   });
 
   it("9 · despesas pela action de despesas (conta do plano), apropriadas ao contrato", async () => {
@@ -217,6 +224,7 @@ describe.skipIf(!HAS_DB)("Homologação ponta a ponta — Consultoria Ambiental 
 
   it("11 · Forecast: previsão de 40 mil/mês para novembro e dezembro", async () => {
     for (const mes of ["11/2026", "12/2026"]) await linha(versoes.forecast.id, "despesa", mes, 40000);
+    await aprovar(versoes.forecast.id);
   });
 
   it("12 · aditivo de acréscimo (50 mil) assinado: valor atualizado 250 mil", async () => {

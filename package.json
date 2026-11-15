@@ -1,7 +1,7 @@
 {
-  "name": "growth-tools-construction",
+  "name": "growth-ambiental",
   "version": "0.1.0",
-  "description": "FP&A SaaS para incorporadoras imobiliárias — Growth Tools / TFG",
+  "description": "Gestão financeira, FP&A e BI para consultorias ambientais — Growth Tools / TFG",
   "author": "Tools for Growth",
   "private": true,
   "type": "module",

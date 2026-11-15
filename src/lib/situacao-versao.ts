@@ -78,3 +78,30 @@ export function trocaDeSituacao(de: string, para: string, chaveLigada: boolean, 
       : null;
   return { recusa: null, exigeAprovador, confirmacao };
 }
+
+// ── GA-1 §3: nada some em silêncio ────────────────────────────────────────
+
+export interface VersoesForaDosRelatorios {
+  /** projetos cujo Orçamento usado nos relatórios não está Aprovado. */
+  orcamento: number;
+  /** projetos cuja Previsão usada nos relatórios não está Aprovada. */
+  previsao: number;
+}
+
+/**
+ * Aviso de uma linha nos relatórios (DRE, Fluxo, Dashboard, Resumo, Previsão,
+ * projeção ao término): com a chave ligada, versão de planejamento lançada e
+ * não Aprovada fica fora dos números — a tela diz isso, com o link para
+ * aprovar. Sem a chave, ou sem nada fora, null.
+ */
+export function avisoDeVersoesNaoAprovadas(fora: VersoesForaDosRelatorios, chaveLigada: boolean): { texto: string; href: string } | null {
+  if (!chaveLigada || (fora.orcamento <= 0 && fora.previsao <= 0)) return null;
+  const proj = (n: number) => `${n} projeto${n === 1 ? "" : "s"}`;
+  const texto =
+    fora.orcamento > 0 && fora.previsao > 0
+      ? `O Orçamento de ${proj(fora.orcamento)} e a Previsão de ${proj(fora.previsao)} ainda não foram aprovados e não entram aqui.`
+      : fora.orcamento > 0
+        ? `O Orçamento de ${proj(fora.orcamento)} ainda não foi aprovado e não entra aqui.`
+        : `A Previsão de ${proj(fora.previsao)} ainda não foi aprovada e não entra aqui.`;
+  return { texto, href: fora.orcamento > 0 ? "/budget" : "/forecast" };
+}

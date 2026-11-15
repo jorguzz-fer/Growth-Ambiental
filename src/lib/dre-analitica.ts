@@ -99,7 +99,10 @@ const porCodigo = (a: string, b: string) => a.localeCompare(b, undefined, { nume
  * grupo nas contas; despesa sem conta (ou com conta fora do plano) vai para
  * "Sem conta do plano". Os subtotais são os da cascata.
  */
-export function linhasDaDreAnalitica(e: EntradaAnalitica, contas: readonly ContaAnalitica[]): LinhaAnalitica[] {
+/** GA-1 §7: o rótulo da receita só cita vendas e liberações para quem tem dados de incorporação. */
+export const rotuloDaReceita = (comIncorporacao: boolean) => (comIncorporacao ? "Receitas (faturas, contas a receber e, nos dados antigos, vendas e liberações)" : "Receitas (faturas e contas a receber)");
+
+export function linhasDaDreAnalitica(e: EntradaAnalitica, contas: readonly ContaAnalitica[], opts: { comIncorporacao?: boolean } = {}): LinhaAnalitica[] {
   const cascata = waterfall([paraInputs(e)]);
   const R = cascata.R;
   const pct = (v: number) => (R > 0 ? (v / R) * 100 : null);
@@ -113,7 +116,7 @@ export function linhasDaDreAnalitica(e: EntradaAnalitica, contas: readonly Conta
   // Receita, com o que a compõe.
   push({ id: "receita", pai: null, nivel: 0, tipo: "categoria", label: "Receita", valor: R });
   const lancadoComoReceita = e.lancamentos.filter((l) => l.categoria === "Receita").reduce((a, l) => a + l.valor, 0);
-  if (e.receitaVendas) push({ id: "receita:vendas", pai: "receita", nivel: 1, tipo: "detalhe", label: "Receitas (faturas, contas a receber e, nos dados antigos, vendas e liberações)", valor: e.receitaVendas });
+  if (e.receitaVendas) push({ id: "receita:vendas", pai: "receita", nivel: 1, tipo: "detalhe", label: rotuloDaReceita(opts.comIncorporacao ?? true), valor: e.receitaVendas });
   if (e.receitaPermuta) push({ id: "receita:permuta", pai: "receita", nivel: 1, tipo: "detalhe", label: "Revenda de bens de permuta", valor: e.receitaPermuta });
   if (lancadoComoReceita) push({ id: "receita:despesa", pai: "receita", nivel: 1, tipo: "detalhe", label: "Lançado como despesa na categoria Receita", valor: lancadoComoReceita });
 

@@ -420,7 +420,7 @@ export interface LinhaGerencial {
  * cascata — sem dupla contagem.
  */
 export function dreGerencial(
-  entrada: { receitaSemConta: number; encargos: number; lancamentos: readonly LancamentoGerencial[] },
+  entrada: { receitaSemConta: number; encargos: number; lancamentos: readonly LancamentoGerencial[]; /** GA-1 §7: rótulo da receita sem conta; padrão cita os dados antigos. */ rotuloDaReceita?: string },
   contas: ReadonlyMap<string, { name: string; classe: ClasseGerencial }>,
 ): { linhas: LinhaGerencial[]; resultadoLiquido: number; foraDoResultado: number; resultadoDaCascata: number; semClasse: string[] } {
   const r2 = (v: number) => Math.round(v * 100) / 100;
@@ -435,7 +435,7 @@ export function dreGerencial(
     atual.valor += contribuicao;
     porConta.set(k, atual);
   };
-  if (entrada.receitaSemConta) somar("receita_bruta", "_receita", "Receita de contratos e vendas (sem conta do plano)", entrada.receitaSemConta);
+  if (entrada.receitaSemConta) somar("receita_bruta", "_receita", entrada.rotuloDaReceita ?? "Receita de contratos e vendas (sem conta do plano)", entrada.receitaSemConta);
   if (entrada.encargos) somar("resultado_financeiro", "_encargos", "Encargos de pagamento (juros, multa, desconto)", -entrada.encargos);
   for (const l of entrada.lancamentos) {
     const sinal = l.categoria === "Receita" ? 1 : -1;

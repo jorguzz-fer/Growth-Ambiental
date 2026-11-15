@@ -19,7 +19,9 @@ vi.mock("server-only", () => ({}));
 describe.skipIf(!HAS_DB)("Plano de Contas ambiental — integração", async () => {
   const { db, schema } = await import("@/lib/db");
   const { defaultPermissions } = await import("@/lib/permissions");
-  const { instalarPlanoPadrao, CHAVES_DO_PLANO_PADRAO } = await import("@/lib/planocontas-padrao");
+  const { instalarPlanoPadrao } = await import("@/lib/planocontas-padrao");
+  const { ligarChavesDeEmpresaNova } = await import("@/lib/chaves-empresa-nova");
+  const { CHAVES_EMPRESA_NOVA } = await import("@/lib/chaves");
   const { PLANO_AMBIENTAL, linhasDoPlano } = await import("@/lib/calc/plano-ambiental");
   const E = await import("./planocontas-estrutura");
   const { addDespesa, updateDespesa } = await import("./despesas");
@@ -58,7 +60,8 @@ describe.skipIf(!HAS_DB)("Plano de Contas ambiental — integração", async () 
       const [tenant] = await db.insert(schema.tenants).values({ name: `tenant-plano-ambiental-${k}` }).returning();
       t[k] = tenant;
       // 1 — o mesmo caminho do provisionamento.
-      await instalarPlanoPadrao(tenant.id, db, undefined, "teste");
+      await instalarPlanoPadrao(tenant.id, db);
+      await ligarChavesDeEmpresaNova(tenant.id);
       for (const nome of ["P1", "P2"]) {
         const [p] = await db.insert(schema.projects).values({ tenantId: tenant.id, name: `${nome}-${k}` }).returning();
         const vs = await db
@@ -89,7 +92,7 @@ describe.skipIf(!HAS_DB)("Plano de Contas ambiental — integração", async () 
     expect(grupos.find((g) => g.id === sub.parentId)!.code).toBe("2");
     expect(await conta(t.a.id, "2.3.04")).toMatchObject({ name: "Hospedagens", groupCode: "2.3", dreCategory: "Custo Variável", classeGerencial: "custo_servico", tipoCusto: "direto", kind: "cef" });
     const flags = await db.select().from(schema.tenantFlags).where(eq(schema.tenantFlags.tenantId, t.a.id));
-    expect(flags.filter((f) => f.ligada).map((f) => f.chave).sort()).toEqual([...CHAVES_DO_PLANO_PADRAO].sort());
+    expect(flags.filter((f) => f.ligada).map((f) => f.chave).sort()).toEqual([...CHAVES_EMPRESA_NOVA].sort());
     // 14 — cada empresa tem as suas linhas: nenhum id compartilhado; o padrão é só ponto de partida.
     const idsB = new Set((await db.select({ id: schema.chartAccounts.id }).from(schema.chartAccounts).where(eq(schema.chartAccounts.tenantId, t.b.id))).map((x) => x.id));
     expect(contas.some((c) => idsB.has(c.id))).toBe(false);
