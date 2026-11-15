@@ -113,6 +113,16 @@ describe("GA-11 · 8 · o que não pode sumir (checklist §3.5)", () => {
     expect(ler(PAGINA)).not.toMatch(/de: sp\.de|ate: sp\.ate/);
   });
 
+  it("os cards de cada dia (cadeia de saldo) e os Dias fechados ficam acima das abas, como na tela de antes", () => {
+    const cadeia = tela.indexOf("<CadeiaDias");
+    const dias = tela.indexOf("{diasFechados}");
+    const abas = tela.indexOf("data-abas-do-caixa");
+    expect(cadeia).toBeGreaterThan(0);
+    expect(cadeia).toBeLessThan(abas);
+    expect(dias).toBeLessThan(abas);
+    expect(tela.indexOf("{faixa}")).toBeLessThan(cadeia);
+  });
+
   it("sugestões da Cris por aba (§4.1)", () => {
     for (const s of ["Quais pendências conciliar primeiro?", "O que está na fatura e não foi lançado?", "Quanto vence na próxima fatura?", "Como subo a fatura em PDF?", "Como lanço um estorno?", "Por que há ajustes neste mês?"]) expect(tela).toContain(s);
   });

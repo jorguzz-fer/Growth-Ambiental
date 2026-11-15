@@ -41,8 +41,9 @@ import { FaixaDeConciliacao, VazioDaConciliacao, type EstadoDoOpenFinance } from
  * Estrutura (§3): cabeçalho → barra com o seletor de conta (o filtro de
  * período saiu, decisão do dono de 15/11/2026: a tela mostra todos os
  * movimentos; `?de=`/`?ate=` de links antigos são ignorados) →
- * cartões do dia → faixa dos três caminhos → abas Contas correntes · Cartões
- * de crédito · Ajustes → cadeia de saldo e Dias fechados; o Assistente à
+ * cartões do dia → faixa dos três caminhos → cadeia de saldo (os cards de
+ * cada dia) e Dias fechados → abas Contas correntes · Cartões de crédito ·
+ * Ajustes; o Assistente à
  * direita. O seletor (`?conta=`) escolhe UMA conta (ou cartão) ou todas, e
  * tudo na tela segue a escolha; trocar de aba volta para "Todas".
  */
@@ -299,6 +300,14 @@ export async function ConciliacaoDeCaixa({ ctx, sp, avisoRemovida, diasFechados 
 
           {faixa}
 
+          {/* Os cards de cada dia (2 realizados, hoje e 7 à frente) e os Dias fechados ficam ACIMA das
+              abas, como na tela de antes: a visão dos fechamentos não pode ficar no fim da página. */}
+          <div data-cadeia-de-saldo>
+            {aba === "cartoes" && <p className="mb-2 text-[11.5px] text-[var(--color-ink3)]">A cadeia de saldo é das contas correntes: o cartão entra nela pelo pagamento da fatura.</p>}
+            <CadeiaDias cadeia={cadeia} canFechar={!contaSel && can(ctx.perms, "fechamento", "criar")} canReabrir={!contaSel && can(ctx.perms, "conciliacao", "excluir")} previsto={previstoDaFaixa} />
+            {diasFechados}
+          </div>
+
           <div className="mb-5 flex gap-1 rounded-[8px] bg-[var(--color-surface3)] p-1" role="tablist" data-abas-do-caixa>
             {ABAS_DO_CAIXA.map((t) => (
               <Link
@@ -377,11 +386,6 @@ export async function ConciliacaoDeCaixa({ ctx, sp, avisoRemovida, diasFechados 
             />
           )}
 
-          <div className="mt-6">
-            {aba === "cartoes" && <p className="mb-2 text-[11.5px] text-[var(--color-ink3)]">A cadeia de saldo é das contas correntes: o cartão entra nela pelo pagamento da fatura.</p>}
-            <CadeiaDias cadeia={cadeia} canFechar={!contaSel && can(ctx.perms, "fechamento", "criar")} canReabrir={!contaSel && can(ctx.perms, "conciliacao", "excluir")} previsto={previstoDaFaixa} />
-            {diasFechados}
-          </div>
         </div>
         {aba === "cartoes" && abaCartoes ? (
           <AssistenteCartoes usuario={ctx.userEmail ?? "anon"} analise={abaCartoes.analise} />

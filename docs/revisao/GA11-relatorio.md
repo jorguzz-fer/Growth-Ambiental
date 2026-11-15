@@ -56,8 +56,11 @@ Está em `docs/revisao/GA11-inventario.md`. Toda função tem destino.
   - Clicar numa linha do quadro também escolhe a conta.
 - **Cartões do dia:** seguem a escolha. Na aba Cartões, mostram créditos e compras da fatura do dia.
 - **Faixa dos três caminhos:** na aba Cartões, "Subir extrato" vira "Subir fatura".
+- **Cadeia de saldo (os cards de cada dia) e Dias fechados:** ficam logo abaixo da faixa e **acima das abas**, como na tela de antes, para a visão dos fechamentos aparecer sem rolar a página.
+  - São os mesmos cards: 2 dias realizados, hoje e 7 à frente, com "Em conta" × "Conciliado" e o botão "Fechar o dia".
+  - Seguem a escolha de conta. Fechar o dia continua só em "Todas".
+  - Ordem da tela: cartões do dia → faixa dos três caminhos → cadeia de saldo e Dias fechados → abas.
 - **Abas:** Contas correntes · Cartões de crédito · Ajustes.
-- **Cadeia de saldo e Dias fechados:** seguem a escolha. Fechar o dia continua só em "Todas".
 - **"Todas" é visão de trabalho:**
   - pendentes, conciliados e "Todos os lançamentos" levam a coluna **Conta**;
   - conciliar funciona dali.
