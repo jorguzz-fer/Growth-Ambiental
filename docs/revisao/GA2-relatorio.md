@@ -94,9 +94,20 @@ O script roda em `BEGIN READ ONLY … ROLLBACK`.
 - **A demonstração não conta:** o seed grava no formato interno correto. As "ambíguas" dela estão certas; só têm dia e mês até 12.
 - **As 4 horas a mais** que os 1.854 do seed são apontamentos de testes anteriores de navegador na base local.
 
-**Produção: a rodar pelo dono** (no terminal do GA-postgres, `psql -f scripts/medicao-datas.sql`):
-- cole o resultado no PR;
-- se uma empresa real tiver ambíguas, as linhas são revistas com o cliente. O código não altera nada.
+**Produção: rodada pelo dono em 15/11/2026, no terminal do GA-postgres. Nada foi gravado.**
+
+| Empresa | Horas | Implantação | Treinamento | Medição de contrato |
+|---|---|---|---|---|
+| Empresa real (a única cliente em produção) | 0 | 0 | 0 | 0 |
+| Consultoria Ambiental (demonstração) | 1.848 | 0 | 0 | 56 |
+
+- **A empresa real não tem nenhum registro** nas quatro telas. Não há data real a revisar.
+- **Os dados da demonstração** foram gravados pelo seed no formato interno correto. As "ambíguas" dela estão certas e não precisam de revisão.
+- **Resultado:** nada a corrigir. O script fica no repositório para uso futuro, por exemplo se surgir suspeita de data invertida digitada antes do GA-2.
+
+**Para rodar de novo:** no terminal do GA-postgres, entre com `psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"` e cole o conteúdo de `scripts/medicao-datas.sql`. O script é somente leitura e termina em ROLLBACK.
+
+**Se uma empresa real tiver ambíguas,** as linhas são revistas com o cliente. O código não altera nada.
 
 ## Testes
 
