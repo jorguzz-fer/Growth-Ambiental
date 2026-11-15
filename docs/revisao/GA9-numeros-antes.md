@@ -33,6 +33,15 @@ O seed da demonstração e várias telas dependem do dia de hoje: mês corrente,
 
 Sem `DATA_FIXA`, `scripts/data-fixa.mjs` não faz nada.
 
+## O que não conta como mudança
+
+Recriando a demonstração duas vezes com a mesma data, duas coisas variam sem que nenhum número mude:
+
+- **zero com sinal:** "+R$ 0" ou "R$ 0", resto de arredondamento que depende da ordem da soma;
+- **ordem das linhas de mesma data** nas listas do Caixa: o banco devolve empates em qualquer ordem, e nenhuma coluna depende da ordem.
+
+Por isso a foto guarda as células com o zero sem sinal e as linhas de cada tabela em ordem fixa, e a comparação faz o mesmo. Com isso, duas recriações independentes deram **fotos idênticas**: 977 telas e 12 planilhas.
+
 ## Como refazer e comparar
 
 Só em ambiente local, com o banco de teste de `.env.local`. O script recusa banco que não seja local.

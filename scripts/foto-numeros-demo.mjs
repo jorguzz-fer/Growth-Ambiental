@@ -30,19 +30,19 @@ const postgres = require("postgres");
 const XLSX = require("xlsx");
 
 const [modo, arquivo] = process.argv.slice(2);
-if (!["gravar", "comparar"].includes(modo) || !arquivo) {
-  console.error("Uso: node scripts/foto-numeros-demo.mjs gravar|comparar <arquivo.json>");
+if (!["gravar", "comparar", "normalizar"].includes(modo) || !arquivo) {
+  console.error("Uso: node scripts/foto-numeros-demo.mjs gravar|comparar|normalizar <arquivo.json>");
   process.exit(2);
 }
 const BASE = process.env.FOTO_BASE ?? "http://localhost:3100";
 const EMAIL = (process.env.FOTO_EMAIL ?? "").trim().toLowerCase();
 const SENHA = process.env.FOTO_SENHA ?? "";
 const DATA_FIXA = process.env.DATA_FIXA ?? "";
-if (!EMAIL || !SENHA || !process.env.DATABASE_URL || !/^\d{4}-\d{2}-\d{2}$/.test(DATA_FIXA)) {
+if (modo !== "normalizar" && (!EMAIL || !SENHA || !process.env.DATABASE_URL || !/^\d{4}-\d{2}-\d{2}$/.test(DATA_FIXA))) {
   console.error("Defina DATABASE_URL, FOTO_EMAIL, FOTO_SENHA e DATA_FIXA (AAAA-MM-DD).");
   process.exit(2);
 }
-if (process.env.TZ !== "UTC") {
+if (modo !== "normalizar" && process.env.TZ !== "UTC") {
   console.error("Rode com TZ=UTC (o mesmo fuso do servidor e do seed).");
   process.exit(2);
 }
@@ -200,6 +200,32 @@ async function tirarFoto() {
   return { meta: { dataFixa: DATA_FIXA, fuso: "UTC", empresa, projetos: projetos.map((p) => p.name), errosDePagina }, telas, exportacao };
 }
 
+// ── Normalização ───────────────────────────────────────────────────────────
+// Duas variações que NÃO são mudança de número, vistas ao recriar a demonstração
+// duas vezes com a mesma data:
+//  1. zero com sinal ("+R$ 0", "+0,0%"): resto de arredondamento que depende da
+//     ordem da soma;
+//  2. ordem das linhas de mesma data (o banco devolve empates em qualquer ordem;
+//     nenhuma coluna das tabelas lidas depende da ordem, como saldo corrido).
+// Por isso cada célula perde o sinal do zero e as linhas de cada tabela são
+// guardadas e comparadas em ordem fixa (o cabeçalho continua na frente).
+const zeroSemSinal = (c) => (typeof c === "string" ? c.replace(/^[+\-−]\s?(R\$ 0|0(,0+)?%)$/, "$1") : c);
+function normalizarTabela(t) {
+  const linhas = t.linhas.map((l) => l.map(zeroSemSinal));
+  const [cab, ...corpo] = linhas;
+  const ordem = (l) => JSON.stringify(l);
+  return { ...t, linhas: cab ? [cab, ...corpo.sort((a, b) => (ordem(a) < ordem(b) ? -1 : ordem(a) > ordem(b) ? 1 : 0))] : [] };
+}
+function normalizar(foto) {
+  for (const tela of Object.values(foto.telas))
+    for (const leitura of Object.values(tela)) {
+      leitura.tabelas = leitura.tabelas.map(normalizarTabela);
+      if (leitura.indicadores) leitura.indicadores = leitura.indicadores.map(zeroSemSinal);
+    }
+  for (const e of Object.values(foto.exportacao)) if (e.abas) for (const [n, a] of Object.entries(e.abas)) e.abas[n] = a.map((l) => l.map(zeroSemSinal));
+  return foto;
+}
+
 // ── Comparação ─────────────────────────────────────────────────────────────
 function diferencas(a, b, caminho = "", saida = []) {
   if (saida.length > 500) return saida;
@@ -216,7 +242,12 @@ function diferencas(a, b, caminho = "", saida = []) {
   return saida;
 }
 
-const foto = await tirarFoto();
+if (modo === "normalizar") {
+  writeFileSync(arquivo, JSON.stringify(normalizar(JSON.parse(readFileSync(arquivo, "utf8"))), null, 1) + "\n");
+  console.log(`Foto normalizada: ${arquivo}`);
+  process.exit(0);
+}
+const foto = normalizar(await tirarFoto());
 if (modo === "gravar") {
   mkdirSync(path.dirname(arquivo), { recursive: true });
   writeFileSync(arquivo, JSON.stringify(foto, null, 1) + "\n");
@@ -224,7 +255,7 @@ if (modo === "gravar") {
   console.log(`Foto gravada em ${arquivo}: ${n} telas lidas, ${Object.keys(foto.exportacao).length} exportações.`);
   if (foto.meta.errosDePagina.length) console.log(`Erros de página: ${foto.meta.errosDePagina.join(" | ")}`);
 } else {
-  const antes = JSON.parse(readFileSync(arquivo, "utf8"));
+  const antes = normalizar(JSON.parse(readFileSync(arquivo, "utf8")));
   const difs = diferencas({ telas: antes.telas, exportacao: antes.exportacao }, { telas: foto.telas, exportacao: foto.exportacao });
   if (antes.meta.dataFixa !== foto.meta.dataFixa) difs.unshift(`DATA_FIXA diferente: foto ${antes.meta.dataFixa}, agora ${foto.meta.dataFixa}`);
   if (difs.length) {
