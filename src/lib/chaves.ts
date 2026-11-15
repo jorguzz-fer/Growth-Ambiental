@@ -126,14 +126,6 @@ export const CHAVES = [
     previa: { href: "/chaves#previa-rateio", rotulo: "Prévia — receita da DRE de hoje × rateio, por projeto, e as pendências" },
   },
   {
-    id: "caixa_conciliacao_por_conta",
-    titulo: "Caixa: conciliação por conta, sem projeto no extrato",
-    efeito:
-      "O Caixa vira a tela de conciliação da empresa: saem o seletor de projeto, o de versão e o modo comparação; a tela mostra a versão Atual de todos os projetos; os cartões entram no bloco de saldos e cada conta ou cartão vira o filtro da tela. O extrato importado (e o do Open Finance) passa a nascer só com a conta: o projeto de cada movimento vem do vínculo (a despesa, a conta a receber ou a parcela com que foi conciliado). Movimento sem vínculo aparece no realizado da empresa como \"não atribuído a projeto\". Os movimentos que já existem mantêm o projeto que têm: nenhum número antigo muda.",
-    origem: "Prompt AT, seções 3 e 4 (decisão do dono de 08/11/2026)",
-    previa: { href: "/chaves#previa-caixa-conta", rotulo: "Prévia — movimentos e pendências por conta, e os movimentos sem projeto" },
-  },
-  {
     id: "parcela_recebida_situacao",
     titulo: "Parcela do comprador: situação, atrasados e previsto do Fluxo",
     efeito:
@@ -166,7 +158,6 @@ export const CHAVES_EMPRESA_NOVA = [
   "resumo_definicao_nova",
   "despesa_categoria_do_plano",
   "orcamento_categoria_do_plano",
-  "caixa_conciliacao_por_conta",
 ] as const satisfies readonly ChaveId[];
 
 /**

@@ -257,7 +257,7 @@ function PagamentoModal({
           </div>
           <p className="mt-1 text-[11px] text-[var(--color-ink3)]">
             Original − desconto + multa + juros + outros. Encargos vão para
-            “Despesas Financeiras” na DRE; a saída real entra no Controle de Caixa.
+            “Despesas Financeiras” na DRE; a saída real entra na Conciliação de Caixa.
           </p>
 
           {error && <p className="mt-2 text-sm text-[var(--color-danger)]">{error}</p>}

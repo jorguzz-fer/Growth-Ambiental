@@ -170,7 +170,7 @@ Cada despesa tem três datas, e confundi-las é o erro mais caro do sistema:
 
 ## Cartões de Crédito (/cartoes) — módulo Caixa
 
-**Para que serve:** cadastrar cartões, acompanhar faturas, pagar a fatura e conferir o extrato do cartão.
+**Para que serve:** cadastrar cartões, acompanhar faturas e pagar a fatura. A conferência e a conciliação da fatura ficam na **Conciliação de Caixa, aba Cartões de crédito** (esta tela tem o link, por cartão).
 
 **O que se faz nela:**
 - **Cadastro**: apelido, 4 últimos dígitos, limite, dias de fechamento e vencimento, conta que debita e taxa do rotativo (opcional). Também ativar e inativar.
@@ -179,8 +179,7 @@ Cada despesa tem três datas, e confundi-las é o erro mais caro do sistema:
 - **Faturas**:
   - **Pagar**: só fatura fechada; informa valor, data, conta e projeto do lançamento. Pagamento parcial é aceito.
   - **Juros cobrados**: vira uma despesa "Despesas Financeiras".
-- **Extrato do cartão**: subir XLSX ou CSV, ou o **PDF (ou foto) da fatura**, para conferir o que não foi lançado, o que não apareceu no extrato e as divergências. O PDF é lido por IA e aparece numa **prévia**: só com "Registrar" o extrato é guardado, e nenhuma despesa é lançada. Também se registra **estorno**.
-- **Lançar o que faltou**: cada item "No extrato, sem lançamento" tem "Lançar em Despesas →", que abre a despesa já preenchida com valor, cartão, data e descrição. A pessoa confere e salva lá.
+- **Subir e conciliar a fatura**: o link "Conciliar … na Conciliação de Caixa → aba Cartões" abre a aba Cartões da Conciliação de Caixa com o cartão já escolhido. Lá se sobe a fatura (PDF, imagem, XLSX ou CSV), se confere o que não foi lançado, o que não apareceu na fatura e as divergências, se lança o que faltou (link para Despesas preenchida) e se registra o estorno.
 
 **Campos que confundem:**
 - A **compra** é lançada em **Despesas**, com a forma "Cartão de crédito": cartão, data da compra e número de parcelas (1 a 48). Ela nasce "A pagar", **sem saída de caixa**, e cada parcela cai na fatura do ciclo correspondente.
@@ -230,52 +229,53 @@ No título da tela aparece "Acerto Contábil".
 - membro: ver, criar e editar;
 - contador: não acessa.
 
-## Caixa (/caixa) — módulo Caixa
+## Conciliação de Caixa (/caixa) — módulo Caixa
 
-**Para que serve:** o "Controle de Caixa". Mostra o dinheiro real, **concilia o extrato bancário** com os lançamentos e registra ajustes e o fechamento do dia.
+**Para que serve:** a tela de conciliação da empresa. Concilia as **contas correntes** e os **cartões de crédito** cadastrados com os lançamentos, registra ajustes e fecha o dia. Trabalha só com o dinheiro real: a versão Atual de todos os projetos e os movimentos sem projeto. Não tem seletor de projeto nem de versão (Orçamento e Previsão não entram aqui).
 
-**O que se faz nela:**
-- Escolher o projeto. A tabela de movimentos é do projeto, mas os saldos, a cadeia de dias e o fechamento são da **empresa inteira**.
-- **Entradas, saídas e saldo do dia**.
-- **Os dois saldos**, por conta e no total:
-  - **Em conta**: o do extrato, ou seja, o fato do banco;
-  - **Conciliado**: o que os lançamentos sustentam.
-  - Num dia todo conciliado, os dois coincidem.
-- **Cadeia de saldo**: 2 dias realizados, hoje e 7 dias à frente. O botão **Fechar o dia** grava saldo inicial, entradas, saídas, saldo final e divergência. Fechar não trava lançamentos, e reabrir exige um motivo.
-- **O que vence nos próximos dias**: de hoje em diante, o cartão de cada dia mostra "Vence a receber", "Vence a pagar" e o "Saldo projetado". A pagar é o saldo em aberto das contas a pagar da versão Atual; a receber é o que falta receber das contas a receber (inclusive as faturas dos contratos) e, em dados antigos, as parcelas dos planos de venda de unidades. O que venceu e segue em aberto aparece num aviso à parte, sem entrar em nenhum dia. Título sem data de vencimento não entra.
-- **Dias fechados**: a seção recolhível abaixo da cadeia lista o histórico dos fechamentos (ver "Dias fechados (no Caixa)").
-- **Importar extrato**:
-  - escolha a conta e, opcionalmente, o saldo final (que atualiza a conta);
-  - envie XLSX, CSV ou PDF (PDF escaneado ou imagem só com IA);
-  - na pré-visualização, para cada linha: cadastrar a despesa **já paga** ou a conta a receber **já recebida**, parear com um lançamento existente, ignorar, ou importar o restante como movimentos;
-  - linhas já importadas (mesma conta, data, valor e documento) são ignoradas;
-  - a conciliação automática só ocorre com **uma única** despesa em aberto de mesmo valor no mesmo mês. Com várias candidatas, a linha fica pendente, com sugestões.
-- Aba **Conciliação**:
-  - saídas pendentes com contas a pagar sugeridas; é possível vincular **várias despesas a um movimento**, desde que os vínculos somem o valor dele;
-  - entradas com contas a receber sugeridas;
-  - "Nova despesa a partir do extrato" abre Despesas já preenchida.
-- **Desfazer conciliação**: preserva o movimento do extrato e desfaz só o vínculo.
-- Aba **Ajustes**: o único lançamento direto desta tela. Exige motivo, para mais ou para menos, e afeta só o saldo conciliado. É o último recurso.
-- Comparar 2 ou 3 versões (entradas, saídas e saldo líquido).
+**Como a tela é organizada:**
+- **Barra de filtros:** o **seletor de conta**, sempre visível (a tela não tem filtro de período: mostra todos os movimentos):
+  - na aba Contas correntes: "Todas as contas correntes" ou uma conta ("Banco · conta");
+  - na aba Cartões de crédito: "Todos os cartões" ou um cartão ("Apelido •••• final");
+  - na aba Ajustes: "Todas as contas", cada conta e cada cartão.
+  - A escolha fica no link da tela (recarregar ou compartilhar mantém). Trocar de aba volta para "Todas". Clicar numa linha do quadro de saldos também escolhe aquela conta.
+  - "Todas" é visão de trabalho: as listas juntam todas as contas (ou cartões), com a coluna **Conta** (ou **Cartão**), e dá para conciliar dali. Com uma conta escolhida, tudo na tela mostra só ela.
+- **Cartões do dia:** entradas, saídas e saldo do dia do que está selecionado (na aba Cartões: créditos e compras da fatura do dia).
+- **Os três caminhos:** **Subir extrato** (na aba Cartões, **Subir fatura**), **Conciliar com a Cris** e **Open Finance** (conectado, conectar ou indisponível, com o motivo). Ao lado, o contador do que falta conciliar.
+- **Três abas:** Contas correntes · Cartões de crédito · Ajustes.
+- **Cadeia de saldo:** 2 dias realizados, hoje e 7 dias à frente, segue a conta escolhida (ou a empresa). O botão **Fechar o dia** (em "Todas") grava saldo inicial, entradas, saídas, saldo final e divergência; fechar não trava lançamentos e reabrir exige um motivo. **Dias fechados** lista o histórico.
+- **O que vence nos próximos dias:** de hoje em diante, cada dia mostra "Vence a receber", "Vence a pagar" e o "Saldo projetado" (contas a pagar da versão Atual e contas a receber em aberto). O que venceu e segue em aberto aparece num aviso à parte.
+- **Assistente IA** à direita: pares propostos, agrupamentos, diferença do dia, o que falta cadastrar e análises (na aba Cartões, o assistente dos cartões).
 
-**Com a chave "Caixa: conciliação por conta" ligada** (o Caixa vira "Conciliação de Caixa"):
-- Não há seletor de projeto nem de versão, nem comparação de versões: a tela mostra a versão Atual de todos os projetos.
-- Os **cartões de crédito** aparecem no bloco de saldos, depois das contas: fatura aberta, conciliado, pendentes e o último extrato.
-- **Cada conta ou cartão é clicável** e filtra a tela; "Todas as contas" volta ao consolidado. Cada linha mostra quantos movimentos faltam conciliar.
-- O extrato importado nasce **só com a conta**: o projeto de cada movimento é o do item com que ele foi conciliado (despesa, conta a receber, parcela de venda antiga ou pagamento de fatura). Movimento sem vínculo é da empresa e não entra no realizado de nenhum projeto.
-- No topo do bloco de saldos, os **três caminhos**: **Subir extrato** (o diálogo de importação), **Conciliar com a Cris** e **Open Finance** (conectado, conectar ou indisponível, com o motivo). Ao lado, o contador "N movimentos a conciliar em M contas · mais antigo há X dias".
-- **Cartão escolhido**: a aba Conciliação mostra as linhas do extrato da fatura, cada uma com a compra lançada no cartão sugerida; "Lançar despesa a partir desta linha" abre Despesas preenchida e, ao salvar, a linha fica conciliada. Cada fatura mostra total do extrato, conciliado e diferença. Crédito ou estorno segue o fluxo de estorno de Cartões.
-- **Pagamento da fatura**: a saída da conta corrente concilia com o pagamento da fatura (sugestão própria), sem saída nova.
+**Aba Contas correntes:**
+- **Os dois saldos**, por conta e no total das contas ativas: **Em conta** (o do extrato, fato do banco) e **Conciliado** (o que os lançamentos sustentam); num dia todo conciliado, os dois coincidem. Cada conta mostra quantos movimentos faltam conciliar.
+- **Importar extrato:** escolha a conta (com uma conta escolhida no seletor, ela já vem preenchida) e, opcionalmente, o saldo final; envie XLSX, CSV ou PDF (PDF escaneado ou imagem só com IA). Na pré-visualização, cada linha pode virar despesa **já paga**, conta a receber **já recebida**, ser pareada com um lançamento, ignorada ou importada como movimento. Linhas já importadas são ignoradas. A conciliação automática só ocorre com **uma única** despesa em aberto de mesmo valor no mesmo mês.
+- O extrato nasce **só com a conta**: o projeto de cada movimento é o do item com que ele foi conciliado. Movimento sem vínculo é da empresa e não entra no realizado de nenhum projeto.
+- **Pendentes:** saídas com contas a pagar sugeridas (com o grau de compatibilidade; um movimento pode quitar **várias despesas**, desde que os vínculos somem o valor dele), entradas com contas a receber sugeridas, e "falta cadastrar" (Despesas ou Contas a Receber já preenchidos).
+- **Pagamento de fatura de cartão:** a saída da conta corrente concilia com o pagamento da fatura, aqui, sem saída nova.
+- **Conciliados**, com **desfazer** (preserva o movimento e desfaz só o vínculo).
+
+**Aba Cartões de crédito:**
+- **Quadro por cartão:** limite, a fatura (fechamento e vencimento), o valor da fatura importada, o valor lançado em Despesas, a diferença e a situação (aberta, fechada, paga ou conciliada).
+- **Subir fatura:** PDF ou imagem (lidos pela IA), XLSX ou CSV (positivo = compra, negativo = crédito). A prévia mostra as linhas; **Registrar** guarda só a fatura, sem duplicar. Nenhuma despesa é lançada.
+- **Conciliação linha a linha:** cada linha da fatura com a compra lançada no cartão sugerida (grau alto: mesma fatura e mesmo valor). Conciliar e desfazer (com motivo). Em "Todos os cartões", uma lista só, com o cartão de cada fatura.
+- **Conferência:** o que está na fatura e não foi lançado (proposta com link para Despesas já preenchida), o que foi lançado e não está na fatura, as divergências e os créditos. Crédito vira estorno **só por ação da pessoa** ("Registrar estorno" ou reconhecer o estorno antecipado).
+- Cadastro, faturas, pagamento da fatura e projeção continuam em **Cartões de Crédito** (/cartoes), que tem o link para esta aba.
+
+**Aba Ajustes:** o único lançamento direto da tela. Exige motivo, para mais ou para menos, e afeta só o saldo conciliado; o projeto é opcional. A lista mostra projeto, conta, autor, data e o saldo conciliado antes e depois. É o último recurso.
 
 **Parcela de venda (dados antigos de unidades):** em empresas que tinham o módulo de unidades, que saiu, as entradas pendentes sugerem também as **parcelas de venda** ainda em aberto (valor, data e o primeiro nome do comprador na descrição). "Conciliar com a parcela" grava o recebimento; parcial é permitido; não cria conta a receber e não muda a receita da DRE. Criar conta a receber a partir de uma entrada que parece parcela exige confirmar que não é a parcela, para a receita não contar duas vezes. Com a chave "Parcela do comprador: situação, atrasados e previsto do Fluxo" ligada, Contas a Receber mostra a situação de cada parcela (a vencer, recebida, parcial, vencida), a faixa do Caixa conta as vencidas não recebidas nos atrasados e o Fluxo tira do previsto a parte recebida.
 
-**Conciliar com a Cris (só nesta tela):**
+**Conciliar com a Cris (só nesta tela, nas abas Contas correntes e Cartões de crédito):**
 - Anexe o extrato na conversa (PDF, imagem, XLSX ou CSV). A Cris lê com o **mesmo leitor da importação**, no servidor, e oferece abrir o diálogo de importação já preenchido; ela pergunta a conta quando não reconhece. Quem importa é o botão do diálogo. PDF ou imagem vai inteiro ao modelo de IA, com os nomes de quem pagou e recebeu; planilha não vai.
 - Para os pendentes, em rodadas de até 20 (do mais antigo para o mais novo), a Cris consulta os **candidatos que o servidor calcula** (despesas, contas a receber, parcelas de venda antigas, pagamentos de fatura) e propõe os pares; com mais de um candidato, faz uma pergunta de cada vez. A proposta vem como lista com o botão **"Confirmar N conciliações"**; cada vínculo é gravado por si, com auditoria, e o resultado diz qual não foi.
 - Ela não procura candidatos por conta própria, não concilia sozinha e não amplia a conciliação automática. Proposta com um item que não é candidato daquele movimento é recusada no servidor.
 - Sem par, ela diz o que falta lançar e o caminho (Despesas ou Contas a Receber, já preenchidos com os dados do extrato; ao salvar, o movimento fica conciliado, sem segunda saída).
 - Permissões: importar exige Caixa/criar; conciliar, Caixa/editar; lançar despesa, Despesas/criar. Sem Caixa/editar, a Cris não tem as ferramentas de conciliação e explica por quê.
 - "Perguntar à Cris", em cada movimento pendente, abre a conversa já com aquele movimento.
+- **Na aba Cartões**, a Cris tem as ferramentas do cartão: lista as linhas da fatura sem par, consulta as compras candidatas que o servidor calcula, propõe um lote de até 20 conciliações (gravadas só pelo botão "Confirmar N conciliações") e lê a fatura anexada (PDF, imagem, XLSX ou CSV), abrindo a prévia de "Subir fatura" já preenchida. Compra que está na fatura e não foi lançada vira proposta com o link para Despesas: a Cris **nunca** lança despesa nem estorno.
+- O que a Cris vê respeita o seletor: com uma conta (ou cartão) escolhida, só ela; em "Todas", todas.
+- Sem a IA configurada, o botão e o chat avisam: "A Cris precisa da IA configurada (Configurações → Diagnóstico de IA)".
 
 **Open Finance:** o cliente conecta o banco em Contas Correntes (ou Cartões), no botão "Conectar banco": um aviso diz o que é lido, para quê, por quanto tempo e como desconectar; a senha do banco é digitada no banco, na janela da Pluggy, e não passa pelo app. Depois, cada conta do banco é associada a uma conta corrente, a um cartão, a uma conta nova, ou ignorada. Os movimentos chegam pendentes. Movimento alterado pelo banco depois de conciliado não muda (vai para revisão); removido nunca é apagado. Na primeira busca, o que for igual a um extrato já importado espera a decisão em "Possíveis duplicados".
 
@@ -331,7 +331,7 @@ No título da tela aparece "Acerto Contábil".
 - **Despesas × Contas a Pagar**: em Despesas se **lança, edita, paga e cancela**, por projeto, com uma linha por PED. Contas a Pagar é **só consulta**, da empresa inteira, por **vencimento**, com uma linha por parcela, fatura ou saldo a ressarcir. A despesa parcelada aparece em várias linhas ali e em uma só em Despesas.
 - **Ressarcimentos × Acertos e Rateios**: Ressarcimentos devolve o dinheiro a **um terceiro que pagou pela empresa**. No Acerto, a **própria empresa** paga várias despesas a fornecedores numa transferência só, e a diferença vira encargo ou desconto financeiro.
 - **Caixa × Contas Correntes**: Contas Correntes é o **cadastro** das contas e do saldo; Caixa é o **dia a dia** (extrato, conciliação, ajustes, fechar o dia) e guarda o **histórico** dos dias fechados.
-- **Cartões × Despesas**: a compra é lançada em **Despesas** (forma "Cartão de crédito") e entra na DRE pela competência. **Cartões** cuida da **fatura**: acompanhar, pagar (a saída de caixa), juros, estorno e conferência do extrato do cartão.
+- **Cartões × Despesas**: a compra é lançada em **Despesas** (forma "Cartão de crédito") e entra na DRE pela competência. **Cartões** cuida da **fatura**: acompanhar, pagar (a saída de caixa) e juros; a conferência da fatura e o estorno ficam na Conciliação de Caixa, aba Cartões de crédito.
 
 ## Caminhos comuns
 
@@ -341,7 +341,7 @@ No título da tela aparece "Acerto Contábil".
    - Ao devolver, registre em Ressarcimentos (item a item ou em lote).
 2. **Conciliar o extrato:**
    - Em Caixa → Importar extrato, escolha a conta e o arquivo e revise a pré-visualização.
-   - Na aba Conciliação, vincule as saídas às despesas sugeridas; para o que não tem despesa, use "Nova despesa a partir do extrato".
+   - Na aba Contas correntes, vincule as saídas às despesas sugeridas; para o que não tem despesa, use "Nova despesa a partir do extrato".
    - Confira se "Em conta" e "Conciliado" batem e feche o dia.
 3. **Pagar várias despesas de uma vez:**
    - Se foi uma transferência única: Acertos e Rateios → Vincular despesas, informando o valor transferido.

@@ -16,7 +16,6 @@ import { registroCasa } from "@/lib/busca";
 import { can } from "@/lib/permissions";
 import { gravarRecebimento } from "@/lib/conta-receber-recebimento";
 import { logAudit } from "@/lib/audit";
-import { chaveLigada } from "@/lib/chaves-tenant";
 import { hojeISO } from "@/lib/despesa-status";
 import { desfazerVinculosDoMovimento, gravarVinculos } from "@/lib/conciliacao-db";
 import { correspondenciaInequivoca, type ItemDeVinculo } from "@/lib/conciliacao-regras";
@@ -172,88 +171,12 @@ async function versaoDoCaixa(tenantId: string, projectId: unknown): Promise<Vers
 const SEM_OBRA = "Escolha o projeto do caixa.";
 
 /**
- * Prompt AT §3 — onde nasce um movimento NOVO de extrato. Chave
- * "caixa_conciliacao_por_conta" ligada: em nenhuma obra (é da conta; a obra
- * vem do vínculo). Desligada: na versão de trabalho da obra da tela, como
- * sempre foi.
+ * Prompt AT §3 / GA-11 — onde nasce um movimento NOVO de extrato: na conta,
+ * em nenhuma versão de obra (a obra vem do vínculo). Era o comportamento da
+ * chave "caixa_conciliacao_por_conta"; desde o GA-11 vale para toda empresa.
  */
-async function destinoDoMovimentoNovo(
-  tenantId: string,
-  projectId: unknown,
-): Promise<{ ok: true; versionId: string | null; version: Version | null } | { ok: false; error: string }> {
-  if (await chaveLigada(tenantId, "caixa_conciliacao_por_conta")) return { ok: true, versionId: null, version: null };
-  const version = await versaoDoCaixa(tenantId, projectId);
-  if (!version) return { ok: false, error: SEM_OBRA };
-  if (version.locked) return { ok: false, error: "Versão congelada." };
-  return { ok: true, versionId: version.id, version };
-}
+const destinoDoMovimentoNovo = { ok: true as const, versionId: null };
 
-export async function addCash(formData: FormData) {
-  const ctx = await getTenantContext();
-  if (!ctx || !can(ctx.perms, "caixa", "criar")) return;
-  const version = await versaoDoCaixa(ctx.tenant.id, formData.get("projectId"));
-  if (!version) throw new Error(SEM_OBRA);
-  if (version.locked) throw new Error("Versão congelada.");
-
-  // Tipo de lançamento define o sinal do valor e a categoria:
-  //  - receita: entrada (+), categoria escolhida (mensais/AS/…);
-  //  - despesa: saída (−), lançamento avulso do extrato sem contraparte;
-  //  - ajuste:  ajuste manual de caixa, + ou − conforme "sinal".
-  // Entradas de ajuste e avulsas do extrato já nascem conciliadas (não têm
-  // contraparte nos módulos de receita/despesa para casar).
-  const tipo = ((formData.get("tipo") as string) || "receita").toLowerCase();
-  const magnitude = Math.abs(Number(formData.get("valor")) || 0);
-
-  let sign = 1;
-  let cat = (formData.get("cat") as string) || "outro";
-  let rec = false;
-  if (tipo === "despesa") {
-    sign = -1;
-    cat = "despesa_extrato";
-    rec = true;
-  } else if (tipo === "ajuste") {
-    sign = (formData.get("sinal") as string) === "menos" ? -1 : 1;
-    cat = "ajuste";
-    rec = true;
-  } else if (tipo === "receita" && cat === "extrato") {
-    // Receita avulsa do extrato (sem categoria de receita conhecida).
-    cat = "receita_extrato";
-    rec = true;
-  }
-
-  const [row] = await db
-    .insert(schema.cashEntries)
-    .values({
-      versionId: version.id,
-      tenantId: ctx.tenant.id,
-      data: (formData.get("data") as string) || null,
-      descricao: (formData.get("descricao") as string) || null,
-      valor: String(sign * magnitude),
-      cat,
-      unitCode: (formData.get("unitCode") as string) || null,
-      bankAccountId: (formData.get("bankAccountId") as string) || null,
-      rec,
-    })
-    .returning();
-
-  await logAudit({
-    tenantId: ctx.tenant.id,
-    userId: ctx.userId,
-    action: tipo === "ajuste" ? "cash.adjust" : "cash.create",
-    entity: "cash_entry",
-    entityId: row.id,
-    meta: { tipo, cat, valor: row.valor },
-  });
-  revalidatePath("/caixa");
-}
-
-/**
- * Prompt L, Parte 4 — o ajuste de caixa com o que faltava: motivo
- * obrigatório (4.2.1), permissão PRÓPRIA `conciliacao:criar` (4.2.2),
- * retorno legível. Grava pelo mesmo caminho de `addCash` (tipo "ajuste":
- * nasce conciliado, `cat = "ajuste"`, fora da DRE) — nenhum `cash_entry`
- * existente muda. A versão é a de trabalho da obra informada (4.2.5).
- */
 export async function addAjuste(formData: FormData): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
   const ctx = await getTenantContext();
   if (!ctx || !can(ctx.perms, "conciliacao", "criar")) {
@@ -265,13 +188,11 @@ export async function addAjuste(formData: FormData): Promise<{ ok: true; id: str
   if (!(magnitude > 0)) return { ok: false, error: "Informe um valor maior que zero." };
   const data = ((formData.get("data") as string | null) ?? "").trim();
   if (!data) return { ok: false, error: "Informe a data do ajuste." };
-  // Prompt AT §3 (BAT-3, provisório): com a chave "caixa_conciliacao_por_conta"
-  // ligada, a obra do ajuste é OPCIONAL: com obra, vai para a versão de
-  // trabalho dela; sem obra, é da empresa ("não atribuído a obra").
-  const porConta = await chaveLigada(ctx.tenant.id, "caixa_conciliacao_por_conta");
+  // Prompt AT §3 (BAT-3) / GA-11 — a obra do ajuste é OPCIONAL: com obra, vai
+  // para a versão de trabalho dela; sem obra, é da empresa ("sem projeto").
   const obraInformada = typeof formData.get("projectId") === "string" && !!formData.get("projectId");
-  const version = porConta && !obraInformada ? null : await versaoDoCaixa(ctx.tenant.id, formData.get("projectId"));
-  if (!version && !(porConta && !obraInformada)) return { ok: false, error: SEM_OBRA };
+  const version = obraInformada ? await versaoDoCaixa(ctx.tenant.id, formData.get("projectId")) : null;
+  if (obraInformada && !version) return { ok: false, error: SEM_OBRA };
   if (version?.locked) return { ok: false, error: "Versão congelada." };
   const sinal = (formData.get("sinal") as string) === "menos" ? -1 : 1;
   const bankAccountId = ((formData.get("bankAccountId") as string | null) || "").trim() || null;
@@ -343,8 +264,7 @@ export async function importCash(
   if (!ctx || !can(ctx.perms, "caixa", "criar")) {
     throw new Error("Sem permissão para importar extrato.");
   }
-  const destino = await destinoDoMovimentoNovo(ctx.tenant.id, input.projectId);
-  if (!destino.ok) throw new Error(destino.error);
+  const destino = destinoDoMovimentoNovo;
 
   const { rows, saldoFinal } = input;
   // Valida a conta (deve pertencer ao tenant).
@@ -383,9 +303,7 @@ export async function importCash(
   // Pools para conciliação automática. Movimento da conta (§3): as despesas e
   // unidades da versão Atual de TODAS as obras; a regra continua a mesma
   // (só concilia com uma única candidata).
-  const versoesDoPool = destino.version
-    ? [destino.version.id]
-    : (await db.select({ id: schema.versions.id }).from(schema.versions).where(and(eq(schema.versions.tenantId, ctx.tenant.id), eq(schema.versions.kind, "atual")))).map((v) => v.id);
+  const versoesDoPool = (await db.select({ id: schema.versions.id }).from(schema.versions).where(and(eq(schema.versions.tenantId, ctx.tenant.id), eq(schema.versions.kind, "atual")))).map((v) => v.id);
   const [despesas, units] = await Promise.all([
     Promise.all(versoesDoPool.map((id) => getDespesas(id))).then((xs) => xs.flat()),
     Promise.all(versoesDoPool.map((id) => getUnits(ctx.tenant.id, id))).then((xs) => xs.flat()),
@@ -1122,8 +1040,7 @@ export async function pairMovimento(
   if (!ctx || !can(ctx.perms, "caixa", "editar")) {
     return { ok: false, error: "Sem permissão para conciliar." };
   }
-  const destino = await destinoDoMovimentoNovo(ctx.tenant.id, input.projectId);
-  if (!destino.ok) return destino;
+  const destino = destinoDoMovimentoNovo;
   const { mov, alvoId, alvoTipo } = input;
   const valor = Number(mov.valor);
   if (!Number.isFinite(valor) || valor === 0) {
@@ -1249,8 +1166,7 @@ export async function criarLancamentoDoExtrato(input: {
   if (!ctx || !can(ctx.perms, "caixa", "editar")) {
     return { ok: false, error: "Sem permissão." };
   }
-  const destino = await destinoDoMovimentoNovo(ctx.tenant.id, input.caixaProjectId);
-  if (!destino.ok) return destino;
+  const destino = destinoDoMovimentoNovo;
   // A obra do lançamento criado também precisa ser desta empresa (Prompt A,
   // 38). A despesa já passava por `getAtualVersion` (filtra o tenant); a conta
   // a receber gravava o `projectId` recebido sem conferir.

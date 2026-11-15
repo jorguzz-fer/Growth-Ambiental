@@ -52,7 +52,7 @@ export async function responderMetrica(
       texto: "Ainda não sei responder isso. Respondo, por enquanto, sobre:",
       detalhes: permitidas.length
         ? permitidas.map((m) => `${m.nome} — ${m.definicao}`)
-        : ["nenhuma métrica: seu acesso não inclui as telas de origem (DRE, Despesas, Controle de Caixa)."],
+        : ["nenhuma métrica: seu acesso não inclui as telas de origem (DRE, Despesas, Conciliação de Caixa)."],
       link: null,
       entendido: null,
     });
@@ -78,7 +78,7 @@ export async function responderMetrica(
         "É o saldo da empresa: as contas não são separadas por projeto.",
         ...(intencao.obra || intencao.de ? ["Projeto e período não se aplicam a este número."] : []),
       ],
-      link: { href: metrica.href, rotulo: "Ver no Controle de Caixa" },
+      link: { href: metrica.href, rotulo: "Ver na Conciliação de Caixa" },
       entendido: metrica.nome,
     });
   }

@@ -7,22 +7,28 @@ import { comUsoDeIa, limiteDeConversa } from "@/lib/ai/uso";
 import { responderComoCris } from "@/lib/ai/cris";
 import { interpretarLocalmente, normalizarIntencao } from "@/lib/assistente-chat";
 import { responderMetrica } from "@/lib/chat-metricas";
-import { anexoValido, contextoValido, historicoDaCris, type PropostaDeConciliacao, type PropostaDeImportacao, type PropostaDePreenchimento, mensagemDeFalhaDaCris } from "@/lib/cris";
+import { anexoValido, contextoValido, historicoDaCris, type PropostaDeConciliacao, type PropostaDeConciliacaoCartao, type PropostaDeFatura, type PropostaDeImportacao, type PropostaDePreenchimento, mensagemDeFalhaDaCris } from "@/lib/cris";
 import { can } from "@/lib/permissions";
-import { ferramentasDoCaixa } from "@/lib/conciliacao-cris-ferramentas";
+import { ferramentasDoCaixa, ferramentasDoCartao } from "@/lib/conciliacao-cris-ferramentas";
+import { abaDoCaixa } from "@/lib/caixa-url";
+import { MENSAGEM_CRIS_SEM_IA } from "@/lib/cris-sem-ia";
 import { executarFerramentaDeDados } from "@/lib/cris-dados";
 
 export type ResultadoDaCris =
-  | { ok: true; texto: string; proposta: PropostaDePreenchimento | null; via: "ia" | "local"; conciliacoes?: PropostaDeConciliacao | null; importacao?: PropostaDeImportacao | null }
+  | { ok: true; texto: string; proposta: PropostaDePreenchimento | null; via: "ia" | "local"; conciliacoes?: PropostaDeConciliacao | null; importacao?: PropostaDeImportacao | null; conciliacoesCartao?: PropostaDeConciliacaoCartao | null; fatura?: PropostaDeFatura | null }
   | { ok: false; error: string };
 
 /** A tela do Caixa (com ou sem filtro de conta). */
 function rotaDoCaixa(rota: string): boolean {
   return rota.split("?")[0] === "/caixa";
 }
-/** A conta escolhida na tela do Caixa (`?conta=`). */
+/** A conta (ou o cartão, na aba Cartões) escolhida na Conciliação de Caixa (`?conta=`). */
 function contaDaRota(rota: string): string | null {
   return new URLSearchParams(rota.split("?")[1] ?? "").get("conta");
+}
+/** GA-11 — a aba da Conciliação de Caixa (`?tab=`): contas, cartoes ou ajustes. */
+function abaDaRota(rota: string) {
+  return abaDoCaixa(new URLSearchParams(rota.split("?")[1] ?? "").get("tab"));
 }
 
 /** Projeto citado na rota da tela (`?proj=`), só se a pessoa o vê. */
@@ -71,7 +77,14 @@ export async function perguntarACris(entrada: { conversa: unknown; tela: unknown
     return { ok: true, texto: [r.texto, ...r.detalhes].join("\n"), proposta: null, via: "local" };
   };
 
-  if (!isAiConfigured()) return semModelo();
+  if (!isAiConfigured()) {
+    // GA-11 §4.1 — na Conciliação de Caixa, a conciliação é com a IA: o chat diz claramente o que falta.
+    if (tela && rotaDoCaixa(tela.rota)) {
+      const local = await semModelo();
+      return local.ok ? { ...local, texto: `${MENSAGEM_CRIS_SEM_IA} Sem ela, não leio extrato nem fatura e não proponho conciliações; respondo só números do catálogo.\n\n${local.texto}` } : local;
+    }
+    return semModelo();
+  }
   const limite = await limiteDeConversa(ctx.tenant.id, ctx.userId);
   if (limite) return { ok: false, error: limite };
 
@@ -89,10 +102,12 @@ export async function perguntarACris(entrada: { conversa: unknown; tela: unknown
         // Etapa 7 — o catálogo de leitura, em qualquer tela, com o acesso da pessoa (AC-T2).
         dados: (nome, e) => executarFerramentaDeDados(ctx, nome, e),
         // Prompt AT §8 — na tela do Caixa, as ferramentas de conciliação, pela permissão da pessoa (AT-T18).
-        caixa: tela && rotaDoCaixa(tela.rota) && dadosPermitidos ? ferramentasDoCaixa(ctx, { podeConciliar: can(ctx.perms, "caixa", "editar"), podeImportar: can(ctx.perms, "caixa", "criar"), anexo, contaDaTela: contaDaRota(tela.rota) }) : undefined,
+        caixa: tela && rotaDoCaixa(tela.rota) && dadosPermitidos && abaDaRota(tela.rota) !== "cartoes" ? ferramentasDoCaixa(ctx, { podeConciliar: can(ctx.perms, "caixa", "editar"), podeImportar: can(ctx.perms, "caixa", "criar"), anexo, contaDaTela: contaDaRota(tela.rota) }) : undefined,
+        // GA-11 §4.2 — na aba Cartões, as ferramentas do cartão (o `?conta=` é o cartão escolhido).
+        cartao: tela && rotaDoCaixa(tela.rota) && dadosPermitidos && abaDaRota(tela.rota) === "cartoes" ? ferramentasDoCartao(ctx, { podeConciliar: can(ctx.perms, "caixa", "editar"), podeRegistrarFatura: can(ctx.perms, "cartoes", "editar"), anexo, cartaoDaTela: contaDaRota(tela.rota) }) : undefined,
       }),
     );
-    return { ok: true, texto: r.texto, proposta: r.proposta, via: "ia", conciliacoes: r.conciliacoes ?? null, importacao: r.importacao ?? null };
+    return { ok: true, texto: r.texto, proposta: r.proposta, via: "ia", conciliacoes: r.conciliacoes ?? null, importacao: r.importacao ?? null, conciliacoesCartao: r.conciliacoesCartao ?? null, fatura: r.fatura ?? null };
   } catch (e) {
     console.error("[cris] falha:", e instanceof Error ? e.name : "erro");
     // Nunca o texto cru do provedor de IA (pode trazer detalhes técnicos): mensagem própria.

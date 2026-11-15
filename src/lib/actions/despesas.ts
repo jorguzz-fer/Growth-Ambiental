@@ -1020,7 +1020,7 @@ export async function pagarDespesa(input: PagarDespesaInput): Promise<ResultadoP
         })
         .where(and(eq(schema.despesas.id, d.id), eq(schema.despesas.tenantId, ctx.tenant.id)));
 
-      // Saída REAL no Controle de Caixa (valor efetivamente pago, na data real).
+      // Saída REAL na Conciliação de Caixa (valor efetivamente pago, na data real).
       await tx.insert(schema.cashEntries).values({
         versionId: d.versionId,
         tenantId: ctx.tenant.id,

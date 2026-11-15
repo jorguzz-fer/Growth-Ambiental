@@ -35,7 +35,8 @@ describe.skipIf(!HAS_DB)("Funcionários (Prompt Z, Parte 2)", async () => {
     p.funcionariosdados = { ver: false, criar: false, editar: false, excluir: false };
     return p;
   };
-  const logs = (action: string) => db.select().from(schema.auditLog).where(and(eq(schema.auditLog.tenantId, tenant.id), eq(schema.auditLog.action, action)));
+  // Em ordem de gravação: sem ORDER BY, o Postgres pode devolver as linhas em qualquer ordem (e `.at(-1)` pegaria outra).
+  const logs = (action: string) => db.select().from(schema.auditLog).where(and(eq(schema.auditLog.tenantId, tenant.id), eq(schema.auditLog.action, action))).orderBy(schema.auditLog.createdAt);
 
   beforeAll(async () => {
     [tenant] = await db.insert(schema.tenants).values({ name: "pessoas-Z1" }).returning();

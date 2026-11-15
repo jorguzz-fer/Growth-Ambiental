@@ -5,7 +5,7 @@ import { partesDoMovimento } from "./movimento-obra";
 /**
  * Prompt AT §3 (Revisão 4) — o movimento do extrato pertence à conta; a obra
  * vem do vínculo. Testes puros (a divisão) e com banco (AT-T5, AT-T6 e a
- * importação com a chave "caixa_conciliacao_por_conta").
+ * importação). Desde o GA-11, vale para toda empresa (a chave saiu).
  */
 describe("partesDoMovimento (puro)", () => {
   const mov = { id: "m", valor: -1000, data: "11/05/2026" };
@@ -72,7 +72,6 @@ describe.skipIf(!HAS_DB)("o movimento é da conta; a obra vem do vínculo (AT §
     ctxRef.current = { tenant: t, projects: [], userId: null, userEmail: "teste@x", role: "owner", perms: defaultPermissions("owner") };
     return { tenant: t, obras, conta };
   }
-  const ligar = (tenantId: string) => db.insert(schema.tenantFlags).values({ tenantId, chave: "caixa_conciliacao_por_conta", ligada: true });
   const despesa = async (tenantId: string, versionId: string, valor: number) =>
     (await db.insert(schema.despesas).values({ tenantId, versionId, valor: String(valor), status: "Pago", competencia: "11/2026", vencimento: "11/05/2026" }).returning())[0];
   const soma = (xs: { valor: number | string }[]) => Math.round(xs.reduce((a, x) => a + Number(x.valor), 0) * 100) / 100;
@@ -132,17 +131,16 @@ describe.skipIf(!HAS_DB)("o movimento é da conta; a obra vem do vínculo (AT §
     expect(await partesDosMovimentosSemObra(tenant.id)).toEqual([]);
   });
 
-  it("chave desligada: o extrato importado nasce na obra da tela, como sempre", async () => {
-    const { tenant, obras, conta } = await empresa("AT3-desligada");
+  it("GA-11: mesmo com a obra da tela informada, o extrato importado nasce só com a conta", async () => {
+    const { tenant, obras, conta } = await empresa("AT3-obra-ignorada");
     const r = await importCash({ rows: [{ data: "11/09/2026", descricao: "PIX", valor: 75 }], bankAccountId: conta.id, projectId: obras[1].projectId });
     expect(r.inserted).toBe(1);
     const ms = await db.select().from(schema.cashEntries).where(eq(schema.cashEntries.tenantId, tenant.id));
-    expect(ms.map((m) => m.versionId)).toEqual([obras[1].atual]);
+    expect(ms.map((m) => m.versionId)).toEqual([null]);
   });
 
-  it("chave ligada: o extrato nasce só com a conta; a conciliação automática procura em todas as obras (candidata única)", async () => {
+  it("o extrato nasce só com a conta; a conciliação automática procura em todas as obras (candidata única)", async () => {
     const { tenant, obras, conta } = await empresa("AT3-ligada");
-    await ligar(tenant.id);
     const unica = (await db.insert(schema.despesas).values({ tenantId: tenant.id, versionId: obras[1].atual, valor: "88.40", status: "Em aberto", competencia: "11/2026", vencimento: "11/10/2026" }).returning())[0];
     // duas candidatas de 50 (uma em cada obra): fica pendente
     for (const o of obras) await db.insert(schema.despesas).values({ tenantId: tenant.id, versionId: o.atual, valor: "50", status: "Em aberto", competencia: "11/2026", vencimento: "11/10/2026" });
@@ -157,16 +155,13 @@ describe.skipIf(!HAS_DB)("o movimento é da conta; a obra vem do vínculo (AT §
     expect(vinc.map((v) => v.despesaId)).toEqual([unica.id]);
   });
 
-  it("BAT-3 (provisório): com a chave ligada, ajuste sem obra é da empresa; com obra, vai para a obra", async () => {
+  it("BAT-3 (GA-11, toda empresa): ajuste sem obra é da empresa; com obra, vai para a obra", async () => {
     const { tenant, obras, conta } = await empresa("AT3-ajuste");
     const fd = (campos: Record<string, string>) => {
       const f = new FormData();
       for (const [k, v] of Object.entries(campos)) f.set(k, v);
       return f;
     };
-    // desligada: sem obra é recusado, como antes
-    expect(await addAjuste(fd({ motivo: "tarifa", valor: "10", data: "11/11/2026", sinal: "menos", bankAccountId: conta.id }))).toMatchObject({ ok: false });
-    await ligar(tenant.id);
     expect(await addAjuste(fd({ motivo: "tarifa", valor: "10", data: "11/11/2026", sinal: "menos", bankAccountId: conta.id }))).toMatchObject({ ok: true });
     expect(await addAjuste(fd({ motivo: "acerto", valor: "5", data: "11/11/2026", bankAccountId: conta.id, projectId: obras[0].projectId }))).toMatchObject({ ok: true });
     const ms = await db.select().from(schema.cashEntries).where(eq(schema.cashEntries.tenantId, tenant.id));

@@ -23,7 +23,7 @@ describe.skipIf(!HAS_DB)("GA-1 — empresa nova", async () => {
   const { db, schema } = await import("@/lib/db");
   const { defaultPermissions } = await import("@/lib/permissions");
   const { provisionTenant } = await import("@/lib/tenant/provision");
-  const { CHAVES_EMPRESA_NOVA, CHAVES_INCORPORACAO, LIGADA_NA_CRIACAO, chaveVisivel } = await import("@/lib/chaves");
+  const { CHAVES, CHAVES_EMPRESA_NOVA, CHAVES_INCORPORACAO, LIGADA_NA_CRIACAO, chaveVisivel } = await import("@/lib/chaves");
   const { chaveLigada } = await import("@/lib/chaves-tenant");
   const { temDadosDeIncorporacao } = await import("@/lib/chaves-empresa-nova");
   const { saveBudgetPlanning, setVersionStatus } = await import("./planning");
@@ -74,8 +74,9 @@ describe.skipIf(!HAS_DB)("GA-1 — empresa nova", async () => {
     for (const c of CHAVES_INCORPORACAO) expect(await chaveLigada(tenantId, c)).toBe(false);
   });
 
-  it("5 · o Caixa abre como conciliação por conta (a chave está ligada desde a criação)", async () => {
-    expect(await chaveLigada(tenantId, "caixa_conciliacao_por_conta")).toBe(true);
+  it("5 · GA-11: a chave do Caixa por conta saiu (a Conciliação de Caixa vale para toda empresa)", async () => {
+    expect(CHAVES.some((c) => (c.id as string) === "caixa_conciliacao_por_conta")).toBe(false);
+    expect((CHAVES_EMPRESA_NOVA as readonly string[]).includes("caixa_conciliacao_por_conta")).toBe(false);
   });
 
   it("6 · sem dados de incorporação, ligar cada chave de incorporação não muda DRE, Fluxo, Dashboard, Resumo nem Contas a Receber", async () => {
@@ -108,7 +109,7 @@ describe.skipIf(!HAS_DB)("GA-1 — empresa nova", async () => {
     const visiveis = (com: boolean, ligadas: Set<string> = new Set()) => CHAVES_INCORPORACAO.filter((id) => chaveVisivel(id, { comIncorporacao: com, ligada: ligadas.has(id) }));
     expect(visiveis(await temDadosDeIncorporacao(tenantId))).toEqual([]);
     expect(visiveis(false, new Set(["dre_receita_rateio"]))).toEqual(["dre_receita_rateio"]);
-    expect(chaveVisivel("caixa_conciliacao_por_conta", { comIncorporacao: false, ligada: false })).toBe(true);
+    expect(chaveVisivel("rascunho_fora_dos_relatorios", { comIncorporacao: false, ligada: false })).toBe(true);
     // uma unidade gravada (dado de incorporação) faz as chaves aparecerem
     const [u] = await db.insert(schema.units).values({ tenantId, versionId: versoes.atual.id, code: "UN-1", status: "Disponivel", valor: "1" }).returning();
     expect(visiveis(await temDadosDeIncorporacao(tenantId))).toEqual([...CHAVES_INCORPORACAO]);

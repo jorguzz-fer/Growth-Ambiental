@@ -143,7 +143,8 @@ export const NAV_MENU: NavModule[] = [
     label: "Caixa",
     icon: "caixa",
     items: [
-      { href: "/caixa", label: "Caixa" },
+      // GA-11 — a tela única do Caixa.
+      { href: "/caixa", label: "Conciliação de Caixa" },
       { href: "/contas", label: "Contas Correntes" },
       // Prompt REN (Fase 3): o cartão é meio de pagamento — mora no Caixa.
       { href: "/cartoes", label: "Cartões de Crédito" },

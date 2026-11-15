@@ -2,8 +2,11 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { confirmarConciliacoes } from "@/lib/actions/caixa";
-import type { PropostaDeConciliacao, PropostaDeImportacao } from "@/lib/cris";
+import { confirmarConciliacoesCartao } from "@/lib/actions/cartao-conciliacao";
+import { EVENTO_IMPORTAR_FATURA } from "@/components/app/extrato-cartao";
+import type { PropostaDeConciliacao, PropostaDeConciliacaoCartao, PropostaDeFatura, PropostaDeImportacao } from "@/lib/cris";
 import { Button } from "@/components/ui/button";
 
 /**
@@ -87,6 +90,109 @@ export function ImportacaoDaCris({ proposta }: { proposta: PropostaDeImportacao 
         }}
       >
         {aberto ? "Importação aberta na tela" : `Abrir a importação com ${proposta.linhas.length} linha(s)`}
+      </Button>
+    </div>
+  );
+}
+
+const brlCris = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+/**
+ * GA-11 §4.2 — o lote que a Cris propõe no cartão. As conciliações só gravam
+ * no botão (o servidor confere cada uma de novo); a compra sem lançamento é
+ * só um link para Despesas já preenchida: nada é lançado sozinho.
+ */
+export function LoteDoCartaoDaCris({ proposta }: { proposta: PropostaDeConciliacaoCartao }) {
+  const router = useRouter();
+  const [pending, start] = useTransition();
+  const [resultado, setResultado] = useState<{ ok: number; falhas: { linha: string; erro?: string }[] } | null>(null);
+  const [erro, setErro] = useState<string | null>(null);
+  const n = proposta.itens.length;
+  return (
+    <div className="rounded-[10px] border border-[#e9d5ff] bg-[#fcfaff] p-3 text-[12px]" data-cris-lote-cartao>
+      {n > 0 && (
+        <>
+          <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-[var(--color-ink3)]">Conciliações do cartão propostas · confira</p>
+          <ul className="space-y-1">
+            {proposta.itens.map((i) => (
+              <li key={`${i.linha}|${i.despesaId}`}>
+                <span className="text-[var(--color-ink3)]">{i.cartao} · {i.descricaoDaLinha}</span> → <span className="text-[var(--color-ink)]">{i.rotulo}</span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+      {proposta.lancar.length > 0 && (
+        <div className="mt-2" data-cris-lancar-compra>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-ink3)]">Na fatura, sem lançamento · nada foi lançado</p>
+          <ul className="space-y-1">
+            {proposta.lancar.map((l) => (
+              <li key={l.linha}>
+                <span className="text-[var(--color-ink3)]">{l.cartao} · {l.descricaoDaLinha}</span> ·{" "}
+                <Link prefetch={false} href={l.href} className="text-[var(--color-accent2)] hover:underline">
+                  Lançar em Despesas ({brlCris(l.valor)}) →
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {proposta.recusados.length > 0 && <p className="mt-1 text-[11.5px] text-[#92400e]">{proposta.recusados.length} item(ns) recusado(s) pelo servidor: {proposta.recusados.map((r) => r.motivo).join("; ")}.</p>}
+      {n > 0 &&
+        (resultado ? (
+          <div className="mt-2" role="status">
+            <p className="font-medium text-[var(--color-success)]">{resultado.ok} conciliação(ões) gravada(s).</p>
+            {resultado.falhas.length > 0 && (
+              <ul className="mt-1 text-[var(--color-danger)]">
+                {resultado.falhas.map((f) => (
+                  <li key={f.linha}>Não gravada: {proposta.itens.find((i) => i.linha === f.linha)?.descricaoDaLinha ?? f.linha} · {f.erro}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ) : (
+          <Button
+            type="button"
+            size="sm"
+            className="mt-2"
+            disabled={pending}
+            data-cris-confirmar-lote-cartao
+            onClick={() =>
+              start(async () => {
+                setErro(null);
+                const r = await confirmarConciliacoesCartao(proposta.itens.map((i) => ({ linha: i.linha, despesaId: i.despesaId })));
+                if (!r.ok) return setErro(r.error);
+                setResultado({ ok: r.gravadas, falhas: r.resultados.filter((x) => !x.ok).map((x) => ({ linha: x.linha, erro: x.erro })) });
+                router.refresh();
+              })
+            }
+          >
+            {pending ? "Gravando…" : `Confirmar ${n} conciliação${n === 1 ? "" : "ões"}`}
+          </Button>
+        ))}
+      {erro && <p className="mt-1 text-[var(--color-danger)]" role="alert">{erro}</p>}
+    </div>
+  );
+}
+
+/** GA-11 §4.2 — a fatura lida por `ler_fatura`: abre a prévia de "Subir fatura" já preenchida; quem registra é o botão dela. */
+export function FaturaDaCris({ proposta }: { proposta: PropostaDeFatura }) {
+  const [aberto, setAberto] = useState(false);
+  return (
+    <div className="rounded-[10px] border border-[#e9d5ff] bg-[#fcfaff] p-3 text-[12px]" data-cris-fatura>
+      <p className="text-[var(--color-ink2)]">
+        {proposta.nome}: {proposta.itens.length} lançamento(s) lido(s) da fatura. Abra a prévia para conferir as linhas e o cartão; nada é registrado antes do botão Registrar, e nenhuma despesa é lançada.
+      </p>
+      <Button
+        type="button"
+        size="sm"
+        className="mt-2"
+        onClick={() => {
+          window.dispatchEvent(new CustomEvent(EVENTO_IMPORTAR_FATURA, { detail: proposta }));
+          setAberto(true);
+        }}
+      >
+        {aberto ? "Prévia aberta na tela" : `Abrir a prévia com ${proposta.itens.length} linha(s)`}
       </Button>
     </div>
   );

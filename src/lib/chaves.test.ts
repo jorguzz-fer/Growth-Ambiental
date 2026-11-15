@@ -34,7 +34,10 @@ describe("GA-1 — classificação das chaves", async () => {
     expect(gerais.size + incorporacao.size).toBe(CHAVES.length);
   });
   it("as regras corrigidas de qualquer empresa nascem ligadas; as de incorporação, não", () => {
-    expect(CHAVES_EMPRESA_NOVA).toEqual(expect.arrayContaining(["caixa_conciliacao_por_conta", "rascunho_fora_dos_relatorios", "resumo_definicao_nova", "despesa_categoria_do_plano"]));
+    expect(CHAVES_EMPRESA_NOVA).toEqual(expect.arrayContaining(["rascunho_fora_dos_relatorios", "resumo_definicao_nova", "despesa_categoria_do_plano"]));
+    // GA-11: a Conciliação de Caixa vale para toda empresa; a chave saiu do catálogo.
+    expect(CHAVES_EMPRESA_NOVA).toHaveLength(10);
+    expect(CHAVES.some((c) => (c.id as string) === "caixa_conciliacao_por_conta")).toBe(false);
     expect(CHAVES_INCORPORACAO).toEqual(["incc_por_empresa", "plano_definicao_nova", "dre_receita_rateio", "parcela_recebida_situacao"]);
   });
 });

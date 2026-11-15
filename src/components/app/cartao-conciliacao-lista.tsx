@@ -6,30 +6,18 @@ import { useRouter } from "next/navigation";
 import { conciliarLinhaDoCartao, desfazerLinhaDoCartao } from "@/lib/actions/cartao-conciliacao";
 import type { FaturaNaConciliacao, LinhaDoCartao } from "@/lib/cartao-conciliacao";
 import { brl0, dateBR } from "@/lib/utils";
-import { TODOS_OS_PROJETOS } from "@/lib/projeto-selecao";
+import { linkParaLancarCompra } from "@/lib/cartao-links";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
-/** Link para lançar a compra em Despesas, preenchida com a linha (6.2): a pessoa completa e salva. */
-function linkParaLancarCompra(cartaoId: string, l: LinhaDoCartao): string {
-  const q = new URLSearchParams({
-    // A obra é escolhida no formulário ("Todos os projetos").
-    proj: TODOS_OS_PROJETOS,
-    tab: "lancamentos",
-    novo: "1",
-    pf_valor: l.valor.toFixed(2),
-    pf_forma: "Cartão de crédito",
-    pf_cartao: cartaoId,
-    pf_data: l.data ?? "",
-    pf_obs: l.descricao ?? "",
-    pf_comp: l.data ? `${l.data.slice(0, 2)}/${l.data.slice(6)}` : "",
-    pf_extrato_cartao: l.id,
-  });
-  return `/despesas?${q.toString()}`;
-}
-
-export function CartaoConciliacaoLista({ cartaoId, faturas, canConciliar, canLancar }: { cartaoId: string; faturas: FaturaNaConciliacao[]; canConciliar: boolean; canLancar: boolean }) {
+/**
+ * GA-11 §3.3 — linha da fatura × compra lançada, de UM cartão ou de todos
+ * ("Todos os cartões": uma lista só, com a coluna Cartão).
+ */
+export function CartaoConciliacaoLista({ cartoes, canConciliar, canLancar }: { cartoes: { id: string; nome: string; faturas: FaturaNaConciliacao[] }[]; canConciliar: boolean; canLancar: boolean }) {
+  const varios = cartoes.length > 1;
+  const faturas = cartoes.flatMap((c) => c.faturas.map((f) => ({ ...f, cartaoId: c.id, cartaoNome: c.nome })));
   const router = useRouter();
   const [pending, start] = useTransition();
   const [msg, setMsg] = useState<string | null>(null);
@@ -50,8 +38,7 @@ export function CartaoConciliacaoLista({ cartaoId, faturas, canConciliar, canLan
     return (
       <Card>
         <CardContent className="p-8 text-center text-[13px] text-[var(--color-ink3)]" data-cartao-sem-extrato>
-          Nenhum extrato deste cartão. Suba a fatura em <Link href="/cartoes" className="text-[var(--color-accent2)] hover:underline">Cartões</Link>; cada linha
-          aparece aqui para conciliar com a compra lançada.
+          Nenhuma fatura {varios ? "dos cartões" : "deste cartão"} ainda. Use <strong>Subir fatura</strong>, acima: cada linha aparece aqui para conciliar com a compra lançada.
         </CardContent>
       </Card>
     );
@@ -62,14 +49,17 @@ export function CartaoConciliacaoLista({ cartaoId, faturas, canConciliar, canLan
       {msg && <p className="text-xs text-[var(--color-success)]" role="status">{msg}</p>}
       <p className="text-[12px] text-[var(--color-ink3)]">
         Cada linha do extrato da fatura é conciliada com a compra lançada neste cartão. A sugestão é só orientação: nada é conciliado sem a sua confirmação, e
-        nenhuma despesa nasce sozinha. Crédito ou estorno segue o fluxo de estorno, em Cartões. O pagamento da fatura (a saída da conta corrente) concilia
-        com o pagamento da fatura, na conta corrente.
+        nenhuma despesa nasce sozinha. Crédito ou estorno segue o fluxo de estorno, na conferência abaixo. O pagamento da fatura (a saída da conta corrente)
+        concilia com o pagamento da fatura, na aba Contas correntes.
       </p>
       {faturas.map((f) => (
-        <Card key={f.fechamento ?? "sem-data"} data-fatura-conciliacao={f.fechamento ?? "sem data"}>
+        <Card key={`${f.cartaoId}|${f.fechamento ?? "sem-data"}`} data-fatura-conciliacao={f.fechamento ?? "sem data"} data-cartao-da-fatura={f.cartaoNome}>
           <CardContent className="p-4">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <h3 className="text-sm font-semibold text-[var(--color-ink)]">{f.fechamento ? `Fatura que fecha em ${dateBR(f.fechamento)}` : "Linhas sem data"}</h3>
+              <h3 className="text-sm font-semibold text-[var(--color-ink)]">
+                {varios && <span className="mr-2 rounded-[6px] bg-[var(--color-surface3)] px-1.5 py-0.5 text-[11px] font-medium text-[var(--color-ink2)]" data-coluna-cartao>{f.cartaoNome}</span>}
+                {f.fechamento ? `Fatura que fecha em ${dateBR(f.fechamento)}` : "Linhas sem data"}
+              </h3>
               <div className="flex flex-wrap gap-3 text-[12px] text-[var(--color-ink2)]" data-fatura-totais>
                 <span>
                   Extrato <strong className="font-[family-name:var(--font-mono)]">{brl0(f.totalExtrato)}</strong>
@@ -111,7 +101,7 @@ export function CartaoConciliacaoLista({ cartaoId, faturas, canConciliar, canLan
                         )}
                       </>
                     ) : l.credito ? (
-                      <Badge tone={l.creditoComEstorno ? "success" : "info"}>{l.creditoComEstorno ? "crédito com estorno" : "crédito: registre o estorno em Cartões"}</Badge>
+                      <Badge tone={l.creditoComEstorno ? "success" : "info"}>{l.creditoComEstorno ? "crédito com estorno" : "crédito: registre o estorno na conferência abaixo"}</Badge>
                     ) : (
                       <Badge tone="warning">pendente</Badge>
                     )}
@@ -134,7 +124,7 @@ export function CartaoConciliacaoLista({ cartaoId, faturas, canConciliar, canLan
                       ))}
                       {l.sugestoes.length === 0 && <span className="text-[12px] text-[var(--color-ink4)]">Sem compra lançada compatível.</span>}
                       {canLancar && (
-                        <Link href={linkParaLancarCompra(cartaoId, l)} className="text-[12px] text-[var(--color-accent2)] hover:underline" data-lancar-da-linha>
+                        <Link prefetch={false} href={linkParaLancarCompra(f.cartaoId, l)} className="text-[12px] text-[var(--color-accent2)] hover:underline" data-lancar-da-linha>
                           Lançar despesa a partir desta linha →
                         </Link>
                       )}

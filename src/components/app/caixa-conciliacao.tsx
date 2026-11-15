@@ -7,10 +7,10 @@ import { ConciliarToggle } from "@/components/app/conciliar-toggle";
 import { ConciliacaoReview } from "@/components/app/conciliacao-review";
 
 /**
- * A aba Conciliação do Caixa e a tabela "Todos os lançamentos de caixa".
- * Saíram de `caixa/page.tsx` para servir às duas telas: a de antes (por obra)
- * e a da chave "caixa_conciliacao_por_conta" (Prompt AT §4), que mostra a obra
- * de cada movimento e passa as obras para a conta criada a partir do extrato.
+ * A aba Contas correntes da Conciliação de Caixa (GA-11 §3.2): pendentes com
+ * sugestões, conciliados com desfazer e a tabela "Todos os lançamentos de
+ * caixa". Em "Todas as contas", cada movimento leva a coluna Conta. O modo
+ * "por obra" (tela antiga, por versão) saiu no GA-11.
  */
 type CashRows = Awaited<ReturnType<typeof getCash>>;
 
@@ -19,20 +19,21 @@ export function Conciliacao({
   conciliados,
   conciliacaoData,
   canDesfazer,
-  projectId = "",
   projetos,
   obraDe,
+  contaDe,
   vazio,
 }: {
   cash: CashRows;
   conciliados: number;
   conciliacaoData: ConciliacaoData;
   canDesfazer: boolean;
-  projectId?: string;
-  /** Caixa por conta: obras para a conta criada a partir do extrato. */
-  projetos?: { id: string; nome: string }[];
-  /** Caixa por conta: nome da obra de cada movimento ("sem obra" quando é da conta). */
+  /** Obras para a conta criada a partir do extrato (a obra é escolhida). */
+  projetos: { id: string; nome: string }[];
+  /** Nome da obra de cada movimento ("sem projeto" quando é da conta). */
   obraDe?: (c: CashRows[number]) => string;
+  /** GA-11 §3.1 — "Todas as contas": movimento → nome da conta (coluna Conta). */
+  contaDe?: Record<string, string>;
   /** Prompt AT §8.1 — o que mostrar quando não há extrato no período. */
   vazio?: React.ReactNode;
 }) {
@@ -52,15 +53,15 @@ export function Conciliacao({
         pendentesEntrada={conciliacaoData.pendentesEntrada}
         conciliados={conciliacaoData.conciliados}
         canDesfazer={canDesfazer}
-        projectId={projectId}
         projetos={projetos}
+        contaDe={contaDe}
       />
 
       <div className="mt-6">
         <h3 className="mb-2 text-sm font-semibold text-[var(--color-ink)]">
           Todos os lançamentos de caixa
         </h3>
-        {cash.length === 0 && vazio ? vazio : <CashTable cash={cash} withToggle obraDe={obraDe} />}
+        {cash.length === 0 && vazio ? vazio : <CashTable cash={cash} withToggle obraDe={obraDe} contaDe={contaDe} />}
       </div>
     </>
   );
@@ -78,16 +79,19 @@ export function CashTable({
   cash,
   withToggle,
   obraDe,
+  contaDe,
 }: {
   cash: CashRows;
   withToggle: boolean;
   obraDe?: (c: CashRows[number]) => string;
+  contaDe?: Record<string, string>;
 }) {
   return (
     <Table>
       <THead>
         <tr>
           <TH>Data</TH>
+          {contaDe && <TH>Conta</TH>}
           <TH>Descrição</TH>
           {obraDe && <TH>Projeto</TH>}
           <TH>Categoria</TH>
@@ -101,6 +105,7 @@ export function CashTable({
           return (
           <TR key={c.id}>
             <TD className="font-[family-name:var(--font-mono)]">{dateBR(c.data)}</TD>
+            {contaDe && <TD className="text-[12px] text-[var(--color-ink2)]" data-coluna-conta>{contaDe[c.id] ?? "sem conta"}</TD>}
             <TD>{c.descricao ?? "—"}</TD>
             {obraDe && <TD className="text-[12px] text-[var(--color-ink2)]">{obraDe(c)}</TD>}
             <TD>
@@ -136,8 +141,8 @@ export function CashTable({
         })}
         {cash.length === 0 && (
           <TR>
-            <TD colSpan={obraDe ? 6 : 5} className="py-6 text-center text-[var(--color-ink3)]">
-              Nenhum lançamento de caixa nesta versão.
+            <TD colSpan={5 + (obraDe ? 1 : 0) + (contaDe ? 1 : 0)} className="py-6 text-center text-[var(--color-ink3)]">
+              Nenhum lançamento de caixa no período.
             </TD>
           </TR>
         )}

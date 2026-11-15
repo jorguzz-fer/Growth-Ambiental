@@ -12,7 +12,7 @@ const DOW = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
  * e final EM CONTA (extrato) e CONCILIADO; onde não coincidem, a diferença e
  * as naturezas aparecem no próprio cartão. Dia futuro é só projeção (1.4-A.5).
  * Dia passado com pendência é distinguido do fechado (1.6).
- * A faixa é independente do filtro de período da tabela (1.5): declarado.
+ * A faixa é fixa (2 realizados, hoje e 7 à frente) e diz isso na tela.
  */
 const quando = (iso: string | null | undefined) => {
   if (!iso) return "";
@@ -44,7 +44,7 @@ export function CadeiaDias({
           </p>
         )}
         <p className="text-[11px] text-[var(--color-ink3)]">
-          Faixa fixa, independente do filtro de período da tabela. Parte do {cadeia.inicio.fonte === "fechamento" ? "saldo final gravado no fechamento" : "saldo em conta calculado"} de {cadeia.inicio.dia.split("-").reverse().join("/")}: {brl0(cadeia.inicio.conciliado)}. Fechar o dia registra os números; não trava lançamento.
+          Faixa fixa: 2 dias realizados, hoje e 7 à frente. Parte do {cadeia.inicio.fonte === "fechamento" ? "saldo final gravado no fechamento" : "saldo em conta calculado"} de {cadeia.inicio.dia.split("-").reverse().join("/")}: {brl0(cadeia.inicio.conciliado)}. Fechar o dia registra os números; não trava lançamento.
         </p>
       </div>
       <div className="-mx-1 overflow-x-auto pb-1">

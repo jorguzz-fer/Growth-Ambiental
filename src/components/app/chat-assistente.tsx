@@ -3,8 +3,8 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { perguntarACris } from "@/lib/actions/cris";
-import { NOME_DA_CRIS, TIPOS_DE_ANEXO, trechosDaCris, type FalaDaCris, type PropostaDeConciliacao, type PropostaDeImportacao, type PropostaDePreenchimento, type TrechoDaCris, type TrechoEmLinha } from "@/lib/cris";
-import { ImportacaoDaCris, LoteDaCris } from "@/components/app/cris-conciliacao";
+import { NOME_DA_CRIS, TIPOS_DE_ANEXO, trechosDaCris, type FalaDaCris, type PropostaDeConciliacao, type PropostaDeConciliacaoCartao, type PropostaDeFatura, type PropostaDeImportacao, type PropostaDePreenchimento, type TrechoDaCris, type TrechoEmLinha } from "@/lib/cris";
+import { FaturaDaCris, ImportacaoDaCris, LoteDaCris, LoteDoCartaoDaCris } from "@/components/app/cris-conciliacao";
 import { validarAnexo } from "@/lib/cris-colagem";
 import { juntarDitado } from "@/lib/voz-ditado";
 import { CampoDeMensagem, tratarTransferencia, type AvisoDoCampo } from "@/components/app/campo-de-mensagem";
@@ -28,7 +28,7 @@ import { Button } from "@/components/ui/button";
 
 type Mensagem =
   | { de: "usuario"; texto: string; anexo?: string }
-  | { de: "cris"; texto: string; proposta: PropostaDePreenchimento | null; aplicada?: boolean; conciliacoes?: PropostaDeConciliacao | null; importacao?: PropostaDeImportacao | null }
+  | { de: "cris"; texto: string; proposta: PropostaDePreenchimento | null; aplicada?: boolean; conciliacoes?: PropostaDeConciliacao | null; importacao?: PropostaDeImportacao | null; conciliacoesCartao?: PropostaDeConciliacaoCartao | null; fatura?: PropostaDeFatura | null }
   | { de: "erro"; texto: string };
 
 const SUGESTOES_PADRAO = [
@@ -81,7 +81,7 @@ export function ChatAssistente() {
       try {
         const falas: FalaDaCris[] = nova.filter((m): m is Exclude<Mensagem, { de: "erro" }> => m.de !== "erro").map((m) => ({ de: m.de, texto: m.texto }));
         const r = await perguntarACris({ conversa: falas, tela, anexo: anexoAgora ? await lerAnexo(anexoAgora) : undefined });
-        setConversa((c) => [...c, r.ok ? { de: "cris", texto: r.texto, proposta: r.proposta, conciliacoes: r.conciliacoes ?? null, importacao: r.importacao ?? null } : { de: "erro", texto: r.error }]);
+        setConversa((c) => [...c, r.ok ? { de: "cris", texto: r.texto, proposta: r.proposta, conciliacoes: r.conciliacoes ?? null, importacao: r.importacao ?? null, conciliacoesCartao: r.conciliacoesCartao ?? null, fatura: r.fatura ?? null } : { de: "erro", texto: r.error }]);
       } catch {
         setConversa((c) => [...c, { de: "erro", texto: "Não consegui responder agora. Tente de novo." }]);
       }
@@ -197,6 +197,8 @@ export function ChatAssistente() {
                   <RespostaDaCris texto={m.texto} />
                   {m.conciliacoes && <LoteDaCris proposta={m.conciliacoes} />}
                   {m.importacao && <ImportacaoDaCris proposta={m.importacao} />}
+                  {m.conciliacoesCartao && <LoteDoCartaoDaCris proposta={m.conciliacoesCartao} />}
+                  {m.fatura && <FaturaDaCris proposta={m.fatura} />}
                   {m.proposta && (
                     <div className="rounded-[10px] border border-[#e9d5ff] bg-[#fcfaff] p-3" data-cris-proposta>
                       <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-[var(--color-ink3)]">Proposta para a tela</p>

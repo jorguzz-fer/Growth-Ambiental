@@ -1,6 +1,5 @@
-import { and, asc, eq, inArray, isNull, ne } from "drizzle-orm";
+import { and, eq, inArray, isNull, ne } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
-import { chaveLigada } from "@/lib/chaves-tenant";
 import { logAudit } from "@/lib/audit";
 import { assinaturaDoItem } from "@/lib/calc/conferencia-cartao";
 import {
@@ -78,18 +77,6 @@ export function situacaoDoItem(item: Pick<PluggyItem, "status" | "error">): { si
   }
 }
 
-/** Versão em que o movimento nasce: nenhuma com a chave da §3; senão a Atual mais antiga. */
-async function versaoDoMovimento(tenantId: string): Promise<{ ok: true; versionId: string | null } | { ok: false }> {
-  if (await chaveLigada(tenantId, "caixa_conciliacao_por_conta")) return { ok: true, versionId: null };
-  const [v] = await db
-    .select({ id: schema.versions.id })
-    .from(schema.versions)
-    .where(and(eq(schema.versions.tenantId, tenantId), eq(schema.versions.kind, "atual")))
-    .orderBy(asc(schema.versions.createdAt), asc(schema.versions.id))
-    .limit(1);
-  return v ? { ok: true, versionId: v.id } : { ok: false };
-}
-
 export interface ResultadoDaConta {
   inseridos: number;
   atualizados: number;
@@ -102,8 +89,6 @@ export async function gravarTransacoesDaConta(conta: { id: string; tenantId: str
   const out: ResultadoDaConta = { inseridos: 0, atualizados: 0, revisao: 0, possiveisDuplicados: 0 };
   const validas = [...new Map(txs.filter((t) => t.id).map((t) => [t.id, t])).values()];
   if (validas.length === 0) return out;
-  const destino = await versaoDoMovimento(conta.tenantId);
-  if (!destino.ok) return out;
   const existentes = await db
     .select()
     .from(schema.cashEntries)
@@ -140,7 +125,8 @@ export async function gravarTransacoesDaConta(conta: { id: string; tenantId: str
         continue;
       }
     }
-    novos.push({ versionId: destino.versionId, tenantId: conta.tenantId, bankAccountId: conta.id, externalId: t.id, data, descricao: t.description, valor: String(valor), cat: "openfinance", rec: false });
+    // GA-11: o movimento é da conta, sem versão de obra.
+    novos.push({ versionId: null, tenantId: conta.tenantId, bankAccountId: conta.id, externalId: t.id, data, descricao: t.description, valor: String(valor), cat: "openfinance", rec: false });
   }
   if (novos.length) {
     const r = await db.insert(schema.cashEntries).values(novos).onConflictDoNothing().returning({ id: schema.cashEntries.id });

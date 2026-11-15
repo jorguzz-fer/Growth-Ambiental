@@ -135,6 +135,9 @@ describe("Prompt AQ §4 — o que não muda", () => {
       "@/lib/docx-texto",
       // Etapa 3 do ERP integrado — planilha anexada vira texto (só lê o arquivo, sem banco).
       "@/lib/planilha-texto",
+      // GA-11 — a aba da Conciliação de Caixa pela URL e a mensagem sem IA (módulos puros, sem banco).
+      "@/lib/caixa-url",
+      "@/lib/cris-sem-ia",
     ]);
     for (const arq of ["src/lib/ai/cris.ts", "src/lib/actions/cris.ts"]) {
       const imps = importsDe(arq);
@@ -150,7 +153,11 @@ describe("Prompt AQ §4 — o que não muda", () => {
     // Etapa 7 — o catálogo de leitura também só lê.
     for (const i of importsDe("src/lib/cris-dados.ts")) soLeitura.add(i);
     expect(importsDe("src/lib/cris-dados.ts").some((i) => i.startsWith("@/lib/actions/") || i.includes("conciliacao-cris-gravar") || i.includes("conciliacao-db"))).toBe(false);
-    for (const arq of ["src/lib/conciliacao-cris-ferramentas.ts", "src/lib/conciliacao-cris.ts", "src/lib/extrato-leitura.ts", "src/lib/cris-dados.ts"]) {
+    // GA-11 §4.2 — as ferramentas do cartão também só leem: de `cartao-conciliacao` só usam a leitura
+    // (`conciliacaoDoCartao`); quem grava a linha é o botão (`confirmarConciliacoesCartao`).
+    for (const i of ["@/lib/cartao-cris", "@/lib/cartao-conciliacao", "@/lib/cartao-links", "@/lib/ai/client", "@/lib/utils"]) soLeitura.add(i);
+    expect(readFileSync("src/lib/cartao-cris.ts", "utf8")).not.toMatch(/vincularLinhaDoCartao|confirmarConciliacoesCartao|importarExtratoCartao|registrarEstorno/);
+    for (const arq of ["src/lib/conciliacao-cris-ferramentas.ts", "src/lib/conciliacao-cris.ts", "src/lib/extrato-leitura.ts", "src/lib/cris-dados.ts", "src/lib/cartao-cris.ts"]) {
       const imps = importsDe(arq);
       expect(imps.filter((i) => !soLeitura.has(i)), arq).toEqual([]);
       expect(readFileSync(arq, "utf8"), arq).not.toMatch(/\.(insert|update|delete)\(\s*schema\./);

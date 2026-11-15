@@ -41,19 +41,6 @@ export interface VinculoView {
   criadoEm: string;
 }
 
-/** Vínculos ativos dos movimentos de uma versão, com o PED e o fornecedor da despesa. */
-export async function vinculosDaVersao(tenantId: string, versionId: string): Promise<VinculoView[]> {
-  const rows = await db
-    .select({ v: schema.conciliacoesDespesa, numDoc: schema.despesas.numDoc, fornecedor: schema.stakeholders.nome })
-    .from(schema.conciliacoesDespesa)
-    .innerJoin(schema.cashEntries, eq(schema.conciliacoesDespesa.cashEntryId, schema.cashEntries.id))
-    .innerJoin(schema.despesas, eq(schema.conciliacoesDespesa.despesaId, schema.despesas.id))
-    .leftJoin(schema.stakeholders, eq(schema.despesas.fornecedorId, schema.stakeholders.id))
-    .where(and(eq(schema.conciliacoesDespesa.tenantId, tenantId), eq(schema.conciliacoesDespesa.desfeito, false), eq(schema.cashEntries.versionId, versionId)))
-    .orderBy(schema.conciliacoesDespesa.criadoEm);
-  return rows.map((r) => ({ id: r.v.id, cashEntryId: r.v.cashEntryId, despesaId: r.v.despesaId, numDoc: r.numDoc, fornecedor: r.fornecedor, valor: Number(r.v.valor), origem: r.v.origem, criadoPor: r.v.criadoPor, criadoEm: r.v.criadoEm.toISOString() }));
-}
-
 /** Vínculos ativos de um conjunto de movimentos (Prompt AT §4: a conciliação da empresa). */
 export async function vinculosDosMovimentos(tenantId: string, cashEntryIds: readonly string[]): Promise<VinculoView[]> {
   if (cashEntryIds.length === 0) return [];

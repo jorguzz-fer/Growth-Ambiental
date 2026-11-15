@@ -30,7 +30,7 @@ As duas telas de Caixa usam os **mesmos componentes** de conciliação (`Concili
 
 | Função | Onde está hoje | Onde fica depois | Teste |
 |---|---|---|---|
-| Período (De/Até) e "Confirmar período" (`DateRangeFilter`) | antiga e nova | Topo, barra de filtros | *novo* checklist §3.5 |
+| Período (De/Até) e "Confirmar período" (`DateRangeFilter`) | antiga e nova | **removido** (decisão do dono de 15/11/2026, depois deste inventário): a tela mostra todos os movimentos; `?de=`/`?ate=` são ignorados | *novo* teste "sem filtro de período" |
 | Seletor de projeto (`ProjectPicker`, `lerSelecaoDeProjeto`, `LembrarProjeto`, `RecuperarProjeto`) | antiga | **removido** (decisão 2) | *novo* teste 1 e 2 (`?proj=` ignorado) |
 | Seletor de versões (`VersionMultiSelect`, `resolveCompareVersions`) | antiga | **removido** (decisão 2) | *novo* teste 1 e 2 (`?vs=` ignorado) |
 | Comparação entre versões (`VersionCompareTable`, entradas/saídas/saldo por versão) | antiga | **removida** (decisão 2) | *novo* teste 1 |
