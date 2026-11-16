@@ -1,11 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import * as XLSX from "xlsx";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { importarExtratoCartao, lerFaturaCartaoPdf, registrarEstorno, vincularCreditoAoEstorno, type ItemImportado } from "@/lib/actions/cartao-extrato";
-import { parseSheet } from "@/lib/extrato-parse";
+import { linhasDaFatura } from "@/lib/fatura-planilha";
 import type { Conferencia, CompraParaConferir } from "@/lib/calc/conferencia-cartao";
 import { linkParaLancarCompra } from "@/lib/cartao-links";
 import { brl0, dateBR } from "@/lib/utils";
@@ -84,13 +83,9 @@ export function SubirFatura({ cartoes, cartaoInicial, canEditar, aiConfigured }:
       return;
     }
     try {
-      const wb = XLSX.read(await file.arrayBuffer(), { cellDates: true });
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const aoa = XLSX.utils.sheet_to_json<unknown[]>(ws, { header: 1, raw: false, defval: "", blankrows: false });
-      const res = parseSheet(aoa);
-      // No extrato do cartão, a convenção é a inversa do extrato bancário: a
-      // compra aparece como débito. Mantemos: positivo = compra, negativo = crédito.
-      setPrevia({ nome: file.name, itens: res.rows.map((r) => ({ data: r.data, descricao: r.descricao, valor: r.valor })) });
+      // GA-13 K6: a mesma leitura do extrato (CSV com data DD/MM e acento certos).
+      // Positivo = compra, negativo = crédito.
+      setPrevia({ nome: file.name, itens: linhasDaFatura(await file.arrayBuffer()) });
     } catch (e) {
       setErro(e instanceof Error ? e.message : "Falha ao ler o arquivo.");
     }

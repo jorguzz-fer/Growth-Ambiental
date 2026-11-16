@@ -117,6 +117,7 @@ export default async function DREPage({
       <RecuperarProjeto
         idsPermitidos={ctx.projects.map((p) => p.id)}
         semMemoria={TODOS_OS_PROJETOS}
+        titulo="DRE"
       />
     );
   }

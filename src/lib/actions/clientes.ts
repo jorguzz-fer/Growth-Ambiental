@@ -22,6 +22,7 @@ import {
   recusaDeInteresse,
   recusaDeStatusContrato,
   statusLiberaUnidade,
+  tipoDeDocClienteValido,
 } from "@/lib/clientes-regras";
 import { vinculosDoCliente } from "@/lib/clientes-vinculos";
 
@@ -349,17 +350,6 @@ export async function deleteCliente(formData: FormData): Promise<ResultadoClient
   }
 }
 
-/** Tipos aceitos para documento de venda/contrato (6.9.1). */
-const TIPOS_DOC_CLIENTE = [
-  "Contrato assinado",
-  "Proposta",
-  "Documentos do comprador",
-  "Comprovante",
-  "Termo aditivo",
-  "Distrato",
-  "Outros",
-];
-
 /**
  * Anexa um documento de venda/contrato a um cliente (e, opcionalmente, à
  * unidade/projeto). Tipo obrigatório (6.9.1). A versão é POR TIPO (6.5):
@@ -384,7 +374,8 @@ export async function uploadClienteDoc(formData: FormData): Promise<ResultadoCli
   if (!cli) return { ok: false, error: "Cliente não encontrado." };
 
   const tipo = ((formData.get("tipo") as string) || "").trim();
-  if (!TIPOS_DOC_CLIENTE.includes(tipo)) return { ok: false, error: "Escolha o tipo do documento." };
+  // GA-13 K3: a mesma lista da tela (clientes-regras).
+  if (!tipoDeDocClienteValido(tipo)) return { ok: false, error: "Escolha o tipo do documento." };
   const file = formData.get("file") as File | null;
   if (!file || file.size === 0) return { ok: false, error: "Selecione um arquivo." };
   if (file.size > LIMITE_UPLOAD_BYTES) {

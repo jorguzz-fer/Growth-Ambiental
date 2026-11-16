@@ -30,5 +30,28 @@ FIM
   exit 1
 fi
 
+# GA-13 J1 — o app não pode depender do fuso do servidor do banco. A suíte
+# roda com o banco de teste FORA de UTC (padrão America/Sao_Paulo), para provar
+# sempre que a conexão fixa a sessão em UTC (src/lib/db/conexao.ts).
+# Só em banco local (localhost/127.0.0.1/::1): é um ALTER DATABASE, e o banco
+# de teste é descartável. Em banco remoto, o script recusa.
+export TEST_DB_TZ="${TEST_DB_TZ:-America/Sao_Paulo}"
+node --input-type=module -e '
+import postgres from "postgres";
+const url = new URL(process.env.DATABASE_URL);
+const local = ["localhost", "127.0.0.1", "::1", "[::1]"].includes(url.hostname);
+if (!local) {
+  console.error(`ERRO: o banco de teste (${url.hostname}) não é local. O test-db.sh só altera o fuso de banco local e descartável.`);
+  process.exit(1);
+}
+const banco = decodeURIComponent(url.pathname.slice(1));
+const tz = process.env.TEST_DB_TZ;
+if (!/^[A-Za-z0-9_+\/-]+$/.test(tz)) { console.error(`TEST_DB_TZ inválido: ${tz}`); process.exit(1); }
+const sql = postgres(process.env.DATABASE_URL, { max: 1, onnotice: () => {}, connection: { TimeZone: "UTC" } });
+await sql.unsafe(`ALTER DATABASE "${banco.replace(/"/g, "\"\"")}" SET timezone TO '"'"'${tz}'"'"'`);
+await sql.end();
+console.log(`Banco de teste "${banco}" com timezone ${tz} (a conexão do app fixa a sessão em UTC).`);
+'
+
 echo "DATABASE_URL definido — rodando a suíte completa (integração incluída)."
 exec npx vitest run --reporter=default "$@"

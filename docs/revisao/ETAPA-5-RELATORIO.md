@@ -1,7 +1,7 @@
 # Revisão 4 · Etapa 5 · Prompt AR, Fase 2 — relatório
 
 **Spec:** `docs/revisao/SPEC-REVISAO-2026-11.md`, Anexo C ·
-**Decisões:** `docs/AR-MEDICAO.md`, "Decisões do dono"
+**Decisões:** `docs/historico-construction/AR-MEDICAO.md`, "Decisões do dono"
 
 A etapa sai em três partes:
 

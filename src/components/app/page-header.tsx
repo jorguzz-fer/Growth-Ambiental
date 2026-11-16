@@ -22,8 +22,11 @@ export function PageHeader({
   actions?: React.ReactNode;
 }) {
   return (
-    <header className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
-      <div className="min-w-0">
+    // GA-13 H1 — título e filtros lado a lado só quando cabem: o título tem
+    // largura mínima (22rem) e os filtros quebram para a linha de baixo (e
+    // quebram entre si) em vez de espremer o título palavra por palavra.
+    <header className="mb-6 flex flex-wrap items-end justify-between gap-x-4 gap-y-3" data-page-header>
+      <div className="min-w-0 flex-[1_1_22rem]">
         {eyebrow && (
           <p className="mb-1.5 font-[family-name:var(--font-mono)] text-[10.5px] uppercase tracking-[0.1em] text-[var(--color-ink3)]">
             {eyebrow}
@@ -35,7 +38,7 @@ export function PageHeader({
         {subtitle && <p className="mt-1.5 text-sm text-[var(--color-ink2)]">{subtitle}</p>}
       </div>
       {/* Prompt PDF: os seletores não vão para o PDF; o título e o recorte, sim. */}
-      {actions && <div className="flex shrink-0 items-center gap-2 print:hidden">{actions}</div>}
+      {actions && <div className="flex min-w-0 max-w-full flex-[0_1_auto] flex-wrap items-center gap-2 print:hidden" data-page-header-acoes>{actions}</div>}
     </header>
   );
 }

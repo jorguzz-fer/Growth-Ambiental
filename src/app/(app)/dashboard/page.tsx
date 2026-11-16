@@ -144,6 +144,7 @@ export default async function DashboardPage({
       <RecuperarProjeto
         idsPermitidos={ctx.projects.map((p) => p.id)}
         semMemoria={TODOS_OS_PROJETOS}
+        titulo="Dashboard"
       />
     );
   }

@@ -3,6 +3,7 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { PARAM_PROJETO } from "@/lib/projeto-selecao";
+import { EsqueletoDeTela } from "@/components/app/esqueleto-de-tela";
 
 /**
  * Memória por aba (B-A2, Prompt A). A obra da tela mora na URL (`?proj=`); a
@@ -46,10 +47,17 @@ export function LembrarProjeto({ projectId }: { projectId: string }) {
 export function RecuperarProjeto({
   idsPermitidos,
   semMemoria: escopoSemMemoria,
+  titulo,
   children,
 }: {
   idsPermitidos: string[];
   semMemoria?: string;
+  /**
+   * GA-13 H3 — título do esqueleto mostrado enquanto a tela decide o projeto e
+   * carrega (antes, nada: a tela ficava em branco). Sem título, o esqueleto
+   * vem sem cabeçalho (a página já mostrou o dela).
+   */
+  titulo?: string;
   children?: ReactNode;
 }) {
   const router = useRouter();
@@ -71,5 +79,5 @@ export function RecuperarProjeto({
     }
   }, [ids, pathname, router, sp, escopoSemMemoria]);
 
-  return semMemoria ? <>{children}</> : null;
+  return semMemoria ? <>{children}</> : <EsqueletoDeTela titulo={titulo} semCabecalho={titulo === undefined} />;
 }

@@ -10,6 +10,7 @@
  */
 import { drizzle } from "drizzle-orm/postgres-js";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
+import { comConexaoUtc } from "./conexao";
 import postgres from "postgres";
 
 async function main() {
@@ -20,7 +21,7 @@ async function main() {
   }
   const folder = process.env.MIGRATIONS_DIR ?? "./migrations";
   // onnotice silencia os avisos "already exists, skipping" do próprio migrator.
-  const sql = postgres(url, { max: 1, prepare: false, onnotice: () => {} });
+  const sql = postgres(url, comConexaoUtc({ max: 1, prepare: false, onnotice: () => {} }));
   try {
     console.log(`[migrate] aplicando migrações de "${folder}"...`);
     await migrate(drizzle(sql), { migrationsFolder: folder });

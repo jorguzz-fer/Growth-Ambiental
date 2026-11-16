@@ -51,7 +51,7 @@ export interface BancoSource {
 
 /**
  * Cascata de fontes de recebimento de uma unidade. Cada flag `usar*` ativa a
- * próxima fonte na cascata (ver docs/SPEC.md §5).
+ * próxima fonte na cascata (ver docs/historico-construction/SPEC.md §5).
  */
 export interface PaymentPlan {
   usarAS: boolean;

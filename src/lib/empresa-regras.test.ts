@@ -33,7 +33,9 @@ describe("Prompt AH · regras da tela Empresa", () => {
     expect(AJUDA_CAMPO.itemListaServico.placeholder).toBe("");
     expect(AJUDA_CAMPO.cnae.placeholder).toBe("");
     for (const a of Object.values(AJUDA_CAMPO)) expect(a.placeholder).not.toMatch(/3552502|4120400|7\.02|^3$/);
-    expect(AJUDA_CAMPO.itemListaServico.ajuda).toMatch(/7\.02/);
+    // GA-13 D2: a ajuda (fora do campo) fala da LC 116 e da contabilidade, sem código de construção civil.
+    expect(AJUDA_CAMPO.itemListaServico.ajuda).toMatch(/LC 116\/2003.*contabilidade/);
+    expect(AJUDA_CAMPO.cnae.ajuda).toMatch(/cartão CNPJ.*contabilidade/);
   });
   it("2 — CEP < 8 dígitos, IBGE ≠ 7 dígitos e UF fora das 27 são recusados; vazio passa (4–8)", () => {
     expect(recusaDoCadastroFiscal({ cep: "1234567", codigoMunicipio: null, uf: null })).toMatch(/^CEP: .*8 dígitos/);

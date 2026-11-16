@@ -157,3 +157,15 @@ describe("Regressão de terminologia ambiental (texto visível de telas e compon
     expect(TERMOS.find(([n]) => n === "obra")![1].test("Nome da obra")).toBe(true);
   });
 });
+
+describe("GA-13 D2 — a ajuda fiscal da tela Empresa não fala de construção civil", () => {
+  it("item LC 116 e CNAE: ajuda neutra, sem 'Construção civil', 'obra' nem '4120'", async () => {
+    const { AJUDA_CAMPO } = await import("@/lib/empresa-regras");
+    for (const campo of [AJUDA_CAMPO.itemListaServico, AJUDA_CAMPO.cnae]) {
+      expect(campo.ajuda).not.toMatch(/constru[cç][aã]o civil|constru[cç][aã]o de edif|\bobras?\b|4120|7\.0[25]/i);
+      expect(campo.placeholder).not.toMatch(/\d/);
+    }
+    expect(AJUDA_CAMPO.itemListaServico.ajuda).toBe("Item da LC 116/2003 do serviço que a empresa presta. Confirme com a contabilidade.");
+    expect(AJUDA_CAMPO.cnae.ajuda).toBe("CNAE principal do cartão CNPJ (grave só os dígitos). Confirme com a contabilidade.");
+  });
+});

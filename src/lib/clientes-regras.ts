@@ -56,6 +56,19 @@ export function recusaDeStatusContrato(
 }
 
 /** Limite real de upload (6.9.4): o corpo da Server Action é 12 MB; o arquivo fica em 10 MB. */
+/**
+ * GA-13 K3 — tipos de documento do cliente (6.9.1), a MESMA lista na tela e na
+ * action. "Documentos do comprador" (nome antigo) não é oferecido para anexo
+ * novo; os registros antigos com esse tipo continuam listados como estão
+ * (a listagem não filtra por tipo; nada é convertido).
+ */
+export const TIPOS_DOC_CLIENTE = ["Contrato assinado", "Proposta", "Documentos do contratante", "Comprovante", "Termo aditivo", "Distrato", "Outros"] as const;
+
+/** O tipo é aceito para um anexo novo? */
+export function tipoDeDocClienteValido(tipo: string): boolean {
+  return (TIPOS_DOC_CLIENTE as readonly string[]).includes(tipo);
+}
+
 export const LIMITE_UPLOAD_MB = 10;
 export const LIMITE_UPLOAD_BYTES = LIMITE_UPLOAD_MB * 1024 * 1024;
 

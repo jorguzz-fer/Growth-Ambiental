@@ -4,7 +4,10 @@
 //   node scripts/varredura-terminologia.mjs --json     → JSON
 // Não decide nada sozinho: a classificação (remover, substituir, preservar,
 // referência interna) é contextual — ver docs/AUDITORIA_TERMINOLOGIA_AMBIENTAL.md.
-import { execFileSync } from "node:child_process";
+// GA-13 G1: lista os arquivos pelo helper compartilhado (funciona sem .git e
+// sem o ripgrep instalado) e conta com a regex do próprio Node.
+import { readFileSync } from "node:fs";
+import { listarArquivosDoRepositorio } from "./lib/listar-arquivos.mjs";
 
 export const TERMOS = {
   "obra(s)": "\\bobras?\\b",
@@ -44,22 +47,37 @@ export const AREAS = {
   "documentação (docs, README)": ["docs", "README.md"],
 };
 
-function contar(regex, caminhos, extra) {
-  try {
-    const out = execFileSync("rg", ["-i", "-o", "--no-filename", ...extra, "-e", regex, ...caminhos], { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
-    return out.split("\n").filter(Boolean).length;
-  } catch {
-    return 0;
+const BINARIO = /\.(zip|gz|tgz|rar|7z|png|jpe?g|gif|webp|ico|pdf|xlsx?|docx?|woff2?)$/i;
+const TODOS = listarArquivosDoRepositorio().filter((f) => !BINARIO.test(f));
+const TEXTO = new Map();
+const texto = (f) => {
+  if (!TEXTO.has(f)) {
+    try {
+      TEXTO.set(f, readFileSync(f, "utf8"));
+    } catch {
+      TEXTO.set(f, "");
+    }
   }
+  return TEXTO.get(f);
+};
+const ehTeste = (f) => /\.test\.tsx?$/.test(f);
+const SEM_TESTE = (f) => !ehTeste(f) && !/(^|\/)migrations\//.test(f) && !/(^|\/)__fixtures__\//.test(f);
+const CRIS = /(^|\/)(assistente-base|ai|agent)\/|(^|\/)(cris|cris-dados|cris-dados-ferramentas|cris-colagem)\.ts$/;
+const SEM_CRIS = (f) => !CRIS.test(f.replace(/^src\/lib\//, ""));
+const dentro = (f, caminhos) => caminhos.some((c) => f === c || f.startsWith(`${c}/`));
+
+function contar(regex, caminhos, filtro) {
+  const rx = new RegExp(regex, "gi");
+  let n = 0;
+  for (const f of TODOS) if (dentro(f, caminhos) && filtro(f)) n += (texto(f).match(rx) ?? []).length;
+  return n;
 }
-const SEM_TESTE = ["-g", "!*.test.ts", "-g", "!*.test.tsx", "-g", "!**/migrations/**", "-g", "!**/__fixtures__/**"];
-const SEM_CRIS = ["-g", "!assistente-base/**", "-g", "!ai/**", "-g", "!agent/**", "-g", "!cris.ts", "-g", "!cris-dados.ts", "-g", "!cris-dados-ferramentas.ts", "-g", "!cris-colagem.ts"];
 const resultado = {};
 for (const [termo, rx] of Object.entries(TERMOS)) {
   resultado[termo] = {};
   for (const [area, caminhos] of Object.entries(AREAS)) {
-    const extra = area.startsWith("testes") ? ["-g", "*.test.ts", "-g", "*.test.tsx"] : area.startsWith("regras") ? [...SEM_TESTE, ...SEM_CRIS] : area.startsWith("documentação") ? [] : SEM_TESTE;
-    resultado[termo][area] = contar(rx, caminhos, extra);
+    const filtro = area.startsWith("testes") ? ehTeste : area.startsWith("regras") ? (f) => SEM_TESTE(f) && SEM_CRIS(f) : area.startsWith("documentação") ? () => true : SEM_TESTE;
+    resultado[termo][area] = contar(rx, caminhos, filtro);
   }
 }
 if (process.argv.includes("--json")) console.log(JSON.stringify(resultado, null, 2));

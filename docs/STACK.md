@@ -1,7 +1,7 @@
 # STACK — Reconstrução para Produção (VPS + Coolify)
 
 > Stack de produção do **Growth Tools · Construction App**, projetada para rodar **inteiramente em uma VPS gerenciada por [Coolify](https://coolify.io)** — sem dependência de PaaS proprietária (Vercel/Supabase Cloud).
-> Funcionalidades de origem: ver [`SPEC.md`](./SPEC.md).
+> Funcionalidades de origem: ver [`SPEC.md`](./historico-construction/SPEC.md) (histórico do Growth Construction).
 
 ---
 
@@ -54,6 +54,23 @@ O protótipo planejava **Next.js + Supabase Cloud + Vercel Pro**. Para auto-hosp
 - **PostgreSQL 16 puro** (recurso nativo do Coolify, com backups agendados). **Sem Supabase** — Postgres direto via ORM.
 - **Multi-tenancy** por coluna `tenant_id` + isolamento na camada de aplicação. (Opcional: RLS nativa do Postgres com `SET app.tenant_id` por sessão, se quiser defesa em profundidade.)
 - Modelar **versões/cenários** como dados versionados (`version_id` em todas as tabelas de movimento).
+
+### Fuso horário do banco (GA-13 J1)
+
+O app **não depende** do fuso do servidor do Postgres.
+
+- **Como funciona:** toda conexão fixa a sessão em UTC (`connection: { TimeZone: "UTC" }`). As opções ficam centralizadas em `src/lib/db/conexao.ts` (`OPCOES_DE_CONEXAO`, `comConexaoUtc`).
+  - Usadas em `src/lib/db/index.ts`, `src/lib/db/migrate.ts` e nos scripts `scripts/medicao-*.ts`.
+  - Os `.mjs`, que não importam TypeScript, repetem `TimeZone: "UTC"`.
+- **Por quê:** as colunas `timestamp` (sem fuso) com `defaultNow()` gravam a hora da sessão. Com o banco em America/Sao_Paulo e a sessão no fuso do servidor, a hora gravada ficava 3 h atrás do `new Date()` do código.
+  - O limite de conversas da Cris por hora nunca disparava.
+  - O reenvio da NFS-e "logo após o envio" não segurava.
+  - O backup não via o que mudou.
+- **Nenhum tipo de coluna mudou.**
+- **Testes:**
+  - `scripts/test-db.sh` põe o banco de teste em `${TEST_DB_TZ:-America/Sao_Paulo}`, só em banco local;
+  - `src/lib/db/fuso.test.ts` confere que a sessão é UTC, que `defaultNow()` fica a menos de 5 s de `new Date()` e que todo `postgres(...)` do repositório usa as opções.
+- **Conferir na produção:** no terminal do GA-postgres, rode `psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SHOW timezone;"`. A correção vale com qualquer resultado.
 
 ### Autenticação
 - **Auth.js (NextAuth v5)** com adapter Drizzle + Postgres (tabelas de sessão/usuário no próprio banco).

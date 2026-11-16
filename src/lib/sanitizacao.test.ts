@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { execFileSync } from "node:child_process";
+import { listarArquivosDoRepositorio } from "@/lib/test-utils/listar-arquivos";
 import { readFileSync } from "node:fs";
 
 /**
@@ -65,9 +65,8 @@ function cnpjValido(d: string): boolean {
 }
 
 const BINARIO = /\.(zip|gz|tgz|rar|7z|png|jpe?g|gif|webp|ico|pdf|xlsx?|docx?|woff2?)$/i;
-const arquivos = execFileSync("git", ["ls-files"], { encoding: "utf8" })
-  .split("\n")
-  .filter(Boolean)
+// GA-13 G1: com ou sem .git (o pacote de revisão e os zips não têm .git).
+const arquivos = listarArquivosDoRepositorio()
   .filter((f) => f !== "package-lock.json" && !f.includes("/migrations/meta/"));
 const textos = arquivos.filter((f) => !BINARIO.test(f)).map((f) => ({ f, s: readFileSync(f, "utf8") }));
 

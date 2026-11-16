@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeAll, afterAll } from "vitest";
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 /**
  * Prompt I, PR I-1 — despesas: validações (§11), transação, trava de edição,

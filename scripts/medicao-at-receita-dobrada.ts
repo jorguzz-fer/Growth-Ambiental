@@ -15,13 +15,14 @@
  * Saída sem nome de comprador: a unidade e a parcela bastam para achar o caso.
  */
 import postgres from "postgres";
+import { comConexaoUtc } from "../src/lib/db/conexao";
 
 const url = process.env.DATABASE_URL;
 if (!url) {
   console.error("DATABASE_URL não definido.");
   process.exit(1);
 }
-const client = postgres(url, { prepare: false, max: 2, connection: { default_transaction_read_only: "on" } as Record<string, string> });
+const client = postgres(url, comConexaoUtc({ prepare: false, max: 2, connection: { default_transaction_read_only: "on" } as Record<string, string> }));
 (globalThis as unknown as { client: unknown }).client = client;
 
 const TOLERANCIA_DIAS = 10;
