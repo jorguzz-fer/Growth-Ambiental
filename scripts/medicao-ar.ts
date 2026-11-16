@@ -20,13 +20,14 @@
  *   DATABASE_URL=postgres://... npx tsx scripts/medicao-ar.ts > docs/AR-MEDICAO-producao.md
  */
 import postgres from "postgres";
+import { comConexaoUtc } from "../src/lib/db/conexao";
 
 const url = process.env.DATABASE_URL;
 if (!url) {
   console.error("DATABASE_URL não definido.");
   process.exit(1);
 }
-const somenteLeitura = postgres(url, { prepare: false, max: 4, connection: { default_transaction_read_only: "on" } as Record<string, string> });
+const somenteLeitura = postgres(url, comConexaoUtc({ prepare: false, max: 4, connection: { default_transaction_read_only: "on" } as Record<string, string> }));
 (globalThis as unknown as { client?: unknown }).client = somenteLeitura;
 
 const brl = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });

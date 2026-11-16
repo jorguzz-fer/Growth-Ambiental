@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { conciliarLinhaDoCartao, desfazerLinhaDoCartao } from "@/lib/actions/cartao-conciliacao";
-import type { FaturaNaConciliacao, LinhaDoCartao } from "@/lib/cartao-conciliacao";
+import type { FaturaNaConciliacao } from "@/lib/cartao-conciliacao";
 import { brl0, dateBR } from "@/lib/utils";
 import { linkParaLancarCompra } from "@/lib/cartao-links";
 import { Card, CardContent } from "@/components/ui/card";

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeAll, afterAll } from "vitest";
 import { eq } from "drizzle-orm";
+import { omitir } from "@/lib/test-utils/omitir";
 
 /**
  * Revisão 4, parte 5c — chave `dre_receita_rateio` na DRE, com banco.
@@ -40,7 +41,7 @@ describe.skipIf(!HAS_DB)("receita da DRE pelo rateio (chave dre_receita_rateio)"
     const [b] = await db.insert(schema.versions).values({ projectId, tenantId, key: "budget", kind: "budget", label: "Orç", color: "#000" }).returning();
     atualId = a.id;
     budgetId = b.id;
-    const { code: _c, status: _s, valor: _v, ...plano } = bla401(); // contrato 555 mil (com permuta 90 mil e financiamento 25 mil)
+    const plano = omitir(bla401(), ["code", "status", "valor"]); // contrato 555 mil (com permuta 90 mil e financiamento 25 mil)
     await db.insert(schema.units).values({ tenantId, versionId: atualId, code: "A-1", valor: "537027", status: "Vendido", paymentPlan: plano } as never);
     await db.insert(schema.reembolsos).values({ tenantId, versionId: atualId, data: "03/15/2026", origem: "Banco", valor: "25000" } as never); // liberação
     await db.insert(schema.permutas).values({ tenantId, versionId: atualId, unitCode: "A-1", status: "Vendido", dataVenda: "06/10/2026", valorVenda: "95000", estimado: "90000", formaVenda: "avista" } as never);

@@ -1,6 +1,7 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import * as schema from "./schema";
+import { comConexaoUtc } from "./conexao";
 
 /*
  * Client do banco.
@@ -29,7 +30,7 @@ const globalForDb = globalThis as unknown as {
 };
 
 const client =
-  globalForDb.client ?? postgres(connectionString, { prepare: false });
+  globalForDb.client ?? postgres(connectionString, comConexaoUtc({ prepare: false }));
 if (process.env.NODE_ENV !== "production") globalForDb.client = client;
 
 export const db = drizzle(client, { schema });

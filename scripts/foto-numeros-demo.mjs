@@ -49,7 +49,8 @@ if (modo !== "normalizar" && process.env.TZ !== "UTC") {
 
 // ── Quem é quem no banco (só leitura) ──────────────────────────────────────
 async function lerEmpresa() {
-  const sql = postgres(process.env.DATABASE_URL, { max: 1, onnotice: () => {} });
+  // GA-13 J1: sessão em UTC (ver src/lib/db/conexao.ts).
+  const sql = postgres(process.env.DATABASE_URL, { max: 1, onnotice: () => {}, connection: { TimeZone: "UTC" } });
   try {
     const [dono] = await sql`
       select m.tenant_id, t.name from membership m

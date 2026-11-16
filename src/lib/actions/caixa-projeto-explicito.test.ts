@@ -38,11 +38,6 @@ describe.skipIf(!HAS_DB)("Caixa com obra explícita", async () => {
   }
   const caixaDe = (versionId: string) =>
     db.select().from(schema.cashEntries).where(eq(schema.cashEntries.versionId, versionId));
-  const fd = (campos: Record<string, string>) => {
-    const f = new FormData();
-    for (const [k, val] of Object.entries(campos)) f.set(k, val);
-    return f;
-  };
 
   beforeAll(async () => {
     [tA] = await db.insert(schema.tenants).values({ name: "caixa-A" }).returning();

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeAll, afterAll } from "vitest";
 import { eq } from "drizzle-orm";
+import { omitir } from "@/lib/test-utils/omitir";
 
 /**
  * Prompt AR, Fase 2 (Revisão 4), AR-T4 — com a chave `plano_definicao_nova`
@@ -32,7 +33,7 @@ describe.skipIf(!HAS_DB)("chave plano_definicao_nova nas consultas", async () =>
     projectId = p.id;
     const [v] = await db.insert(schema.versions).values({ projectId, tenantId, key: "atual", kind: "atual", label: "Atual", color: "#000" }).returning();
     versionId = v.id;
-    const { code: _c, status: _s, valor: _v, ...plano } = bla401();
+    const plano = omitir(bla401(), ["code", "status", "valor"]);
     plano.S1.usarS2 = false; // cenário B da spec: Sinal 2 preenchido, caixinha desmarcada
     await db.insert(schema.units).values({ tenantId, versionId, code: "B-1", valor: "537027", status: "Vendido", paymentPlan: plano } as never);
   });

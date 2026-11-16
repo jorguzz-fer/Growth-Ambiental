@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { bla401 } from "./__fixtures__";
 import { partesIguais, receitaPorRateio, totalDoContrato } from "./receita-rateio";
 import type { CalcUnit } from "./types";
+import { omitir } from "@/lib/test-utils/omitir";
 
 /**
  * Revisão 4, parte 5c — receita da DRE pelo rateio do contrato (decisões do
@@ -9,8 +10,7 @@ import type { CalcUnit } from "./types";
  * revisando os meses passados).
  */
 const linha = (u: CalcUnit) => {
-  const { code, status, valor: _v, ...plano } = u;
-  return { code, status, paymentPlan: plano };
+  return { code: u.code, status: u.status, paymentPlan: omitir(u, ["code", "status", "valor"]) };
 };
 const meses = (de: number, ate: number, ano = 2026) => Array.from({ length: ate - de + 1 }, (_, i) => `${String(de + i).padStart(2, "0")}/${ano}`);
 

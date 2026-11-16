@@ -16,6 +16,7 @@
  * custo sai só em US$.
  */
 import postgres from "postgres";
+import { comConexaoUtc } from "../src/lib/db/conexao";
 import { custoDaChamadaUsd, DATA_DA_TABELA_DE_PRECOS, FONTE_DA_TABELA_DE_PRECOS, modeloBase } from "../src/lib/ai/precos";
 
 const url = process.env.DATABASE_URL;
@@ -24,7 +25,7 @@ if (!url) {
   process.exit(1);
 }
 const cambio = Number(process.env.CAMBIO_USD_BRL) || null;
-const sql = postgres(url, { prepare: false, max: 2, connection: { default_transaction_read_only: "on" } as Record<string, string> });
+const sql = postgres(url, comConexaoUtc({ prepare: false, max: 2, connection: { default_transaction_read_only: "on" } as Record<string, string> }));
 
 const usd = (v: number) => `US$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`;
 const brl = (v: number) => (cambio ? `R$ ${(v * cambio).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—");

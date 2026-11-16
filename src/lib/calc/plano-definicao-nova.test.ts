@@ -4,6 +4,7 @@ import { calcProjectionBySource } from "./projection";
 import { expandUnitReceivables } from "./receivables";
 import { previaDasUnidades } from "@/lib/plano-previa";
 import type { CalcUnit } from "./types";
+import { omitir } from "@/lib/test-utils/omitir";
 
 /**
  * Prompt AR, Fase 2 (Revisão 4) — chave `plano_definicao_nova`, com as
@@ -71,8 +72,7 @@ describe("plano pela definição nova (BAR-1 a BAR-5)", () => {
 describe("prévia da chave e lista de conferência", () => {
   it("separa o que sai por financiamento, por permuta e por caixinha, e lista as unidades a conferir", () => {
     const comoLinha = (u: CalcUnit) => {
-      const { code, status, valor: _v, ...plano } = u;
-      return { code, status, paymentPlan: plano };
+      return { code: u.code, status: u.status, paymentPlan: omitir(u, ["code", "status", "valor"]) };
     };
     const ok = bla401();
     const semCaixinha = variacao((x) => {
