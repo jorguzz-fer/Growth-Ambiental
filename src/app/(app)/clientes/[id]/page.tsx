@@ -7,7 +7,7 @@ import { can } from "@/lib/permissions";
 import { updateCliente, deleteCliente, uploadClienteDoc } from "@/lib/actions/clientes";
 import { FormComResultado } from "@/components/app/form-com-resultado";
 import { vinculosDoCliente } from "@/lib/clientes-vinculos";
-import { bloqueiosDeExclusao, LIMITE_UPLOAD_MB } from "@/lib/clientes-regras";
+import { bloqueiosDeExclusao, LIMITE_UPLOAD_MB, TIPOS_DOC_CLIENTE } from "@/lib/clientes-regras";
 import { brl } from "@/lib/utils";
 import { ROTULO_STATUS_CONTRATO, type StatusContrato } from "@/lib/contrato-regras";
 import { isR2Configured, readUrl } from "@/lib/storage/r2";
@@ -184,7 +184,7 @@ export default async function EditarClientePage({ params }: { params: Promise<{ 
                     <option value="" disabled>
                       — escolha —
                     </option>
-                    {["Contrato assinado", "Proposta", "Documentos do contratante", "Comprovante", "Termo aditivo", "Distrato", "Outros"].map((t) => (
+                    {TIPOS_DOC_CLIENTE.map((t) => (
                       <option key={t} value={t}>{t}</option>
                     ))}
                   </Select>

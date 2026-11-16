@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import ts from "typescript";
-import { CODIGO_INTERNO } from "@/lib/codigos-internos";
+import { CODIGO_INTERNO, CODIGO_INTERNO_GA13, temCodigoInterno } from "@/lib/codigos-internos";
 
 /**
  * GA-2B §4 — trava: nenhum texto interno de desenvolvimento chega ao cliente.
@@ -146,7 +146,7 @@ const DA_CRIS = [
 const JA_COBERTOS = new Set([...TEXTOS_AO_CLIENTE, ...ACTIONS, ...DA_CRIS]);
 const DEMAIS = listar(join(RAIZ, "src"), (p) => p.endsWith(".ts") && !p.endsWith(".d.ts")).filter((f) => !JA_COBERTOS.has(f));
 
-const comCodigo = (lista: Achado[]) => lista.filter((a) => CODIGO_INTERNO.test(a.texto) && !ehExcecaoDeTrecho(a)).map((a) => `${a.arquivo}:${a.linha}: ${a.texto.slice(0, 160)}`);
+const comCodigo = (lista: Achado[]) => lista.filter((a) => temCodigoInterno(a.texto) && !ehExcecaoDeTrecho(a)).map((a) => `${a.arquivo}:${a.linha}: ${a.texto.slice(0, 160)}`);
 
 describe("GA-2B §4 — nenhum código interno de desenvolvimento no texto do cliente", () => {
   it("a varredura acha os arquivos de cada grupo", () => {
@@ -170,6 +170,11 @@ describe("GA-2B §4 — nenhum código interno de desenvolvimento no texto do cl
   it("o padrão pega os códigos e deixa passar etapa e fase de verdade", () => {
     for (const s of ["(Prompt I)", "BAA-6", "BL-2", "§57", "§ 7", "PR #21", "GA-11", "ferramentas (Etapa 7)", "aguarda decisão", "até nova decisão", "que ainda não existem", "Fase 0 — Scaffold", "(Parte 4)", "(RG-07)", "ver HOMOLOGACAO.md", "roadmap"]) expect(CODIGO_INTERNO.test(s), s).toBe(true);
     for (const s of ["Etapa 3 de 5", "Fase 2 do projeto", "CT-000001", "20 anos após o desligamento (NR-7)", "Conciliado sem vínculo, por mês", "entram em TODO pacote", "Parte do saldo"]) expect(CODIGO_INTERNO.test(s), s).toBe(false);
+  });
+
+  it("GA-13 C3: o padrão do GA-13 também pega os códigos (e qualquer §)", () => {
+    for (const s of ["Prompt I", "BAA-6", "BA-1", "GA-13", "§", "§57", "PR22"]) expect(CODIGO_INTERNO_GA13.test(s), s).toBe(true);
+    for (const s of ["Etapa 3", "Fase 2", "CT-000001"]) expect(CODIGO_INTERNO_GA13.test(s), s).toBe(false);
   });
 
   it("telas: nenhum texto visível com código interno", () => {

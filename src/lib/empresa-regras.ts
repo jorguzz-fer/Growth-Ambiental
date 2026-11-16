@@ -18,8 +18,9 @@ export const TELA_EMPRESA = "empresa" as const;
 export const AJUDA_CAMPO = {
   codigoMunicipio: { placeholder: "7 dígitos, sem ponto", ajuda: "Código do município na tabela do IBGE. É ele, e não o nome, que a nota usa." },
   aliquotaIss: { placeholder: "0 a 5", ajuda: "Alíquota do município para o serviço, em %. Confirme com a contabilidade." },
-  itemListaServico: { placeholder: "", ajuda: "Item da LC 116/2003. Construção civil costuma ser 7.02 (obra) ou 7.05 (reforma) — confirme com a contabilidade." },
-  cnae: { placeholder: "", ajuda: "Construção de edifícios costuma ser 4120-4/00 (grave só os dígitos). Alguns municípios exigem." },
+  // GA-13 D2: ajuda neutra. Os códigos do setor ambiental entram no GA-7, quando a contabilidade validar.
+  itemListaServico: { placeholder: "", ajuda: "Item da LC 116/2003 do serviço que a empresa presta. Confirme com a contabilidade." },
+  cnae: { placeholder: "", ajuda: "CNAE principal do cartão CNPJ (grave só os dígitos). Confirme com a contabilidade." },
 } as const;
 
 /** Parte 4.2 — os cinco campos sem pendência, declarados opcionais na tela. */
