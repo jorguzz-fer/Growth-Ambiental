@@ -493,7 +493,7 @@ export default async function DREPage({
               </>
             )}
             encargos financeiros (multa, juros) pela {definicaoNova ? <><strong>competência</strong> da despesa que os gerou</> : <>data de <strong>pagamento</strong></>}. Retiradas, Investimentos e Empréstimos
-            estão incluídos na cascata, como hoje — a classificação contábil dessas três linhas aguarda decisão.
+            aparecem na cascata para mostrar o efeito no caixa.
             “—” numa célula: a linha não teve nenhum lançamento; “R$ 0” é soma que deu zero.
           </p>
           {totais.some((t) => t.R <= 0) && (

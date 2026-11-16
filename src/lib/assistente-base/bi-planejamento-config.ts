@@ -66,7 +66,7 @@ Regras gerais:
   - em dados antigos de construção: receita de venda de unidades pelo vencimento, liberações e permutas pela liquidação;
   - multa e juros pelo pagamento.
 - O **rodapé amarelo** conta o que ficou fora da cascata (sem categoria, sem competência, categoria fora da lista) e traz um link para a Conferência. Lançamento sem competência só aparece no Acumulado.
-- Retiradas, Investimentos e Empréstimos estão na cascata. A tela diz que a classificação delas aguarda decisão. Para uma leitura contábil formal, confirme com a sua contabilidade.
+- Retiradas, Investimentos e Empréstimos aparecem na cascata para mostrar o efeito no caixa. Para uma leitura contábil formal, confirme com a sua contabilidade.
 - Na Empresa toda, o projeto sem o cenário entra com outra versão (Atual, senão a padrão), e a linha de cobertura declara isso.
 
 **Não faz:** não grava, não reclassifica e não exporta.

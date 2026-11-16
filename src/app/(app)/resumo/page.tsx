@@ -52,8 +52,9 @@ import { ehVersaoAtual, pendenteDaConta } from "@/lib/contas-pagar-regras";
 import { estaVencida } from "@/lib/despesa-status";
 import { analisarResumo } from "@/lib/resumo-analise";
 import { AssistenteResumo } from "@/components/app/assistente-resumo";
+import { isAiConfigured } from "@/lib/ai/client";
 import { TEXTO_DA_BASE, indicadoresDoResumo, type IndicadorDoResumo } from "@/lib/resumo-tela";
-import { rotuloDaVersao } from "@/lib/dashboard-tela";
+import { rotuloDaVersao, textoDoRecorte } from "@/lib/dashboard-tela";
 import { brl0, dateBR, monthInRange, pct1, ymd } from "@/lib/utils";
 import { PageHeader } from "@/components/app/page-header";
 import { DateRangeFilter } from "@/components/app/date-range-filter";
@@ -486,7 +487,7 @@ export default async function ResumoPage({
       </>
       )}
       </div>
-      <AssistenteResumo usuario={ctx.userId ?? "anon"} analise={analise} />
+      <AssistenteResumo usuario={ctx.userId ?? "anon"} analise={analise} recorte={textoDoRecorte({ projetos: 1, nomeDoProjeto: obra.name, versoes: [`${rotuloDaVersao(version).titulo} “${version.label}”`], de: de ?? "", ate: ate ?? "" })} aiConfigured={isAiConfigured()} />
       </div>
     </>
   );
@@ -749,13 +750,23 @@ function BlocosDoResumo({ b }: { b: Blocos }) {
         </Bloco>
       </div>
       <div className="grid gap-4 lg:grid-cols-3" data-blocos-pendentes>
-        {(["resultado", "caixa", "comparativo"] as const).map((k) => (
-          <div key={k} className="rounded-[12px] border border-dashed border-[var(--color-line)] bg-[var(--color-surface2)] px-4 py-3 text-[12px] text-[var(--color-ink2)]">
-            {BLOCOS_PENDENTES[k]}
-          </div>
-        ))}
+        {(["resultado", "caixa", "comparativo"] as const).map((k) => {
+          const bloco = BLOCOS_PENDENTES[k];
+          return (
+            <div key={k} data-bloco-pendente={k} className="rounded-[12px] border border-dashed border-[var(--color-line)] bg-[var(--color-surface2)] px-4 py-3 text-[12px] text-[var(--color-ink2)]">
+              {bloco.texto}
+              {bloco.link && (
+                <>
+                  {" "}
+                  <Link href={`${bloco.link.href}${q}`} className="text-[var(--color-accent2)] hover:underline">
+                    {bloco.link.rotulo} →
+                  </Link>
+                </>
+              )}
+            </div>
+          );
+        })}
       </div>
-      <p className="text-[11px] text-[var(--color-ink3)]">{BLOCOS_PENDENTES.execucao}</p>
     </div>
   );
 }
@@ -1014,7 +1025,7 @@ async function ResumoConsolidado({
                   {verCusto
                     ? ` Custo = Custo Variável + Custo Fixo, competências até ${mesAtual}; o desvio total soma só os projetos com Orçamento (${total.obrasComOrcamento} de ${obras.length}).`
                     : " Custo não aparece: exige permissão de ver Despesas."}{" "}
-                  Margem fica de fora até a correção da receita (Prompt I).
+                  A margem não entra neste total.
                 </p>
                 <div className="tbl-scroll overflow-x-auto">
                   <Table aria-label="Comparativo entre projetos">

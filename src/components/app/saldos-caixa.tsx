@@ -157,7 +157,7 @@ export function SaldosCaixa({ contas, total, importar, openFinance, totalAjustes
         {(totalAjustes || baixadoSemConciliar) && (
           <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-[12px] text-[var(--color-ink2)]">
             {totalAjustes && (
-              <span title="Ajustes de caixa acumulados (Parte 4). Se este total cresce, é lançamento que não está sendo feito.">
+              <span title="Ajustes de caixa acumulados. Se este total cresce, é lançamento que não está sendo feito.">
                 Ajustes acumulados: <strong className="font-[family-name:var(--font-mono)] text-[var(--color-ink)]">{brl0(totalAjustes.valor)}</strong> ({totalAjustes.n})
               </span>
             )}

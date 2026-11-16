@@ -82,7 +82,7 @@ export const MODELO_DE_IMPLANTACAO: readonly EtapaDoModelo[] = [
   { grupo: "G", codigo: "G3", titulo: "Medições", descricao: "Medição, aprovação, faturamento simulado e recebimento no piloto.", dependeDe: "G2" },
   { grupo: "G", codigo: "G4", titulo: "Forecast", descricao: "Previsão e projeção ao término do piloto.", dependeDe: "G2" },
   { grupo: "G", codigo: "G5", titulo: "Relatórios", descricao: "DRE, fluxo, relatório gerencial e Dashboard conferidos com o piloto.", dependeDe: "G3" },
-  { grupo: "H", codigo: "H1", titulo: "Checklist de homologação", descricao: "Fluxo ponta a ponta e conferências financeiras (ver HOMOLOGACAO_PONTA_A_PONTA.md).", dependeDe: "G5" },
+  { grupo: "H", codigo: "H1", titulo: "Checklist de homologação", descricao: "Fluxo ponta a ponta e conferências financeiras: lançar, medir, faturar, receber e conferir os relatórios.", dependeDe: "G5" },
   { grupo: "H", codigo: "H2", titulo: "Aprovação", descricao: "Aceite formal do cliente para entrar em operação.", dependeDe: "H1" },
   { grupo: "H", codigo: "H3", titulo: "Pendências", descricao: "Pendências abertas registradas com responsável e data.", dependeDe: "H1" },
   { grupo: "H", codigo: "H4", titulo: "Suporte inicial", descricao: "Operação assistida nas primeiras semanas.", dependeDe: "H2" },

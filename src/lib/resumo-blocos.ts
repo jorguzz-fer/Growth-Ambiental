@@ -243,14 +243,26 @@ export function alertaDeVencidos(
   };
 }
 
-/** 1.9 · Os blocos que ainda não entram, com o motivo que a tela escreve. */
+/**
+ * 1.9 · Os blocos que este resumo não calcula, com o texto da tela e onde ver
+ * a informação. GA-2B §3: o texto diz ao cliente onde olhar, sem explicar
+ * decisões internas. (Resultado: a receita por competência ainda está em
+ * revisão interna; Caixa: o ponto de partida do saldo é do Fluxo de Caixa.)
+ * A nota de Execução (físico × financeiro) saiu: a função não existe na tela.
+ */
 export const BLOCOS_PENDENTES = {
-  resultado:
-    "Resultado (competência): depende da correção da receita no Prompt I (seções 54 a 58). Enquanto a receita tiver várias origens e leituras do plano, a margem não é confiável — por isso o bloco não mostra número.",
-  caixa:
-    "Caixa (regime de caixa): o saldo de hoje e a exposição máxima projetada dependem da decisão do ponto de partida do saldo (BAD-1, chave do Fluxo de Caixa). Até lá, veja o Fluxo de Caixa.",
-  execucao: "Execução (físico × financeiro) fica fora da tela até a decisão da medição por serviço (BV-1).",
-  comparativo: "Comparativo entre projetos: aparece quando a tela somar mais de um projeto — escolha Todos, Ativos ou Finalizados no seletor de projeto.",
+  resultado: {
+    texto: "O resultado por competência deste resumo está em revisão. Para a margem por contrato e projeto, veja a DRE.",
+    link: { href: "/dre", rotulo: "DRE" },
+  },
+  caixa: {
+    texto: "Saldo de hoje e projeção do caixa: veja o Fluxo de Caixa.",
+    link: { href: "/fluxocaixa", rotulo: "Fluxo de Caixa" },
+  },
+  comparativo: {
+    texto: "Comparativo entre projetos: aparece quando a tela somar mais de um projeto — escolha Todos, Ativos ou Finalizados no seletor de projeto.",
+    link: null,
+  },
 } as const;
 
 /** O plano tem alguma fonte com valor? (sinal, periódicas, FGTS, subsídio ou financiamento) */

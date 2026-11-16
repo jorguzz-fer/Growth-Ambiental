@@ -48,8 +48,9 @@ export interface TabelaDoPacote {
   semAso?: boolean;
 }
 
-const BM3 = "dado sensível do cliente (BM-3, Prompt M) — fora até nova decisão (BAO-2)";
-const FUNC = "endereço, salário, jornada e dados bancários do funcionário (Prompt Z) — fora (BAO-2)";
+// Os códigos das decisões (BM-3, BAO-2) ficam só aqui no comentário; o texto vai ao cliente no pacote.
+const BM3 = "dado pessoal sensível do cliente — não incluído no backup (proteção de dados, LGPD)";
+const FUNC = "endereço, salário, jornada e dados bancários do funcionário — não incluídos no backup (proteção de dados, LGPD)";
 
 export const TABELAS_DO_PACOTE: readonly TabelaDoPacote[] = [
   // ── Estrutura ─────────────────────────────────────────────────────────────
