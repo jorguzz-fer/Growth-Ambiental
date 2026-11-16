@@ -101,7 +101,8 @@ export default async function DespesasPage({
           title="Lançamentos de Despesas"
           actions={<ProjectPicker projects={pickerProjetos} selected="" allOption />}
         />
-        <RecuperarProjeto idsPermitidos={ctx.projects.map((p) => p.id)}>
+        {/* GA-13 H2: sem projeto lembrado na aba, abre em "Todos os projetos / filiais". */}
+        <RecuperarProjeto idsPermitidos={ctx.projects.map((p) => p.id)} semMemoria={TODOS_OS_PROJETOS}>
           <Card>
             <CardContent className="p-8 text-center text-[var(--color-ink3)]">
               {ctx.projects.length === 0

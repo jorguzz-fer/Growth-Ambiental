@@ -146,3 +146,14 @@ export function rotuloDoEscopo(escopo: "todos" | "ativos" | "finalizados"): stri
       ? "Projetos ativos"
       : "Projetos finalizados";
 }
+
+/**
+ * GA-13 H2 — o projeto em que abre uma tela que só funciona com UM projeto,
+ * quando a aba não lembra nenhum: o primeiro projeto ativo (situação "Ativo"),
+ * na ordem dos seletores; sem ativo, o primeiro projeto (não escritório); sem
+ * projeto, o primeiro da lista. A tela nunca abre vazia. Telas com visão
+ * consolidada abrem em "Todos" (`TODOS_OS_PROJETOS`).
+ */
+export function primeiroProjetoAtivo<T extends { id: string; situacao?: string | null; kind?: string | null }>(projetos: readonly T[]): T | null {
+  return projetos.find((p) => p.situacao === "Ativo" && p.kind !== "office") ?? projetos.find((p) => p.kind !== "office") ?? projetos[0] ?? null;
+}

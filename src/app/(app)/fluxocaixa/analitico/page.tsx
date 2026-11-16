@@ -45,7 +45,7 @@ export default async function FluxoAnaliticoPage({
 
   const escopo = lerEscopoDeRelatorio(ctx.projects, sp);
   if (escopo.tipo === "nenhum") {
-    return <RecuperarProjeto idsPermitidos={ctx.projects.map((p) => p.id)} semMemoria={TODOS_OS_PROJETOS} />;
+    return <RecuperarProjeto idsPermitidos={ctx.projects.map((p) => p.id)} semMemoria={TODOS_OS_PROJETOS} titulo="Fluxo de Caixa Analítico" />;
   }
   const projetos = escopo.tipo === "projeto" ? [escopo.projeto] : projetosDoEscopo(ctx.projects, escopo.tipo).projetos;
   const projParam = escopo.tipo === "projeto" ? escopo.projeto.id : escopo.tipo === "todos" ? TODOS_OS_PROJETOS : escopo.tipo;

@@ -1,5 +1,5 @@
 import { getTenantContext } from "@/lib/context";
-import { lerSelecaoDeProjeto } from "@/lib/projeto-selecao";
+import { lerSelecaoDeProjeto, primeiroProjetoAtivo } from "@/lib/projeto-selecao";
 import { getAlocacoesAtivas, getAlocaveis, getDiasDaEquipe, getDocumentsByEquipeDias, getEquipeDoProjeto } from "@/lib/queries";
 import { analisarEquipes } from "@/lib/pessoas-analise";
 import { isAiConfigured } from "@/lib/ai/despesa-extract";
@@ -10,7 +10,7 @@ import { isR2Configured, readUrl } from "@/lib/storage/r2";
 import { PageHeader } from "@/components/app/page-header";
 import { AccessDenied } from "@/components/app/access-denied";
 import { ProjectPicker } from "@/components/app/project-picker";
-import { LembrarProjeto } from "@/components/app/projeto-da-aba";
+import { LembrarProjeto, RecuperarProjeto } from "@/components/app/projeto-da-aba";
 import { EquipesManager, type DocDoDia } from "@/components/app/equipes-manager";
 
 export const dynamic = "force-dynamic";
@@ -28,7 +28,10 @@ export default async function EquipesPage({ searchParams }: { searchParams: Prom
     return (
       <>
         <PageHeader title="Equipes e Presença de Campo" subtitle="Escolha o projeto para ver a equipe e registrar as diárias" actions={<ProjectPicker projects={pickerProjetos} selected="" />} />
-        <p className="text-[12.5px] text-[var(--color-ink3)]">Selecione um projeto.</p>
+        {/* GA-13 H2: a equipe é de UM projeto; sem projeto lembrado na aba, abre no primeiro ativo. */}
+        <RecuperarProjeto idsPermitidos={ctx.projects.map((p) => p.id)} semMemoria={primeiroProjetoAtivo(ctx.projects)?.id}>
+          <p className="text-[12.5px] text-[var(--color-ink3)]">Nenhum projeto cadastrado. Cadastre o projeto em Projetos.</p>
+        </RecuperarProjeto>
       </>
     );
   }

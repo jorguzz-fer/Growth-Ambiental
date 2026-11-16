@@ -151,7 +151,7 @@ export default async function ResumoPage({
       ? await getProjectVersions(ctx.tenant.id, escopo.projeto.id)
       : null;
   if (!escolhido?.trabalho) {
-    return <PedirProjeto titulo="Resumo Executivo" projetos={ctx.projects} oQue="ver o resumo executivo" />;
+    return <PedirProjeto titulo="Resumo Executivo" projetos={ctx.projects} oQue="ver o resumo executivo" allOption />;
   }
   const { project: obra, versions: versoesDaObra, trabalho: versaoTrabalho } = escolhido;
   const projectPicker = (
