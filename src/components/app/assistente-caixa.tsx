@@ -192,7 +192,7 @@ export function AssistenteCaixa({ usuario, projectId, analise, canConciliar }: {
             <Bloco titulo="Dias que não fecham (do mais antigo)">
               {diasQueNaoFecham.length === 0 ? <p className={li}>Nenhum na faixa.</p> : diasQueNaoFecham.map((d) => <p key={d.dia} className={li}>{diaBR(d.dia)} · diferença {brl0(d.diferenca)} · {d.pendentes} linha(s) a resolver</p>)}
             </Bloco>
-            <Bloco titulo="Conciliado sem vínculo (BL-2), por mês">
+            <Bloco titulo="Conciliado sem vínculo, por mês">
               {conciliadoSemVinculo.length === 0 ? <p className={li}>Nenhum neste projeto.</p> : conciliadoSemVinculo.map((m) => <p key={m.mes} className={li}>{m.mes.split("-").reverse().join("/")} · {m.quantidade} movimento(s) · {brl0(m.valor)}</p>)}
             </Bloco>
             <Bloco titulo="Baixado e não conciliado">

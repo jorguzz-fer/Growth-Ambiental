@@ -112,7 +112,7 @@ export function AssistenteContas({ usuario, analise }: { usuario: string; analis
           )}
         </AcaoDoPainel>
 
-        <AcaoDoPainel cor="#E6F4EA" icone={<Icone cor="#1E7A3C" d="M8 12h8M12 8v8M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />} titulo="Automáticas sem conexão" descricao="Marcadas como automáticas e não conectadas (BX-3)" contador={autoNaoConectada.length} aberta={aberta === "auto"} onClick={() => alternarAcao("auto")}>
+        <AcaoDoPainel cor="#E6F4EA" icone={<Icone cor="#1E7A3C" d="M8 12h8M12 8v8M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />} titulo="Automáticas sem conexão" descricao="Marcadas como automáticas e não conectadas" contador={autoNaoConectada.length} aberta={aberta === "auto"} onClick={() => alternarAcao("auto")}>
           {autoNaoConectada.length === 0 ? nada("Nenhuma conta promete atualização automática sem conexão.") : (
             <ul className="space-y-1">
               {autoNaoConectada.map((c) => (

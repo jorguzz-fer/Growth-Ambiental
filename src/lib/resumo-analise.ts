@@ -57,8 +57,8 @@ export function analisarResumo(o: {
           ? [
               { bloco: "Exposição", texto: "Saldos em aberto, não o valor cheio: contas a receber e a pagar do projeto (versão Atual), com o vencido à parte." },
               { bloco: "Atenção", texto: "Exceções categóricas (cadastro e lançamento incompletos) e por valor: custo realizado acima do orçado e recebível vencido, com os limites da empresa (tela Empresa). Aponta o quê, onde e quanto — nunca a causa." },
-              { bloco: "Resultado", texto: BLOCOS_PENDENTES.resultado },
-              { bloco: "Caixa", texto: BLOCOS_PENDENTES.caixa },
+              { bloco: "Resultado", texto: BLOCOS_PENDENTES.resultado.texto },
+              { bloco: "Caixa", texto: BLOCOS_PENDENTES.caixa.texto },
             ]
           : []),
       ]
@@ -67,8 +67,8 @@ export function analisarResumo(o: {
         { bloco: "Vendas", texto: `Cadastro das unidades da versão. VGV total: ${TEXTO_DA_BASE.todas_unidades}; VGV vendido: ${TEXTO_DA_BASE.vendidas}. VSO = vendidas no período ÷ oferta no início; sem período ou com vendida sem data, não é calculado.` },
         { bloco: "Exposição", texto: "Saldos em aberto, não o valor cheio: contas a receber e a pagar do projeto (versão Atual), com o vencido à parte; financiamento aprovado × liberado e permuta em estoque, da versão." },
         { bloco: "Atenção", texto: "Exceções categóricas (cadastro e lançamento incompletos) e por valor: custo realizado acima do orçado e recebível vencido, com os limites da empresa (tela Empresa). Aponta o quê, onde e quanto — nunca a causa." },
-        { bloco: "Resultado", texto: BLOCOS_PENDENTES.resultado },
-        { bloco: "Caixa", texto: BLOCOS_PENDENTES.caixa },
+        { bloco: "Resultado", texto: BLOCOS_PENDENTES.resultado.texto },
+        { bloco: "Caixa", texto: BLOCOS_PENDENTES.caixa.texto },
       ]
     : [
         { bloco: "Indicadores gerais", texto: `Valores acumulados da versão, nominais (sem INCC). O VGV conta ${TEXTO_DA_BASE.todas_unidades}; Sinais a Subsídio contam ${TEXTO_DA_BASE.vendidas}; permutas e liberações contam todos os registros da versão.` },

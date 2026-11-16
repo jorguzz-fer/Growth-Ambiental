@@ -21,9 +21,6 @@ export default function Home() {
           Abrir o app
         </Link>
       </div>
-      <p className="mt-10 font-[family-name:var(--font-mono)] text-[11px] text-[var(--color-ink4)]">
-        Fase 0 — Scaffold · Next.js 15 · Drizzle · Auth.js · Coolify
-      </p>
     </main>
   );
 }

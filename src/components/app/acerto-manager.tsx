@@ -456,7 +456,7 @@ function VincularDespesas({
                 {diferenca.tipo === "JUROS" ? "despesa" : "receita"} financeira do
                 período, na competência do pagamento. <strong>Não é rateada no
                 custo de nenhum projeto</strong> — juros de mora são perda
-                operacional, não custo de obtenção de recursos (RG-07).
+                operacional, não custo de obtenção de recursos.
               </p>
             </div>
           )}

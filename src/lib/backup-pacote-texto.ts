@@ -179,7 +179,7 @@ export function montarLeiaMe(r: ResumoDoPacote): string {
   for (const f of FORA_DO_PACOTE) L.push(`  - ${f.tabela} (${f.grupo}): ${f.motivo}`);
   for (const t of r.tabelas.filter((x) => x.colunasOmitidas.length))
     L.push(`  - colunas de ${t.tabela}: ${t.colunasOmitidas.join(", ")} — ${t.motivoOmissao ?? "omitidas"}`);
-  if (r.documentos.asoOmitidos) L.push(`  - ${r.documentos.asoOmitidos} documento(s) de ASO (exame de saúde do funcionário) — dado de saúde, fora (BAO-2)`);
+  if (r.documentos.asoOmitidos) L.push(`  - ${r.documentos.asoOmitidos} documento(s) de ASO (exame de saúde do funcionário) — dado de saúde, não incluído no backup (proteção de dados, LGPD)`);
   if (r.sequencias.length) {
     L.push("");
     L.push("NUMERAÇÃO (para não reemitir número já usado)");

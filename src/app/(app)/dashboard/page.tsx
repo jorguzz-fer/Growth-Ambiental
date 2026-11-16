@@ -39,6 +39,7 @@ import { valorContratadoDosProjetos } from "@/lib/valor-contratado";
 import { indicadoresExecutivos } from "@/lib/indicadores-executivos";
 import { IndicadoresExecutivosPainel } from "@/components/app/indicadores-executivos";
 import { AssistenteDashboard } from "@/components/app/assistente-dashboard";
+import { isAiConfigured } from "@/lib/ai/client";
 import { PageHeader } from "@/components/app/page-header";
 import { ProjectPicker } from "@/components/app/project-picker";
 import { Card, CardContent } from "@/components/ui/card";
@@ -507,7 +508,7 @@ export default async function DashboardPage({
           físico-financeiros de obra (financiamento, BDI, CUB, PLS) saiu. */}
       <StatusProjetoPanel st={statusProjeto} />
       </div>
-      <AssistenteDashboard usuario={ctx.userId ?? "anon"} analise={analise} />
+      <AssistenteDashboard usuario={ctx.userId ?? "anon"} analise={analise} recorte={recorte} aiConfigured={isAiConfigured()} />
       </div>
       )}
     </>

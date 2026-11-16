@@ -5,6 +5,9 @@ import { variacoes, type AnaliseDoDashboard, type Instantaneo, type Variacao } f
 import { brl0, cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Faisca } from "@/components/app/assistente-funcionarios";
+import { useCris } from "@/components/app/cris-contexto";
+import { MENSAGEM_CRIS_SEM_IA } from "@/lib/cris-sem-ia";
+import { DESCRICAO_MONTAR_ANALISE, pedidoDeAnalise } from "@/lib/montar-analise";
 
 /**
  * Painel do assistente no Dashboard (Prompt AA, Parte 6).
@@ -15,7 +18,9 @@ import { Faisca } from "@/components/app/assistente-funcionarios";
  */
 type Acao = "explicar" | "mudou" | "divergencia" | "atencao";
 
-export function AssistenteDashboard({ usuario, analise }: { usuario: string; analise: AnaliseDoDashboard }) {
+export function AssistenteDashboard({ usuario, analise, recorte, aiConfigured }: { usuario: string; analise: AnaliseDoDashboard; recorte: string; aiConfigured: boolean }) {
+  const cris = useCris();
+  const [semIa, setSemIa] = useState(false);
   const chave = `gt:assistente:dashboard:recolhido:${usuario}`;
   const chaveVisita = `gt:assistente:dashboard:ultima:${usuario}:${analise.recorte}`;
   const [recolhido, setRecolhido] = useState(false);
@@ -82,9 +87,22 @@ export function AssistenteDashboard({ usuario, analise }: { usuario: string; ana
       </div>
 
       <div className="space-y-2">
-        {/* 6.3 — a primeira ação; ainda sem o catálogo de métricas (BAA-6). */}
-        <Acao cor="#EEF0F4" cor2="#5B6475" d="M12 5v14M5 12h14" titulo="Montar outra análise" descricao="Indisponível: depende do catálogo de métricas (BAA-6) e da camada analítica do Prompt I, que ainda não existem." desabilitada aberta={false} onClick={() => {}}>
-          {null}
+        {/* 6.3 — a primeira ação. GA-2B §2: abre a Cris com o pedido e o recorte da tela. */}
+        <Acao
+          cor="#EEF0F4"
+          cor2="#5B6475"
+          d="M12 5v14M5 12h14"
+          titulo="Montar outra análise"
+          descricao={DESCRICAO_MONTAR_ANALISE}
+          aberta={semIa}
+          onClick={() => {
+            if (!aiConfigured) return setSemIa(!semIa);
+            cris?.perguntar(pedidoDeAnalise("Dashboard", recorte));
+          }}
+        >
+          <p className="text-[12px] text-[var(--color-ink2)]" data-cris-sem-ia>
+            {MENSAGEM_CRIS_SEM_IA}
+          </p>
         </Acao>
 
         <Acao cor="#E7EDFD" cor2="#2B5CD9" d="M12 8v.01M11 12h1v4h1M3.5 12a8.5 8.5 0 1 0 17 0 8.5 8.5 0 0 0-17 0z" titulo="Explicar o indicador" descricao="Fonte, cenário, regime e janela de cada cartão" aberta={aberta === "explicar"} onClick={() => toggle("explicar")}>

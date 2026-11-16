@@ -321,7 +321,7 @@ export function ConciliacaoReview({ pendentes, pendentesEntrada, conciliados, ca
                     <td className={`px-3 py-2 text-right font-[family-name:var(--font-mono)] ${c.valor < 0 ? "text-[var(--color-danger)]" : "text-[var(--color-success)]"}`}>{brl0(c.valor)}</td>
                     <td className="px-3 py-2">
                       {c.semVinculo ? (
-                        <Badge tone="warning" title="Marcado como conciliado sem registro de com o quê casou (BL-2). Regularize vinculando uma despesa ou desfazendo.">conciliado sem vínculo</Badge>
+                        <Badge tone="warning" title="Marcado como conciliado sem registro do lançamento correspondente. Regularize vinculando uma despesa ou desfazendo.">conciliado sem vínculo</Badge>
                       ) : c.vinculos.length > 0 ? (
                         <ul className="space-y-0.5">
                           {c.vinculos.map((v) => (

@@ -122,7 +122,7 @@ export function AssistenteEquipes({ usuario, projectId, hojeInterno, analise, di
             </>
           )}
         </Acao>
-        <Acao cor="#FFF1DB" cor2="#B45309" d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" titulo="Diárias sem lançamento de pagamento" descricao="Membros com diárias registradas e sem despesa correspondente (BZ-1)" contador={diariasSemLancamento.length} aberta={aberta === "pagamento"} onClick={() => a("pagamento")}>
+        <Acao cor="#FFF1DB" cor2="#B45309" d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" titulo="Diárias sem lançamento de pagamento" descricao="Membros com diárias registradas e sem despesa correspondente" contador={diariasSemLancamento.length} aberta={aberta === "pagamento"} onClick={() => a("pagamento")}>
           {diariasSemLancamento.length === 0 ? <p className={li}>Toda diária de autônomo já tem despesa lançada.</p> : <ul className="space-y-1">{diariasSemLancamento.map((x) => <li key={x.equipeProjetoId} className={li}><span className={nome}>{x.nome}</span> · {qtd(x.quantidade)} diária(s) · {brl0(x.valor)} — use &quot;Lançar em Despesas&quot; no acumulado.</li>)}</ul>}
         </Acao>
         <Acao cor="#FDE6E9" cor2="#C0334A" d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6" titulo="Projeto sem equipe" descricao="Projetos sem ninguém alocado" contador={obrasSemEquipe.length} aberta={aberta === "semEquipe"} onClick={() => a("semEquipe")}>
