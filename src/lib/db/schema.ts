@@ -26,7 +26,7 @@ import type { PaymentPlan } from "@/lib/calc/types";
  * Drizzle, mais o esqueleto de multi-tenancy (tenants + memberships) para
  * ancorar o RBAC. O modelo de domínio completo (projetos, versões, unidades,
  * plano de pagamento, despesas, fornecedores, contas) entra na Fase 1.
- * Ver docs/SPEC.md §3 e docs/STACK.md §7.
+ * Ver docs/historico-construction/SPEC.md §3 e docs/STACK.md §7.
  */
 
 /** Papéis de acesso do tenant (ver docs/STACK.md §2 - Autenticação). */
@@ -102,7 +102,7 @@ export const verificationTokens = pgTable(
 // ────────────────────────── Multi-tenancy ───────────────────────────
 
 /**
- * Empresa cliente (incorporadora). Ver docs/SPEC.md §1.
+ * Empresa cliente (incorporadora). Ver docs/historico-construction/SPEC.md §1.
  *
  * O bloco fiscal existe para a EMISSÃO de nota (ver docs/EMISSAO-NF.md): são os
  * dados do prestador que a prefeitura exige na NFS-e e que o provedor de
@@ -185,14 +185,14 @@ export const memberships = pgTable(
 
 // ─────────────────────────── Enums de domínio ───────────────────────────
 
-/** Empreendimento (proj) ou escritório/filial (office). Ver docs/SPEC.md §3. */
+/** Empreendimento (proj) ou escritório/filial (office). Ver docs/historico-construction/SPEC.md §3. */
 export const projectKindEnum = pgEnum("project_kind", ["proj", "office"]);
 export const projectStatusEnum = pgEnum("project_status", [
   "Em andamento",
   "Planejamento",
 ]);
 
-/** Tipo de versão/cenário. Ver docs/SPEC.md §4. */
+/** Tipo de versão/cenário. Ver docs/historico-construction/SPEC.md §4. */
 export const versionKindEnum = pgEnum("version_kind", [
   "budget",
   "forecast",
@@ -221,10 +221,10 @@ export const bankAccountTypeEnum = pgEnum("bank_account_type", [
   "Terceiros",
 ]);
 
-/** Origem do subitem do plano de contas. Ver docs/SPEC.md §8.3. */
+/** Origem do subitem do plano de contas. Ver docs/historico-construction/SPEC.md §8.3. */
 export const accountKindEnum = pgEnum("account_kind", ["cef", "complementar"]);
 
-/** As 7 categorias da DRE. Ver docs/SPEC.md §8.3. */
+/** As 7 categorias da DRE. Ver docs/historico-construction/SPEC.md §8.3. */
 export const dreCategoryEnum = pgEnum("dre_category", [
   "Receita",
   "Custo Variável",
@@ -317,7 +317,7 @@ export const projects = pgTable("project", {
   art: text("art"),
   /** raio permitido para registro de ponto, em metros (padrão 100). */
   pontoRaioMetros: integer("ponto_raio_metros").notNull().default(100),
-  // ── Medição / BDI / provisionamento (ver docs/BDI-PROVISIONAMENTO.md) ───
+  // ── Medição / BDI / provisionamento (ver docs/historico-construction/BDI-PROVISIONAMENTO.md) ───
   // Todos OPCIONAIS: projetos existentes seguem funcionando sem preenchê-los.
   /** CUB de referência (R$/m²) e metragem — custo referencial = CUB × metragem. */
   cub: numeric("cub", { precision: 15, scale: 2 }),
@@ -381,7 +381,7 @@ export const timeEntries = pgTable("time_entry", {
 /**
  * Versão/cenário de planejamento de um projeto. Cada versão isola seus dados
  * de movimento (units, permutas, reembolsos, caixa, despesas). Limite de 6 por
- * projeto (3 fixas + 3 customizadas). Ver docs/SPEC.md §4.
+ * projeto (3 fixas + 3 customizadas). Ver docs/historico-construction/SPEC.md §4.
  */
 export const versions = pgTable(
   "version",
@@ -432,7 +432,7 @@ export const versions = pgTable(
 /**
  * Unidade (imóvel) de uma versão. O plano de pagamento em cascata é guardado
  * como JSONB (`payment_plan`) — agregado sempre lido/gravado por inteiro e
- * consumido 1:1 pela lógica de cálculo (src/lib/calc). Ver docs/SPEC.md §3 e §5.
+ * consumido 1:1 pela lógica de cálculo (src/lib/calc). Ver docs/historico-construction/SPEC.md §3 e §5.
  */
 export const units = pgTable("unit", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -462,7 +462,7 @@ export const units = pgTable("unit", {
   uniqueIndex("unit_version_code_uq").on(t.versionId, t.code),
 ]);
 
-/** Inventário de ativos recebidos em permuta. Ver docs/SPEC.md §3 e §7.4. */
+/** Inventário de ativos recebidos em permuta. Ver docs/historico-construction/SPEC.md §3 e §7.4. */
 export const permutas = pgTable("permuta", {
   id: uuid("id").primaryKey().defaultRandom(),
   versionId: uuid("version_id")
@@ -508,7 +508,7 @@ export const permutas = pgTable("permuta", {
   index("permuta_version_idx").on(t.versionId),
 ]);
 
-/** Reembolsos da versão. Ver docs/SPEC.md §3 e §7.3. */
+/** Reembolsos da versão. Ver docs/historico-construction/SPEC.md §3 e §7.3. */
 export const reembolsos = pgTable("reembolso", {
   id: uuid("id").primaryKey().defaultRandom(),
   versionId: uuid("version_id")
@@ -600,7 +600,7 @@ export const bankAccounts = pgTable("bank_account", {
 
 /**
  * Subitem do plano de contas (dupla classificação CEF/complementar). Registro
- * por tenant, derivado de PLANO_CONTAS. Ver docs/SPEC.md §8.3.
+ * por tenant, derivado de PLANO_CONTAS. Ver docs/historico-construction/SPEC.md §8.3.
  */
 export const chartAccounts = pgTable(
   "chart_account",
@@ -1412,7 +1412,7 @@ export const documents = pgTable("document", {
  * Catálogo de SERVIÇOS do projeto (orçamento de obra). Cada serviço tem um
  * custo proposto; a incidência é derivada (custo ÷ custo total dos serviços) e
  * os limites mínimo/máximo permitem sinalizar quando a incidência está fora da
- * faixa aceitável. Ver docs/BDI-PROVISIONAMENTO.md §2.
+ * faixa aceitável. Ver docs/historico-construction/BDI-PROVISIONAMENTO.md §2.
  *
  * Tabela NOVA e independente: não altera nem substitui `medicao`, que continua
  * válida e em uso (alimenta o Relatório CEF; não a DRE — Prompt V).
@@ -1441,7 +1441,7 @@ export const servicos = pgTable("servico", {
  * Medição de um serviço numa competência: o usuário informa APENAS o percentual
  * EXECUTADO ACUMULADO do serviço ao final do mês. A variação mensal e o valor
  * medido são derivados pelo sistema (nunca digitados) — ver
- * docs/BDI-PROVISIONAMENTO.md §4.
+ * docs/historico-construction/BDI-PROVISIONAMENTO.md §4.
  */
 export const medicaoServicos = pgTable("medicao_servico", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -1547,7 +1547,7 @@ export const clientes = pgTable("cliente", {
 
 // ───────────────────────────── Caixa & INCC ─────────────────────────────
 
-/** Lançamento de caixa (real) por versão, conciliável. Ver docs/SPEC.md §9.4. */
+/** Lançamento de caixa (real) por versão, conciliável. Ver docs/historico-construction/SPEC.md §9.4. */
 export const cashEntries = pgTable("cash_entry", {
   id: uuid("id").primaryKey().defaultRandom(),
   /**
@@ -1704,7 +1704,7 @@ export const contaReceberRecebimentos = pgTable("conta_receber_recebimento", {
 });
 
 /**
- * Tabela INCC por projeto (48 meses, editável). Ver docs/SPEC.md §6.
+ * Tabela INCC por projeto (48 meses, editável). Ver docs/historico-construction/SPEC.md §6.
  * Prompt Q2 (0068): linha SEM projeto = a série da empresa (uma por mês),
  * lida no lugar da série da obra quando a chave "incc_por_empresa" está ligada.
  */
@@ -1739,7 +1739,7 @@ export const inccRates = pgTable(
 // ─────────────────────────────── Auditoria ──────────────────────────────
 
 /**
- * Log de auditoria: registra quem alterou o quê (ver docs/SPEC.md §12.7).
+ * Log de auditoria: registra quem alterou o quê (ver docs/historico-construction/SPEC.md §12.7).
  * Append-only; preenchido pela camada de Server Actions.
  */
 export const auditLog = pgTable("audit_log", {

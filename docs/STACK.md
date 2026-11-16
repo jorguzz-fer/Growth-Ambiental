@@ -1,7 +1,7 @@
 # STACK — Reconstrução para Produção (VPS + Coolify)
 
 > Stack de produção do **Growth Tools · Construction App**, projetada para rodar **inteiramente em uma VPS gerenciada por [Coolify](https://coolify.io)** — sem dependência de PaaS proprietária (Vercel/Supabase Cloud).
-> Funcionalidades de origem: ver [`SPEC.md`](./SPEC.md).
+> Funcionalidades de origem: ver [`SPEC.md`](./historico-construction/SPEC.md) (histórico do Growth Construction).
 
 ---
 

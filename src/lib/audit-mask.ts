@@ -1,6 +1,6 @@
 /**
  * Mascaramento de dado pessoal no Log de Auditoria (BAK-2, decidido em
- * 28/09/2026 — ver docs/V2-BLOCO0-BLOQUEIOS.md, decisão 3.8).
+ * 28/09/2026 — ver docs/historico-construction/V2-BLOCO0-BLOQUEIOS.md, decisão 3.8).
  *
  * ## O problema
  *

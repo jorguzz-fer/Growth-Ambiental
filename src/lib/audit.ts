@@ -5,7 +5,7 @@ type Executor = Pick<typeof db, "insert">;
 
 /**
  * Registra uma entrada no log de auditoria (append-only). Chamado pelas Server
- * Actions após mutações. Ver docs/SPEC.md §12.7.
+ * Actions após mutações. Ver docs/historico-construction/SPEC.md §12.7.
  */
 export async function logAudit(entry: {
   tenantId: string;

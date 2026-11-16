@@ -8,9 +8,10 @@ produção para deploy em **VPS + Coolify**.
 - Módulo de Contratos e Aditivos: [`docs/MODULO_CONTRATOS_ADITIVOS.md`](./docs/MODULO_CONTRATOS_ADITIVOS.md)
 - Auditoria de dados herdados: [`docs/AUDITORIA_SANITIZACAO.md`](./docs/AUDITORIA_SANITIZACAO.md)
 - Adequação funcional ao setor ambiental (módulos removidos, adaptados e preservados): [`docs/ADEQUACAO_FUNCIONAL_GROWTH_AMBIENTAL.md`](./docs/ADEQUACAO_FUNCIONAL_GROWTH_AMBIENTAL.md)
-- Auditoria de terminologia (varredura, classes e exceções): [`docs/AUDITORIA_TERMINOLOGIA_AMBIENTAL.md`](./docs/AUDITORIA_TERMINOLOGIA_AMBIENTAL.md). Os documentos `docs/V2-*` e `docs/SPEC.md` são histórico do produto anterior.
+- Auditoria de terminologia (varredura, classes e exceções): [`docs/AUDITORIA_TERMINOLOGIA_AMBIENTAL.md`](./docs/AUDITORIA_TERMINOLOGIA_AMBIENTAL.md). Os documentos `docs/historico-construction/V2-*` e `docs/historico-construction/SPEC.md` são histórico do produto anterior.
 
-- Especificação funcional: [`docs/SPEC.md`](./docs/SPEC.md)
+- Índice da documentação (uma linha por documento): [`docs/README.md`](./docs/README.md)
+- Especificação funcional do produto anterior (histórico): [`docs/historico-construction/SPEC.md`](./docs/historico-construction/SPEC.md)
 - Stack e roadmap de produção: [`docs/STACK.md`](./docs/STACK.md)
 - Emissão de NFS-e (cadastro fiscal, cálculo e provedor): [`docs/EMISSAO-NF.md`](./docs/EMISSAO-NF.md)
 - Leitura de documentos por IA (subir NF/cupom/comprovante e preencher o formulário, com alerta nos campos duvidosos): [`docs/LEITURA-DOCUMENTOS-IA.md`](./docs/LEITURA-DOCUMENTOS-IA.md)
@@ -120,7 +121,7 @@ intervalo). Usa `git archive` de propósito: um pacote montado à mão escolhend
 diretórios já saiu **sem** `src/lib/db/migrations/meta/_journal.json`, e sem
 esse arquivo o migrator do Drizzle aborta com
 `Can't find meta/_journal.json file` — o revisor teve de aplicar os `.sql` à
-mão. O script confere a presença de `_journal.json`, `docs/SPEC.md`,
+mão. O script confere a presença de `_journal.json`, `docs/README.md`,
 `package.json` e `REVISAO.txt` e falha se algum faltar.
 
 ## Estrutura

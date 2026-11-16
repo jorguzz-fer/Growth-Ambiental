@@ -81,7 +81,7 @@ Base: código do commit `d6daf16` (09/11/2026). Coloque este arquivo em
   requisição (comparação antes × depois de todos os valores: zero divergências),
   e a migração **0071** criou índices em `despesa.version_id`,
   `pagamento.despesa_id`, `conta_receber.project_id`, `permuta.version_id` e
-  `reembolso.version_id`. Docs: `docs/V3-DRE-DESEMPENHO-PR1.md` e `-PR2.md`.
+  `reembolso.version_id`. Docs: `docs/historico-construction/V3-DRE-DESEMPENHO-PR1.md` e `-PR2.md`.
   O Prompt AR (Etapa 5) mexe em `getMonthlyRevenue`, que a DRE consome: o
   teste `src/lib/dre-inputs-desempenho.test.ts` tem de continuar passando.
 - **Desempenho do Fluxo de Caixa (achado da mesma medição, não corrigido):**
@@ -92,7 +92,7 @@ Base: código do commit `d6daf16` (09/11/2026). Coloque este arquivo em
   mesmo código.
 - **Nota fiscal (Prompt AG):** o Thiago assinou o contrato da **Focus NFe**
   (reunião de 11/11). O código do emissor está pronto desde 26/10; falta o
-  passo a passo de `docs/V2-PROMPT-AG-FINAL.md` ("Para ligar em produção"):
+  passo a passo de `docs/historico-construction/V2-PROMPT-AG-FINAL.md` ("Para ligar em produção"):
   `NFSE_TENANT_ID`, `FOCUS_NFE_TOKEN_HOMOLOGACAO`, cadastro fiscal da empresa
   em Homologação, código IBGE do município de cada obra, permissões
   "Emitir/Cancelar nota fiscal" e uma nota de teste completa em homologação.
@@ -229,7 +229,7 @@ Estas decisões valem como requisito. Não reabrir.
 | --- | --- | --- | --- |
 | BAQ-1 | AQ | `perguntarAoAssistente` e `interpretarPergunta` são chamados por alguma rota do agente? | Resposta do código; não apagar se forem |
 | BAQ-2 | AQ | A tela de Clientes aceita anexo para a Cris? | Resposta do código: aceita. **Decidido (12/11): deixa como está** (Clientes e Funcionários continuam aceitando) |
-| BAR-1 | AR | Seção do plano preenchida e com a chave `usar*` desligada conta? | **Decidido (11/11): não conta; só a seção com a caixinha marcada.** Atrás de chave, com lista de conferência antes (ver `docs/AR-MEDICAO.md`) |
+| BAR-1 | AR | Seção do plano preenchida e com a chave `usar*` desligada conta? | **Decidido (11/11): não conta; só a seção com a caixinha marcada.** Atrás de chave, com lista de conferência antes (ver `docs/historico-construction/AR-MEDICAO.md`) |
 | BAR-2 | AR | Subsídio pendente entra na projeção? | **Decidido (11/11): enquanto não conciliado, entra como previsto** |
 | BAR-3 | AR | Financiamento entra em todas as leituras? | **Decidido (11/11): não entra como recebível; chega como liberação de obra** |
 | BAR-4 | AR | `Permuta.val` sai de toda leitura de receita? | **Decidido (11/11): sim como fonte própria; o valor do bem já está na receita, pelo rateio do total do contrato. A revenda não soma o valor cheio na DRE (só o ganho ou a perda, em linha própria)** |
@@ -1280,7 +1280,7 @@ hoje é regime de vencimento, não o rateio decidido no Prompt I, §57.
 
 ### FASE 1 — MEDIR NA PRODUÇÃO (SOMENTE LEITURA)
 
-**Não altere nada.** Gere `docs/AR-MEDICAO.md` com:
+**Não altere nada.** Gere `docs/historico-construction/AR-MEDICAO.md` com:
 
 1. Para cada empresa e obra, quantas unidades vendidas têm, no `payment_plan`:
    - alguma seção com valor > 0 e a chave `usar*` correspondente desligada;
@@ -1357,7 +1357,7 @@ feito na DRE. Empresa com a chave desligada vê o número de antes.
 
 ### RELATÓRIO FINAL (obrigatório)
 
-1. `docs/AR-MEDICAO.md` (Fase 1).
+1. `docs/historico-construction/AR-MEDICAO.md` (Fase 1).
 2. Depois da Fase 2: por obra, os totais de cada tela antes × depois, com a
    chave ligada e desligada.
 3. Lista de arquivos que deixaram de ler o plano diretamente.
@@ -1421,7 +1421,7 @@ O pacote enviado para revisão veio **sem**:
 - `src/lib/db/migrations/meta/` — sem `_journal.json`, o migrator do Drizzle
   não roda (`Can't find meta/_journal.json file`). Tive de aplicar os `.sql` à
   mão para testar;
-- `docs/` — o README aponta para `docs/SPEC.md`, `docs/STACK.md`,
+- `docs/` — o README aponta para `docs/historico-construction/SPEC.md`, `docs/STACK.md`,
   `docs/EMISSAO-NF.md`, `docs/LEITURA-DOCUMENTOS-IA.md` e nenhum veio;
 - histórico do git — sem ele não dá para separar o que foi feito nesta rodada.
 

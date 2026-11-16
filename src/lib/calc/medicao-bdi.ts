@@ -2,7 +2,7 @@
  * Medição de obra, BDI e provisionamento de liberação.
  *
  * Todas as fórmulas foram derivadas da planilha de referência do cliente e
- * conferidas contra os números dela — ver docs/BDI-PROVISIONAMENTO.md, que
+ * conferidas contra os números dela — ver docs/historico-construction/BDI-PROVISIONAMENTO.md, que
  * traz a validação número a número.
  *
  * Funções PURAS: nenhum valor é fixado em código. Percentuais de BDI, taxas,
@@ -177,7 +177,7 @@ export interface LinhaProvisionamento {
 }
 
 /**
- * Quadro mensal de liberação/provisionamento (docs/BDI-PROVISIONAMENTO.md §5):
+ * Quadro mensal de liberação/provisionamento (docs/historico-construction/BDI-PROVISIONAMENTO.md §5):
  *
  *   liberação do mês  = variação mensal × financiamento da construção
  *   custo estimado    = variação mensal × custo referencial (CUB × metragem)

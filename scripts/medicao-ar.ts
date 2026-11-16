@@ -17,7 +17,7 @@
  * Saída: Markdown no stdout, só com nome da empresa, nome da obra, contagens e
  * somas. Nenhum dado de comprador, nenhum código de unidade.
  *
- *   DATABASE_URL=postgres://... npx tsx scripts/medicao-ar.ts > docs/AR-MEDICAO-producao.md
+ *   DATABASE_URL=postgres://... npx tsx scripts/medicao-ar.ts > docs/historico-construction/AR-MEDICAO-producao.md
  */
 import postgres from "postgres";
 import { comConexaoUtc } from "../src/lib/db/conexao";

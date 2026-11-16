@@ -49,7 +49,7 @@ varredura do histórico com `git log -p`, e o teste automatizado
 | Município-sede do cliente anterior (código IBGE, CEP) | testes de NFS-e | Campinas/SP como sede fictícia (São Paulo segue como "outro município") |
 | Centro de custo com nome da cidade, nome da loja/fornecedor em exemplos de busca | testes e comentários | nomes genéricos |
 | Identificador de conta em plataforma externa (agente) | `docs/API-AGENTE.md` | removido |
-| Diagnóstico da base de produção (contagens e valores por empresa/obra) | `docs/V2-DIAGNOSTICO-PRODUCAO.md`, trechos em documentos de prompt/decisão | arquivo removido; trechos neutralizados (§4) |
+| Diagnóstico da base de produção (contagens e valores por empresa/obra) | `docs/historico-construction/V2-DIAGNOSTICO-PRODUCAO.md`, trechos em documentos de prompt/decisão | arquivo removido; trechos neutralizados (§4) |
 | Script de diagnóstico de registros específicos de produção | `scripts/diagnostico-registros.sql` | removido |
 | Protótipo compactado com dados reais | `growth-tools-construction.zip` (nomes, pessoa, CPF/CNPJ, banco, conta) | removido |
 | Credenciais/segredos (chaves de API, tokens, chaves privadas, `.env`) | — | **nada encontrado** na árvore nem no histórico (só `.env.example`) |
@@ -58,7 +58,7 @@ varredura do histórico com `git log -p`, e o teste automatizado
 
 ### Removidos
 - `growth-tools-construction.zip` — protótipo com dados reais (inspecionado em pasta isolada antes).
-- `docs/V2-DIAGNOSTICO-PRODUCAO.md` — inteiramente resultado de consultas na produção do cliente anterior.
+- `docs/historico-construction/V2-DIAGNOSTICO-PRODUCAO.md` — inteiramente resultado de consultas na produção do cliente anterior.
 - `scripts/diagnostico-registros.sql` — consulta a registros específicos da produção anterior.
 
 ### Código e configuração sanitizados
@@ -83,7 +83,7 @@ removido além do diagnóstico de produção**.
 
 | Lote | Revisados / alterados | O que saiu |
 |---|---|---|
-| `docs/v2/PROMPTS.md` (1 MB) | 1 / 1 (53 trocas) | valores reais de mockups e de produção; contagens de produção; números de pedido reais; nomes de sócios em contas, de funcionárias, de terceiros e de fornecedores; dígitos de CPF mascarado; endereço, CEP e coordenadas de obra |
+| `docs/historico-construction/v2/PROMPTS.md` (1 MB) | 1 / 1 (53 trocas) | valores reais de mockups e de produção; contagens de produção; números de pedido reais; nomes de sócios em contas, de funcionárias, de terceiros e de fornecedores; dígitos de CPF mascarado; endereço, CEP e coordenadas de obra |
 | Mockup HTML, SPEC, revisões, BDI, emissor, agente | ~15 / 7 | no mockup: pessoas, fornecedores, sócios, documentos (RG, CTPS, PIS), contas, endereço e renda de comprador; valores monetários arredondados e reescalados por um fator único (somas, saldos e percentuais continuam coerentes; HTML e JS íntegros); SPEC: número de unidades e custo do empreendimento, preço cobrado do piloto; BDI: planilha real trocada por exemplo sintético recalculado pelas mesmas fórmulas; nome de outro cliente e contagem de produção no doc do agente |
 | V2-PROMPT A–K + decisões/bloqueios | 112 / 22 | resultado do diagnóstico de numeração de produção; nomes de funcionários; contagens e somas de produção por empresa; VGV real; valor de divergência de produção; código IBGE da sede; links para o diagnóstico removido |
 | V2-PROMPT L–Z, V3, SQL e demais | 178 / 21 | dados reais de numeração; nomes de funcionários e de sócios em rótulos de contas; lançamento real de produção; simulação real de venda; soma real dos percentuais do empreendimento; contagens de produção |

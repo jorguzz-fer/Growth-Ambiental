@@ -81,7 +81,7 @@ REV="$TMP/REVISAO.txt"
 FALTOU=0
 for OBRIGATORIO in \
   "src/lib/db/migrations/meta/_journal.json" \
-  "docs/SPEC.md" \
+  "docs/README.md" \
   "package.json" \
   "REVISAO.txt"
 do
