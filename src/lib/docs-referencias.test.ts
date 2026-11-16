@@ -24,7 +24,7 @@ const EXCECOES: { arquivo: string; caminho: string; motivo: string }[] = [
 const ehExcecao = (arquivo: string, caminho: string) => EXCECOES.some((e) => e.arquivo === arquivo && e.caminho === caminho);
 const RAIZ = process.cwd();
 const ARQUIVOS = listarArquivosDoRepositorio().filter(
-  (f) => /\.(ts|tsx|mjs|cjs|js|md|sh|sql|json)$/.test(f) && !f.startsWith("src/lib/db/migrations/") && !f.startsWith("pacote-revisao/") && !f.startsWith("docs/historico-construction/"),
+  (f) => /\.(ts|tsx|mjs|cjs|js|md|sh|sql|json)$/.test(f) && !f.startsWith("src/lib/db/migrations/") && !f.startsWith("pacote-revisao/") && !f.startsWith("docs/historico-construction/") && f !== "src/lib/docs-referencias.test.ts", // o próprio teste cita as exceções
 );
 const existe = (rel: string) => existsSync(join(RAIZ, rel));
 
