@@ -1,6 +1,7 @@
 import { and, eq, isNull } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { baixarArquivoDaNota, resolverAmbiente } from "@/lib/fiscal/focus";
+import { credencialDeLeitura } from "@/lib/fiscal/emissor";
 import { getObjectBytes, isR2Configured, putObject } from "@/lib/storage/r2";
 import { nomeDoArquivoDaNota, urlSegura } from "@/lib/nota-servico";
 
@@ -41,9 +42,17 @@ export async function arquivoDaNota(n: Nota, tipo: TipoDeArquivo): Promise<{ byt
   if (chave && r2) return { bytes: await getObjectBytes(chave), contentType: CONTENT_TYPE[tipo], nome };
   const origem = origemNoProvedor(n, tipo);
   if (!origem) return null;
-  const { bytes } = await baixarArquivoDaNota(resolverAmbiente(n.ambiente), origem);
+  const { bytes } = await baixarArquivoDaNota(resolverAmbiente(n.ambiente), origem, await tokenDoArquivo(n));
   if (r2) await guardar(n, tipo, bytes);
   return { bytes, contentType: CONTENT_TYPE[tipo], nome };
+}
+
+/**
+ * O token da empresa DONA da nota. Sem ele, só o arquivo público (o PDF vem
+ * por link aberto) pode ser baixado: o token de outra empresa nunca é usado.
+ */
+async function tokenDoArquivo(n: Pick<Nota, "tenantId" | "ambiente">): Promise<string | null> {
+  return credencialDeLeitura(n.tenantId, resolverAmbiente(n.ambiente));
 }
 
 async function guardar(n: Nota, tipo: TipoDeArquivo, bytes: Uint8Array) {
@@ -81,7 +90,7 @@ export async function guardarArquivosDaNota(tenantId: string, notaId: string): P
   for (const tipo of ["pdf", "xml"] as const) {
     if ((tipo === "pdf" ? n.pdfKey : n.xmlKey) || !origemNoProvedor(n, tipo)) continue;
     try {
-      const { bytes } = await baixarArquivoDaNota(resolverAmbiente(n.ambiente), origemNoProvedor(n, tipo)!);
+      const { bytes } = await baixarArquivoDaNota(resolverAmbiente(n.ambiente), origemNoProvedor(n, tipo)!, await tokenDoArquivo(n));
       await guardar(n, tipo, bytes);
     } catch {
       // segue: o download tenta de novo

@@ -3,10 +3,12 @@ import { getTenantContext } from "@/lib/context";
 import { can } from "@/lib/permissions";
 import { DateField } from "@/components/ui/date-field";
 import { getNotasParaAnalise, getNotasServico } from "@/lib/queries";
-import { ROTULO_DA_SITUACAO, ROTULO_DO_AMBIENTE, SITUACOES_DA_NOTA, emitenteDoTenant, obraFiscalDoProjeto, recusaDoTenant, type SituacaoDaNota } from "@/lib/nota-servico";
+import { ROTULO_DA_SITUACAO, ROTULO_DO_AMBIENTE, SITUACOES_DA_NOTA, emitenteDoTenant, obraFiscalDoProjeto, type SituacaoDaNota } from "@/lib/nota-servico";
 import { analisarNotas } from "@/lib/nota-servico-analise";
 import { AssistenteNotas } from "@/components/app/assistente-notas";
 import { resolverAmbiente } from "@/lib/fiscal/focus";
+import { situacaoDaEmissao } from "@/lib/fiscal/emissor";
+import { avisoDoCertificado } from "@/lib/fiscal/emissor-regras";
 import { brl } from "@/lib/utils";
 import { PageHeader } from "@/components/app/page-header";
 import { AccessDenied } from "@/components/app/access-denied";
@@ -48,7 +50,10 @@ export default async function NotasFiscaisPage({
     ctx.projects.map((p) => p.id),
     { ambiente, status, projectId, de, ate },
   );
-  const recusa = recusaDoTenant(ctx.tenant.id, process.env.NFSE_TENANT_ID);
+  const emissao = await situacaoDaEmissao(ctx.tenant);
+  const recusa = emissao.recusa;
+  // Certificado perto de vencer: avisa aqui também, não só em Empresa.
+  const certificado = emissao.emissor ? avisoDoCertificado(emissao.emissor.certificadoValidoAte) : null;
   // Seção 6 — o assistente olha as notas EM ABERTO do ambiente escolhido, sem os filtros da tabela.
   const analise = analisarNotas(await getNotasParaAnalise(ctx.tenant.id, ctx.projects.map((p) => p.id), ambiente), {
     emitente: emitenteDoTenant(ctx.tenant),
@@ -78,6 +83,7 @@ export default async function NotasFiscaisPage({
         A nota é o documento do serviço: <strong>não</strong> cria receita, conta a receber nem lançamento de caixa, e não muda nenhum
         relatório. Pode apontar para a conta a receber já lançada, só como referência.
         {recusa ? ` ${recusa}` : ""}
+        {!recusa && certificado?.tom === "warning" ? <span data-aviso-certificado> {certificado.texto} (Configurações → Empresa)</span> : null}
       </p>
       <div className="mb-4 flex flex-wrap items-center gap-2 text-[13px]" data-filtros>
         {(["producao", "homologacao"] as const).map((a) => (

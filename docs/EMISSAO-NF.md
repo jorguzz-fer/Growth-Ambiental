@@ -74,8 +74,10 @@ Consequências de projeto:
 - **Numeração do RPS é do provedor** (`serie_nfse_producao`,
   `proximo_numero_nfse_producao` no cadastro da empresa). Não usar
   `number_sequence` para isso — ela continua sendo do PED interno.
-- **O token é da empresa e vale dinheiro**: fica em variável de ambiente
-  (`FOCUS_NFE_TOKEN*`), nunca em coluna de banco lida por toda query de tenant.
+- **O token é da empresa e vale dinheiro**: nunca fica em coluna de banco.
+  Desde 19/11/2026 ele é lido da Focus na hora, com o token master da
+  plataforma (seção 7); o modo antigo de variável de ambiente
+  (`FOCUS_NFE_TOKEN*`) continua valendo para quem já estava nele.
 - **Homologação é o padrão** de todo tenant (`fiscal_ambiente`): nota de teste
   não tem validade fiscal, e o padrão inverso emitiria nota real por acidente na
   primeira tentativa de integração.
@@ -131,3 +133,102 @@ Projetos** guarda o município de incidência e o CNO de cada obra. O bloco do
 projeto mostra, já no cadastro, se aquela obra vai tributar dentro ou fora do
 município da sede — a descoberta tardia desse detalhe é justamente o que produz
 nota tributada na cidade errada.
+
+## 7. A empresa ativa a própria emissão (19/11/2026, trazido do Growth Construction em 20/11/2026)
+
+**Decisões de 19/11/2026 (Growth Construction), valendo também aqui:**
+
+- **A conta da Focus é a da plataforma**, a do token master configurado no
+  servidor (`FOCUS_NFE_TOKEN_MASTER`). As empresas entram nela à medida que
+  chegam.
+- **Só o proprietário da empresa e os operadores da plataforma** ativam a
+  emissão e trocam o certificado. Quem tem o certificado A1 assina pela
+  empresa.
+- **Empresa nova já começa por aqui.** O modo antigo continua só para quem já
+  estava nele.
+
+### Como funciona
+
+1. Em **Configurações → Empresa**, a empresa completa o cadastro fiscal, como
+   antes.
+2. No cartão **Emissão de NFS-e**, o proprietário envia o certificado A1
+   (`.pfx` ou `.p12`) com a senha e clica em **Ativar emissão**. Se o município
+   pedir, informa também o login e a senha da prefeitura. Se a empresa já
+   emitia nota por outro sistema, informa a série e o próximo número do RPS.
+3. O servidor faz o resto:
+   - pergunta à Focus se ela emite NFS-e no município da sede
+     (`GET /v2/municipios/{ibge}`). Se não emite, recusa. Se a emissão está
+     fora do ar ou sem cancelamento pela API, ativa e avisa;
+   - procura a empresa na conta pelo CNPJ (`GET /v2/empresas?cnpj=`): cria se
+     não existe (`POST`) e atualiza se já existe (`PUT`);
+   - grava em `nfse_emissor` só o vínculo (o id da empresa na Focus), o CNPJ
+     ativado e a validade do certificado.
+4. Daí em diante, cada envio, consulta, cancelamento e download usa o token da
+   **própria empresa**. O app lê esse token na Focus com o token master
+   (`GET /v2/empresas/{id}`) e guarda só na memória do servidor, por 10
+   minutos.
+5. **Atualizar cadastro na Focus**, no mesmo cartão, reenvia os dados
+   fiscais. O certificado só vai se for escolhido um arquivo novo; é assim que
+   se troca um certificado vencido.
+
+### O que nunca fica no app
+
+- **Nem certificado, nem senha do certificado, nem senha da prefeitura, nem
+  token de emissão** ficam no app: não vão para o banco, para o log nem para a
+  auditoria.
+- A auditoria registra só que houve a ativação: o CNPJ, a validade do
+  certificado e se o certificado ou o login da prefeitura foram enviados.
+
+### Quando a emissão para (e a tela diz por quê)
+
+- **Sem `FOCUS_NFE_TOKEN_MASTER` no servidor.**
+- **O CNPJ do cadastro fiscal mudou depois da ativação.** É preciso ativar de
+  novo.
+- **O certificado venceu.** Faltando 30 dias ou menos, a tela avisa em Empresa
+  e em Notas Fiscais. Vencido, a emissão nova para, mas consultar e baixar as
+  notas antigas continua funcionando.
+- **Um CNPJ já ativado em outra empresa do sistema** não pode ser ativado de
+  novo.
+
+### O que mudou nas decisões anteriores
+
+- **BAG-3 ("um CNPJ só"):** revista. Agora cada empresa ativa a própria
+  emissão. O modo antigo (`NFSE_TENANT_ID` + `FOCUS_NFE_TOKEN_*`) continua
+  funcionando para quem já estava nele, para nada quebrar.
+- **"Token nunca no banco":** mantida. O token não é guardado: é lido da Focus
+  quando precisa.
+
+### Limites
+
+- **A NFS-e Nacional não está habilitada.** O cadastro liga `habilita_nfse`,
+  a NFS-e municipal. Município que já migrou para a Nacional fica para um
+  passo seguinte.
+- **A API de empresas só existe em produção na Focus.** Ativar a emissão
+  cadastra a empresa de verdade na conta. A homologação continua sendo o
+  padrão para as **notas**: até trocar o ambiente para Produção, as notas
+  emitidas não têm validade fiscal.
+- **A Focus cobra por empresa cadastrada** na conta da plataforma.
+- **Não há botão de desativar.** Excluir a empresa na Focus é irreversível;
+  se precisar, a plataforma faz pelo painel da Focus e apaga a linha de
+  `nfse_emissor`.
+
+### Para ligar
+
+1. No Coolify, criar `FOCUS_NFE_TOKEN_MASTER` com o token master da conta
+   (painel da Focus › Tokens). O app reinicia sozinho.
+2. Na empresa: completar o cadastro fiscal em Configurações → Empresa e
+   ativar a emissão com o certificado.
+3. Testar uma nota em homologação: montar, conferir, enviar, atualizar até
+   autorizar, baixar o PDF e cancelar.
+4. Só depois, trocar o ambiente da empresa para Produção.
+
+**Arquivos novos:**
+
+```
+src/lib/fiscal/emissor-regras.ts    regras puras (quem ativa, certificado, corpo, município, recusa)
+src/lib/fiscal/focus-empresas.ts    API de empresas e municípios com o token master
+src/lib/fiscal/emissor.ts           situação da emissão e token por empresa
+src/lib/actions/nfse-emissor.ts     ativarEmissaoNfse
+src/components/app/emissor-nfse.tsx formulário do cartão
+src/lib/db/migrations/0084_nfse_emissor.sql  (aditiva, com down)
+```

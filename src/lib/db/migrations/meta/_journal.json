@@ -589,6 +589,13 @@
       "when": 1793100000000,
       "tag": "0083_cris_implantacao",
       "breakpoints": true
+    },
+    {
+      "idx": 84,
+      "version": "7",
+      "when": 1793200000000,
+      "tag": "0084_nfse_emissor",
+      "breakpoints": true
     }
   ]
 }

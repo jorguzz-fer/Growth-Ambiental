@@ -116,7 +116,7 @@ describe.skipIf(!HAS_DB)("Prompt AG · cancelamento da NFS-e", async () => {
       return { status: "cancelado", ref, http: 200 };
     });
     expect(await cancelarNota(id, MOTIVO, "77")).toMatchObject({ ok: true, situacao: "cancelada" });
-    expect(focus.cancelarNfse).toHaveBeenCalledWith("homologacao", `${id.replace(/-/g, "")}t1`, MOTIVO);
+    expect(focus.cancelarNfse).toHaveBeenCalledWith("homologacao", `${id.replace(/-/g, "")}t1`, MOTIVO, "token-de-teste");
     const n = await nota(id);
     expect(n).toMatchObject({ status: "cancelada", motivoCancelamento: MOTIVO, numero: "77" });
     expect(n.canceladaEm).toBeInstanceOf(Date);
