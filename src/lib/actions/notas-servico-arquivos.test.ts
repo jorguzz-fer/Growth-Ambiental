@@ -121,7 +121,7 @@ describe.skipIf(!HAS_DB)("Prompt AG · arquivos da NFS-e", async () => {
     expect(r1.status).toBe(200);
     expect(r1.headers.get("content-disposition")).toBe('attachment; filename="HOMOLOGACAO-SEM-VALOR-FISCAL-NFSe-77.pdf"');
     expect(new Uint8Array(await r1.arrayBuffer())).toEqual(PDF);
-    expect(focus.baixarArquivoDaNota).toHaveBeenCalledWith("homologacao", "https://focus/danfse.pdf");
+    expect(focus.baixarArquivoDaNota).toHaveBeenCalledWith("homologacao", "https://focus/danfse.pdf", "token-de-teste");
     const n = await nota(id);
     expect(n.pdfKey).toBe(`nfse/${tenantId}/${id}/HOMOLOGACAO-SEM-VALOR-FISCAL-NFSe-77.pdf`);
     expect(n.xmlKey).toBeNull();

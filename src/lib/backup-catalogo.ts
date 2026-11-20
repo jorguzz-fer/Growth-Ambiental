@@ -165,6 +165,7 @@ export const FORA_DO_PACOTE: readonly { tabela: string; grupo: string; motivo: s
   { tabela: "openfinance_conta", grupo: "Open Finance", motivo: "associação das contas do banco conectado — configuração, não lançamento" },
   { tabela: "openfinance_evento", grupo: "Open Finance", motivo: "avisos técnicos recebidos da Pluggy — registro de integração, não lançamento" },
   { tabela: "openfinance_possivel_duplicado", grupo: "Open Finance", motivo: "fila de transações do banco aguardando decisão — ainda não é lançamento" },
+  { tabela: "nfse_emissor", grupo: "Nota fiscal", motivo: "vínculo da empresa com o cadastro dela na Focus NFe — configuração de integração, não lançamento; as notas emitidas vão em nota_servico" },
 ];
 
 export const ehMovimento = (t: TabelaDoPacote) => t.recorte.tipo !== "cadastro";

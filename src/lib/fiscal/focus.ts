@@ -15,8 +15,12 @@
  *  - **Fluxo assíncrono**: o POST devolve `processando_autorizacao`. A
  *    autorização chega por consulta ou por webhook — nunca na mesma requisição.
  *
- * O token vem de variável de ambiente, um por ambiente. Nada de credencial em
- * coluna de banco, e nada de token em log: mensagem de erro é montada sem ele.
+ * O token é o da EMPRESA emissora. Quem chama passa o token
+ * (`credencialDaEmissao`, em `emissor.ts`: lido da Focus com o token master da
+ * plataforma, para a empresa que ativou a emissão pela tela). Sem token
+ * passado, vale o modo antigo de variável de ambiente (`FOCUS_NFE_TOKEN_*`).
+ * Nada de credencial em coluna de banco, e nada de token em log: mensagem de
+ * erro é montada sem ele.
  */
 
 import {
@@ -136,8 +140,9 @@ async function chamar(
   metodo: "POST" | "GET" | "DELETE",
   caminho: string,
   corpo?: unknown,
+  tokenDaEmpresa?: string,
 ): Promise<{ ok: boolean; json: RespostaFocus; http: number }> {
-  const token = tokenFocus(ambiente);
+  const token = tokenDaEmpresa || tokenFocus(ambiente);
   if (!token) {
     throw new Error(
       `Token do provedor fiscal não configurado para ${ambiente} — defina FOCUS_NFE_TOKEN.`,
@@ -183,6 +188,7 @@ export async function emitirNfse(
   ambiente: AmbienteFiscal,
   ref: string,
   payload: PayloadNfse,
+  token?: string,
 ): Promise<ResultadoNota> {
   if (!refValida(ref)) {
     throw new Error("Referência inválida: use apenas letras e números.");
@@ -192,6 +198,7 @@ export async function emitirNfse(
     "POST",
     `/nfse?ref=${encodeURIComponent(ref)}`,
     payload,
+    token,
   );
   return mapear(ref, json, ok, http);
 }
@@ -200,11 +207,14 @@ export async function emitirNfse(
 export async function consultarNfse(
   ambiente: AmbienteFiscal,
   ref: string,
+  token?: string,
 ): Promise<ResultadoNota> {
   const { ok, json, http } = await chamar(
     ambiente,
     "GET",
     `/nfse/${encodeURIComponent(ref)}`,
+    undefined,
+    token,
   );
   if (http === 404) {
     return { status: "nao_encontrada", ref, http, bruto: json };
@@ -223,12 +233,14 @@ export async function cancelarNfse(
   ambiente: AmbienteFiscal,
   ref: string,
   justificativa?: string,
+  token?: string,
 ): Promise<ResultadoNota> {
   const { ok, json, http } = await chamar(
     ambiente,
     "DELETE",
     `/nfse/${encodeURIComponent(ref)}`,
     justificativa?.trim() ? { justificativa: justificativa.trim() } : undefined,
+    token,
   );
   return mapear(ref, json, ok, http);
 }
@@ -251,6 +263,8 @@ const TAMANHO_MAXIMO = 10 * 1024 * 1024;
 export async function baixarArquivoDaNota(
   ambiente: AmbienteFiscal,
   caminhoOuUrl: string,
+  /** token da empresa dona da nota; null = sem token (só arquivo público). Ausente = modo antigo (variável de ambiente). */
+  tokenDaEmpresa?: string | null,
 ): Promise<{ bytes: Uint8Array; contentType: string }> {
   const origem = ORIGENS[ambiente];
   const t = caminhoOuUrl.trim();
@@ -259,7 +273,7 @@ export async function baixarArquivoDaNota(
   else if (t.startsWith("/") && !t.startsWith("//")) url = new URL(t, origem);
   else throw new Error("Caminho de arquivo inválido.");
   if (url.protocol !== "https:") throw new Error("Só https.");
-  const token = tokenFocus(ambiente);
+  const token = tokenDaEmpresa === undefined ? tokenFocus(ambiente) : tokenDaEmpresa;
   const resp = await fetch(url, {
     headers: url.origin === origem && token ? { Authorization: cabecalhoAuth(token) } : {},
     signal: AbortSignal.timeout(TIMEOUT_MS),

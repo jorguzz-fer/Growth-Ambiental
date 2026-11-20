@@ -205,7 +205,9 @@ describe("Prompt AG PR3 — regras do envio", async () => {
     };
     expect(m.bloqueiosDoEnvio({ ...base, emitente: completo })).toEqual([]);
     expect(m.bloqueiosDoEnvio({ ...base, status: "autorizada", emitente: completo })).toHaveLength(1);
-    expect(m.bloqueiosDoEnvio({ ...base, podeEmitir: false, focusConfigurado: false, recusaDoTenant: "outra", emitente: completo })).toHaveLength(3);
+    // Emissão não ativada já explica a falta de token: uma mensagem só para a mesma causa.
+    expect(m.bloqueiosDoEnvio({ ...base, podeEmitir: false, focusConfigurado: false, recusaDoTenant: "outra", emitente: completo })).toHaveLength(2);
+    expect(m.bloqueiosDoEnvio({ ...base, focusConfigurado: false, emitente: completo })).toEqual([expect.stringContaining("token")]);
     expect(m.bloqueiosDoEnvio({ ...base, emitente: { ...completo, cnpj: null } }).some((b) => b.startsWith("Empresa:"))).toBe(true);
   });
 });

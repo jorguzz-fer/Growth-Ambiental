@@ -21,7 +21,6 @@ import {
   podeCancelar,
   podeEditar,
   podeEnviar,
-  recusaDoTenant,
   refDaTentativa,
   retornoQueVale,
   semResposta,
@@ -30,7 +29,8 @@ import {
   type RascunhoDaNota,
   type SituacaoDaNota,
 } from "@/lib/nota-servico";
-import { cancelarNfse, consultarNfse, emitirNfse, focusConfigurado, resolverAmbiente } from "@/lib/fiscal/focus";
+import { cancelarNfse, consultarNfse, emitirNfse, resolverAmbiente } from "@/lib/fiscal/focus";
+import { credencialDaEmissao, credencialDeLeitura, situacaoDaEmissao } from "@/lib/fiscal/emissor";
 import type { AmbienteFiscal, ResultadoNota as RetornoDoProvedor } from "@/lib/fiscal/tipos";
 import { guardarArquivosDaNota } from "@/lib/nota-servico-arquivos";
 
@@ -221,11 +221,12 @@ export async function enviarNota(id: string, conferido: boolean): Promise<Result
   if (!amb.ok) return amb;
   const ambiente = amb.ambiente;
   const emitente = emitenteDoTenant(ctx.tenant);
+  const emissao = await situacaoDaEmissao(ctx.tenant);
   const bloqueios = bloqueiosDoEnvio({
     status: n.status,
     podeEmitir: true,
-    recusaDoTenant: recusaDoTenant(tenantId, process.env.NFSE_TENANT_ID),
-    focusConfigurado: focusConfigurado(ambiente),
+    recusaDoTenant: emissao.recusa,
+    focusConfigurado: emissao.configurado(ambiente),
     ambiente,
     emitente,
   });
@@ -233,6 +234,10 @@ export async function enviarNota(id: string, conferido: boolean): Promise<Result
   const m = conferirAntesDoEnvio(n, emitente, obraFiscalDoProjeto(projeto), dataDeEmissao());
   if (!m.payload || !m.calculo) return { ok: false, error: "Corrija a nota antes de enviar.", pendencias: m.erros };
   const { payload, calculo } = m;
+  // O token antes de gravar qualquer coisa: sem ele, a nota não sai do rascunho.
+  const cred = await credencialDaEmissao(ctx.tenant, ambiente);
+  if (!cred.ok) return { ok: false, error: cred.error };
+  const token = cred.token;
 
   let ref: string;
   try {
@@ -282,11 +287,11 @@ export async function enviarNota(id: string, conferido: boolean): Promise<Result
   // Fora da transação: a rede pode demorar ou falhar.
   let post: RetornoDoProvedor | null = null;
   try {
-    post = await emitirNfse(ambiente, ref, payload as Parameters<typeof emitirNfse>[2]);
+    post = await emitirNfse(ambiente, ref, payload as Parameters<typeof emitirNfse>[2], token);
   } catch {
     post = null;
   }
-  const r = await desfechoDoPost(tenantId, id, ambiente, ref, post, ctx.userId);
+  const r = await desfechoDoPost(tenantId, id, ambiente, ref, post, ctx.userId, token);
   revalidatePath("/notasfiscais");
   return r;
 }
@@ -303,10 +308,12 @@ export async function atualizarNota(id: string): Promise<ResultadoDoEnvio> {
   if (!(n.status === "processando" || n.status === "autorizada") || !n.ref)
     return { ok: true, situacao: n.status, aviso: "Não há o que consultar nesta nota." };
   const ambiente = resolverAmbiente(n.ambiente);
-  if (!focusConfigurado(ambiente)) return { ok: false, error: "O token da Focus NFe deste ambiente não está configurado no servidor." };
+  // Consultar uma nota já enviada vale mesmo com a emissão nova parada.
+  const token = await credencialDeLeitura(ctx.tenant.id, ambiente);
+  if (!token) return { ok: false, error: "Sem credencial da Focus NFe para consultar esta nota (a emissão desta empresa não está ativa neste servidor)." };
   let c: RetornoDoProvedor | null = null;
   try {
-    c = await consultarNfse(ambiente, n.ref);
+    c = await consultarNfse(ambiente, n.ref, token);
   } catch {
     c = null;
   }
@@ -339,13 +346,13 @@ export async function reenviarNota(id: string): Promise<ResultadoDoEnvio> {
   if (n.status !== "processando" || !n.ref) return { ok: false, error: "Só se reenvia nota que está processando." };
   const ref = n.ref;
   const ambiente = resolverAmbiente(n.ambiente);
-  if (!focusConfigurado(ambiente)) return { ok: false, error: "O token da Focus NFe deste ambiente não está configurado no servidor." };
-  const recusa = recusaDoTenant(tenantId, process.env.NFSE_TENANT_ID);
-  if (recusa) return { ok: false, error: recusa };
+  const cred = await credencialDaEmissao(ctx.tenant, ambiente);
+  if (!cred.ok) return { ok: false, error: cred.error };
+  const token = cred.token;
 
   let c: RetornoDoProvedor | null = null;
   try {
-    c = await consultarNfse(ambiente, ref);
+    c = await consultarNfse(ambiente, ref, token);
   } catch {
     c = null;
   }
@@ -391,11 +398,11 @@ export async function reenviarNota(id: string): Promise<ResultadoDoEnvio> {
   await logAudit({ tenantId, userId: ctx.userId, action: "nfse.reenviar", entity: "nota_servico", entityId: id, meta: { ambiente, ref } });
   let post: RetornoDoProvedor | null = null;
   try {
-    post = await emitirNfse(ambiente, ref, m.payload as Parameters<typeof emitirNfse>[2]);
+    post = await emitirNfse(ambiente, ref, m.payload as Parameters<typeof emitirNfse>[2], token);
   } catch {
     post = null;
   }
-  const r = await desfechoDoPost(tenantId, id, ambiente, ref, post, ctx.userId);
+  const r = await desfechoDoPost(tenantId, id, ambiente, ref, post, ctx.userId, token);
   revalidatePath("/notasfiscais");
   return r;
 }
@@ -417,13 +424,14 @@ async function desfechoDoPost(
   ref: string,
   post: RetornoDoProvedor | null,
   userId: string | null,
+  token: string,
 ): Promise<ResultadoDoEnvio> {
   if (!post || semResposta(post))
     return registrarSemResposta(tenantId, id, ref, userId, "A Focus não respondeu ao envio. A nota fica processando: use “Atualizar situação” em alguns minutos.");
   let consulta: RetornoDoProvedor | null = null;
   if (post.status === "erro") {
     try {
-      consulta = await consultarNfse(ambiente, ref);
+      consulta = await consultarNfse(ambiente, ref, token);
     } catch {
       consulta = null;
     }
@@ -541,10 +549,9 @@ export async function cancelarNota(id: string, motivo: string, confirmacao: stri
   if (!podeCancelar(n.status) || !n.ref) return { ok: false, error: "Só nota autorizada pode ser cancelada." };
   const lido = lerCancelamento(n, motivo, confirmacao);
   if (!lido.ok) return lido;
-  const recusa = recusaDoTenant(tenantId, process.env.NFSE_TENANT_ID);
-  if (recusa) return { ok: false, error: recusa };
   const ambiente = resolverAmbiente(n.ambiente);
-  if (!focusConfigurado(ambiente)) return { ok: false, error: "O token da Focus NFe deste ambiente não está configurado no servidor." };
+  const cred = await credencialDaEmissao(ctx.tenant, ambiente);
+  if (!cred.ok) return { ok: false, error: cred.error };
   const ref = n.ref;
 
   try {
@@ -578,7 +585,7 @@ export async function cancelarNota(id: string, motivo: string, confirmacao: stri
 
   let r: RetornoDoProvedor | null = null;
   try {
-    r = await cancelarNfse(ambiente, ref, lido.motivo);
+    r = await cancelarNfse(ambiente, ref, lido.motivo, cred.token);
   } catch {
     r = null;
   }

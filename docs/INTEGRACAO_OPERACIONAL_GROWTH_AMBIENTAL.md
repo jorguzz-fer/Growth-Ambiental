@@ -62,10 +62,10 @@ Esta etapa integra clientes, projetos, contratos, equipes, horas, custos, notas 
   - A conta a receber precisa ser do mesmo contrato.
   - **Uma conta a receber não recebe duas notas vivas** (não canceladas nem rejeitadas), o que impede faturar o mesmo recebível duas vezes.
   - A nota continua **não criando recebível**: a fatura é a conta a receber do contrato.
-- **Testes:** usam a lógica com o provedor simulado. **Nenhuma emissão real foi feita.** A emissão depende das credenciais e da homologação do provedor, e o envio é restrito a uma empresa pela variável `NFSE_TENANT_ID`.
+- **Testes:** usam a lógica com o provedor simulado. **Nenhuma emissão real foi feita.** A emissão depende das credenciais e da homologação do provedor, e cada empresa ativa a própria emissão em Configurações → Empresa, com o certificado A1 (`docs/EMISSAO-NF.md`, seção 7). O modo antigo, uma empresa só pela variável `NFSE_TENANT_ID`, continua para quem já estava nele.
 - **Pendências tributárias:**
   - itens da lista de serviço, retenções e município de incidência para consultoria ambiental: validar com a contabilidade;
-  - emissão multiempresa: depende de configurar o provedor por empresa.
+  - emissão multiempresa: resolvida em 20/11/2026 (cada empresa ativa a sua; ver `docs/EMISSAO-NF.md`, seção 7).
 
 ## 5. Dashboard executivo
 

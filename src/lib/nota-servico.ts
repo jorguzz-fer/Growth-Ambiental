@@ -6,7 +6,9 @@
  *   APONTAR para a conta a receber já lançada (opção b).
  * - BAG-2: a nota NÃO cria receita, conta a receber nem lançamento. É
  *   documento do fato; o vínculo é só referência.
- * - BAG-3: um CNPJ só — emite apenas o tenant declarado em `NFSE_TENANT_ID`.
+ * - BAG-3 (revista em 19/11/2026): cada empresa ativa a própria emissão em
+ *   Configurações → Empresa (`src/lib/fiscal/emissor.ts`). O modo antigo de um
+ *   CNPJ só (`NFSE_TENANT_ID`) continua valendo para quem já estava nele.
  * - BAG-4: nota de homologação fica marcada para sempre e fora de relatório.
  *
  * O cálculo, a validação e o payload NÃO são refeitos aqui: vêm de
@@ -89,8 +91,12 @@ export function refDaTentativa(notaId: string, tentativa: number): string {
   return ref;
 }
 
-// ── Um CNPJ só (BAG-3) ────────────────────────────────────────────────────
-/** Recusa (texto) quando este tenant não é o declarado para emitir; null = pode. */
+// ── Um CNPJ só (BAG-3, modo antigo) ───────────────────────────────────────
+/**
+ * Recusa (texto) quando este tenant não é o declarado para emitir; null = pode.
+ * Modo antigo: as telas e as ações usam `situacaoDaEmissao` (fiscal/emissor.ts),
+ * que cobre também a emissão ativada pela própria empresa.
+ */
 export function recusaDoTenant(tenantId: string, tenantDeclarado: string | null | undefined): string | null {
   const d = (tenantDeclarado ?? "").trim();
   if (!d) return "A emissão de NFS-e ainda não foi habilitada no servidor (NFSE_TENANT_ID não definido).";
@@ -428,7 +434,8 @@ export function bloqueiosDoEnvio(i: {
   if (!podeEnviar(i.status)) b.push("Só rascunho ou nota rejeitada pode ser enviada.");
   if (!i.podeEmitir) b.push("Você não tem a permissão “Emitir nota fiscal (NFS-e)”.");
   if (i.recusaDoTenant) b.push(i.recusaDoTenant);
-  if (!i.focusConfigurado) b.push(`O token da Focus NFe para ${ROTULO_DO_AMBIENTE[i.ambiente]} não está configurado no servidor.`);
+  // Emissão não ativada já diz tudo; o token só falta de verdade quando ela está ativa.
+  if (!i.recusaDoTenant && !i.focusConfigurado) b.push(`O token da Focus NFe para ${ROTULO_DO_AMBIENTE[i.ambiente]} não está configurado no servidor.`);
   for (const p of checarProntidaoFiscal(i.emitente)) if (p.severidade === "bloqueio") b.push(`Empresa: ${p.mensagem}`);
   return b;
 }

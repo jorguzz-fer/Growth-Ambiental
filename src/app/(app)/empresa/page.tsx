@@ -20,7 +20,11 @@ import {
   checarProntidaoFiscal,
   formatarCnpj,
 } from "@/lib/calc/emitente-fiscal";
-import { focusConfigurado, resolverAmbiente } from "@/lib/fiscal/focus";
+import { resolverAmbiente } from "@/lib/fiscal/focus";
+import { situacaoDaEmissao } from "@/lib/fiscal/emissor";
+import { masterConfigurado } from "@/lib/fiscal/focus-empresas";
+import { avisoDoCertificado, podeAtivarEmissao } from "@/lib/fiscal/emissor-regras";
+import { FormularioDoEmissor } from "@/components/app/emissor-nfse";
 import { AccessDenied } from "@/components/app/access-denied";
 import { CrisNoFormulario } from "@/components/app/cris-no-formulario";
 
@@ -44,7 +48,12 @@ export default async function EmpresaPage() {
 
   const t = ctx.tenant;
   const ambiente = resolverAmbiente(t.fiscalAmbiente);
-  const provedorPronto = focusConfigurado(ambiente);
+  // Seção 7 de docs/EMISSAO-NF.md — a emissão ativada pela própria empresa.
+  const emissao = await situacaoDaEmissao(t);
+  const provedorPronto = emissao.recusa === null && emissao.configurado(ambiente);
+  const certificado = emissao.emissor ? avisoDoCertificado(emissao.emissor.certificadoValidoAte) : null;
+  const podeAtivar = podeAtivarEmissao({ role: ctx.role, email: ctx.userEmail });
+  const master = masterConfigurado();
   const emitente = {
     razaoSocial: t.name,
     nomeFantasia: t.nomeFantasia,
@@ -183,7 +192,7 @@ export default async function EmpresaPage() {
                   : `${bloqueios.length} pendência(s)`}
               </Badge>
               <Badge tone={provedorPronto ? "success" : "neutral"}>
-                {provedorPronto ? "Provedor configurado" : "Sem token do provedor"}
+                {provedorPronto ? "Emissão ativa" : "Emissão não ativada"}
               </Badge>
             </div>
           </div>
@@ -206,9 +215,9 @@ export default async function EmpresaPage() {
 
           <p className="text-xs text-[var(--color-ink3)]" data-texto-emissor>
             {bloqueios.length === 0
-              ? "Cadastro sem pendência de bloqueio: a emissão de NFS-e passa a ser feita em Receitas › Notas Fiscais, com o provedor configurado pelo administrador do servidor."
-              : "Quando as pendências de bloqueio fecharem, a emissão de NFS-e passa a ser feita em Receitas › Notas Fiscais. O provedor de emissão é configurado pelo administrador do servidor, fora desta tela."}
-            {!provedorPronto && " Provedor ainda sem token neste ambiente."}
+              ? "Cadastro sem pendência de bloqueio. Com a emissão ativada (logo abaixo), as notas são feitas em Receitas › Notas Fiscais."
+              : "Quando as pendências de bloqueio fecharem, o proprietário ativa a emissão logo abaixo e as notas passam a ser feitas em Receitas › Notas Fiscais."}
+            {emissao.modo === "tela" && " Mudou endereço, inscrição ou regime? Salve aqui e depois clique em “Atualizar cadastro na Focus”."}
           </p>
 
           <FormComResultado action={salvarDadosFiscais} sucesso="Dados fiscais salvos." aoConcluir="recarregar" className="space-y-4">
@@ -397,6 +406,60 @@ export default async function EmpresaPage() {
               </p>
             )}
           </FormComResultado>
+        </CardContent>
+      </Card>
+
+      <Card className="mt-4" id="emissao-nfse">
+        <CardContent className="space-y-4 p-5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h2 className="text-sm font-semibold text-[var(--color-ink)]">Emissão de NFS-e</h2>
+              <p className="mt-1 text-xs text-[var(--color-ink3)]">
+                A empresa é cadastrada no provedor de emissão (Focus NFe) com o certificado digital A1. Só o proprietário ativa.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2" data-situacao-emissor>
+              {emissao.modo === "tela" ? (
+                <Badge tone={emissao.recusa ? "danger" : "success"}>{emissao.recusa ? "Emissão parada" : "Emissão ativada"}</Badge>
+              ) : emissao.modo === "legado" ? (
+                <Badge tone="info">Configurada no servidor</Badge>
+              ) : (
+                <Badge tone="neutral">Não ativada</Badge>
+              )}
+              {certificado && <Badge tone={certificado.tom}>{certificado.dias === null ? "Certificado sem validade informada" : certificado.dias < 0 ? "Certificado vencido" : `Certificado: ${certificado.dias} dia(s)`}</Badge>}
+            </div>
+          </div>
+
+          {emissao.emissor && (
+            <ul className="space-y-1 text-xs text-[var(--color-ink2)]">
+              <li>
+                CNPJ ativado: <strong>{formatarCnpj(emissao.emissor.cnpj)}</strong> · ativado em {emissao.emissor.ativadoEm.toLocaleDateString("pt-BR")}
+                {emissao.emissor.atualizadoEm.getTime() !== emissao.emissor.ativadoEm.getTime() && ` · atualizado em ${emissao.emissor.atualizadoEm.toLocaleDateString("pt-BR")}`}
+              </li>
+              {certificado && <li>{certificado.texto}</li>}
+            </ul>
+          )}
+          {emissao.recusa && emissao.modo === "tela" && <p className="text-xs text-[var(--color-danger)]">{emissao.recusa}</p>}
+          {emissao.modo === "legado" && (
+            <p className="text-xs text-[var(--color-ink3)]">
+              A emissão desta empresa está configurada direto no servidor (modo antigo). Ativar aqui passa a usar o cadastro pela tela.
+            </p>
+          )}
+
+          {podeAtivar ? (
+            <FormularioDoEmissor
+              ativo={emissao.modo === "tela"}
+              bloqueado={
+                !master
+                  ? "A conta da Focus NFe da plataforma ainda não está configurada no servidor. Fale com o suporte da plataforma."
+                  : bloqueios.length > 0
+                    ? "Complete as pendências do cadastro fiscal acima (e salve) antes de ativar."
+                    : null
+              }
+            />
+          ) : (
+            <p className="text-xs text-[var(--color-ink3)]">Só o proprietário da empresa ativa a emissão e troca o certificado.</p>
+          )}
         </CardContent>
       </Card>
 

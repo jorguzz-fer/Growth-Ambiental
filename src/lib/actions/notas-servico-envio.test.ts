@@ -207,7 +207,7 @@ describe.skipIf(!HAS_DB)("Prompt AG · envio da NFS-e", async () => {
     expect(await nota(id2)).toMatchObject({ status: "processando", tentativa: 2, ref: `${id2.replace(/-/g, "")}t2` });
   });
 
-  it("bloqueios: sem conferência, sem permissão, outro CNPJ, sem token — nada é gravado nem enviado", async () => {
+  it("bloqueios: sem conferência, sem permissão, emissão não ativada, sem token — nada é gravado nem enviado", async () => {
     const id = await rascunho();
     expect(await enviarNota(id, false)).toMatchObject({ ok: false });
     como("contador");
@@ -216,7 +216,7 @@ describe.skipIf(!HAS_DB)("Prompt AG · envio da NFS-e", async () => {
     expect(await enviarNota(id, true)).toMatchObject({ ok: false, error: expect.stringContaining("Sem permissão") });
     como("owner");
     process.env.NFSE_TENANT_ID = "00000000-0000-0000-0000-000000000000";
-    expect(await enviarNota(id, true)).toMatchObject({ ok: false, pendencias: [expect.stringContaining("outra empresa")] });
+    expect(await enviarNota(id, true)).toMatchObject({ ok: false, pendencias: [expect.stringContaining("ainda não foi ativada")] });
     process.env.NFSE_TENANT_ID = tenantId;
     delete process.env.FOCUS_NFE_TOKEN_HOMOLOGACAO;
     delete process.env.FOCUS_NFE_TOKEN;

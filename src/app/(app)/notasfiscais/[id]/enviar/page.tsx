@@ -11,11 +11,11 @@ import {
   dataDeEmissao,
   emitenteDoTenant,
   obraFiscalDoProjeto,
-  recusaDoTenant,
 } from "@/lib/nota-servico";
 import { formatarCnpj } from "@/lib/calc/emitente-fiscal";
 import { NATUREZAS_OPERACAO } from "@/lib/calc/nfse";
-import { focusConfigurado, resolverAmbiente } from "@/lib/fiscal/focus";
+import { resolverAmbiente } from "@/lib/fiscal/focus";
+import { situacaoDaEmissao } from "@/lib/fiscal/emissor";
 import { brl } from "@/lib/utils";
 import { PageHeader } from "@/components/app/page-header";
 import { AccessDenied } from "@/components/app/access-denied";
@@ -53,6 +53,7 @@ export default async function EnviarNotaPage({ params }: { params: Promise<{ id:
     );
   }
   const emitente = emitenteDoTenant(ctx.tenant);
+  const emissao = await situacaoDaEmissao(ctx.tenant);
   const amb = ambienteDoEnvio(n, resolverAmbiente(ctx.tenant.fiscalAmbiente));
   const ambiente = amb.ok ? amb.ambiente : resolverAmbiente(n.ambiente);
   const bloqueios = [
@@ -60,8 +61,8 @@ export default async function EnviarNotaPage({ params }: { params: Promise<{ id:
     ...bloqueiosDoEnvio({
       status: n.status,
       podeEmitir: true,
-      recusaDoTenant: recusaDoTenant(ctx.tenant.id, process.env.NFSE_TENANT_ID),
-      focusConfigurado: focusConfigurado(ambiente),
+      recusaDoTenant: emissao.recusa,
+      focusConfigurado: emissao.configurado(ambiente),
       ambiente,
       emitente,
     }),

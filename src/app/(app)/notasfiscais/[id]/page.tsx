@@ -13,14 +13,14 @@ import {
   podeCancelar,
   podeEditar,
   podeEnviar,
-  recusaDoTenant,
   urlSegura,
   type SituacaoDaNota,
 } from "@/lib/nota-servico";
 import { rotuloDaConta, valoresIniciais } from "@/lib/nota-servico-tela";
 import { calcularNfse, validarNfse } from "@/lib/calc/nfse";
 import { formatarCnpj } from "@/lib/calc/emitente-fiscal";
-import { focusConfigurado, resolverAmbiente } from "@/lib/fiscal/focus";
+import { resolverAmbiente } from "@/lib/fiscal/focus";
+import { situacaoDaEmissao } from "@/lib/fiscal/emissor";
 import { brl } from "@/lib/utils";
 import { PageHeader } from "@/components/app/page-header";
 import { AccessDenied } from "@/components/app/access-denied";
@@ -79,6 +79,7 @@ export default async function NotaPage({ params }: { params: Promise<{ id: strin
     n.status === "autorizada" && (ultimoDeCancelamento?.tipo === "cancelamento_pedido" || ultimoDeCancelamento?.tipo === "cancelamento_sem_resposta");
   const espelho = urlSegura(n.urlEspelho);
   // 4.1 — o botão de envio só aparece sem bloqueio; com bloqueio, a lista diz o que falta.
+  const emissao = await situacaoDaEmissao(ctx.tenant);
   const amb = ambienteDoEnvio(n, resolverAmbiente(ctx.tenant.fiscalAmbiente));
   const ambienteDoProximoEnvio = amb.ok ? amb.ambiente : resolverAmbiente(n.ambiente);
   const bloqueios =
@@ -88,8 +89,8 @@ export default async function NotaPage({ params }: { params: Promise<{ id: strin
           ...bloqueiosDoEnvio({
             status: n.status,
             podeEmitir,
-            recusaDoTenant: recusaDoTenant(ctx.tenant.id, process.env.NFSE_TENANT_ID),
-            focusConfigurado: focusConfigurado(ambienteDoProximoEnvio),
+            recusaDoTenant: emissao.recusa,
+            focusConfigurado: emissao.configurado(ambienteDoProximoEnvio),
             ambiente: ambienteDoProximoEnvio,
             emitente: e,
           }),
